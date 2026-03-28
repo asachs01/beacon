@@ -1,0 +1,30 @@
+/* One Dark — Atom/one-dark-theme */
+:root[data-theme="one-dark"] {
+  --td-bg: #fafafa;
+  --td-bg-alt: #f0f0f0;
+  --td-bg-code: #282c34;
+  --td-text: #383a42;
+  --td-text-muted: #a0a1a7;
+  --td-border: #e0e0e0;
+  --td-accent: #4078f2;
+  --td-accent-hover: #3269db;
+  --td-success: #50a14f;
+  --td-warning: #c18401;
+  --td-error: #e45649;
+  --td-info: #0184bc;
+}
+
+:root[data-theme="one-dark"].dark {
+  --td-bg: #282c34;
+  --td-bg-alt: #21252b;
+  --td-bg-code: #1e2127;
+  --td-text: #abb2bf;
+  --td-text-muted: #5c6370;
+  --td-border: #3e4451;
+  --td-accent: #61afef;
+  --td-accent-hover: #78bcf5;
+  --td-success: #98c379;
+  --td-warning: #e5c07b;
+  --td-error: #e06c75;
+  --td-info: #56b6c2;
+}

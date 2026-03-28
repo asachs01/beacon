@@ -1,0 +1,30 @@
+/* Nord — nordtheme.com */
+:root[data-theme="nord"] {
+  --td-bg: #eceff4;
+  --td-bg-alt: #e5e9f0;
+  --td-bg-code: #2e3440;
+  --td-text: #2e3440;
+  --td-text-muted: #4c566a;
+  --td-border: #d8dee9;
+  --td-accent: #5e81ac;
+  --td-accent-hover: #81a1c1;
+  --td-success: #a3be8c;
+  --td-warning: #ebcb8b;
+  --td-error: #bf616a;
+  --td-info: #88c0d0;
+}
+
+:root[data-theme="nord"].dark {
+  --td-bg: #2e3440;
+  --td-bg-alt: #3b4252;
+  --td-bg-code: #242933;
+  --td-text: #eceff4;
+  --td-text-muted: #d8dee9;
+  --td-border: #434c5e;
+  --td-accent: #88c0d0;
+  --td-accent-hover: #8fbcbb;
+  --td-success: #a3be8c;
+  --td-warning: #ebcb8b;
+  --td-error: #bf616a;
+  --td-info: #81a1c1;
+}

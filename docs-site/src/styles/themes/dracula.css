@@ -1,0 +1,30 @@
+/* Dracula — draculatheme.com */
+:root[data-theme="dracula"] {
+  --td-bg: #f8f8f2;
+  --td-bg-alt: #eee8d5;
+  --td-bg-code: #282a36;
+  --td-text: #282a36;
+  --td-text-muted: #6272a4;
+  --td-border: #d6d0c4;
+  --td-accent: #bd93f9;
+  --td-accent-hover: #a77bf3;
+  --td-success: #50fa7b;
+  --td-warning: #f1fa8c;
+  --td-error: #ff5555;
+  --td-info: #8be9fd;
+}
+
+:root[data-theme="dracula"].dark {
+  --td-bg: #282a36;
+  --td-bg-alt: #44475a;
+  --td-bg-code: #1e1f29;
+  --td-text: #f8f8f2;
+  --td-text-muted: #6272a4;
+  --td-border: #44475a;
+  --td-accent: #bd93f9;
+  --td-accent-hover: #caa9fa;
+  --td-success: #50fa7b;
+  --td-warning: #f1fa8c;
+  --td-error: #ff5555;
+  --td-info: #8be9fd;
+}

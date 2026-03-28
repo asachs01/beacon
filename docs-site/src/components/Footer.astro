@@ -1,0 +1,54 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="border-t border-[var(--td-border)] mt-auto">
+  <div class="container py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div class="md:col-span-2">
+        <a href="/" class="flex items-center gap-2 font-semibold text-lg mb-4">
+          <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
+            <path d="M22 52 L18 56 Q18 58 20 58 L44 58 Q46 58 46 56 L42 52 Z" fill="currentColor"/>
+            <path d="M24 52 L27 20 L37 20 L40 52 Z" fill="currentColor"/>
+            <rect x="25" y="16" width="14" height="6" rx="1" fill="currentColor"/>
+            <path d="M20 14 A14 14 0 0 1 32 2" stroke="var(--td-accent)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <path d="M44 14 A14 14 0 0 0 32 2" stroke="var(--td-accent)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          </svg>
+          <span>Beacon Docs</span>
+        </a>
+        <p class="text-[var(--td-text-muted)] max-w-md">
+          Documentation for Beacon — your family's daily signal. An open-source, self-hosted family dashboard for wall-mounted displays.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="font-semibold mb-4">Documentation</h3>
+        <ul class="space-y-2 text-[var(--td-text-muted)]">
+          <li><a href="/docs/getting-started/" class="hover:text-[var(--td-text)]">Getting Started</a></li>
+          <li><a href="/docs/configuration/" class="hover:text-[var(--td-text)]">Configuration</a></li>
+          <li><a href="/docs/faq/" class="hover:text-[var(--td-text)]">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="font-semibold mb-4">Community</h3>
+        <ul class="space-y-2 text-[var(--td-text-muted)]">
+          <li>
+            <a href="https://github.com/asachs01/beacon" target="_blank" rel="noopener noreferrer" class="hover:text-[var(--td-text)]">
+              GitHub
+            </a>
+          </li>
+          <li>
+            <a href="https://github.com/asachs01/beacon/issues" target="_blank" rel="noopener noreferrer" class="hover:text-[var(--td-text)]">
+              Report an Issue
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-[var(--td-border)] mt-8 pt-8 text-center text-[var(--td-text-muted)] text-sm">
+      <p>&copy; {currentYear} Beacon. Built with <a href="https://astro.build" class="text-[var(--td-accent)] hover:underline">Astro</a>.</p>
+    </div>
+  </div>
+</footer>

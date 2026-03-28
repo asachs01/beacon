@@ -1,0 +1,84 @@
+---
+import '@/styles/global.css';
+import SEOHead from '@/components/SEOHead.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  canonicalURL?: string;
+  ogImage?: string;
+  ogType?: string;
+  twitterCard?: string;
+}
+
+const {
+  title,
+  description = 'Documentation for Beacon — your family\'s daily signal',
+  canonicalURL,
+  ogImage,
+  ogType,
+  twitterCard
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <SEOHead
+      title={title}
+      description={description}
+      canonicalURL={canonicalURL}
+      ogImage={ogImage}
+      ogType={ogType}
+      twitterCard={twitterCard}
+    />
+    <script is:inline>
+      // Restore theme + dark mode before first paint to prevent flash
+      (function() {
+        var theme = localStorage.getItem('td-theme');
+        if (theme) document.documentElement.setAttribute('data-theme', theme);
+        else document.documentElement.setAttribute('data-theme', 'beacon');
+        var dark = localStorage.getItem('td-dark');
+        if (dark === 'true' || (dark === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <slot />
+    <script is:inline>
+      // Copy code button for all pre blocks
+      document.querySelectorAll('.prose pre').forEach(function(pre) {
+        var button = document.createElement('button');
+        button.className = 'copy-button';
+        button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+        button.addEventListener('click', function() {
+          var code = pre.querySelector('code');
+          var text = code ? code.textContent : pre.textContent;
+          navigator.clipboard.writeText(text || '');
+          button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+          setTimeout(function() {
+            button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+          }, 2000);
+        });
+        pre.style.position = 'relative';
+        pre.appendChild(button);
+      });
+
+      // Dark mode toggle
+      document.querySelectorAll('[data-theme-toggle]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var isDark = document.documentElement.classList.toggle('dark');
+          localStorage.setItem('td-dark', String(isDark));
+        });
+      });
+    </script>
+  </body>
+</html>

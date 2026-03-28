@@ -1,0 +1,156 @@
+---
+title: "Family Members"
+description: "How to add, edit, and manage family members in Beacon — avatars, colors, roles, and PINs."
+order: 5
+---
+
+# Family Members
+
+Family members are the people in your household. Each member gets a name, an avatar, a color, a role, and an optional PIN. Members are used for chore assignment, the leaderboard, and visual identification throughout the app.
+
+---
+
+## Adding a family member
+
+1. Click the **gear icon** (Settings) in the bottom of the sidebar
+   - On mobile, tap **More** in the bottom tab bar, then tap **Settings**
+2. The "Family Members" modal opens showing your current members (or "No family members yet" if none exist)
+3. Click **+ Add Member**
+4. Fill in the form:
+   - **Name**: Enter the member's name (required)
+   - **Avatar**: Pick an emoji from the categorized grid (see below)
+   - **Color**: Pick a color from the 8-color palette
+   - **Role**: Select Parent or Child
+   - **PIN**: Optionally enter a 4-6 digit numeric PIN
+5. Click **Add Member**
+
+The member is saved immediately to the browser's localStorage and (when possible) synced to Home Assistant input_text helpers.
+
+---
+
+## Avatar selection
+
+Beacon provides 55+ emoji avatars organized into 5 categories:
+
+### People (16 options)
+Boy, Girl, Man, Woman, Old Man, Old Woman, Person, Baby, Child, Princess, Prince, Superhero, Red-haired Woman, Curly-haired Man, Bearded Person, Blonde Person
+
+### Animals (16 options)
+Dog, Cat, Rabbit, Fox, Bear, Panda, Lion, Cow, Pig, Frog, Owl, Bee, Butterfly, Turtle, Octopus, Penguin
+
+### Nature (9 options)
+Cherry Blossom, Sunflower, Hibiscus, Four-leaf Clover, Rainbow, Star, Moon, Sun, Fire
+
+### Fun (9 options)
+Guitar, Art Palette, Soccer Ball, Basketball, Video Game Controller, Rocket, Theatre Masks, Circus Tent, Bullseye
+
+### Food (5 options)
+Pizza, Ice Cream, Cupcake, Donut, Birthday Cake
+
+To select an avatar, scroll through the categories and tap the emoji you want. The selected avatar gets a highlighted border.
+
+---
+
+## Color assignment
+
+Eight colors are available for family members:
+
+| Color | Hex | Swatch |
+|-------|-----|--------|
+| Blue | `#3b82f6` | Used for events, chore cards, and leaderboard rows |
+| Green | `#22c55e` | |
+| Purple | `#a855f7` | |
+| Orange | `#f97316` | |
+| Pink | `#ec4899` | |
+| Teal | `#14b8a6` | |
+| Yellow | `#eab308` | |
+| Red | `#ef4444` | |
+
+The color appears in several places:
+- As the border and background tint on the member's avatar throughout the app
+- As the progress bar fill in the Chores panel
+- As the background tint on chore cards
+- In the leaderboard row styling
+
+Multiple family members can share the same color, but using different colors makes it easier to visually distinguish members.
+
+---
+
+## Roles
+
+Each family member has one of two roles:
+
+| Role | Description |
+|------|-------------|
+| **Parent** | Full access. The presence of at least one parent enables the "Add Chore" button in the Chores panel. |
+| **Child** | Standard access. Can complete and uncomplete chores. |
+
+Roles are currently informational and used to control UI visibility (e.g., showing the chore creation form). There is no access control enforced by roles at this time.
+
+---
+
+## PIN setup
+
+PINs are optional 4-6 digit numeric codes. When a PIN is set:
+
+- It is stored in the browser's localStorage
+- Only digits are accepted (letters and symbols are stripped during entry)
+- The maximum length is 6 digits
+- PINs are stored as plain text locally (not hashed)
+
+PINs are reserved for future features like parental controls and per-member authentication. They are not currently enforced for any action.
+
+---
+
+## Editing a family member
+
+1. Open the Family Members modal (gear icon in sidebar)
+2. Find the member you want to edit
+3. Click the **pencil icon** on their card
+4. The form opens with the member's current data pre-filled
+5. Modify any fields
+6. Click **Save Changes**
+
+---
+
+## Removing a family member
+
+1. Open the Family Members modal
+2. Find the member you want to remove
+3. Click the **trash icon** on their card
+4. The button changes to show **Confirm?** (you have 3 seconds to click again)
+5. Click **Confirm?** to permanently remove the member
+
+Removing a member does not delete their chore completions or streak history. However, they will no longer appear in the Chores panel or Leaderboard.
+
+---
+
+## Data storage
+
+Family member data is stored in the browser's localStorage under the key `beacon_family_members`. When a Home Assistant client is connected, Beacon attempts to sync the data to an `input_text.beacon_family_members` helper entity (for payloads under 255 characters).
+
+For larger families, the data may exceed the HA input_text limit. In that case, localStorage is the sole storage location. This means:
+
+- Family members are tied to the specific browser/device where they were created
+- Clearing browser data will remove family members
+- To use the same family on multiple displays, set up members on each device separately
+
+> **Tip**: For a production setup, consider using a dedicated tablet that is always on, with browser data persistence enabled.
+
+---
+
+## Troubleshooting
+
+### Family members disappear after clearing browser data
+
+Family data is stored in localStorage. If you clear browser data (cache, cookies, site data), family members will be lost. To avoid this:
+- Use a kiosk browser (like Fully Kiosk) that does not clear data
+- Avoid clearing site data for your Beacon URL
+
+### The "Add Chore" button does not appear
+
+The Add Chore button appears when there is at least one family member defined. If no members exist, the Chores panel shows "Add family members first to assign chores."
+
+### Changes do not sync across devices
+
+Each device has its own localStorage. Family members added on one tablet will not appear on another. This is a known limitation of the localStorage-based storage approach.

@@ -1,0 +1,30 @@
+/* Tokyo Night — github.com/enkia/tokyo-night-vscode-theme */
+:root[data-theme="tokyo-night"] {
+  --td-bg: #d5d6db;
+  --td-bg-alt: #cbccd1;
+  --td-bg-code: #1a1b26;
+  --td-text: #343b58;
+  --td-text-muted: #6a6f87;
+  --td-border: #c0c1c6;
+  --td-accent: #7aa2f7;
+  --td-accent-hover: #5d8ae8;
+  --td-success: #9ece6a;
+  --td-warning: #e0af68;
+  --td-error: #f7768e;
+  --td-info: #7dcfff;
+}
+
+:root[data-theme="tokyo-night"].dark {
+  --td-bg: #1a1b26;
+  --td-bg-alt: #24283b;
+  --td-bg-code: #16161e;
+  --td-text: #a9b1d6;
+  --td-text-muted: #565f89;
+  --td-border: #292e42;
+  --td-accent: #7aa2f7;
+  --td-accent-hover: #89b4fa;
+  --td-success: #9ece6a;
+  --td-warning: #e0af68;
+  --td-error: #f7768e;
+  --td-info: #7dcfff;
+}

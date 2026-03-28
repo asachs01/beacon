@@ -1,0 +1,58 @@
+---
+import { getCollection } from 'astro:content';
+
+const currentPath = Astro.url.pathname;
+
+const docs = await getCollection('docs');
+
+// Group docs by their section (first path segment)
+const sections = new Map<string, { label: string; href: string; order: number }[]>();
+for (const doc of docs) {
+  const parts = doc.id.split('/');
+  const section = parts.length > 1 ? parts[0] : 'General';
+  const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1).replace(/-/g, ' ');
+
+  if (!sections.has(sectionLabel)) sections.set(sectionLabel, []);
+  sections.get(sectionLabel)!.push({
+    label: doc.data.title,
+    href: `/docs/${doc.id}/`,
+    order: doc.data.order ?? 0,
+  });
+}
+
+// Sort entries within each section by order field
+for (const [, items] of sections) {
+  items.sort((a, b) => a.order - b.order);
+}
+
+const sidebarItems = Array.from(sections.entries()).map(([label, children]) => ({ label, children }));
+
+function isActive(href?: string): boolean {
+  if (!href) return false;
+  return currentPath === href || currentPath === href.slice(0, -1);
+}
+---
+
+<aside class="w-64 shrink-0 hidden lg:block">
+  <nav class="sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto py-6 pr-4">
+    {sidebarItems.map(section => (
+      <div class="mb-6">
+        <h3 class="font-semibold text-sm uppercase tracking-wider text-[var(--td-text-muted)] mb-2 px-3">
+          {section.label}
+        </h3>
+        <ul class="space-y-1">
+          {section.children.map(item => (
+            <li>
+              <a
+                href={item.href}
+                class={isActive(item.href) ? 'sidebar-link-active sidebar-link' : 'sidebar-link'}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </nav>
+</aside>

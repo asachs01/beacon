@@ -1,0 +1,72 @@
+---
+import { themes } from '@/data/themes';
+---
+
+<div class="relative" id="theme-switcher">
+  <button
+    id="theme-button"
+    class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-[var(--td-border)] text-[var(--td-text-muted)] hover:text-[var(--td-text)] hover:border-[var(--td-text)] transition-colors text-sm"
+    aria-label="Switch color theme"
+  >
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+    </svg>
+    <span class="hidden sm:inline" id="theme-label">Theme</span>
+  </button>
+
+  <div
+    id="theme-dropdown"
+    class="hidden absolute right-0 top-full mt-2 w-48 rounded-lg border border-[var(--td-border)] bg-[var(--td-bg)] shadow-lg z-50 py-1"
+  >
+    {themes.map(theme => (
+      <button
+        class="theme-option flex items-center gap-3 w-full px-3 py-2 text-sm text-[var(--td-text-muted)] hover:text-[var(--td-text)] hover:bg-[var(--td-border)] transition-colors text-left"
+        data-theme-id={theme.id}
+      >
+        <span class="flex gap-0.5">
+          {theme.preview.map(color => (
+            <span class="w-3 h-3 rounded-full border border-[var(--td-border)]" style={`background:${color}`} />
+          ))}
+        </span>
+        <span>{theme.name}</span>
+      </button>
+    ))}
+  </div>
+</div>
+
+<script>
+  const btn = document.getElementById('theme-button');
+  const dropdown = document.getElementById('theme-dropdown');
+  const label = document.getElementById('theme-label');
+
+  btn?.addEventListener('click', () => {
+    dropdown?.classList.toggle('hidden');
+  });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!(e.target as Element)?.closest('#theme-switcher')) {
+      dropdown?.classList.add('hidden');
+    }
+  });
+
+  document.querySelectorAll('.theme-option').forEach(option => {
+    option.addEventListener('click', () => {
+      const id = (option as HTMLElement).dataset.themeId;
+      if (id) {
+        document.documentElement.setAttribute('data-theme', id);
+        localStorage.setItem('td-theme', id);
+        if (label) label.textContent = option.querySelector('span:last-child')?.textContent || 'Theme';
+      }
+      dropdown?.classList.add('hidden');
+    });
+  });
+
+  // Restore on load
+  const stored = localStorage.getItem('td-theme');
+  if (stored) {
+    document.documentElement.setAttribute('data-theme', stored);
+    const match = document.querySelector(`.theme-option[data-theme-id="${stored}"] span:last-child`);
+    if (label && match) label.textContent = match.textContent || 'Theme';
+  }
+</script>

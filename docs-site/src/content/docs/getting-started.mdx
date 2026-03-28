@@ -1,0 +1,359 @@
+---
+title: "Getting Started"
+description: "Install Beacon as a Home Assistant add-on, Docker container, or development server and connect your family's calendar in under 10 minutes."
+order: 2
+---
+
+# Getting Started
+
+This guide walks you through three ways to install Beacon, then covers first-time setup: connecting calendars, adding family members, configuring weather, and mounting the display.
+
+---
+
+## Prerequisites
+
+### Software requirements
+
+| Requirement | Minimum | Recommended |
+|------------|---------|-------------|
+| Home Assistant | 2024.1+ with Supervisor | Latest stable |
+| Node.js (dev only) | 20.x | 22.x |
+| Docker (standalone only) | 20.10+ | Latest stable |
+| Web browser | Chrome 90+, Safari 15+, Firefox 90+ | Chrome or Chromium |
+
+### Hardware recommendations
+
+**For the Home Assistant server:**
+
+| Setup | Notes |
+|-------|-------|
+| Raspberry Pi 4 (4GB+) | Good for small households |
+| Intel NUC / Mini PC | Recommended for reliability |
+| Home Assistant Yellow / Green | Purpose-built HA hardware |
+| Virtual machine | Proxmox, VMware, or VirtualBox |
+
+**For the wall-mounted display:**
+
+| Device | Price Range | Notes |
+|--------|------------|-------|
+| Amazon Fire HD 8 (refurbished) | $30-50 | Best value. Use Fully Kiosk Browser. |
+| Amazon Fire HD 10 | $75-100 | Bigger screen, still affordable. |
+| Samsung Galaxy Tab A | $100-150 | Good Android tablet with decent screen. |
+| Old iPad (any model from 2018+) | Free if you have one | Works well in Safari. |
+| Raspberry Pi 4 + HDMI monitor | $80-120 | Great for larger 15-24" displays. |
+| Old laptop/monitor + mini PC | $50-100 | Repurpose hardware you already have. |
+| Elecrow 10.1" touchscreen | $90-120 | Purpose-built wall display with stand. |
+
+> **The cheapest path**: A $35 refurbished Fire HD 8 tablet with a $15 magnetic wall mount. Under $50 total and it looks great.
+
+---
+
+## Installation Method 1: Home Assistant Add-on (Recommended)
+
+This is the easiest method. Beacon runs inside Home Assistant as a managed add-on.
+
+### Step 1: Add the repository
+
+1. Open your Home Assistant web interface
+2. Navigate to **Settings** in the left sidebar
+3. Click **Add-ons**
+4. Click the **Add-on Store** button in the bottom right
+5. Click the three-dot menu (top right corner)
+6. Select **Repositories**
+7. Paste this URL into the text field:
+   ```
+   https://github.com/asachs01/beacon
+   ```
+8. Click **Add**
+9. Click **Close**
+
+The page will reload. You should now see a "Beacon" section in the add-on store.
+
+### Step 2: Install the add-on
+
+1. Find **Beacon** in the add-on store (you may need to scroll down or search)
+2. Click on the Beacon card
+3. Click **Install**
+4. Wait for the installation to complete (this downloads the container image, typically 30-60 seconds)
+
+You will see the Beacon add-on info page when installation is complete.
+
+### Step 3: Configure the add-on
+
+1. Click the **Configuration** tab
+2. Set the following options:
+
+```yaml
+family_name: "My Family"
+theme: "skylight"
+auto_dark_mode: true
+weather_entity: "weather.home"
+photo_directory: "/media/beacon/photos"
+photo_interval: 30
+screen_saver_timeout: 5
+```
+
+3. Replace `"My Family"` with your family name (this appears in the dashboard greeting)
+4. Replace `"weather.home"` with your actual weather entity ID (find it in **Settings > Devices & Services > Entities**, search for "weather")
+5. Click **Save**
+
+### Step 4: Start Beacon
+
+1. Go back to the **Info** tab
+2. Click **Start**
+3. Wait a few seconds for the container to start
+4. Click **Open Web UI** in the sidebar panel, or navigate directly to your Home Assistant URL — Beacon appears as a sidebar panel with a calendar-clock icon
+
+> **What you should see**: The Beacon dashboard with a large clock, the current date, a personalized greeting, and (if weather is configured) the current temperature. If you have not connected any calendars yet, the calendar view will be empty.
+
+### Step 5: Enable auto-start (optional)
+
+1. On the Beacon add-on page, toggle **Start on boot** to ON
+2. This ensures Beacon restarts automatically if Home Assistant reboots
+
+---
+
+## Installation Method 2: Docker Standalone
+
+Use this method if you want to run Beacon outside of Home Assistant, or if you use a Home Assistant Core installation without Supervisor.
+
+### Step 1: Pull and run the container
+
+```bash
+docker run -d \
+  --name beacon \
+  -p 3000:3000 \
+  -e SUPERVISOR_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
+  -e HA_URL="http://YOUR_HA_IP:8123" \
+  ghcr.io/asachs01/beacon:latest
+```
+
+Replace:
+- `YOUR_HA_LONG_LIVED_TOKEN` with a long-lived access token from Home Assistant (create one at **Profile > Long-Lived Access Tokens**)
+- `YOUR_HA_IP` with your Home Assistant IP address or hostname
+
+### Step 2: Create a long-lived access token
+
+1. In Home Assistant, click your profile icon (bottom left)
+2. Scroll to the bottom to **Long-Lived Access Tokens**
+3. Click **Create Token**
+4. Name it "Beacon"
+5. Copy the token immediately (you will not see it again)
+
+### Step 3: Access Beacon
+
+Open a browser and navigate to:
+
+```
+http://YOUR_DOCKER_HOST:3000
+```
+
+### Docker Compose example
+
+```yaml
+version: "3.8"
+services:
+  beacon:
+    image: ghcr.io/asachs01/beacon:latest
+    container_name: beacon
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - SUPERVISOR_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
+      - HA_URL=http://YOUR_HA_IP:8123
+```
+
+---
+
+## Installation Method 3: Development
+
+Use this method if you want to contribute to Beacon or run it directly from source.
+
+### Step 1: Clone the repository
+
+```bash
+git clone https://github.com/asachs01/beacon.git
+cd beacon
+```
+
+### Step 2: Install dependencies
+
+```bash
+npm install
+```
+
+### Step 3: Configure environment variables
+
+Create a `.env` file in the project root:
+
+```bash
+VITE_HA_URL=http://YOUR_HA_IP:8123
+VITE_HA_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
+VITE_FAMILY_NAME="My Family"
+VITE_THEME=skylight
+VITE_AUTO_DARK_MODE=true
+VITE_HA_WEATHER_ENTITY=weather.home
+VITE_PHOTO_DIRECTORY=/media/beacon/photos
+VITE_PHOTO_INTERVAL=30
+VITE_SCREEN_SAVER_TIMEOUT=5
+```
+
+### Step 4: Start the development server
+
+```bash
+npm run dev
+```
+
+The dashboard will be available at `http://localhost:5173` with hot module replacement.
+
+### Step 5: Build for production
+
+```bash
+npm run build
+```
+
+The production build outputs to the `dist/` directory. Serve it with any static file server:
+
+```bash
+npx serve dist -l 3000 -s
+```
+
+---
+
+## First-Time Setup
+
+### Connecting Google Calendar
+
+This is the most common calendar source. Follow every step carefully.
+
+1. **Create a Google Cloud project** (skip if you have already done this for HA):
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Click **Select a project** at the top, then **New Project**
+   - Name it something like "Home Assistant"
+   - Click **Create**
+
+2. **Enable the Google Calendar API**:
+   - In the Google Cloud Console, go to **APIs & Services > Library**
+   - Search for "Google Calendar API"
+   - Click on it, then click **Enable**
+
+3. **Create OAuth credentials**:
+   - Go to **APIs & Services > Credentials**
+   - Click **Create Credentials > OAuth client ID**
+   - If prompted, configure the OAuth consent screen first:
+     - Select **External** user type
+     - Fill in the app name ("Home Assistant") and your email
+     - Add your email as a test user
+     - Save
+   - Back on Credentials, click **Create Credentials > OAuth client ID**
+   - Application type: **Web application**
+   - Name: "Home Assistant"
+   - Authorized redirect URIs: add `https://my.home-assistant.io/redirect/oauth`
+   - Click **Create**
+   - Download the JSON file
+
+4. **Add the integration in Home Assistant**:
+   - Go to **Settings > Devices & Services**
+   - Click **Add Integration**
+   - Search for **Google Calendar**
+   - Upload the credentials JSON when prompted
+   - A browser window will open — sign in with your Google account
+   - Grant calendar access
+   - Home Assistant will create `calendar.*` entities for each of your Google calendars
+
+5. **Verify in Beacon**:
+   - Open Beacon and navigate to the Calendar view (calendar icon in sidebar)
+   - You should see your calendars listed as colored filter pills above the week view
+   - Events should appear on the correct days and times
+
+> **Using other calendar sources?** Beacon works with any calendar integration Home Assistant supports. CalDAV (Nextcloud, Fastmail, iCloud), ICS feeds, and the Local Calendar integration all work the same way — set them up in HA, and Beacon will discover them automatically.
+
+### Setting up the Local Calendar (no Google needed)
+
+If you want a purely local calendar with no cloud dependency:
+
+1. Go to **Settings > Devices & Services** in Home Assistant
+2. Click **Add Integration**
+3. Search for **Local Calendar**
+4. Name it (e.g., "Family Calendar")
+5. Click **Submit**
+
+This creates a `calendar.family_calendar` entity. Events you create in Beacon will be stored locally on your Home Assistant instance.
+
+### Setting up family members
+
+1. Open Beacon
+2. Click the **gear icon** in the bottom of the sidebar (or under "More" on mobile)
+3. The Family Members modal opens
+4. Click **+ Add Member**
+5. Fill in:
+   - **Name**: The family member's name
+   - **Avatar**: Choose from 55+ emoji options organized in 5 categories (People, Animals, Nature, Fun, Food)
+   - **Color**: Pick from 8 colors (blue, green, purple, orange, pink, teal, yellow, red)
+   - **Role**: Parent or Child
+   - **PIN** (optional): A 4-6 digit numeric PIN
+6. Click **Add Member**
+7. Repeat for each family member
+
+### Configuring the weather entity
+
+1. First, make sure you have a weather integration installed in Home Assistant. The easiest option is **Met.no** (built-in, no API key required):
+   - Go to **Settings > Devices & Services**
+   - Click **Add Integration**
+   - Search for **Meteorologisk institutt (Met.no)**
+   - Enter your home coordinates
+   - Submit
+
+2. Find your weather entity ID:
+   - Go to **Settings > Devices & Services > Entities**
+   - Search for "weather"
+   - Note the entity ID (e.g., `weather.home` or `weather.forecast_home`)
+
+3. Set the entity in Beacon's configuration:
+   - For add-on: Configuration tab > set `weather_entity`
+   - For Docker: set the `WEATHER_ENTITY` environment variable
+   - For development: set `VITE_HA_WEATHER_ENTITY` in `.env`
+
+### Mounting and displaying on a tablet
+
+**Android tablets (Fire, Samsung, etc.):**
+
+1. Install **Fully Kiosk Browser** from the app store (free version works, paid version adds remote management)
+2. Set the start URL to your Beacon address
+3. Enable these settings in Fully Kiosk:
+   - **Keep Screen On**: Yes
+   - **Autostart on Boot**: Yes
+   - **Hide Status Bar**: Yes
+   - **Hide Navigation Bar**: Yes
+   - **Screen Brightness**: 40-60% for comfortable ambient viewing
+4. Mount the tablet using a magnetic wall mount, adhesive mount, or a 3D-printed bracket
+
+**iPads:**
+
+1. Open Safari and navigate to your Beacon URL
+2. Tap the Share button and select **Add to Home Screen**
+3. Open the saved shortcut — it will launch in a pseudo-fullscreen mode
+4. Go to **Settings > Display & Brightness > Auto-Lock > Never**
+5. Enable **Guided Access** (Settings > Accessibility > Guided Access) to lock the iPad to Beacon
+
+**Desktop browsers (Raspberry Pi, mini PC):**
+
+1. Open Chrome or Chromium
+2. Navigate to your Beacon URL
+3. Press **F11** for fullscreen mode
+4. To auto-start in kiosk mode, create a startup script:
+   ```bash
+   chromium-browser --kiosk --noerrdialogs --disable-translate http://YOUR_BEACON_URL
+   ```
+
+---
+
+## Next steps
+
+- [Calendar](/docs/calendar/) — creating events, recurring events, drag-to-reschedule
+- [Dashboard](/docs/dashboard/) — understanding the dashboard layout
+- [Family Members](/docs/family/) — managing family members
+- [Configuration](/docs/configuration/) — complete options reference
+- [Themes](/docs/themes/) — changing the look and feel
+- [FAQ](/docs/faq/) — common questions answered

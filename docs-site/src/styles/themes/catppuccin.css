@@ -1,0 +1,30 @@
+/* Catppuccin Mocha / Latte — catppuccin.com */
+:root[data-theme="catppuccin"] {
+  --td-bg: #eff1f5;
+  --td-bg-alt: #e6e9ef;
+  --td-bg-code: #1e1e2e;
+  --td-text: #4c4f69;
+  --td-text-muted: #6c6f85;
+  --td-border: #ccd0da;
+  --td-accent: #8839ef;
+  --td-accent-hover: #7c2cdb;
+  --td-success: #40a02b;
+  --td-warning: #df8e1d;
+  --td-error: #d20f39;
+  --td-info: #04a5e5;
+}
+
+:root[data-theme="catppuccin"].dark {
+  --td-bg: #1e1e2e;
+  --td-bg-alt: #313244;
+  --td-bg-code: #181825;
+  --td-text: #cdd6f4;
+  --td-text-muted: #a6adc8;
+  --td-border: #45475a;
+  --td-accent: #cba6f7;
+  --td-accent-hover: #b4befe;
+  --td-success: #a6e3a1;
+  --td-warning: #f9e2af;
+  --td-error: #f38ba8;
+  --td-info: #89dceb;
+}

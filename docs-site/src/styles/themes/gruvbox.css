@@ -1,0 +1,30 @@
+/* Gruvbox — github.com/morhetz/gruvbox */
+:root[data-theme="gruvbox"] {
+  --td-bg: #fbf1c7;
+  --td-bg-alt: #f2e5bc;
+  --td-bg-code: #282828;
+  --td-text: #3c3836;
+  --td-text-muted: #665c54;
+  --td-border: #d5c4a1;
+  --td-accent: #d79921;
+  --td-accent-hover: #b57614;
+  --td-success: #98971a;
+  --td-warning: #d79921;
+  --td-error: #cc241d;
+  --td-info: #458588;
+}
+
+:root[data-theme="gruvbox"].dark {
+  --td-bg: #282828;
+  --td-bg-alt: #3c3836;
+  --td-bg-code: #1d2021;
+  --td-text: #ebdbb2;
+  --td-text-muted: #a89984;
+  --td-border: #504945;
+  --td-accent: #fabd2f;
+  --td-accent-hover: #d79921;
+  --td-success: #b8bb26;
+  --td-warning: #fabd2f;
+  --td-error: #fb4934;
+  --td-info: #83a598;
+}

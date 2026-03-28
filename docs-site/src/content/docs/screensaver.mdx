@@ -1,0 +1,129 @@
+---
+title: "Screen Saver"
+description: "Beacon's screen saver and display protection — dim mode, clock screensaver, anti-burn-in, and wake behavior."
+order: 13
+---
+
+# Screen Saver
+
+Beacon includes a built-in screen saver to protect wall-mounted displays from burn-in and reduce brightness during idle periods. It operates in three phases.
+
+---
+
+## Three phases
+
+| Phase | Trigger | What happens |
+|-------|---------|-------------|
+| **Awake** | User interaction | Normal display — Beacon UI is fully visible |
+| **Dim** | 5 minutes of inactivity | A semi-transparent dark overlay covers the screen |
+| **Screensaver** | 10 minutes of inactivity | A moving clock replaces the UI entirely |
+
+---
+
+## Dim mode
+
+After 5 minutes of no interaction, a dark overlay fades in over the entire UI. The underlying Beacon interface is still partially visible but significantly dimmed.
+
+- The overlay is a full-screen `div` with a dark background
+- Clicking anywhere on the overlay immediately wakes the display (returns to Awake phase)
+
+**Purpose**: Reduces the overall brightness of the display, which:
+- Reduces ambient light in the room
+- Saves power on LCD and OLED displays
+- Extends the lifespan of the display panel
+
+---
+
+## Clock screensaver
+
+After 10 minutes of no interaction, the dim overlay is replaced by a full-screen clock screensaver. The display shows:
+
+- **Time**: Large text showing the current time (e.g., "2:45")
+- **Date**: Below the time, showing the full date (e.g., "Wednesday, March 28")
+- **Background**: Solid black (or very dark) background
+
+The clock updates every second.
+
+---
+
+## Anti-burn-in protection
+
+To prevent the clock from burning into the display (a particular concern with OLED and plasma screens), the clock position moves periodically:
+
+- **Move interval**: Every 30 seconds
+- **Position range**: 15% to 85% of the screen width and height
+- **Movement**: The clock jumps to a new random position (not a smooth animation, to minimize transition artifacts)
+
+This ensures no single pixel group is illuminated for extended periods.
+
+---
+
+## Waking the display
+
+Any user interaction immediately returns to the Awake phase:
+
+| Input | Wakes display? |
+|-------|---------------|
+| Mouse move | Yes |
+| Mouse click | Yes |
+| Key press | Yes |
+| Touch start | Yes |
+| Scroll | Yes |
+
+All event listeners use `{ passive: true }` to avoid interfering with normal input handling.
+
+The idle timer resets on every interaction, so continuous use keeps the display awake indefinitely.
+
+---
+
+## Configuration
+
+The screen saver timeout can be adjusted through the `screen_saver_timeout` configuration option:
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `screen_saver_timeout` | integer | `5` | Minutes of inactivity before dim mode activates |
+
+The screensaver phase always activates at 2x the dim timeout (e.g., 5-minute dim = 10-minute screensaver, 3-minute dim = 6-minute screensaver).
+
+**Configuration examples:**
+- **Add-on**: `screen_saver_timeout: 5`
+- **Docker**: `SCREEN_SAVER_TIMEOUT=5`
+- **Development**: `VITE_SCREEN_SAVER_TIMEOUT=5`
+
+> **Note**: The current implementation uses hardcoded values (5 minutes for dim, 10 minutes for screensaver). The configuration option affects the dim timeout; the screensaver timeout is always double.
+
+---
+
+## Disabling the screen saver
+
+There is no built-in toggle to disable the screen saver. If you want to prevent it:
+
+1. **Move input periodically**: Some kiosk browsers (like Fully Kiosk Browser) have a "Keep Screen On" or "Prevent Screen Saver" option that simulates touch input at intervals
+2. **Set a very long timeout**: Set `screen_saver_timeout` to a high value like `999` (this would require 999 minutes of inactivity before dimming)
+
+---
+
+## Troubleshooting
+
+### Screen dims too quickly
+
+Increase the `screen_saver_timeout` value. The default of 5 minutes works well for most wall displays, but if your household frequently glances at the display, you may want to increase it to 10 or 15 minutes.
+
+### Screen does not wake on touch
+
+1. Verify the touch events are reaching the browser (some kiosk apps intercept touch input)
+2. Try tapping multiple times or using a mouse click
+3. In very rare cases, the event listener may not be attached if the component did not mount correctly — reload the page
+
+### Clock position does not change
+
+The anti-burn-in repositioning happens every 30 seconds. Wait at least 30 seconds on the screensaver phase to see the clock move. The movement is a jump (not a slide), so it may be subtle if the new position is close to the previous one.
+
+### Display still shows burn-in marks
+
+Screen burn-in is a hardware issue that the software screensaver can only mitigate, not reverse. For OLED displays:
+- Use the screensaver consistently (do not disable it)
+- Reduce the display brightness to 40-60%
+- Consider using a dark theme (Midnight, Dracula, Monokai) which illuminates fewer pixels
+- Some displays have built-in pixel refresh features — enable them in the display's settings menu

@@ -1,0 +1,183 @@
+---
+import ThemeSwitcher from './ThemeSwitcher.astro';
+
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/docs/welcome/', label: 'Docs' },
+];
+
+function isActive(href: string): boolean {
+  if (href === '/') return currentPath === '/';
+  return currentPath.startsWith(href);
+}
+---
+
+<header class="sticky top-0 z-50 backdrop-blur-md border-b border-[var(--td-border)]" style="background-color: color-mix(in srgb, var(--td-bg) 80%, transparent)">
+  <div class="container">
+    <div class="flex items-center justify-between h-16">
+      <a href="/" class="flex items-center gap-2 font-semibold text-lg">
+        <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
+          <path d="M22 52 L18 56 Q18 58 20 58 L44 58 Q46 58 46 56 L42 52 Z" fill="currentColor"/>
+          <path d="M24 52 L27 20 L37 20 L40 52 Z" fill="currentColor"/>
+          <rect x="25" y="16" width="14" height="6" rx="1" fill="currentColor"/>
+          <path d="M20 14 A14 14 0 0 1 32 2" stroke="var(--td-accent)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <path d="M44 14 A14 14 0 0 0 32 2" stroke="var(--td-accent)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span>Beacon Docs</span>
+      </a>
+
+      <nav class="hidden lg:flex items-center gap-6">
+        {navLinks.map(link => (
+          <a
+            href={link.href}
+            class={isActive(link.href) ? 'nav-link-active' : 'nav-link'}
+          >
+            {link.label}
+          </a>
+        ))}
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <button
+          id="mobile-menu-button"
+          class="lg:hidden p-2 rounded-lg hover:bg-[var(--td-border)] transition-colors"
+          aria-label="Open navigation menu"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <button
+          id="search-button"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--td-border)] text-[var(--td-text-muted)] hover:text-[var(--td-text)] hover:border-[var(--td-text)] transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <span class="hidden sm:inline text-sm">Search</span>
+          <kbd class="hidden sm:inline text-xs bg-[var(--td-border)] px-1.5 py-0.5 rounded">Ctrl K</kbd>
+        </button>
+
+        <ThemeSwitcher />
+
+        <button data-theme-toggle class="p-2 rounded-lg hover:bg-[var(--td-border)] transition-colors" aria-label="Toggle dark mode">
+          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+
+        <a
+          href="https://github.com/asachs01/beacon"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="p-2 rounded-lg hover:bg-[var(--td-border)] transition-colors"
+          aria-label="GitHub"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Search modal -->
+<div id="search-dialog" class="search-dialog" role="dialog" aria-modal="true">
+  <div id="search-dialog-backdrop" class="absolute inset-0"></div>
+  <div class="relative w-full max-w-2xl mx-4 rounded-xl border border-[var(--td-border)] shadow-2xl overflow-hidden max-h-[70vh] flex flex-col" style="background-color: var(--td-bg)">
+    <div id="search-container" class="pagefind-ui p-4 overflow-y-auto"></div>
+  </div>
+</div>
+
+<!-- Mobile menu overlay -->
+<div id="mobile-menu" class="fixed inset-0 z-[100] hidden">
+  <div id="mobile-menu-backdrop" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div class="absolute inset-y-0 left-0 w-80 max-w-[85vw] border-r border-[var(--td-border)] overflow-y-auto shadow-2xl" style="background-color: var(--td-bg)">
+    <div class="flex items-center justify-between h-16 px-4 border-b border-[var(--td-border)]">
+      <span class="font-semibold">Navigation</span>
+      <button id="mobile-menu-close" class="p-2 rounded-lg hover:bg-[var(--td-border)] transition-colors" aria-label="Close menu">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="p-4" id="mobile-sidebar-content">
+    </nav>
+  </div>
+</div>
+
+<script>
+  // Mobile menu
+  const menuButton = document.getElementById('mobile-menu-button');
+  const menu = document.getElementById('mobile-menu');
+  const menuClose = document.getElementById('mobile-menu-close');
+  const menuBackdrop = document.getElementById('mobile-menu-backdrop');
+
+  function openMenu() { menu?.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+  function closeMenu() { menu?.classList.add('hidden'); document.body.style.overflow = ''; }
+
+  menuButton?.addEventListener('click', openMenu);
+  menuClose?.addEventListener('click', closeMenu);
+  menuBackdrop?.addEventListener('click', closeMenu);
+
+  // Search
+  const searchButton = document.getElementById('search-button');
+  const searchDialog = document.getElementById('search-dialog');
+  const searchBackdrop = document.getElementById('search-dialog-backdrop');
+  let pagefindLoaded = false;
+
+  async function openSearch() {
+    if (searchDialog) searchDialog.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    if (!pagefindLoaded) {
+      pagefindLoaded = true;
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = `/pagefind/pagefind-ui.css`;
+      document.head.appendChild(link);
+
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `/pagefind/pagefind-ui.js`;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load Pagefind'));
+        document.head.appendChild(script);
+      });
+
+      // @ts-ignore
+      new window.PagefindUI({ element: '#search-container', showSubResults: true, showImages: false });
+    }
+
+    requestAnimationFrame(() => {
+      const input = document.querySelector<HTMLInputElement>('.pagefind-ui__search-input');
+      input?.focus();
+    });
+  }
+
+  function closeSearch() {
+    if (searchDialog) searchDialog.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  searchButton?.addEventListener('click', openSearch);
+  searchBackdrop?.addEventListener('click', closeSearch);
+
+  document.addEventListener('keydown', (e) => {
+    const isOpen = searchDialog?.style.display === 'flex';
+    if (e.key === 'Escape') { isOpen ? closeSearch() : closeMenu(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      isOpen ? closeSearch() : openSearch();
+    }
+  });
+</script>

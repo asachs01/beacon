@@ -1,10 +1,13 @@
-import { defineCollection } from 'astro:content';
-import { glob } from 'astro/loaders';
-import { postSchema } from '@asachs01/astro-tinker/schemas';
+import { defineCollection, z } from "astro:content";
+import { glob } from "astro/loaders";
 
-export const collections = {
-  posts: defineCollection({
-    loader: glob({ base: './src/content/posts', pattern: '**/*.md' }),
-    schema: postSchema,
+const docs = defineCollection({
+  loader: glob({ pattern: "**/*.mdx", base: "./src/content/docs" }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    order: z.number().optional().default(0),
   }),
-};
+});
+
+export const collections = { docs };

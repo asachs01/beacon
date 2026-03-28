@@ -1,0 +1,30 @@
+/* Solarized — ethanschoonover.com/solarized */
+:root[data-theme="solarized"] {
+  --td-bg: #fdf6e3;
+  --td-bg-alt: #eee8d5;
+  --td-bg-code: #002b36;
+  --td-text: #657b83;
+  --td-text-muted: #93a1a1;
+  --td-border: #eee8d5;
+  --td-accent: #268bd2;
+  --td-accent-hover: #2176b5;
+  --td-success: #859900;
+  --td-warning: #b58900;
+  --td-error: #dc322f;
+  --td-info: #2aa198;
+}
+
+:root[data-theme="solarized"].dark {
+  --td-bg: #002b36;
+  --td-bg-alt: #073642;
+  --td-bg-code: #00212b;
+  --td-text: #839496;
+  --td-text-muted: #586e75;
+  --td-border: #073642;
+  --td-accent: #268bd2;
+  --td-accent-hover: #2aa198;
+  --td-success: #859900;
+  --td-warning: #b58900;
+  --td-error: #dc322f;
+  --td-info: #2aa198;
+}

@@ -1,0 +1,44 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  canonicalURL?: string;
+  ogImage?: string;
+  ogType?: string;
+  twitterCard?: string;
+}
+
+const {
+  title,
+  description,
+  canonicalURL = Astro.url.href,
+  ogImage = '/og-image.png',
+  ogType = 'website',
+  twitterCard = 'summary_large_image'
+} = Astro.props;
+
+const siteName = 'Beacon Docs';
+const fullTitle = `${title} | ${siteName}`;
+
+const ogImageURL = ogImage.startsWith('http')
+  ? ogImage
+  : new URL(ogImage, Astro.site || Astro.url.origin).href;
+---
+
+<title>{fullTitle}</title>
+<meta name="title" content={fullTitle} />
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+
+<meta property="og:type" content={ogType} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImageURL} />
+<meta property="og:site_name" content={siteName} />
+
+<meta name="twitter:card" content={twitterCard} />
+<meta name="twitter:url" content={canonicalURL} />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageURL} />

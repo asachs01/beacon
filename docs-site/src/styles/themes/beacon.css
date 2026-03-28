@@ -1,0 +1,32 @@
+/* Beacon theme — Deep Navy with Beacon Gold accent */
+:root:not([data-theme]),
+:root[data-theme="beacon"] {
+  --td-bg: #f8fafc;
+  --td-bg-alt: #f1f5f9;
+  --td-bg-code: #0f172a;
+  --td-text: #0f172a;
+  --td-text-muted: #64748b;
+  --td-border: #e2e8f0;
+  --td-accent: #f59e0b;
+  --td-accent-hover: #d97706;
+  --td-success: #22c55e;
+  --td-warning: #f59e0b;
+  --td-error: #ef4444;
+  --td-info: #06b6d4;
+}
+
+:root:not([data-theme]).dark,
+:root[data-theme="beacon"].dark {
+  --td-bg: #0f172a;
+  --td-bg-alt: #1e293b;
+  --td-bg-code: #0f172a;
+  --td-text: #f8fafc;
+  --td-text-muted: #94a3b8;
+  --td-border: #334155;
+  --td-accent: #f59e0b;
+  --td-accent-hover: #fbbf24;
+  --td-success: #22c55e;
+  --td-warning: #f59e0b;
+  --td-error: #ef4444;
+  --td-info: #06b6d4;
+}

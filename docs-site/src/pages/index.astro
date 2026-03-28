@@ -1,0 +1,111 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import Card from '@/components/Card.astro';
+
+const features = [
+  {
+    icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    title: 'Weekly Calendar',
+    description: 'Full week view with drag-and-drop rescheduling, recurring events, and multi-calendar support through Home Assistant.'
+  },
+  {
+    icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>',
+    title: 'Chores & Leaderboard',
+    description: 'Assign chores with dollar values, track streaks, and motivate the family with a weekly earnings leaderboard.'
+  },
+  {
+    icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>',
+    title: 'Music Controls',
+    description: 'Control any Home Assistant media player with album art, transport controls, volume, and a persistent Now Playing bar.'
+  },
+  {
+    icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>',
+    title: 'Photo Frame',
+    description: 'Digital photo slideshow with crossfade transitions, clock overlay, and music controls on top.'
+  },
+];
+
+const docLinks = [
+  { title: 'Getting Started', description: 'Install Beacon and connect your calendar in under 10 minutes.', href: '/docs/getting-started/' },
+  { title: 'Calendar', description: 'Week view, creating events, recurring events, drag-to-reschedule.', href: '/docs/calendar/' },
+  { title: 'Configuration', description: 'Complete reference for all configuration options.', href: '/docs/configuration/' },
+  { title: 'FAQ', description: 'Answers to 20+ common questions.', href: '/docs/faq/' },
+];
+---
+
+<BaseLayout title="Home">
+  <Header />
+
+  <!-- Hero -->
+  <section class="py-20 lg:py-32" style="background: linear-gradient(to bottom, color-mix(in srgb, var(--td-accent) 5%, transparent), transparent)">
+    <div class="container text-center">
+      <h1 class="text-4xl lg:text-6xl font-bold mb-6 tracking-tight">
+        Beacon Docs
+      </h1>
+      <p class="text-xl lg:text-2xl text-[var(--td-text-muted)] max-w-3xl mx-auto mb-4">
+        Your family's daily signal.
+      </p>
+      <p class="text-lg text-[var(--td-text-muted)] max-w-2xl mx-auto mb-8">
+        An open-source, self-hosted family dashboard for wall-mounted displays. Replace your $650 Skylight with something better.
+      </p>
+
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="/docs/getting-started/" class="btn btn-primary">Get Started</a>
+        <a href="/docs/welcome/" class="btn btn-secondary">Read the Docs</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="py-20">
+    <div class="container">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {features.map(feature => (
+          <div class="text-center">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4" style="background-color: color-mix(in srgb, var(--td-accent) 10%, transparent); color: var(--td-accent)" set:html={feature.icon} />
+            <h3 class="font-semibold text-lg mb-2">{feature.title}</h3>
+            <p class="text-[var(--td-text-muted)] text-sm">{feature.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Links -->
+  <section class="py-20" style="background-color: var(--td-bg-alt)">
+    <div class="container">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold mb-4">Documentation</h2>
+        <p class="text-[var(--td-text-muted)] max-w-2xl mx-auto">
+          Everything you need to set up, configure, and customize Beacon for your family.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {docLinks.map(link => (
+          <Card title={link.title} description={link.description} href={link.href} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-20">
+    <div class="container">
+      <div class="card max-w-4xl mx-auto text-center p-12">
+        <h2 class="text-2xl font-bold mb-4">Ready to Build?</h2>
+        <p class="text-[var(--td-text-muted)] mb-8 max-w-xl mx-auto">
+          Install Beacon as a Home Assistant add-on or Docker container. Free and open source under the MIT license.
+        </p>
+        <div class="flex flex-wrap justify-center gap-4">
+          <a href="/docs/getting-started/" class="btn btn-primary">Get Started</a>
+          <a href="https://github.com/asachs01/beacon" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">View on GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
