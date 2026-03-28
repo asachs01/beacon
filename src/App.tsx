@@ -272,6 +272,7 @@ export function App() {
             chores={chores}
             completedChoreIds={completedChoreIds}
             onToggleChore={handleToggleChore}
+            familyName={settings.familyName}
           />
         ) : activeView === 'music' ? (
           <MusicView

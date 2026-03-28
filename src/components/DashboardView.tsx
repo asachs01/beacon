@@ -50,6 +50,7 @@ interface DashboardViewProps {
   chores: Chore[];
   completedChoreIds: Set<string>;
   onToggleChore: (choreId: string) => void;
+  familyName?: string;
 }
 
 export function DashboardView({
@@ -58,6 +59,7 @@ export function DashboardView({
   chores,
   completedChoreIds,
   onToggleChore,
+  familyName,
 }: DashboardViewProps) {
   const [now, setNow] = useState(new Date());
 
@@ -90,7 +92,7 @@ export function DashboardView({
         <div className="dashboard-clock">{timeString}</div>
         <div className="dashboard-date">{dateString}</div>
         <div className="dashboard-greeting">
-          {greeting}, {FAMILY_NAME}
+          {greeting}, {familyName || FAMILY_NAME}
         </div>
       </section>
 
