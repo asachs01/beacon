@@ -3,8 +3,7 @@ import sitemap from '@astrojs/sitemap';
 import tinker from '@asachs01/astro-tinker';
 
 export default defineConfig({
-  site: 'https://sachsha.us/beacon',
-  base: '/beacon',
+  site: 'https://beacon-family-docs.netlify.app',
   integrations: [
     sitemap(),
     tinker({
