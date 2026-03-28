@@ -43,7 +43,7 @@ EOF
 # Inject runtime-config script tag into index.html
 INDEX_HTML="/app/dist/index.html"
 if ! grep -q 'runtime-config.js' "${INDEX_HTML}"; then
-  sed -i 's|</head>|<script src="/runtime-config.js"></script></head>|' "${INDEX_HTML}"
+  sed -i 's|</head>|<script src="./runtime-config.js"></script></head>|' "${INDEX_HTML}"
 fi
 
 echo "Starting Beacon on port 3000..."
