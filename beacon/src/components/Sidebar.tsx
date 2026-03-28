@@ -15,13 +15,11 @@ import {
 import beaconIcon from '../assets/beacon-icon.svg';
 import { ThemeSelector } from './ThemeSelector';
 
-export type SidebarView = 'dashboard' | 'calendar' | 'chores' | 'grocery' | 'leaderboard' | 'music' | 'photos' | 'settings';
+export type SidebarView = 'dashboard' | 'calendar' | 'chores' | 'grocery' | 'leaderboard' | 'music' | 'photos' | 'timer' | 'settings';
 
 interface SidebarProps {
   activeView: SidebarView;
   onChangeView: (view: SidebarView) => void;
-  onToggleTimer?: () => void;
-  timerOpen?: boolean;
 }
 
 const ICON_SIZE = 24;
@@ -41,6 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'leaderboard', icon: <Trophy size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Leaderboard' },
   { id: 'music', icon: <Music size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Music' },
   { id: 'photos', icon: <Image size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Photos' },
+  { id: 'timer', icon: <TimerIcon size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Timer' },
 ];
 
 /** Items shown directly in the mobile bottom tab bar */
@@ -49,8 +48,6 @@ const MOBILE_TAB_IDS: SidebarView[] = ['dashboard', 'calendar', 'chores', 'music
 export function Sidebar({
   activeView,
   onChangeView,
-  onToggleTimer,
-  timerOpen = false,
 }: SidebarProps) {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
 
@@ -96,17 +93,6 @@ export function Sidebar({
 
         {/* Bottom utility icons */}
         <div className="sidebar-nav-group sidebar-nav-group--bottom">
-          {onToggleTimer && (
-            <button
-              type="button"
-              className={`sidebar-icon ${timerOpen ? 'sidebar-icon--active' : ''}`}
-              onClick={onToggleTimer}
-              title="Timer"
-              aria-label="Timer"
-            >
-              <TimerIcon size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-            </button>
-          )}
           <button
             type="button"
             className={`sidebar-icon ${activeView === 'settings' ? 'sidebar-icon--active' : ''}`}
@@ -175,16 +161,6 @@ export function Sidebar({
                   <span>{item.label}</span>
                 </button>
               ))}
-              {onToggleTimer && (
-                <button
-                  type="button"
-                  className={`mobile-more-item ${timerOpen ? 'mobile-more-item--active' : ''}`}
-                  onClick={() => { onToggleTimer(); setMobileMoreOpen(false); }}
-                >
-                  <TimerIcon size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-                  <span>Timer</span>
-                </button>
-              )}
               <button
                 type="button"
                 className={`mobile-more-item ${activeView === 'settings' ? 'mobile-more-item--active' : ''}`}

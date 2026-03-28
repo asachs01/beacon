@@ -74,7 +74,6 @@ export function App() {
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [prefillTime, setPrefillTime] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<SidebarView>('dashboard');
-  const [showTimer, setShowTimer] = useState(false);
 
   // Event notifications (browser + HA mobile_app)
   useNotifications(events, client);
@@ -265,8 +264,6 @@ export function App() {
       <Sidebar
         activeView={activeView}
         onChangeView={handleChangeView}
-        onToggleTimer={() => setShowTimer((prev) => !prev)}
-        timerOpen={showTimer}
       />
 
       {/* Main content area */}
@@ -308,6 +305,10 @@ export function App() {
             haUrl={config.ha_url}
             calendars={calendars}
           />
+        ) : activeView === 'timer' ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
+            <Timer />
+          </div>
         ) : activeView === 'photos' ? (
           <PhotoFrame
             musicPlayer={music.activePlayer}
@@ -440,29 +441,6 @@ export function App() {
           onPrevious={() => music.previous(music.activePlayer!.entity_id)}
           onSetVolume={(v) => music.setVolume(v, music.activePlayer!.entity_id)}
           onExpand={() => setActiveView('music')}
-        />
-      )}
-
-      {/* Timer Slide Panel */}
-      <div className={`timer-panel ${showTimer ? 'timer-panel--open' : ''}`}>
-        <div className="timer-panel-header">
-          <span className="timer-panel-title">Timer</span>
-          <button
-            type="button"
-            className="timer-panel-close"
-            onClick={() => setShowTimer(false)}
-          >
-            &times;
-          </button>
-        </div>
-        <div className="timer-panel-body">
-          <Timer />
-        </div>
-      </div>
-      {showTimer && (
-        <div
-          className="slide-panel-backdrop"
-          onClick={() => setShowTimer(false)}
         />
       )}
 
