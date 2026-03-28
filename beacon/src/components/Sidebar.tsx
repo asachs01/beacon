@@ -189,9 +189,6 @@ export function Sidebar({
                 <Settings size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
                 <span>Settings</span>
               </button>
-              <div className="mobile-more-theme">
-                <ThemeSelector />
-              </div>
             </div>
           </>
         )}
