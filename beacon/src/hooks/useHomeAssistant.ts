@@ -5,8 +5,14 @@ import { getConfig } from '../config';
 function resolveHaUrl(): string {
   const config = getConfig();
   if (config.ha_url) return config.ha_url;
-  // In ingress mode, use the browser's origin (same HA instance)
-  return window.location.origin;
+  // In ingress mode, use the parent frame's origin (not the inner iframe)
+  try {
+    return window.parent.location.origin;
+  } catch {
+    // Cross-origin — fall back to current origin but force https
+    const origin = window.location.origin;
+    return origin.replace(/^http:/, 'https:');
+  }
 }
 
 export function useHomeAssistant() {
