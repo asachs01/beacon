@@ -8,6 +8,8 @@ interface EventModalProps {
   onSave: (calendarId: string, data: EventFormData) => void;
   onDelete: (calendarId: string, eventId: string) => void;
   onClose: () => void;
+  prefillDate?: string | null;
+  prefillTime?: string | null;
 }
 
 export interface EventFormData {
@@ -37,18 +39,35 @@ function toLocalTime(isoStr: string): string {
   }
 }
 
-export function EventModal({ event, calendars, onSave, onDelete, onClose }: EventModalProps) {
+function addHour(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const newH = Math.min(h + 1, 23);
+  return `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+export function EventModal({
+  event,
+  calendars,
+  onSave,
+  onDelete,
+  onClose,
+  prefillDate,
+  prefillTime,
+}: EventModalProps) {
   const isEditing = !!event;
   const defaultCalendar = calendars[0]?.id || '';
+  const defaultDate = prefillDate || format(new Date(), 'yyyy-MM-dd');
+  const defaultStartTime = prefillTime || '09:00';
+  const defaultEndTime = addHour(defaultStartTime);
 
   const [form, setForm] = useState<EventFormData>({
     summary: '',
     description: '',
     calendarId: defaultCalendar,
-    startDate: format(new Date(), 'yyyy-MM-dd'),
-    startTime: '09:00',
-    endDate: format(new Date(), 'yyyy-MM-dd'),
-    endTime: '10:00',
+    startDate: defaultDate,
+    startTime: defaultStartTime,
+    endDate: defaultDate,
+    endTime: defaultEndTime,
     allDay: false,
   });
 
@@ -92,7 +111,7 @@ export function EventModal({ event, calendars, onSave, onDelete, onClose }: Even
               {isEditing ? 'Event Details' : 'New Event'}
             </h2>
             <button type="button" className="modal-close" onClick={onClose}>
-              ✕
+              &#x2715;
             </button>
           </div>
 

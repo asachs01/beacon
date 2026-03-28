@@ -16,13 +16,15 @@ export function FamilyFilter({ calendars, hiddenCalendars, onToggle }: FamilyFil
         return (
           <button
             key={cal.id}
-            className={`filter-btn ${isHidden ? 'filter-btn--hidden' : ''}`}
+            className={`filter-pill ${isHidden ? 'filter-pill--hidden' : 'filter-pill--active'}`}
             onClick={() => onToggle(cal.id)}
             type="button"
           >
             <span
               className="filter-dot"
-              style={{ backgroundColor: isHidden ? 'transparent' : cal.color, borderColor: cal.color }}
+              style={{
+                backgroundColor: isHidden ? '#d1d5db' : cal.color,
+              }}
             />
             <span className="filter-name">{cal.name}</span>
           </button>

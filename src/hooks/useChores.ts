@@ -1,0 +1,148 @@
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { FamilyStore } from '../api/family';
+import { Chore, ChoreCompletion, Streak, MemberEarnings } from '../types/family';
+import { HomeAssistantClient } from '../api/homeassistant';
+
+export function useChores(haClient?: () => HomeAssistantClient | null) {
+  const store = useMemo(() => new FamilyStore(haClient), [haClient]);
+  const [chores, setChores] = useState<Chore[]>([]);
+  const [completionsToday, setCompletionsToday] = useState<ChoreCompletion[]>([]);
+  const [streaks, setStreaks] = useState<Streak[]>([]);
+
+  const refresh = useCallback(() => {
+    setChores(store.getChores());
+    setCompletionsToday(store.getCompletionsToday());
+    setStreaks(store.getStreaks());
+  }, [store]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const addChore = useCallback(
+    (chore: Omit<Chore, 'id'>) => {
+      store.addChore(chore);
+      refresh();
+    },
+    [store, refresh]
+  );
+
+  const updateChore = useCallback(
+    (id: string, data: Partial<Omit<Chore, 'id'>>) => {
+      store.updateChore(id, data);
+      refresh();
+    },
+    [store, refresh]
+  );
+
+  const removeChore = useCallback(
+    (id: string) => {
+      store.removeChore(id);
+      refresh();
+    },
+    [store, refresh]
+  );
+
+  const completeChore = useCallback(
+    (choreId: string, memberId: string) => {
+      store.completeChore(choreId, memberId);
+      refresh();
+    },
+    [store, refresh]
+  );
+
+  const uncompleteChore = useCallback(
+    (choreId: string, memberId: string) => {
+      store.uncompleteChore(choreId, memberId);
+      refresh();
+    },
+    [store, refresh]
+  );
+
+  const isChoreCompletedToday = useCallback(
+    (choreId: string, memberId: string): boolean => {
+      return completionsToday.some(
+        (c) => c.chore_id === choreId && c.member_id === memberId
+      );
+    },
+    [completionsToday]
+  );
+
+  const getStreakForMember = useCallback(
+    (memberId: string): Streak => {
+      return (
+        streaks.find((s) => s.member_id === memberId) ?? {
+          member_id: memberId,
+          current: 0,
+          longest: 0,
+          last_completed: '',
+        }
+      );
+    },
+    [streaks]
+  );
+
+  const getChoresForMember = useCallback(
+    (memberId: string): Chore[] => {
+      return chores.filter((c) => c.assigned_to.includes(memberId));
+    },
+    [chores]
+  );
+
+  const getMemberProgress = useCallback(
+    (memberId: string): { completed: number; total: number } => {
+      const memberChores = chores.filter((c) => c.assigned_to.includes(memberId));
+      const completed = memberChores.filter((c) =>
+        completionsToday.some(
+          (comp) => comp.chore_id === c.id && comp.member_id === memberId
+        )
+      ).length;
+      return { completed, total: memberChores.length };
+    },
+    [chores, completionsToday]
+  );
+
+  const getEarningsForPeriod = useCallback(
+    (startDate: string, endDate: string): MemberEarnings[] => {
+      const completions = store.getCompletionsForPeriod(startDate, endDate);
+      const choreMap = new Map(chores.map((c) => [c.id, c]));
+      const earningsMap = new Map<string, MemberEarnings>();
+
+      for (const comp of completions) {
+        const chore = choreMap.get(comp.chore_id);
+        if (!chore) continue;
+
+        const existing = earningsMap.get(comp.member_id) ?? {
+          member_id: comp.member_id,
+          total_cents: 0,
+          chore_count: 0,
+        };
+        existing.total_cents += chore.value_cents;
+        existing.chore_count += 1;
+        earningsMap.set(comp.member_id, existing);
+      }
+
+      return Array.from(earningsMap.values()).sort(
+        (a, b) => b.total_cents - a.total_cents
+      );
+    },
+    [chores, store]
+  );
+
+  return {
+    chores,
+    completionsToday,
+    streaks,
+    addChore,
+    updateChore,
+    removeChore,
+    completeChore,
+    uncompleteChore,
+    isChoreCompletedToday,
+    getStreakForMember,
+    getChoresForMember,
+    getMemberProgress,
+    getEarningsForPeriod,
+    refresh,
+  };
+}
