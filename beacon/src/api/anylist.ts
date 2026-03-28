@@ -1,8 +1,13 @@
 import { GroceryItem, GroceryList } from '../types/grocery';
 import { getConfig } from '../config';
 
-const { ha_url, ha_token: HA_TOKEN } = getConfig();
-const HA_URL = ha_url.replace(/\/$/, '');
+const config = getConfig();
+const HA_TOKEN = config.ha_token;
+function getHaUrl(): string {
+  if (config.ha_url) return config.ha_url.replace(/\/$/, '');
+  try { return window.parent.location.origin; } catch { return window.location.origin.replace(/^http:/, 'https:'); }
+}
+const HA_URL = getHaUrl();
 
 /**
  * AnyList integration via Home Assistant's REST API and todo entities.
@@ -53,8 +58,9 @@ export class AnyListClient {
         attributes: Record<string, unknown>;
       }>;
 
+      // AnyList creates todo.* entities without a prefix — include all todo entities
       this.entityIds = states
-        .filter(s => s.entity_id.startsWith('todo.anylist_'))
+        .filter(s => s.entity_id.startsWith('todo.'))
         .map(s => s.entity_id);
     } catch {
       this.entityIds = [];
@@ -79,7 +85,7 @@ export class AnyListClient {
       return entityIds.map(entityId => {
         const entity = states.find(s => s.entity_id === entityId);
         const friendlyName = (entity?.attributes?.friendly_name as string)
-          ?? entityId.replace('todo.anylist_', '').replace(/_/g, ' ');
+          ?? entityId.replace('todo.', '').replace(/_/g, ' ');
 
         return {
           id: entityId,

@@ -1,8 +1,13 @@
 import { GroceryItem, GroceryList, MealPlanEntry } from '../types/grocery';
 import { getConfig } from '../config';
 
-const { ha_url, ha_token: HA_TOKEN } = getConfig();
-const HA_URL = ha_url.replace(/\/$/, '');
+const config = getConfig();
+const HA_TOKEN = config.ha_token;
+function getHaUrl(): string {
+  if (config.ha_url) return config.ha_url.replace(/\/$/, '');
+  try { return window.parent.location.origin; } catch { return window.location.origin.replace(/^http:/, 'https:'); }
+}
+const HA_URL = getHaUrl();
 
 /**
  * Grocy API client that works through Home Assistant's REST API.
