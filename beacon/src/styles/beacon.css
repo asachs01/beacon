@@ -1176,7 +1176,10 @@ a:focus:not(:focus-visible) {
     grid-column: 1 !important;
   }
 
-  /* Desktop sidebar visibility controlled by inline style in component */
+  /* Hide desktop sidebar on mobile — show bottom tab bar instead */
+  .sidebar--desktop {
+    display: none !important;
+  }
 
   /* --- Show mobile bottom tab bar --- */
   .mobile-tab-bar {

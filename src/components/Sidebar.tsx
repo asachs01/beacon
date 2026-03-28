@@ -66,7 +66,7 @@ export function Sidebar({
       <nav
         className={`sidebar sidebar--desktop sidebar--${position}`}
         aria-label="Main navigation"
-        style={{ display: position === 'bottom' ? 'none' : 'flex' }}
+        style={position === 'bottom' ? { display: 'none' } : undefined}
       >
         {/* Beacon logo */}
         <div className="sidebar-logo">
