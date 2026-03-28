@@ -145,9 +145,7 @@ input, select, textarea {
 
 .sidebar-logo img {
   width: 32px;
-  height: 32px;
-  /* Add dark fill filter so the icon is visible on the light sidebar bg */
-  filter: brightness(0) saturate(100%) invert(15%) sepia(5%) saturate(500%) hue-rotate(180deg);
+  height: auto;
 }
 
 .sidebar-nav-group {
@@ -1049,48 +1047,156 @@ input, select, textarea {
   }
 }
 
-/* --- Responsive: Smaller tablets --- */
+/* ============================================================
+   Mobile Tab Bar (bottom navigation)
+   ============================================================ */
+
+/* Hide mobile tab bar on desktop */
+.mobile-tab-bar {
+  display: none;
+}
+
+/* ============================================================
+   Responsive: Tablets < 768px
+   ============================================================ */
 @media (max-width: 768px) {
   :root {
     --time-axis-width: 44px;
     --hour-height: 56px;
-    --sidebar-width: 52px;
+    --sidebar-width: 0px;
+    --mobile-tab-bar-height: 64px;
   }
 
-  .sidebar {
-    padding: 8px 0;
+  /* --- Layout: remove sidebar column, add bottom padding for tab bar --- */
+  .beacon {
+    grid-template-columns: 1fr;
+    padding-bottom: var(--mobile-tab-bar-height);
   }
 
-  .sidebar-icon {
-    width: 38px;
-    height: 38px;
+  /* --- Hide desktop sidebar --- */
+  .sidebar--desktop {
+    display: none;
   }
 
-  .sidebar-icon--active::before {
-    left: -6px;
+  /* --- Show mobile bottom tab bar --- */
+  .mobile-tab-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--mobile-tab-bar-height);
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
+    z-index: 90;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  .sidebar-logo {
-    width: 34px;
-    height: 34px;
-    margin-bottom: 12px;
+  .mobile-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 56px;
+    min-height: 48px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: color var(--transition);
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .sidebar-logo img {
-    width: 26px;
-    height: 26px;
+  .mobile-tab--active {
+    color: var(--accent, #3b82f6);
   }
 
+  .mobile-tab-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+
+  /* --- Mobile overflow menu --- */
+  .mobile-more-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.25);
+    z-index: 99;
+  }
+
+  .mobile-more-menu {
+    position: fixed;
+    bottom: var(--mobile-tab-bar-height);
+    left: 0;
+    right: 0;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    padding: 8px 0 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    animation: slide-up 200ms ease;
+  }
+
+  .mobile-more-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px 12px;
+  }
+
+  .mobile-more-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .mobile-more-close {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--text-muted);
+  }
+
+  .mobile-more-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    min-height: 48px;
+    transition: background var(--transition);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-more-item:hover,
+  .mobile-more-item:active {
+    background: var(--bg-hover);
+  }
+
+  .mobile-more-item--active {
+    color: var(--accent, #3b82f6);
+  }
+
+  .mobile-more-theme {
+    padding: 8px 24px 0;
+  }
+
+  /* --- Header: simplified on mobile --- */
   .beacon-header {
     padding: 0 12px;
-  }
-
-  .beacon-body {
-    padding: 8px 8px 0;
-  }
-
-  .filter-bar {
-    padding: 6px 8px 0;
+    height: 48px;
   }
 
   .header-separator {
@@ -1101,15 +1207,33 @@ input, select, textarea {
     display: none;
   }
 
+  .clock-mini {
+    display: none;
+  }
+
+  .header-family-name {
+    font-size: 1.1rem;
+  }
+
+  /* --- Calendar body spacing --- */
+  .beacon-body {
+    padding: 8px 8px 0;
+  }
+
+  .filter-bar {
+    padding: 6px 8px 0;
+  }
+
   .filter-name {
     display: none;
   }
 
   .filter-pill {
     padding: 6px 8px;
-    min-height: 32px;
+    min-height: 44px;
   }
 
+  /* --- Calendar header --- */
   .week-header-day-name {
     font-size: 0.6rem;
   }
@@ -1120,19 +1244,188 @@ input, select, textarea {
     height: 32px;
   }
 
+  .week-header-day {
+    padding: 8px 2px;
+  }
+
+  /* --- Event blocks: larger touch targets --- */
+  .event-block {
+    min-height: 32px;
+  }
+
   .event-block-time {
     display: none;
+  }
+
+  .event-block-title {
+    font-size: 0.7rem;
+  }
+
+  .event-block-content {
+    padding: 6px 8px;
+  }
+
+  /* --- FAB repositioned above tab bar --- */
+  .btn--fab {
+    width: 52px;
+    height: 52px;
+    bottom: calc(var(--mobile-tab-bar-height) + 16px);
+    right: 16px;
+    font-size: 1.5rem;
+  }
+
+  /* --- Modals: full-screen on mobile --- */
+  .modal-overlay {
+    align-items: flex-end;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    animation: slide-up 250ms ease;
+  }
+
+  /* --- Slide panels: full-width from bottom --- */
+  .slide-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 90vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    transform: translateY(100%);
+  }
+
+  .slide-panel--open {
+    transform: translateY(0);
+  }
+
+  /* --- Timer panel: full-width from bottom on mobile --- */
+  .timer-panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    max-height: 80vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-right: none;
+    transform: translateY(100%);
+  }
+
+  .timer-panel--open {
+    transform: translateY(0);
+  }
+
+  /* --- Demo badge above tab bar --- */
+  .demo-badge {
+    bottom: calc(var(--mobile-tab-bar-height) + 12px);
+    left: 12px;
+  }
+
+  /* --- Grocery drawer adjustments --- */
+  .grocery-drawer {
+    bottom: var(--mobile-tab-bar-height);
+  }
+
+  /* --- Now playing bar above tab bar --- */
+  .now-playing-bar {
+    margin-bottom: var(--mobile-tab-bar-height);
+  }
+}
+
+/* ============================================================
+   Responsive: Phones < 480px
+   ============================================================ */
+@media (max-width: 480px) {
+  :root {
+    --time-axis-width: 36px;
+    --hour-height: 52px;
+  }
+
+  .header-family-name {
+    font-size: 1rem;
+  }
+
+  .beacon-header {
+    padding: 0 8px;
+    height: 44px;
+  }
+
+  .beacon-body {
+    padding: 4px 4px 0;
+  }
+
+  .filter-bar {
+    padding: 4px 4px 0;
+  }
+
+  .filter-pill {
+    padding: 4px 6px;
+  }
+
+  .week-header-day-name {
+    font-size: 0.55rem;
+    letter-spacing: 0.5px;
+  }
+
+  .week-header-day-number {
+    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+  }
+
+  .week-header-day {
+    padding: 6px 1px;
+  }
+
+  .week-time-label {
+    font-size: 0.6rem;
   }
 
   .event-block-title {
     font-size: 0.65rem;
   }
 
+  .event-block-content {
+    padding: 4px 6px;
+  }
+
   .btn--fab {
     width: 48px;
     height: 48px;
-    bottom: 16px;
-    right: 16px;
-    font-size: 1.5rem;
+    bottom: calc(var(--mobile-tab-bar-height) + 12px);
+    right: 12px;
+  }
+
+  /* Tighter modal padding */
+  .modal-header {
+    padding: 16px 16px 0;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+  }
+
+  /* Mobile tab bar slightly shorter */
+  .mobile-tab-bar {
+    height: 56px;
+  }
+
+  .mobile-tab {
+    min-width: 48px;
+    padding: 4px 6px;
+  }
+
+  .mobile-tab-label {
+    font-size: 0.55rem;
   }
 }
