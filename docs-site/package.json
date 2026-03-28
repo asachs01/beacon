@@ -9,7 +9,7 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@asachs01/astro-tinker": "file:../../astro-tinker",
+    "@asachs01/astro-tinker": "github:asachs01/astro-tinker",
     "@astrojs/sitemap": "^3.3.1",
     "astro": "^5.16.0",
     "zod": "^3.23.0"
