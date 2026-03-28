@@ -141,13 +141,19 @@ export class HomeAssistantClient {
     });
   }
 
-  async getCalendars(): Promise<CalendarInfo[]> {
-    const result = await this.sendMessage({ type: 'calendars/list' }) as Array<{
-      entity_id: string;
-      name: string;
-    }>;
+  private getRestUrl(): string {
+    return this.url.replace(/\/api\/websocket$/, '').replace(/^ws/, 'http');
+  }
 
-    return result.map((cal, index) => ({
+  async getCalendars(): Promise<CalendarInfo[]> {
+    const baseUrl = this.getRestUrl();
+    const response = await fetch(`${baseUrl}/api/calendars`, {
+      headers: { Authorization: `Bearer ${this.token}` },
+    });
+    if (!response.ok) throw new Error(`Failed to fetch calendars: ${response.status}`);
+    const data = await response.json() as Array<{ entity_id: string; name: string }>;
+
+    return data.map((cal, index) => ({
       id: cal.entity_id,
       name: cal.name,
       color: getCalendarColor(index),
@@ -155,21 +161,22 @@ export class HomeAssistantClient {
   }
 
   async getEvents(calendarId: string, start: string, end: string): Promise<CalendarEvent[]> {
-    const result = await this.sendMessage({
-      type: 'calendars/list_events',
-      entity_id: calendarId,
-      start_date_time: start,
-      end_date_time: end,
-    }) as { events: Array<{
+    const baseUrl = this.getRestUrl();
+    const params = new URLSearchParams({ start, end });
+    const response = await fetch(`${baseUrl}/api/calendars/${calendarId}?${params}`, {
+      headers: { Authorization: `Bearer ${this.token}` },
+    });
+    if (!response.ok) throw new Error(`Failed to fetch events: ${response.status}`);
+    const result = await response.json() as Array<{
       uid?: string;
       summary: string;
       start: string | { dateTime: string; date: string };
       end: string | { dateTime: string; date: string };
       description?: string;
       recurrence_id?: string;
-    }> };
+    }>;
 
-    return (result.events || []).map((ev, i) => {
+    return (result || []).map((ev, i) => {
       const startStr = typeof ev.start === 'string' ? ev.start : (ev.start.dateTime || ev.start.date);
       const endStr = typeof ev.end === 'string' ? ev.end : (ev.end.dateTime || ev.end.date);
       const allDay = typeof ev.start === 'string'
