@@ -22,7 +22,9 @@ WEATHER_ENTITY="${WEATHER_ENTITY:-weather.home}"
 PHOTO_DIRECTORY="${PHOTO_DIRECTORY:-/media/beacon/photos}"
 PHOTO_INTERVAL="${PHOTO_INTERVAL:-30}"
 SCREEN_SAVER_TIMEOUT="${SCREEN_SAVER_TIMEOUT:-5}"
-HA_URL="${HA_URL:-http://supervisor/core}"
+# For ingress, the browser connects to HA via the same origin (relative path)
+# The WebSocket needs the actual HA URL, which the browser knows as window.location.origin
+HA_URL="${HA_URL:-}"
 
 # Generate runtime-config.js
 CONFIG_JS="/app/dist/runtime-config.js"

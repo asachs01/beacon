@@ -2,13 +2,21 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
 import { getConfig } from '../config';
 
-const { ha_url: HA_URL, ha_token: HA_TOKEN } = getConfig();
+function resolveHaUrl(): string {
+  const config = getConfig();
+  if (config.ha_url) return config.ha_url;
+  // In ingress mode, use the browser's origin (same HA instance)
+  return window.location.origin;
+}
 
 export function useHomeAssistant() {
   const clientRef = useRef<HomeAssistantClient | null>(null);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
+    const { ha_token: HA_TOKEN } = getConfig();
+    const HA_URL = resolveHaUrl();
+
     if (!HA_TOKEN) {
       console.warn('Beacon: No HA token configured. Set VITE_HA_TOKEN env var.');
       return;
