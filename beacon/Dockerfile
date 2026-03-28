@@ -21,5 +21,3 @@ WORKDIR /app
 COPY --from=builder /app/dist /app/dist
 COPY run.sh /app/run.sh
 RUN chmod a+x /app/run.sh
-
-CMD ["/app/run.sh"]
