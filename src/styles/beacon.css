@@ -1056,6 +1056,11 @@ input, select, textarea {
   display: none;
 }
 
+/* Hide mobile calendar nav on desktop */
+.week-mobile-nav {
+  display: none;
+}
+
 /* ============================================================
    Responsive: Tablets < 768px
    ============================================================ */
@@ -1247,6 +1252,61 @@ input, select, textarea {
   .week-header-day {
     padding: 8px 2px;
   }
+
+  /* --- Mobile 3-day calendar navigation --- */
+  .week-mobile-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 6px 8px 2px;
+    flex-shrink: 0;
+  }
+
+  .week-mobile-nav-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    transition: all var(--transition);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .week-mobile-nav-btn:hover {
+    background: var(--bg-hover);
+  }
+
+  .week-mobile-nav-btn:disabled {
+    color: var(--text-light);
+    pointer-events: none;
+  }
+
+  .week-mobile-dots {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .week-mobile-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all var(--transition);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .week-mobile-dot--active {
+    background: var(--accent, #3b82f6);
+    width: 20px;
+    border-radius: 4px;
+  }
+
+  /* Calendar header/grid now use inline gridTemplateColumns from React */
 
   /* --- Event blocks: larger touch targets --- */
   .event-block {

@@ -24,6 +24,26 @@ const START_HOUR = 7;
 const END_HOUR = 21; // 9 PM
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 
+/** Number of days to show in mobile 3-day view */
+const MOBILE_DAYS = 3;
+const MOBILE_BREAKPOINT = 768;
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    setIsMobile(mql.matches);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+
+  return isMobile;
+}
+
 function formatHour(hour: number): string {
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const h = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
@@ -45,15 +65,56 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 0 });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   // Drag state
   const [dragEvent, setDragEvent] = useState<CalendarEvent | null>(null);
   const [dragGhost, setDragGhost] = useState<{ date: string; hour: number } | null>(null);
 
-  const days = useMemo(() => {
+  // Mobile 3-day view: which group of days to show (0-based index into day groups)
+  const todayDayIndex = differenceInCalendarDays(today, weekStart);
+  const initialGroup = Math.min(Math.floor(todayDayIndex / MOBILE_DAYS), Math.floor(6 / MOBILE_DAYS));
+  const [mobileGroupIndex, setMobileGroupIndex] = useState(initialGroup);
+
+  // Swipe state
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const allDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStart.toISOString()]);
+
+  // On mobile show a 3-day slice, on desktop show all 7
+  const days = useMemo(() => {
+    if (!isMobile) return allDays;
+    const start = mobileGroupIndex * MOBILE_DAYS;
+    return allDays.slice(start, Math.min(start + MOBILE_DAYS, 7));
+  }, [isMobile, allDays, mobileGroupIndex]);
+
+  const dayCount = days.length;
+  const maxMobileGroup = Math.ceil(7 / MOBILE_DAYS) - 1;
+
+  // Swipe handlers for mobile day navigation
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!isMobile) return;
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, [isMobile]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!isMobile || !touchStartRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    // Only trigger if horizontal swipe is dominant and long enough
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0 && mobileGroupIndex < maxMobileGroup) {
+        setMobileGroupIndex((prev) => prev + 1);
+      } else if (dx > 0 && mobileGroupIndex > 0) {
+        setMobileGroupIndex((prev) => prev - 1);
+      }
+    }
+  }, [isMobile, mobileGroupIndex, maxMobileGroup]);
 
   const visibleEvents = useMemo(() => {
     return events.filter(e => !hiddenCalendars.has(e.calendarId));
@@ -244,10 +305,52 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
     setDragGhost(null);
   }, []);
 
+  // Dynamic grid columns based on how many days are shown
+  const gridCols = `var(--time-axis-width) repeat(${dayCount}, 1fr)`;
+
   return (
-    <div className="week-calendar">
+    <div
+      className="week-calendar"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Mobile day group navigation dots */}
+      {isMobile && (
+        <div className="week-mobile-nav">
+          <button
+            type="button"
+            className="week-mobile-nav-btn"
+            disabled={mobileGroupIndex === 0}
+            onClick={() => setMobileGroupIndex((prev) => Math.max(0, prev - 1))}
+            aria-label="Previous days"
+          >
+            &lsaquo;
+          </button>
+          <div className="week-mobile-dots">
+            {Array.from({ length: maxMobileGroup + 1 }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`week-mobile-dot ${i === mobileGroupIndex ? 'week-mobile-dot--active' : ''}`}
+                onClick={() => setMobileGroupIndex(i)}
+                aria-label={`Day group ${i + 1}`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            className="week-mobile-nav-btn"
+            disabled={mobileGroupIndex === maxMobileGroup}
+            onClick={() => setMobileGroupIndex((prev) => Math.min(maxMobileGroup, prev + 1))}
+            aria-label="Next days"
+          >
+            &rsaquo;
+          </button>
+        </div>
+      )}
+
       {/* Column Headers */}
-      <div className="week-calendar-header">
+      <div className="week-calendar-header" style={{ gridTemplateColumns: gridCols }}>
         <div className="week-header-spacer" />
         {days.map((day) => {
           const isToday = isSameDay(day, today);
@@ -274,33 +377,51 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                 className="week-allday-spans"
                 style={{ height: `${allDayLaneCount * 26 + 4}px` }}
               >
-                {multiDaySpans.map((mds) => (
-                  <button
-                    key={`multiday-${mds.event.id}`}
-                    className="event-block event-block--multiday"
-                    style={{
-                      left: `calc(${(mds.startCol / 7) * 100}% + 2px)`,
-                      width: `calc(${(mds.span / 7) * 100}% - 4px)`,
-                      top: `${mds.lane * 26 + 2}px`,
-                    }}
-                    onClick={() => onEventClick(mds.event)}
-                    type="button"
-                    title={mds.event.title}
-                  >
-                    <EventBlock
-                      event={mds.event}
-                      onClick={onEventClick}
-                      allDay
-                      multiDay
-                    />
-                  </button>
-                ))}
+                {multiDaySpans
+                  .filter((mds) => {
+                    // On mobile, only show spans that overlap the visible day range
+                    if (!isMobile) return true;
+                    const visStart = mobileGroupIndex * MOBILE_DAYS;
+                    const visEnd = Math.min(visStart + MOBILE_DAYS, 7);
+                    return mds.startCol < visEnd && mds.startCol + mds.span > visStart;
+                  })
+                  .map((mds) => {
+                    // Adjust columns for mobile view offset
+                    const visStart = isMobile ? mobileGroupIndex * MOBILE_DAYS : 0;
+                    const visEnd = isMobile ? Math.min(visStart + MOBILE_DAYS, 7) : 7;
+                    const clampedStart = Math.max(mds.startCol - visStart, 0);
+                    const clampedEnd = Math.min(mds.startCol + mds.span - visStart, visEnd - visStart);
+                    const visibleSpan = clampedEnd - clampedStart;
+                    if (visibleSpan <= 0) return null;
+
+                    return (
+                      <button
+                        key={`multiday-${mds.event.id}`}
+                        className="event-block event-block--multiday"
+                        style={{
+                          left: `calc(${(clampedStart / dayCount) * 100}% + 2px)`,
+                          width: `calc(${(visibleSpan / dayCount) * 100}% - 4px)`,
+                          top: `${mds.lane * 26 + 2}px`,
+                        }}
+                        onClick={() => onEventClick(mds.event)}
+                        type="button"
+                        title={mds.event.title}
+                      >
+                        <EventBlock
+                          event={mds.event}
+                          onClick={onEventClick}
+                          allDay
+                          multiDay
+                        />
+                      </button>
+                    );
+                  })}
               </div>
             </div>
           )}
 
           {/* Single all-day events row */}
-          <div className="week-allday-row">
+          <div className="week-allday-row" style={{ gridTemplateColumns: gridCols }}>
             <div className="week-allday-label">All day</div>
             {days.map((day) => {
               const key = format(day, 'yyyy-MM-dd');
@@ -328,7 +449,7 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
 
       {/* Time Grid */}
       <div className="week-grid-scroll" ref={scrollRef}>
-        <div className="week-time-grid">
+        <div className="week-time-grid" style={{ gridTemplateColumns: gridCols }}>
           {/* Time axis labels */}
           {HOURS.map((hour) => (
             <div

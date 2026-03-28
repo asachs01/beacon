@@ -299,11 +299,11 @@
   font-style: italic;
 }
 
-/* --- Responsive: stack on narrow screens --- */
-@media (max-width: 900px) {
+/* --- Responsive: Tablet < 768px --- */
+@media (max-width: 768px) {
   .dashboard {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto auto;
     gap: 24px;
     padding: 24px;
     overflow-y: auto;
@@ -326,12 +326,35 @@
     font-size: 22px;
   }
 
+  .dashboard-center {
+    height: auto;
+  }
+
   .dashboard-events-scroll {
     max-height: 40vh;
   }
+
+  .dashboard-right {
+    height: auto;
+  }
+
+  /* Weather widget: full width */
+  .dashboard-weather {
+    margin-bottom: 16px;
+  }
+
+  /* Task items: ensure touch targets */
+  .task-checklist-item {
+    min-height: 48px;
+  }
+
+  .event-card {
+    padding: 16px;
+  }
 }
 
-@media (max-width: 600px) {
+/* --- Responsive: Phone < 480px --- */
+@media (max-width: 480px) {
   .dashboard {
     padding: 16px;
     gap: 16px;
@@ -348,5 +371,26 @@
   .dashboard-greeting {
     font-size: 18px;
     margin-top: 8px;
+  }
+
+  .dashboard-section-title {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .event-card {
+    padding: 12px 14px;
+  }
+
+  .event-card-title {
+    font-size: 14px;
+  }
+
+  .event-card-time {
+    font-size: 12px;
+  }
+
+  .dashboard-weather-temp {
+    font-size: 24px;
   }
 }

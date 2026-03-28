@@ -10,7 +10,8 @@ import { WeekCalendar } from './components/WeekCalendar';
 import { DashboardView } from './components/DashboardView';
 import { EventModal, EventFormData } from './components/EventModal';
 import { FamilyFilter } from './components/FamilyFilter';
-import { FamilyManager } from './components/FamilyManager';
+import { SettingsView } from './components/SettingsView';
+import { useSettings } from './hooks/useSettings';
 import { ChoresPanel } from './components/ChoresPanel';
 import { Leaderboard } from './components/Leaderboard';
 import { Sidebar, SidebarView } from './components/Sidebar';
@@ -24,7 +25,7 @@ import { Timer } from './components/Timer';
 import { CalendarEvent } from './types';
 import { getConfig } from './config';
 
-const { family_name: FAMILY_NAME } = getConfig();
+const config = getConfig();
 
 export function App() {
   const { client, connected } = useHomeAssistant();
@@ -54,12 +55,20 @@ export function App() {
     uncompleteChore,
   } = useChores(client);
 
+  const {
+    settings,
+    updateSettings,
+    resetSettings,
+    exportSettings,
+    importSettings,
+    clearLocalStorage,
+  } = useSettings();
+
   const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [prefillTime, setPrefillTime] = useState<string | null>(null);
-  const [showFamilyManager, setShowFamilyManager] = useState(false);
   const [activeView, setActiveView] = useState<SidebarView>('dashboard');
   const [showTimer, setShowTimer] = useState(false);
 
@@ -250,7 +259,6 @@ export function App() {
       <Sidebar
         activeView={activeView}
         onChangeView={handleChangeView}
-        onOpenSettings={() => setShowFamilyManager(true)}
         onToggleTimer={() => setShowTimer((prev) => !prev)}
         timerOpen={showTimer}
       />
@@ -277,6 +285,22 @@ export function App() {
             onSetVolume={music.setVolume}
             onSelectPlayer={music.selectPlayer}
           />
+        ) : activeView === 'settings' ? (
+          <SettingsView
+            settings={settings}
+            onUpdateSettings={updateSettings}
+            onResetSettings={resetSettings}
+            onExportSettings={exportSettings}
+            onImportSettings={importSettings}
+            onClearLocalStorage={clearLocalStorage}
+            members={members}
+            onAddMember={addMember}
+            onUpdateMember={updateMember}
+            onRemoveMember={removeMember}
+            connected={connected}
+            haUrl={config.ha_url}
+            calendars={calendars}
+          />
         ) : activeView === 'photos' ? (
           <PhotoFrame
             musicPlayer={music.activePlayer}
@@ -292,7 +316,7 @@ export function App() {
             {/* Header */}
             <header className="beacon-header">
               <div className="header-left">
-                <span className="header-family-name">{FAMILY_NAME}</span>
+                <span className="header-family-name">{settings.familyName}</span>
                 <span className="header-separator" />
                 <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
                 {!connected && (
@@ -353,16 +377,7 @@ export function App() {
         />
       )}
 
-      {/* Family Manager Modal */}
-      {showFamilyManager && (
-        <FamilyManager
-          members={members}
-          onAddMember={addMember}
-          onUpdateMember={updateMember}
-          onRemoveMember={removeMember}
-          onClose={() => setShowFamilyManager(false)}
-        />
-      )}
+      {/* (FamilyManager is now embedded in SettingsView) */}
 
       {/* Chores Slide Panel */}
       <ChoresPanel

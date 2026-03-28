@@ -815,22 +815,82 @@
   font-size: 1.2rem;
 }
 
-/* --- Responsive --- */
+/* --- Responsive: Tablet < 768px --- */
 @media (max-width: 768px) {
+  /* Slide panels become bottom sheets on mobile (handled in beacon.css) */
   .slide-panel {
-    width: 100vw;
+    width: 100%;
+  }
+
+  .slide-panel-header {
+    padding: 16px 20px 8px;
+  }
+
+  .slide-panel-body {
+    padding: 0 20px 20px;
   }
 
   .family-manager {
     max-width: 100%;
     width: 100%;
-    max-height: 100vh;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 95vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   }
 
   .fm-avatar-option {
+    width: 48px;
+    height: 48px;
+    font-size: 1.3rem;
+  }
+
+  .fm-btn-icon {
     width: 44px;
     height: 44px;
-    font-size: 1.2rem;
+  }
+
+  .fm-card {
+    padding: 14px 16px;
+    min-height: 56px;
+  }
+
+  /* Touch-friendly chore cards */
+  .chore-card {
+    min-height: 60px;
+    padding: 12px 14px;
+  }
+
+  .chore-checkbox {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+  }
+
+  .chores-assign-btn {
+    min-height: 44px;
+  }
+
+  /* Leaderboard rows */
+  .lb-row {
+    padding: 14px 16px;
+    min-height: 56px;
+  }
+
+  .lb-period-btn {
+    min-height: 44px;
+  }
+}
+
+/* --- Responsive: Phone < 480px --- */
+@media (max-width: 480px) {
+  .slide-panel-title {
+    font-size: 1.1rem;
+  }
+
+  .chores-group-name {
+    font-size: 0.9rem;
+  }
+
+  .lb-earnings {
+    font-size: 1rem;
   }
 }

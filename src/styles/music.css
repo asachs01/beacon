@@ -407,11 +407,16 @@
   border: none;
 }
 
-/* --- Responsive --- */
+/* --- Responsive: Tablet < 768px --- */
 @media (max-width: 768px) {
+  .music-view {
+    padding: 24px 20px;
+  }
+
   .music-art-container {
-    width: 220px;
-    height: 220px;
+    width: 240px;
+    height: 240px;
+    margin-bottom: 24px;
   }
 
   .music-track-title {
@@ -420,5 +425,51 @@
 
   .now-playing-volume {
     display: none;
+  }
+
+  /* Touch-friendly controls */
+  .music-control-btn {
+    width: 52px;
+    height: 52px;
+  }
+
+  .music-control-btn--play {
+    width: 68px;
+    height: 68px;
+  }
+
+  .now-playing-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .now-playing-btn--play {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* --- Responsive: Phone < 480px --- */
+@media (max-width: 480px) {
+  .music-view {
+    padding: 16px;
+  }
+
+  .music-art-container {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 20px;
+  }
+
+  .music-track-title {
+    font-size: 1.1rem;
+  }
+
+  .music-track-artist {
+    font-size: 0.9rem;
+  }
+
+  .music-controls {
+    gap: 16px;
   }
 }

@@ -354,14 +354,26 @@
   justify-content: center;
 }
 
-/* --- Responsive --- */
+/* --- Responsive: Tablet < 768px --- */
 @media (max-width: 768px) {
   .grocery-drawer {
-    max-height: 50vh;
+    max-height: 55vh;
+    /* Position above the mobile tab bar */
+    bottom: var(--mobile-tab-bar-height, 64px);
   }
 
   .grocery-drawer-input {
     font-size: 16px; /* prevents iOS zoom */
+  }
+
+  .grocery-item {
+    min-height: 48px;
+    padding: 12px 14px;
+  }
+
+  .grocery-drawer-add-btn {
+    min-height: 48px;
+    padding: 0 20px;
   }
 
   .meal-plan-bar-content {
@@ -370,5 +382,16 @@
 
   .meal-plan-bar-notes {
     display: none;
+  }
+}
+
+/* --- Responsive: Phone < 480px --- */
+@media (max-width: 480px) {
+  .grocery-drawer {
+    max-height: 60vh;
+  }
+
+  .grocery-drawer-handle-label {
+    font-size: 0.85rem;
   }
 }

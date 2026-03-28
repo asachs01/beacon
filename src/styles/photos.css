@@ -194,7 +194,7 @@
   margin-top: 8px;
 }
 
-/* --- Responsive --- */
+/* --- Responsive: Tablet < 768px --- */
 @media (max-width: 768px) {
   .photo-frame-clock {
     font-size: 2.5rem;
@@ -204,13 +204,53 @@
     padding: 60px 20px 20px;
   }
 
+  /* Ensure controls are touch-accessible */
   .photo-frame-control-btn {
-    width: 52px;
-    height: 52px;
+    width: 56px;
+    height: 56px;
   }
 
   .photo-frame-control-btn--play {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
+  }
+
+  .photo-frame-back {
+    width: 48px;
+    height: 48px;
+  }
+
+  /* Keep the photo music bar above the mobile tab bar */
+  .photo-frame-music {
+    bottom: var(--mobile-tab-bar-height, 0px);
+  }
+}
+
+/* --- Responsive: Phone < 480px --- */
+@media (max-width: 480px) {
+  .photo-frame-clock {
+    font-size: 2rem;
+  }
+
+  .photo-frame-date {
+    font-size: 0.9rem;
+  }
+
+  .photo-frame-overlay {
+    padding: 40px 16px 16px;
+  }
+
+  .photo-frame-controls {
+    gap: 20px;
+  }
+
+  .photo-frame-control-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .photo-frame-control-btn--play {
+    width: 56px;
+    height: 56px;
   }
 }

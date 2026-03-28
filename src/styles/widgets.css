@@ -385,3 +385,46 @@
   overflow-y: auto;
   padding: 16px;
 }
+
+/* --- Responsive: Tablet < 768px --- */
+@media (max-width: 768px) {
+  /* Timer panel becomes bottom sheet (handled in beacon.css) */
+
+  .timer-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .timer-preset {
+    padding: 8px 14px;
+    min-height: 40px;
+  }
+
+  .countdown-add-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .countdown-remove-btn {
+    width: 32px;
+    height: 32px;
+    opacity: 1; /* Always visible on touch devices */
+  }
+
+  .countdown-item {
+    padding: 10px;
+    min-height: 48px;
+  }
+}
+
+/* --- Responsive: Phone < 480px --- */
+@media (max-width: 480px) {
+  .timer-display {
+    font-size: 48px;
+  }
+
+  .timer {
+    padding: 16px;
+    gap: 12px;
+  }
+}

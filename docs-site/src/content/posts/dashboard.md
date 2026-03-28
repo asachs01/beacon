@@ -1,0 +1,180 @@
+---
+title: "Dashboard"
+date: 2026-03-26
+description: "Guide to Beacon's dashboard view — clock, greeting, today's events, weather widget, task checklist, and countdown widget."
+categories: ["docs"]
+tags: ["dashboard", "clock", "weather", "tasks", "countdown"]
+slug: "dashboard"
+draft: false
+---
+
+# Dashboard
+
+The dashboard is Beacon's default view — the first thing you see when you open the app. It is designed to give you a glanceable summary of the day from across the room.
+
+---
+
+## Dashboard layout
+
+The dashboard is divided into three sections arranged in a row:
+
+| Section | Position | Contents |
+|---------|----------|----------|
+| **Left** | Left column | Large clock, date, personalized greeting |
+| **Center** | Middle column | Today's events list |
+| **Right** | Right column | Weather, task checklist, countdown widget |
+
+---
+
+## Clock and greeting
+
+The left section displays:
+
+- **Clock**: A large digital clock showing the current time in 12-hour format (e.g., "2:45"). Updates every second.
+- **Date**: The full date in "Wednesday, March 28" format.
+- **Greeting**: A time-of-day greeting followed by your family name.
+
+The greeting changes based on the hour:
+
+| Time Range | Greeting |
+|------------|----------|
+| 5:00 AM - 11:59 AM | Good morning |
+| 12:00 PM - 4:59 PM | Good afternoon |
+| 5:00 PM - 8:59 PM | Good evening |
+| 9:00 PM - 4:59 AM | Good night |
+
+The family name comes from the `family_name` configuration option. For example, if you set `family_name: "Sachs"`, the greeting reads "Good morning, Sachs".
+
+---
+
+## Today's events
+
+The center section shows all calendar events scheduled for today, sorted by start time. Each event is displayed as a card with:
+
+- **Calendar name**: The name of the calendar the event belongs to
+- **Event title**: The event's title text
+- **Time**: "All day" for all-day events, or the start and end time (e.g., "9:00 AM - 10:00 AM")
+
+Event cards are color-coded using the calendar's assigned color — a pastel background with a solid left border.
+
+If there are no events today, the section shows "Nothing on the calendar today".
+
+---
+
+## Weather widget
+
+The weather widget appears in the right section when a weather entity is configured. It displays:
+
+- **Weather icon**: An emoji representing the current condition (sunny, cloudy, rainy, etc.)
+- **Temperature**: The current temperature rounded to the nearest degree
+- **Condition**: A human-readable label like "Partly Cloudy" or "Sunny"
+
+### Supported weather conditions
+
+| Condition | Icon |
+|-----------|------|
+| sunny | Sun |
+| clear-night | Crescent moon |
+| cloudy | Cloud |
+| partlycloudy | Sun behind cloud |
+| rainy | Rain cloud |
+| pouring | Heavy rain |
+| snowy | Snowflake |
+| snowy-rainy | Sleet |
+| fog | Fog |
+| hail | Hail |
+| lightning | Lightning bolt |
+| lightning-rainy | Thunderstorm |
+| windy | Wind |
+| exceptional | Warning |
+
+The weather data comes from whatever weather entity you configure (Met.no, OpenWeatherMap, AccuWeather, etc.) and refreshes every 10 minutes.
+
+---
+
+## Task checklist
+
+Below the weather widget, a task checklist shows today's chores. Each task displays:
+
+- A **checkbox** that you can tap to mark the chore complete
+- The **chore icon** (emoji) and **chore name**
+
+Tasks are divided into two groups:
+1. **Incomplete tasks** appear first with empty checkboxes
+2. **Completed tasks** appear below with checked boxes and strikethrough text
+
+If all tasks are completed, the checklist shows "All done!". If no chores are configured, it shows "No tasks for today".
+
+Tapping a completed task's checkbox will undo the completion.
+
+> **Note**: The dashboard checklist uses the first family member for tracking completions. For per-member chore management, use the full Chores panel (see [Chores](/docs/chores/)).
+
+---
+
+## Countdown widget
+
+The countdown widget displays upcoming events or milestones with a "days until" counter. It appears below the task checklist.
+
+### Two types of countdowns
+
+1. **Calendar-based countdowns**: Any future calendar event that has "countdown" or "#countdown" in its description is automatically picked up as a countdown item.
+
+2. **Manual countdowns**: Click the **+** button in the countdown header to add a custom countdown with a name and target date. Manual countdowns are stored in the browser's localStorage.
+
+### How it works
+
+- Each countdown item shows the number of days remaining, the event title, and the formatted date (e.g., "Mar 28")
+- Items are sorted by date (soonest first)
+- Past countdowns (where the date has already passed) are automatically hidden
+- Manual countdowns have an **x** button to remove them; calendar-based countdowns cannot be removed from this widget (edit the event instead)
+
+### Creating a countdown from a calendar event
+
+1. Create or edit a calendar event
+2. In the **Description** field, include the word `countdown` or `#countdown` anywhere in the text
+3. The event will appear in the countdown widget on the dashboard
+
+Example description: `#countdown Summer vacation starts!`
+
+### Creating a manual countdown
+
+1. Click the **+** button in the Countdown header
+2. Enter an event name (e.g., "Spring Break")
+3. Select a target date
+4. Click **Add**
+
+The widget is hidden entirely if there are no active countdowns and the add form is not open.
+
+---
+
+## Customizing the dashboard
+
+The dashboard layout is not configurable — the three-column layout is fixed. However, you can influence what appears:
+
+| What to customize | How |
+|-------------------|-----|
+| Family name in greeting | Set `family_name` in configuration |
+| Weather display | Set `weather_entity` in configuration; leave blank to hide weather |
+| Task list content | Add chores in the Chores panel |
+| Countdown items | Add `#countdown` to event descriptions, or add manual countdowns |
+| Theme and colors | Use the theme selector in the sidebar |
+
+---
+
+## Troubleshooting
+
+### Weather does not appear
+
+1. Verify you have a weather entity configured: check **Developer Tools > States** for entities starting with `weather.`
+2. Make sure the `weather_entity` config option matches the entity ID exactly
+3. Beacon fetches weather on connection — if HA is not connected, weather will be blank
+
+### Clock shows wrong time
+
+The clock uses the browser's local time, not Home Assistant's time. Make sure the device running Beacon has the correct timezone set in its operating system settings.
+
+### "Nothing on the calendar today" even though events exist
+
+1. Events are filtered to today's date using the browser's local date
+2. If the browser's timezone differs from your HA timezone, events may appear on the wrong day
+3. Verify events exist for today in the Calendar view

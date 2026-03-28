@@ -1,0 +1,199 @@
+---
+title: "Grocery"
+date: 2026-03-26
+description: "Set up grocery list integration with Grocy or AnyList in Beacon — shopping lists, quick-add, expiring items, and meal planning."
+categories: ["docs"]
+tags: ["grocery", "grocy", "anylist", "shopping", "meal-plan"]
+slug: "grocery"
+draft: false
+---
+
+# Grocery
+
+Beacon integrates with **Grocy** and **AnyList** through Home Assistant to display and manage your grocery shopping lists. You can view items, add new ones, check them off, and see alerts for expiring products.
+
+---
+
+## How the integration works
+
+Beacon tries two grocery sources in order:
+
+1. **Grocy**: If the `sensor.grocy_shopping_list` entity exists and has items, Grocy is used
+2. **AnyList**: If Grocy is not available, Beacon looks for `todo.anylist_*` entities
+3. **None**: If neither is available, the grocery drawer shows a message to connect a service
+
+The source detection happens automatically — you do not need to configure which service to use.
+
+---
+
+## Grocy integration setup
+
+[Grocy](https://grocy.info/) is a self-hosted groceries and household management solution. To use it with Beacon:
+
+### Step 1: Install Grocy
+
+If you do not already have Grocy running:
+
+1. Install the **Grocy** add-on from the Home Assistant Add-on Store
+2. Start the add-on and complete the initial Grocy setup through its web UI
+3. Add some products and a shopping list
+
+### Step 2: Install the Grocy integration in Home Assistant
+
+1. Go to **Settings > Devices & Services**
+2. Click **Add Integration**
+3. Search for **Grocy**
+4. Enter your Grocy URL and API key (found in Grocy's settings)
+5. Click **Submit**
+
+### Step 3: Verify the entities
+
+After the integration is set up, verify these entities exist:
+
+- `sensor.grocy_shopping_list` — your shopping list items
+- `sensor.grocy_expiring_products` — products nearing their best-before date
+- `sensor.grocy_meal_plan` — your meal plan (optional)
+
+Check in **Developer Tools > States** by searching for "grocy".
+
+### Step 4: Open Beacon
+
+Navigate to the Grocery view (shopping cart icon in the sidebar). You should see your Grocy shopping list with a "via Grocy" label.
+
+---
+
+## AnyList integration setup
+
+[AnyList](https://www.anylist.com/) is a popular shared grocery list app. Since AnyList has no official public API, the integration works through a custom Home Assistant integration.
+
+### Step 1: Install the AnyList integration
+
+1. Install the [AnyList custom component](https://github.com/kevdliu/hacs-anylist) via HACS (Home Assistant Community Store)
+2. Restart Home Assistant
+3. Go to **Settings > Devices & Services**
+4. Click **Add Integration**
+5. Search for **AnyList**
+6. Enter your AnyList email and password
+7. Click **Submit**
+
+### Step 2: Verify the entities
+
+The integration creates `todo.anylist_*` entities for each of your AnyList lists:
+
+- `todo.anylist_grocery` — your main grocery list
+- `todo.anylist_costco` — other lists you have in AnyList
+
+### Step 3: Open Beacon
+
+Navigate to the Grocery view. You should see your AnyList items with a "via AnyList" label. Beacon uses the first discovered AnyList entity as the primary list.
+
+---
+
+## Using the shopping list
+
+### Opening the grocery view
+
+Click the **shopping cart icon** in the sidebar. On mobile, tap **More** then **Grocery**.
+
+The grocery drawer shows:
+
+1. **Handle bar**: Tap to expand/collapse. Shows the "Grocery" label, unchecked item count badge, and source indicator
+2. **Quick-add input**: A text field to add new items
+3. **Expiring items alert**: A yellow alert bar when products are nearing expiration (Grocy only)
+4. **Shopping list**: All items sorted with unchecked items first, then checked items, alphabetically within each group
+
+### Quick-add items
+
+1. Tap the text input at the top of the list
+2. Type the item name (e.g., "Milk")
+3. Tap **Add** or press Enter
+4. The item is added to your shopping list and synced to Grocy/AnyList
+
+### Checking off items
+
+1. Tap any item in the list
+2. If unchecked, it becomes checked (moves to the bottom of the list with a checkmark)
+3. If already checked, tapping unchecks it (moves back to the top)
+
+Updates are optimistic — the UI updates immediately while the API call happens in the background.
+
+### Item details
+
+Each item may show:
+- **Name**: The item name
+- **Quantity**: Number or amount (if set in Grocy/AnyList)
+- **Category**: Product category or group (if available)
+
+---
+
+## Expiring items alerts
+
+When using Grocy, Beacon checks for products expiring within the next 3 days. If any are found:
+
+- A yellow alert bar appears at the top of the grocery list
+- The alert shows the count and names of the first 3 expiring items
+- Example: "3 items expiring soon: Milk, Yogurt, Eggs..."
+
+This feature is only available with Grocy (AnyList does not track expiration dates).
+
+---
+
+## Meal plan display
+
+When using Grocy with a meal plan configured, Beacon can display today's planned meals. The meal plan bar shows:
+
+- **Meal type**: Breakfast, Lunch, or Dinner
+- **Recipe name**: The planned recipe
+- **Notes**: Any additional notes
+
+The meal plan data is fetched from `sensor.grocy_meal_plan` and filtered to the current day. The bar is collapsible — tap it to collapse to a small icon, tap again to expand.
+
+Meal types are mapped from Grocy's section labels:
+- Sections containing "breakfast" or "morning" map to Breakfast
+- Sections containing "lunch" or "noon" map to Lunch
+- Everything else maps to Dinner
+
+---
+
+## Data refresh
+
+- The grocery list refreshes automatically every 2 minutes
+- Adding, checking, or unchecking an item triggers an immediate refresh
+- The expiring products alert refreshes with the list
+- The meal plan refreshes every 5 minutes
+
+---
+
+## Troubleshooting
+
+### "Connect Grocy or AnyList in Home Assistant to see your lists"
+
+This message appears when Beacon cannot find either a Grocy or AnyList integration. Verify:
+
+1. The Grocy integration is set up and `sensor.grocy_shopping_list` exists in HA
+2. OR the AnyList integration is set up and `todo.anylist_*` entities exist
+3. Beacon is connected to Home Assistant (no "Connecting..." badge)
+
+### Items do not sync back to the app
+
+Beacon uses Home Assistant's REST API to communicate with Grocy/AnyList. Check:
+
+1. The Home Assistant token is valid
+2. The Grocy/AnyList integration is functioning (check **Developer Tools > States** for the entity)
+3. Open the browser console (F12) and look for "Beacon: Failed to..." error messages
+
+### Expiring items alert does not appear
+
+1. Verify `sensor.grocy_expiring_products` exists in Home Assistant
+2. Ensure products in Grocy have best-before dates set
+3. The alert only shows products expiring within the next 3 days
+
+### AnyList shows wrong list
+
+Beacon uses the first `todo.anylist_*` entity it discovers. If you have multiple AnyList lists, the one that appears depends on the order HA returns entities. To ensure the correct list is used, you may need to rename entities in HA.
+
+### Quick-add does nothing
+
+1. Make sure the input is not empty (whitespace-only is rejected)
+2. Check the browser console for errors
+3. Verify the underlying service (`grocy.add_generic` or `todo.add_item`) works by calling it from **Developer Tools > Services** in HA

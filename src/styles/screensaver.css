@@ -63,7 +63,7 @@
   to { opacity: 1; }
 }
 
-/* Responsive */
+/* Responsive: Tablet < 768px */
 @media (max-width: 768px) {
   .screensaver-time {
     font-size: 72px;
@@ -71,5 +71,18 @@
 
   .screensaver-date {
     font-size: 18px;
+  }
+}
+
+/* Responsive: Phone < 480px */
+@media (max-width: 480px) {
+  .screensaver-time {
+    font-size: 56px;
+    letter-spacing: -2px;
+  }
+
+  .screensaver-date {
+    font-size: 15px;
+    margin-top: 8px;
   }
 }
