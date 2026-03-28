@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f172a"/>
+
+  <!-- Gold bottom bar -->
+  <rect x="0" y="626" width="1200" height="4" fill="#f59e0b"/>
+
+  <!-- Icon centered-left of lockup, vertically centered ~315px -->
+  <g transform="translate(370, 220) scale(3)">
+    <path d="M18 56 L46 56 L42 44 L22 44 Z" fill="#f8fafc"/>
+    <path d="M22 44 L42 44 L38 16 L26 16 Z" fill="#f8fafc"/>
+    <rect x="24" y="10" width="16" height="6" rx="1" fill="#f8fafc"/>
+    <path d="M20 13 A14 14 0 0 1 44 13"
+          stroke="#f59e0b" stroke-width="2.5"
+          stroke-linecap="round" fill="none" opacity="1"/>
+    <path d="M14 13 A20 20 0 0 1 50 13"
+          stroke="#f59e0b" stroke-width="2"
+          stroke-linecap="round" fill="none" opacity="0.6"/>
+    <path d="M8 13 A26 26 0 0 1 56 13"
+          stroke="#f59e0b" stroke-width="2"
+          stroke-linecap="round" fill="none" opacity="0.3"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="590" y="330"
+        font-family="'Plus Jakarta Sans', system-ui, sans-serif"
+        font-size="96"
+        font-weight="600"
+        letter-spacing="-0.02em"
+        fill="#f8fafc">Beacon</text>
+
+  <!-- Tagline -->
+  <text x="600" y="400"
+        font-family="'Inter', system-ui, sans-serif"
+        font-size="24"
+        font-weight="400"
+        fill="#94a3b8"
+        text-anchor="middle">Your family's daily signal</text>
+</svg>
