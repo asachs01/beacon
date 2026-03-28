@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FamilyMember, MEMBER_COLORS, AVATAR_OPTIONS } from '../types/family';
+import { FamilyMember, MEMBER_COLORS, AVATAR_CATEGORIES } from '../types/family';
 
 interface FamilyManagerProps {
   members: FamilyMember[];
@@ -186,19 +186,26 @@ export function FamilyManager({
                 />
               </div>
 
-              {/* Avatar Picker */}
+              {/* Avatar Picker (categorized) */}
               <div className="form-field">
                 <label className="form-label">Avatar</label>
-                <div className="fm-avatar-grid">
-                  {AVATAR_OPTIONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      className={`fm-avatar-option ${form.avatar === emoji ? 'fm-avatar-option--selected' : ''}`}
-                      onClick={() => setForm((f) => ({ ...f, avatar: emoji }))}
-                    >
-                      {emoji}
-                    </button>
+                <div className="fm-avatar-picker">
+                  {AVATAR_CATEGORIES.map((category) => (
+                    <div key={category.label} className="fm-avatar-category">
+                      <span className="fm-avatar-category-label">{category.label}</span>
+                      <div className="fm-avatar-grid">
+                        {category.emojis.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            className={`fm-avatar-option ${form.avatar === emoji ? 'fm-avatar-option--selected' : ''}`}
+                            onClick={() => setForm((f) => ({ ...f, avatar: emoji }))}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

@@ -191,6 +191,41 @@
   margin-top: 8px;
 }
 
+/* Avatar Picker (categorized, scrollable) */
+.fm-avatar-picker {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.fm-avatar-picker::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fm-avatar-picker::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.fm-avatar-category {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fm-avatar-category-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
 /* Avatar Grid */
 .fm-avatar-grid {
   display: flex;

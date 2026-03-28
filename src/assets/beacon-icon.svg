@@ -1,28 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <!-- Base (trapezoid) -->
-  <path d="M18 56 L46 56 L42 44 L22 44 Z" fill="#f8fafc"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 80" fill="none">
+  <!--
+    Beacon icon — reverse-engineered from reference image.
+    Colors:
+      Base/lantern accents: #f59e0b (Beacon Gold, ~#E8961E from ref)
+      Tower body:           #f0f4f8 (warm white)
+      Arc inner:            #f59e0b (bright amber)
+      Arc middle:           #b8860b (darker gold)
+      Arc outer:            #7a5c0a (dark olive-gold)
+    Structure (viewBox 64x80):
+      Base:         trapezoid, bottom y=76, top y=64, bottom-width=40, top-width=28
+      Tower:        trapezoid, bottom y=64, top y=24, bottom-width=28, top-width=14
+      Lantern room: rect+frame, y=18 to y=24, width=16, centered at x=32
+      Arcs:         centered at (32, 20), radii 14/21/28, sweep ~125deg upward
+  -->
 
-  <!-- Tower body (trapezoid) -->
-  <path d="M22 44 L42 44 L38 16 L26 16 Z" fill="#f8fafc"/>
+  <!-- Base (gold trapezoid) -->
+  <path d="M12 76 L52 76 L46 64 L18 64 Z" fill="#f59e0b"/>
 
-  <!-- Lantern room (rectangle) -->
-  <rect x="24" y="10" width="16" height="6" rx="1" fill="#f8fafc"/>
+  <!-- Tower body (warm white trapezoid) -->
+  <path d="M18 64 L46 64 L39 24 L25 24 Z" fill="#eef2f7"/>
 
-  <!-- Glow arc 1 — inner, 100% opacity -->
-  <path d="M20 13 A14 14 0 0 1 44 13"
-        stroke="#f59e0b" stroke-width="2.5"
-        stroke-linecap="round" fill="none"
-        opacity="1"/>
+  <!-- Lantern room outer frame (gold) -->
+  <rect x="24" y="18" width="16" height="8" rx="1" fill="#f59e0b"/>
 
-  <!-- Glow arc 2 — middle, 60% opacity -->
-  <path d="M14 13 A20 20 0 0 1 50 13"
-        stroke="#f59e0b" stroke-width="2"
-        stroke-linecap="round" fill="none"
-        opacity="0.6"/>
+  <!-- Lantern room window (dark, matches bg) -->
+  <rect x="27" y="20" width="10" height="5" rx="0.5" fill="#1e2d4a"/>
 
-  <!-- Glow arc 3 — outer, 30% opacity -->
-  <path d="M8 13 A26 26 0 0 1 56 13"
-        stroke="#f59e0b" stroke-width="2"
-        stroke-linecap="round" fill="none"
-        opacity="0.3"/>
+  <!-- Arc inner — bright amber, 125deg sweep -->
+  <path d="M19.5 20 A13 13 0 0 1 44.5 20"
+        stroke="#f59e0b" stroke-width="4"
+        stroke-linecap="round" fill="none"/>
+
+  <!-- Arc middle — darker gold -->
+  <path d="M13 20 A20 20 0 0 1 51 20"
+        stroke="#b8860b" stroke-width="3.5"
+        stroke-linecap="round" fill="none"/>
+
+  <!-- Arc outer — dark olive-gold -->
+  <path d="M6.5 20 A27 27 0 0 1 57.5 20"
+        stroke="#7a5c0a" stroke-width="3"
+        stroke-linecap="round" fill="none"/>
 </svg>

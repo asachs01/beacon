@@ -93,16 +93,120 @@ input, select, textarea {
   font-size: inherit;
 }
 
-/* --- Main Layout --- */
+/* --- Sidebar width variable --- */
+:root {
+  --sidebar-width: 64px;
+}
+
+/* --- Main Layout (sidebar + content grid) --- */
 .beacon {
   height: 100vh;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
   overflow: hidden;
   background: var(--bg-page);
 }
 
-/* --- Header --- */
+.beacon-main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f0eeeb;
+  border-right: 1px solid var(--border-subtle);
+  padding: 12px 0;
+  height: 100vh;
+  z-index: 15;
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.sidebar-logo img {
+  width: 32px;
+  height: 32px;
+  /* Add dark fill filter so the icon is visible on the light sidebar bg */
+  filter: brightness(0) saturate(100%) invert(15%) sepia(5%) saturate(500%) hue-rotate(180deg);
+}
+
+.sidebar-nav-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 0 8px;
+}
+
+.sidebar-nav-group--bottom {
+  margin-top: auto;
+}
+
+.sidebar-divider {
+  width: 32px;
+  height: 1px;
+  background: var(--border);
+  margin: 12px 0;
+  flex-shrink: 0;
+}
+
+.sidebar-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  transition: all var(--transition);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sidebar-icon:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sidebar-icon--active {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-blue-full);
+}
+
+.sidebar-icon--active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--color-blue-full);
+}
+
+/* --- Filter Bar (above calendar) --- */
+.filter-bar {
+  padding: 8px 16px 0;
+  flex-shrink: 0;
+}
+
+
+/* --- Header (simplified — nav moved to sidebar) --- */
 .beacon-header {
   flex-shrink: 0;
   height: var(--header-height);
@@ -112,7 +216,6 @@ input, select, textarea {
   padding: 0 24px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-sm);
   z-index: 10;
 }
 
@@ -511,7 +614,7 @@ input, select, textarea {
 
 /* --- FAB (Add Event) --- */
 .btn--fab {
-  position: fixed;
+  position: absolute;
   bottom: 24px;
   right: 24px;
   width: 56px;
@@ -561,7 +664,7 @@ input, select, textarea {
 .demo-badge {
   position: fixed;
   bottom: 24px;
-  left: 24px;
+  left: calc(var(--sidebar-width) + 24px);
   background: var(--bg-surface);
   color: var(--text-muted);
   font-size: 0.65rem;
@@ -844,6 +947,31 @@ input, select, textarea {
   :root {
     --time-axis-width: 44px;
     --hour-height: 56px;
+    --sidebar-width: 52px;
+  }
+
+  .sidebar {
+    padding: 8px 0;
+  }
+
+  .sidebar-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .sidebar-icon--active::before {
+    left: -6px;
+  }
+
+  .sidebar-logo {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 12px;
+  }
+
+  .sidebar-logo img {
+    width: 26px;
+    height: 26px;
   }
 
   .beacon-header {
@@ -852,6 +980,10 @@ input, select, textarea {
 
   .beacon-body {
     padding: 8px 8px 0;
+  }
+
+  .filter-bar {
+    padding: 6px 8px 0;
   }
 
   .header-separator {

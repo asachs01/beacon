@@ -65,9 +65,34 @@ export const MEMBER_COLORS = [
   '#ef4444', // red
 ] as const;
 
-/** Default avatar emojis */
-export const AVATAR_OPTIONS = [
-  '👩', '👨', '👧', '👦', '👶', '🧑',
-  '👩‍🦰', '👨‍🦱', '🧒', '👸', '🤴', '🦸',
-  '🐱', '🐶', '🦊', '🐻', '🐼', '🦁',
-] as const;
+/** Avatar categories for the picker UI */
+export interface AvatarCategory {
+  label: string;
+  emojis: string[];
+}
+
+export const AVATAR_CATEGORIES: AvatarCategory[] = [
+  {
+    label: 'People',
+    emojis: ['👦', '👧', '👨', '👩', '👴', '👵', '🧑', '👶', '🧒', '👸', '🤴', '🦸', '👩‍🦰', '👨‍🦱', '🧔', '👱'],
+  },
+  {
+    label: 'Animals',
+    emojis: ['🐶', '🐱', '🐰', '🦊', '🐻', '🐼', '🦁', '🐮', '🐷', '🐸', '🦉', '🐝', '🦋', '🐢', '🐙', '🐧'],
+  },
+  {
+    label: 'Nature',
+    emojis: ['🌸', '🌻', '🌺', '🍀', '🌈', '⭐', '🌙', '☀️', '🔥'],
+  },
+  {
+    label: 'Fun',
+    emojis: ['🎸', '🎨', '⚽', '🏀', '🎮', '🚀', '🎭', '🎪', '🎯'],
+  },
+  {
+    label: 'Food',
+    emojis: ['🍕', '🍦', '🧁', '🍩', '🎂'],
+  },
+];
+
+/** Flat list of all avatar emojis (for backwards compat) */
+export const AVATAR_OPTIONS = AVATAR_CATEGORIES.flatMap((c) => c.emojis);

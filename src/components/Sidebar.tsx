@@ -1,0 +1,81 @@
+import {
+  Calendar,
+  ListChecks,
+  ShoppingCart,
+  Trophy,
+  Settings,
+} from 'lucide-react';
+import beaconIcon from '../assets/beacon-icon.svg';
+import { ThemeSelector } from './ThemeSelector';
+
+export type SidebarView = 'calendar' | 'chores' | 'grocery' | 'leaderboard';
+
+interface SidebarProps {
+  activeView: SidebarView;
+  onChangeView: (view: SidebarView) => void;
+  onOpenSettings: () => void;
+}
+
+const ICON_SIZE = 24;
+const STROKE_WIDTH = 1.5;
+
+interface NavItem {
+  id: SidebarView;
+  icon: React.ReactNode;
+  label: string;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { id: 'calendar', icon: <Calendar size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Calendar' },
+  { id: 'chores', icon: <ListChecks size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Chores' },
+  { id: 'grocery', icon: <ShoppingCart size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Grocery' },
+  { id: 'leaderboard', icon: <Trophy size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Leaderboard' },
+];
+
+export function Sidebar({
+  activeView,
+  onChangeView,
+  onOpenSettings,
+}: SidebarProps) {
+  return (
+    <nav className="sidebar" aria-label="Main navigation">
+      {/* Beacon logo */}
+      <div className="sidebar-logo">
+        <img src={beaconIcon} alt="Beacon" width={32} height={32} />
+      </div>
+
+      {/* Main nav icons */}
+      <div className="sidebar-nav-group">
+        {NAV_ITEMS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`sidebar-icon ${activeView === item.id ? 'sidebar-icon--active' : ''}`}
+            onClick={() => onChangeView(item.id)}
+            title={item.label}
+            aria-label={item.label}
+          >
+            {item.icon}
+          </button>
+        ))}
+      </div>
+
+      {/* Divider */}
+      <div className="sidebar-divider" />
+
+      {/* Bottom utility icons */}
+      <div className="sidebar-nav-group sidebar-nav-group--bottom">
+        <button
+          type="button"
+          className="sidebar-icon"
+          onClick={onOpenSettings}
+          title="Family Settings"
+          aria-label="Family Settings"
+        >
+          <Settings size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
+        </button>
+        <ThemeSelector />
+      </div>
+    </nav>
+  );
+}

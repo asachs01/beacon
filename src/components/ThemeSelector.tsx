@@ -66,35 +66,20 @@ export function ThemeSelector() {
     <div ref={containerRef} style={{ position: 'relative' }}>
       <button
         type="button"
-        className="theme-selector-trigger"
+        className="sidebar-icon"
         onClick={() => setOpen((prev) => !prev)}
         aria-label="Change theme"
-        title="Change theme"
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: '50%',
-          border: '1px solid var(--grid-lines)',
-          background: 'var(--bg-surface)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 16,
-          transition: 'background 200ms ease',
-        }}
+        title="Change Theme"
       >
-        {/* Palette icon (SVG inline for zero dependencies) */}
         <svg
-          width="18"
-          height="18"
+          width="24"
+          height="24"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{ color: 'var(--text-secondary)' }}
         >
           <circle cx="13.5" cy="6.5" r="0.5" fill="currentColor" />
           <circle cx="17.5" cy="10.5" r="0.5" fill="currentColor" />
@@ -109,10 +94,10 @@ export function ThemeSelector() {
           className="theme-selector-dropdown"
           style={{
             position: 'absolute',
-            top: 'calc(100% + 8px)',
-            right: 0,
+            bottom: 0,
+            left: 'calc(100% + 8px)',
             background: 'var(--bg-surface)',
-            border: '1px solid var(--grid-lines)',
+            border: '1px solid var(--border)',
             borderRadius: 12,
             boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
             padding: 8,

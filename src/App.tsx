@@ -10,6 +10,7 @@ import { FamilyFilter } from './components/FamilyFilter';
 import { FamilyManager } from './components/FamilyManager';
 import { ChoresPanel } from './components/ChoresPanel';
 import { Leaderboard } from './components/Leaderboard';
+import { Sidebar, SidebarView } from './components/Sidebar';
 import { CalendarEvent } from './types';
 
 const FAMILY_NAME = import.meta.env.VITE_FAMILY_NAME || 'Sachs Family';
@@ -38,8 +39,11 @@ export function App() {
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [prefillTime, setPrefillTime] = useState<string | null>(null);
   const [showFamilyManager, setShowFamilyManager] = useState(false);
-  const [showChoresPanel, setShowChoresPanel] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [activeView, setActiveView] = useState<SidebarView>('calendar');
+
+  // Chores and leaderboard are now slide-over panels triggered from sidebar
+  const showChoresPanel = activeView === 'chores';
+  const showLeaderboard = activeView === 'leaderboard';
 
   // Fetch data when connected
   useEffect(() => {
@@ -143,79 +147,72 @@ export function App() {
     setShowModal(true);
   }, []);
 
+  const handleChangeView = useCallback((view: SidebarView) => {
+    setActiveView(view);
+  }, []);
+
+  const handleClosePanel = useCallback(() => {
+    setActiveView('calendar');
+  }, []);
+
   return (
     <div className="beacon">
-      {/* Header */}
-      <header className="beacon-header">
-        <div className="header-left">
-          <span className="header-family-name">{FAMILY_NAME}</span>
-          <span className="header-separator" />
-          <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
-          {!connected && (
-            <div className="connection-status">
-              <span className="connection-dot" />
-              Connecting...
-            </div>
-          )}
-        </div>
-        <div className="header-right">
+      {/* Left Sidebar */}
+      <Sidebar
+        activeView={activeView}
+        onChangeView={handleChangeView}
+        onOpenSettings={() => setShowFamilyManager(true)}
+      />
+
+      {/* Main content area */}
+      <div className="beacon-main">
+        {/* Header */}
+        <header className="beacon-header">
+          <div className="header-left">
+            <span className="header-family-name">{FAMILY_NAME}</span>
+            <span className="header-separator" />
+            <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
+            {!connected && (
+              <div className="connection-status">
+                <span className="connection-dot" />
+                Connecting...
+              </div>
+            )}
+          </div>
+          <div className="header-right">
+            <Clock />
+          </div>
+        </header>
+
+        {/* Family filter pills — above the calendar */}
+        <div className="filter-bar">
           <FamilyFilter
             calendars={calendars}
             hiddenCalendars={hiddenCalendars}
             onToggle={handleToggleCalendar}
           />
-          <Clock />
-          {/* Sidebar nav buttons */}
-          <button
-            type="button"
-            className="sidebar-nav-btn"
-            onClick={() => setShowChoresPanel((v) => !v)}
-            title="Chores"
-          >
-            <span className="sidebar-nav-icon">✓</span>
-          </button>
-          <button
-            type="button"
-            className="sidebar-nav-btn"
-            onClick={() => setShowLeaderboard((v) => !v)}
-            title="Leaderboard"
-          >
-            <span className="sidebar-nav-icon">🏆</span>
-          </button>
-          <button
-            type="button"
-            className="settings-btn"
-            onClick={() => setShowFamilyManager(true)}
-            title="Family Settings"
-            aria-label="Family Settings"
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-            </svg>
-          </button>
         </div>
-      </header>
 
-      {/* Calendar Body */}
-      <div className="beacon-body">
-        <WeekCalendar
-          events={events}
-          hiddenCalendars={hiddenCalendars}
-          onEventClick={handleEventClick}
-          onSlotClick={handleSlotClick}
-        />
+        {/* Calendar Body */}
+        <div className="beacon-body">
+          <WeekCalendar
+            events={events}
+            hiddenCalendars={hiddenCalendars}
+            onEventClick={handleEventClick}
+            onSlotClick={handleSlotClick}
+          />
+        </div>
+
+        {/* FAB */}
+        <button
+          type="button"
+          className="btn--fab"
+          onClick={handleAddEvent}
+          aria-label="Add event"
+        >
+          +
+        </button>
       </div>
-
-      {/* FAB */}
-      <button
-        type="button"
-        className="btn--fab"
-        onClick={handleAddEvent}
-        aria-label="Add event"
-      >
-        +
-      </button>
 
       {/* Event Modal */}
       {showModal && (
@@ -244,26 +241,26 @@ export function App() {
       {/* Chores Slide Panel */}
       <ChoresPanel
         open={showChoresPanel}
-        onClose={() => setShowChoresPanel(false)}
+        onClose={handleClosePanel}
         haClient={client}
       />
       {showChoresPanel && (
         <div
           className="slide-panel-backdrop"
-          onClick={() => setShowChoresPanel(false)}
+          onClick={handleClosePanel}
         />
       )}
 
       {/* Leaderboard Slide Panel */}
       <Leaderboard
         open={showLeaderboard}
-        onClose={() => setShowLeaderboard(false)}
+        onClose={handleClosePanel}
         haClient={client}
       />
       {showLeaderboard && (
         <div
           className="slide-panel-backdrop"
-          onClick={() => setShowLeaderboard(false)}
+          onClick={handleClosePanel}
         />
       )}
 
