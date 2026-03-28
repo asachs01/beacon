@@ -1170,8 +1170,10 @@ a:focus:not(:focus-visible) {
     padding-bottom: var(--mobile-tab-bar-height);
   }
 
-  .beacon .beacon-main {
-    grid-column: 1;
+  .beacon .beacon-main,
+  .beacon--sidebar-left .beacon-main,
+  .beacon--sidebar-right .beacon-main {
+    grid-column: 1 !important;
   }
 
   /* Desktop sidebar visibility controlled by inline style in component */
