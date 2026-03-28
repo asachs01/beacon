@@ -1,12 +1,19 @@
 #!/bin/sh
 # Beacon -- Home Assistant Add-on entry point
 
-# Read the Supervisor token from environment
-SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN:-}"
+# The supervisor token only works inside the container network.
+# For ingress (browser-side), we need a long-lived access token.
+# Check for a user-provided token first, fall back to supervisor token.
+SUPERVISOR_TOKEN="${BEACON_HA_TOKEN:-${SUPERVISOR_TOKEN:-}}"
 
 # Read options from /data/options.json if it exists (populated by HA Supervisor)
 if [ -f /data/options.json ]; then
   FAMILY_NAME="$(cat /data/options.json | sed -n 's/.*"family_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+  USER_HA_TOKEN="$(cat /data/options.json | sed -n 's/.*"ha_token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+  # Prefer user-provided token over supervisor token
+  if [ -n "$USER_HA_TOKEN" ]; then
+    SUPERVISOR_TOKEN="$USER_HA_TOKEN"
+  fi
   THEME="$(cat /data/options.json | sed -n 's/.*"theme"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
   AUTO_DARK_MODE="$(cat /data/options.json | sed -n 's/.*"auto_dark_mode"[[:space:]]*:[[:space:]]*\([a-z]*\).*/\1/p')"
   WEATHER_ENTITY="$(cat /data/options.json | sed -n 's/.*"weather_entity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"

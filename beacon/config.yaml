@@ -18,6 +18,7 @@ homeassistant_api: true
 auth_api: true
 options:
   family_name: "My Family"
+  ha_token: ""
   theme: "skylight"
   auto_dark_mode: true
   weather_entity: "weather.home"
@@ -26,6 +27,7 @@ options:
   screen_saver_timeout: 5
 schema:
   family_name: str
+  ha_token: password
   theme: str
   auto_dark_mode: bool
   weather_entity: str
