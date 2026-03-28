@@ -45,7 +45,8 @@ const {
         if (theme) document.documentElement.setAttribute('data-theme', theme);
         else document.documentElement.setAttribute('data-theme', 'beacon');
         var dark = localStorage.getItem('td-dark');
-        if (dark === 'true' || (dark === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        // Default to dark mode for Beacon theme (it's designed dark-first)
+        if (dark === 'true' || dark === null) {
           document.documentElement.classList.add('dark');
         }
       })();

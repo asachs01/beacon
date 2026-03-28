@@ -159,12 +159,14 @@ code, pre {
   max-width: none;
 }
 
-.prose h1 { font-size: 1.875rem; font-weight: 700; margin-bottom: 1.5rem; margin-top: 2rem; }
-.prose h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; margin-top: 2rem; }
-.prose h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem; margin-top: 1.5rem; }
-.prose p { margin-bottom: 1rem; line-height: 1.625; }
-.prose ul, .prose ol { margin-bottom: 1rem; padding-left: 1.5rem; }
-.prose li { margin-bottom: 0.5rem; }
+.prose { color: var(--td-text); }
+.prose h1 { font-size: 1.875rem; font-weight: 700; margin-bottom: 1.5rem; margin-top: 2rem; color: var(--td-text); }
+.prose h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; margin-top: 2rem; color: var(--td-text); border-bottom: 1px solid var(--td-border); padding-bottom: 0.5rem; }
+.prose h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem; margin-top: 1.5rem; color: var(--td-text); }
+.prose p { margin-bottom: 1rem; line-height: 1.75; color: var(--td-text); }
+.prose ul, .prose ol { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--td-text); }
+.prose li { margin-bottom: 0.5rem; color: var(--td-text); }
+.prose strong { color: var(--td-text); font-weight: 600; }
 
 .prose code:not(pre code) {
   background-color: var(--td-border);
