@@ -1,20 +1,30 @@
-#!/usr/bin/with-contenv bashio
+#!/bin/sh
 # Beacon -- Home Assistant Add-on entry point
 
 # Read the Supervisor token from environment
 SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN:-}"
 
-# Read options from /data/options.json (populated by HA Supervisor)
-FAMILY_NAME="$(bashio::config 'family_name' 2>/dev/null || echo 'My Family')"
-THEME="$(bashio::config 'theme' 2>/dev/null || echo 'skylight')"
-AUTO_DARK_MODE="$(bashio::config 'auto_dark_mode' 2>/dev/null || echo 'true')"
-WEATHER_ENTITY="$(bashio::config 'weather_entity' 2>/dev/null || echo 'weather.home')"
-PHOTO_DIRECTORY="$(bashio::config 'photo_directory' 2>/dev/null || echo '/media/beacon/photos')"
-PHOTO_INTERVAL="$(bashio::config 'photo_interval' 2>/dev/null || echo '30')"
-SCREEN_SAVER_TIMEOUT="$(bashio::config 'screen_saver_timeout' 2>/dev/null || echo '5')"
-HA_URL="$(bashio::config 'ha_url' 2>/dev/null || echo 'http://supervisor/core')"
+# Read options from /data/options.json if it exists (populated by HA Supervisor)
+if [ -f /data/options.json ]; then
+  FAMILY_NAME="$(cat /data/options.json | sed -n 's/.*"family_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+  THEME="$(cat /data/options.json | sed -n 's/.*"theme"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+  AUTO_DARK_MODE="$(cat /data/options.json | sed -n 's/.*"auto_dark_mode"[[:space:]]*:[[:space:]]*\([a-z]*\).*/\1/p')"
+  WEATHER_ENTITY="$(cat /data/options.json | sed -n 's/.*"weather_entity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+  PHOTO_DIRECTORY="$(cat /data/options.json | sed -n 's/.*"photo_directory"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
+  PHOTO_INTERVAL="$(cat /data/options.json | sed -n 's/.*"photo_interval"[[:space:]]*:[[:space:]]*\([0-9]*\).*/\1/p')"
+  SCREEN_SAVER_TIMEOUT="$(cat /data/options.json | sed -n 's/.*"screen_saver_timeout"[[:space:]]*:[[:space:]]*\([0-9]*\).*/\1/p')"
+fi
 
-# Generate runtime-config.js that injects config into the static build
+FAMILY_NAME="${FAMILY_NAME:-My Family}"
+THEME="${THEME:-skylight}"
+AUTO_DARK_MODE="${AUTO_DARK_MODE:-true}"
+WEATHER_ENTITY="${WEATHER_ENTITY:-weather.home}"
+PHOTO_DIRECTORY="${PHOTO_DIRECTORY:-/media/beacon/photos}"
+PHOTO_INTERVAL="${PHOTO_INTERVAL:-30}"
+SCREEN_SAVER_TIMEOUT="${SCREEN_SAVER_TIMEOUT:-5}"
+HA_URL="${HA_URL:-http://supervisor/core}"
+
+# Generate runtime-config.js
 CONFIG_JS="/app/dist/runtime-config.js"
 cat > "${CONFIG_JS}" <<EOF
 window.__BEACON_CONFIG__ = {
@@ -30,11 +40,11 @@ window.__BEACON_CONFIG__ = {
 };
 EOF
 
-# Inject the runtime-config script tag into index.html if not already present
+# Inject runtime-config script tag into index.html
 INDEX_HTML="/app/dist/index.html"
 if ! grep -q 'runtime-config.js' "${INDEX_HTML}"; then
   sed -i 's|</head>|<script src="/runtime-config.js"></script></head>|' "${INDEX_HTML}"
 fi
 
-bashio::log.info "Starting Beacon on port 3000..."
+echo "Starting Beacon on port 3000..."
 exec serve /app/dist -l 3000 -s
