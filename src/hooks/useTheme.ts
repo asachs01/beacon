@@ -25,7 +25,10 @@ function applyThemeToDOM(theme: Theme): void {
   root.style.setProperty('--bg-primary', colors.background);
   root.style.setProperty('--bg-surface', colors.surface);
   root.style.setProperty('--bg-header', colors.headerBg);
+  root.style.setProperty('--bg-sidebar', colors.headerBg);
   root.style.setProperty('--bg-today', colors.todayHighlight);
+  root.style.setProperty('--border', colors.gridLines);
+  root.style.setProperty('--border-subtle', colors.gridLines);
   root.style.setProperty('--text-primary', colors.text);
   root.style.setProperty('--text-secondary', colors.textSecondary);
   root.style.setProperty('--grid-lines', colors.gridLines);

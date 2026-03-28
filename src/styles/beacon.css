@@ -8,18 +8,24 @@
 
 /* --- Custom Properties --- */
 :root {
-  --bg-page: #faf9f6;
+  /* These are fallback defaults — the theme hook overrides them at runtime */
+  --bg-primary: #faf9f6;
   --bg-surface: #ffffff;
   --bg-hover: #f5f4f1;
   --bg-today: rgba(59, 130, 246, 0.04);
+  --bg-header: #ffffff;
+  --bg-sidebar: #f0eeeb;
 
   --text-primary: #1a1a1a;
   --text-secondary: #6b7280;
   --text-muted: #9ca3af;
   --text-light: #d1d5db;
 
+  --grid-lines: #e5e5e5;
   --border: #e5e5e5;
   --border-subtle: #f0efec;
+  --accent: #3b82f6;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
   --color-blue: #bfdbfe;
   --color-blue-full: #3b82f6;
@@ -71,7 +77,7 @@ html, body, #root {
 
 body {
   font-family: var(--font-body);
-  background: var(--bg-page);
+  background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -104,7 +110,7 @@ input, select, textarea {
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
   overflow: hidden;
-  background: var(--bg-page);
+  background: var(--bg-primary);
 }
 
 .beacon-main {
@@ -120,7 +126,7 @@ input, select, textarea {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #f0eeeb;
+  background: var(--bg-sidebar, #f0eeeb);
   border-right: 1px solid var(--border-subtle);
   padding: 12px 0;
   height: 100vh;
@@ -274,7 +280,7 @@ input, select, textarea {
   gap: 6px;
   padding: 6px 14px;
   border-radius: var(--radius-pill);
-  background: var(--bg-page);
+  background: var(--bg-primary);
   border: 1px solid var(--border);
   transition: all var(--transition);
   min-height: 36px;
@@ -787,7 +793,7 @@ input, select, textarea {
 .form-input,
 .form-select,
 .form-textarea {
-  background: var(--bg-page);
+  background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
@@ -874,7 +880,7 @@ input, select, textarea {
 }
 
 .btn--secondary {
-  background: var(--bg-page);
+  background: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
