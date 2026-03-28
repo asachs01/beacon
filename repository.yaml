@@ -1,5 +1,3 @@
 name: Beacon Add-on Repository
-url: "https://github.com/asachs01/beacon"
-maintainer: "Aaron Sachs <asachs01@github.com>"
-repositories:
-  - "https://github.com/asachs01/beacon"
+url: https://github.com/asachs01/beacon
+maintainer: Aaron Sachs <asachs01@github.com>
