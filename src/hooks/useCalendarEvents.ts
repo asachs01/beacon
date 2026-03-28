@@ -65,11 +65,29 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
       start_date?: string;
       end_date?: string;
       description?: string;
+      rrule?: string;
     }
   ) => {
     const client = getClient();
     if (!client?.isConnected) return;
     await client.createEvent(calendarId, event);
+  }, [getClient]);
+
+  const updateEvent = useCallback(async (
+    calendarId: string,
+    uid: string,
+    event: {
+      summary?: string;
+      start_date_time?: string;
+      end_date_time?: string;
+      start_date?: string;
+      end_date?: string;
+      description?: string;
+    }
+  ) => {
+    const client = getClient();
+    if (!client?.isConnected) return;
+    await client.updateEvent(calendarId, uid, event);
   }, [getClient]);
 
   const deleteEvent = useCallback(async (calendarId: string, uid: string) => {
@@ -96,6 +114,7 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
     fetchCalendars,
     fetchEvents,
     createEvent,
+    updateEvent,
     deleteEvent,
   };
 }

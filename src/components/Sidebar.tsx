@@ -7,6 +7,7 @@ import {
   Music,
   Image,
   Settings,
+  Timer as TimerIcon,
 } from 'lucide-react';
 import beaconIcon from '../assets/beacon-icon.svg';
 import { ThemeSelector } from './ThemeSelector';
@@ -17,6 +18,8 @@ interface SidebarProps {
   activeView: SidebarView;
   onChangeView: (view: SidebarView) => void;
   onOpenSettings: () => void;
+  onToggleTimer?: () => void;
+  timerOpen?: boolean;
 }
 
 const ICON_SIZE = 24;
@@ -42,6 +45,8 @@ export function Sidebar({
   activeView,
   onChangeView,
   onOpenSettings,
+  onToggleTimer,
+  timerOpen = false,
 }: SidebarProps) {
   return (
     <nav className="sidebar" aria-label="Main navigation">
@@ -71,6 +76,17 @@ export function Sidebar({
 
       {/* Bottom utility icons */}
       <div className="sidebar-nav-group sidebar-nav-group--bottom">
+        {onToggleTimer && (
+          <button
+            type="button"
+            className={`sidebar-icon ${timerOpen ? 'sidebar-icon--active' : ''}`}
+            onClick={onToggleTimer}
+            title="Timer"
+            aria-label="Timer"
+          >
+            <TimerIcon size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
+          </button>
+        )}
         <button
           type="button"
           className="sidebar-icon"

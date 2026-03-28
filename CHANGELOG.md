@@ -4,6 +4,28 @@ All notable changes to Beacon will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- Recurring event support in EventModal (daily/weekly/monthly with end date), passed as rrule to HA calendar.create_event
+- Drag-to-reschedule in WeekCalendar: timed events are draggable to new time slots with ghost preview
+- Multi-day event spanning bars in the all-day row, rendered across day columns with lane stacking
+- PWA manifest (public/manifest.json) with Beacon branding, icons, standalone display, and iOS meta tags
+- HA API updateEvent method for rescheduling events via calendar.update_event service
+
+### Changed
+- Dockerfile: multi-stage build with `serve` for static assets, proper HEALTHCHECK
+- run.sh: reads all options from /data/options.json, generates runtime-config.js for static build
+- config.yaml: added family_name, theme, auto_dark_mode, photo_directory, photo_interval, screen_saver_timeout options
+- Centralized configuration via `src/config.ts` (window.__BEACON_CONFIG__ in add-on, VITE_* in dev)
+- Migrated all VITE_* env var references to use getConfig()
+- repository.yaml: proper HA add-on repository discovery structure
+
+### Added
+- `src/config.ts`: unified getConfig() for add-on and dev modes
+- `.github/workflows/build-addon.yml`: multi-arch Docker build on tag/release
+- `Makefile`: dev, build, docker-build, docker-push, lint, typecheck targets
+
 ## [0.2.0] - 2026-03-28
 
 ### Added

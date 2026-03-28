@@ -1,3 +1,5 @@
+export type RecurrenceFrequency = 'none' | 'daily' | 'weekly' | 'monthly';
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -8,6 +10,8 @@ export interface CalendarEvent {
   calendarId: string;
   calendarName: string;
   color: string;
+  recurrence?: RecurrenceFrequency;
+  recurrenceEnd?: string;
 }
 
 export interface CalendarInfo {

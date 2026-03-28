@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
+import { getConfig } from '../config';
 
-const HA_URL = import.meta.env.VITE_HA_URL || 'http://supervisor/core';
-const HA_TOKEN = import.meta.env.VITE_HA_TOKEN || '';
+const { ha_url: HA_URL, ha_token: HA_TOKEN } = getConfig();
 
 export function useHomeAssistant() {
   const clientRef = useRef<HomeAssistantClient | null>(null);

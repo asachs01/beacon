@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
-import { CalendarEvent, CalendarInfo } from '../types';
+import { format, parseISO, addMonths } from 'date-fns';
+import { CalendarEvent, CalendarInfo, RecurrenceFrequency } from '../types';
 
 interface EventModalProps {
   event: CalendarEvent | null;
@@ -21,6 +21,8 @@ export interface EventFormData {
   endDate: string;
   endTime: string;
   allDay: boolean;
+  recurrence: RecurrenceFrequency;
+  recurrenceEnd: string;
 }
 
 function toLocalDate(isoStr: string): string {
@@ -60,6 +62,8 @@ export function EventModal({
   const defaultStartTime = prefillTime || '09:00';
   const defaultEndTime = addHour(defaultStartTime);
 
+  const defaultRecurrenceEnd = format(addMonths(new Date(), 3), 'yyyy-MM-dd');
+
   const [form, setForm] = useState<EventFormData>({
     summary: '',
     description: '',
@@ -69,6 +73,8 @@ export function EventModal({
     endDate: defaultDate,
     endTime: defaultEndTime,
     allDay: false,
+    recurrence: 'none',
+    recurrenceEnd: defaultRecurrenceEnd,
   });
 
   useEffect(() => {
@@ -82,6 +88,8 @@ export function EventModal({
         endDate: toLocalDate(event.end),
         endTime: event.allDay ? '10:00' : toLocalTime(event.end),
         allDay: event.allDay,
+        recurrence: event.recurrence || 'none',
+        recurrenceEnd: event.recurrenceEnd || defaultRecurrenceEnd,
       });
     }
   }, [event]);
@@ -206,6 +214,34 @@ export function EventModal({
                 </div>
               )}
             </div>
+
+            <div className="form-field">
+              <label className="form-label" htmlFor="event-recurrence">Repeats</label>
+              <select
+                id="event-recurrence"
+                className="form-select"
+                value={form.recurrence}
+                onChange={(e) => updateField('recurrence', e.target.value as RecurrenceFrequency)}
+              >
+                <option value="none">Does not repeat</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+
+            {form.recurrence !== 'none' && (
+              <div className="form-field">
+                <label className="form-label" htmlFor="event-recurrence-end">Repeat until</label>
+                <input
+                  id="event-recurrence-end"
+                  className="form-input"
+                  type="date"
+                  value={form.recurrenceEnd}
+                  onChange={(e) => updateField('recurrenceEnd', e.target.value)}
+                />
+              </div>
+            )}
 
             <div className="form-field">
               <label className="form-label" htmlFor="event-desc">Description</label>

@@ -4,8 +4,10 @@ import { CalendarEvent, WeatherData } from '../types';
 import { Chore } from '../types/family';
 import { EventCard } from './EventCard';
 import { TaskChecklist } from './TaskChecklist';
+import { CountdownWidget } from './CountdownWidget';
+import { getConfig } from '../config';
 
-const FAMILY_NAME = import.meta.env.VITE_FAMILY_NAME || 'your family';
+const { family_name: FAMILY_NAME } = getConfig();
 
 function getGreeting(hour: number): string {
   if (hour >= 5 && hour < 12) return 'Good morning';
@@ -132,6 +134,8 @@ export function DashboardView({
           completedIds={completedChoreIds}
           onToggle={onToggleChore}
         />
+
+        <CountdownWidget events={events} />
       </section>
     </div>
   );

@@ -1,8 +1,7 @@
 import { Photo } from '../types/photos';
+import { getConfig } from '../config';
 
-const HA_URL = import.meta.env.VITE_HA_URL || 'http://supervisor/core';
-const HA_TOKEN = import.meta.env.VITE_HA_TOKEN || '';
-const PHOTOS_PATH = import.meta.env.VITE_PHOTOS_PATH || '/media/beacon/photos';
+const { ha_url: HA_URL, ha_token: HA_TOKEN, photo_directory: PHOTOS_PATH } = getConfig();
 
 /**
  * Shuffles an array in place using Fisher-Yates.

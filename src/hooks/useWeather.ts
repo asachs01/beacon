@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
 import { WeatherData } from '../types';
+import { getConfig } from '../config';
 
-const WEATHER_ENTITY = import.meta.env.VITE_HA_WEATHER_ENTITY || 'weather.home';
+const { weather_entity: WEATHER_ENTITY } = getConfig();
 const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
 export function useWeather(getClient: () => HomeAssistantClient | null) {

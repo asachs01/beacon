@@ -1,7 +1,8 @@
 import { GroceryItem, GroceryList, MealPlanEntry } from '../types/grocery';
+import { getConfig } from '../config';
 
-const HA_URL = (import.meta.env.VITE_HA_URL || 'http://supervisor/core').replace(/\/$/, '');
-const HA_TOKEN = import.meta.env.VITE_HA_TOKEN || '';
+const { ha_url, ha_token: HA_TOKEN } = getConfig();
+const HA_URL = ha_url.replace(/\/$/, '');
 
 /**
  * Grocy API client that works through Home Assistant's REST API.

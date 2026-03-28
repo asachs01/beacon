@@ -1,0 +1,387 @@
+/* ============================================================
+   Beacon — Timer & Countdown Widget Styles
+   ============================================================ */
+
+/* --- Timer --- */
+.timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.timer--compact {
+  padding: 12px;
+  gap: 8px;
+}
+
+.timer-modes {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+}
+
+.timer-mode-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all var(--transition);
+}
+
+.timer-mode-btn--active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.timer--compact .timer-mode-btn {
+  padding: 4px 10px;
+  font-size: 0.65rem;
+}
+
+.timer-display {
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.timer--compact .timer-display {
+  font-size: 32px;
+}
+
+.timer-display--finished {
+  color: #ef4444;
+  animation: timer-pulse 1s ease infinite;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.timer-presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.timer-preset {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  transition: all var(--transition);
+}
+
+.timer-preset:hover {
+  background: var(--bg-hover);
+}
+
+.timer-preset--active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.timer--compact .timer-preset {
+  padding: 4px 8px;
+  font-size: 0.65rem;
+}
+
+.timer-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.timer-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  transition: all var(--transition);
+}
+
+.timer--compact .timer-btn {
+  width: 36px;
+  height: 36px;
+}
+
+.timer-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.timer-btn--play {
+  background: var(--color-green-full);
+  border-color: var(--color-green-full);
+  color: white;
+}
+
+.timer-btn--play:hover {
+  background: #16a34a;
+}
+
+.timer-btn--pause {
+  background: var(--color-orange-full);
+  border-color: var(--color-orange-full);
+  color: white;
+}
+
+.timer-btn--pause:hover {
+  background: #ea580c;
+}
+
+.timer-laps {
+  width: 100%;
+  max-height: 120px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.timer-lap {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  font-size: 0.75rem;
+}
+
+.timer-lap-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.timer-lap-time {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Countdown Widget --- */
+.countdown-widget {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+}
+
+.countdown-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.countdown-add-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+.countdown-add-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.countdown-add-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.countdown-add-form .form-input {
+  flex: 1;
+  min-width: 100px;
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+.countdown-add-form .btn {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+}
+
+.countdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.countdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+
+.countdown-item:hover {
+  background: var(--bg-hover);
+}
+
+.countdown-days {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 48px;
+}
+
+.countdown-days-number {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent, var(--color-blue-full));
+  line-height: 1;
+}
+
+.countdown-days-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.countdown-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.countdown-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.countdown-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.countdown-remove-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1rem;
+  transition: all var(--transition);
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.countdown-item:hover .countdown-remove-btn {
+  opacity: 1;
+}
+
+.countdown-remove-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* --- Timer Slide Panel (from sidebar) --- */
+.timer-panel {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width, 64px);
+  width: 320px;
+  height: 100vh;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 300ms ease;
+}
+
+.timer-panel--open {
+  transform: translateX(0);
+}
+
+.timer-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.timer-panel-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.timer-panel-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  transition: all var(--transition);
+}
+
+.timer-panel-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.timer-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}

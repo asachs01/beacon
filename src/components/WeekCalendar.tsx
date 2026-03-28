@@ -1,11 +1,11 @@
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import {
   startOfWeek,
   addDays,
   format,
   isSameDay,
   parseISO,
-
+  differenceInCalendarDays,
   getHours,
   getMinutes,
 } from 'date-fns';
@@ -17,6 +17,7 @@ interface WeekCalendarProps {
   hiddenCalendars: Set<string>;
   onEventClick: (event: CalendarEvent) => void;
   onSlotClick: (date: string, hour: number) => void;
+  onEventReschedule?: (event: CalendarEvent, newDate: string, newHour: number) => void;
 }
 
 const START_HOUR = 7;
@@ -29,10 +30,25 @@ function formatHour(hour: number): string {
   return `${h} ${ampm}`;
 }
 
-export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick }: WeekCalendarProps) {
+/** Describes a multi-day bar segment for the all-day row */
+interface MultiDaySpan {
+  event: CalendarEvent;
+  /** Column index where this bar starts (0-based, relative to week) */
+  startCol: number;
+  /** How many day columns this bar spans */
+  span: number;
+  /** Row lane within the all-day area to avoid overlaps */
+  lane: number;
+}
+
+export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule }: WeekCalendarProps) {
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 0 });
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Drag state
+  const [dragEvent, setDragEvent] = useState<CalendarEvent | null>(null);
+  const [dragGhost, setDragGhost] = useState<{ date: string; hour: number } | null>(null);
 
   const days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -43,47 +59,124 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
     return events.filter(e => !hiddenCalendars.has(e.calendarId));
   }, [events, hiddenCalendars]);
 
-  // Separate all-day and timed events per day
-  const { allDayByDay, timedByDay } = useMemo(() => {
-    const allDay = new Map<string, CalendarEvent[]>();
+  // Separate all-day / multi-day and timed events per day
+  const { multiDaySpans, singleAllDayByDay, timedByDay, allDayLaneCount } = useMemo(() => {
     const timed = new Map<string, CalendarEvent[]>();
+    const singleAllDay = new Map<string, CalendarEvent[]>();
 
     for (const day of days) {
       const key = format(day, 'yyyy-MM-dd');
-      allDay.set(key, []);
       timed.set(key, []);
+      singleAllDay.set(key, []);
     }
+
+    const multiDayEvents: CalendarEvent[] = [];
 
     for (const event of visibleEvents) {
       const eventStart = parseISO(event.start);
       const eventEnd = parseISO(event.end);
 
-      for (const day of days) {
-        const dayKey = format(day, 'yyyy-MM-dd');
-        const dayEnd = addDays(day, 1);
-
-        if (event.allDay) {
-          if (eventStart < dayEnd && eventEnd > day) {
-            allDay.get(dayKey)?.push(event);
-          }
+      if (event.allDay) {
+        // Check if it spans multiple days within the visible week
+        const spanDays = differenceInCalendarDays(eventEnd, eventStart);
+        if (spanDays > 1) {
+          multiDayEvents.push(event);
         } else {
-          // Check if event overlaps with this day
-          if (eventStart < dayEnd && eventEnd > day) {
-            timed.get(dayKey)?.push(event);
+          // Single all-day event
+          for (const day of days) {
+            const dayKey = format(day, 'yyyy-MM-dd');
+            const dayEnd = addDays(day, 1);
+            if (eventStart < dayEnd && eventEnd > day) {
+              singleAllDay.get(dayKey)?.push(event);
+            }
+          }
+        }
+      } else {
+        // Check if timed event spans multiple days
+        const spanDays = differenceInCalendarDays(eventEnd, eventStart);
+        if (spanDays >= 1) {
+          multiDayEvents.push(event);
+        } else {
+          for (const day of days) {
+            const dayKey = format(day, 'yyyy-MM-dd');
+            const dayEnd = addDays(day, 1);
+            if (eventStart < dayEnd && eventEnd > day) {
+              timed.get(dayKey)?.push(event);
+            }
           }
         }
       }
     }
 
-    return { allDayByDay: allDay, timedByDay: timed };
+    // Build multi-day spans with lane assignments
+    const spans: MultiDaySpan[] = [];
+    // Sort by start date, then by duration (longer first)
+    const sorted = [...multiDayEvents].sort((a, b) => {
+      const cmp = a.start.localeCompare(b.start);
+      if (cmp !== 0) return cmp;
+      return differenceInCalendarDays(parseISO(b.end), parseISO(b.start))
+        - differenceInCalendarDays(parseISO(a.end), parseISO(a.start));
+    });
+
+    // Track which lanes are occupied at each column
+    const laneCols: Map<number, Set<number>> = new Map();
+
+    for (const event of sorted) {
+      const eventStart = parseISO(event.start);
+      const eventEnd = parseISO(event.end);
+
+      // Clamp to visible week
+      const visStart = eventStart < days[0] ? days[0] : eventStart;
+      const weekEndDate = addDays(days[6], 1);
+      const visEnd = eventEnd > weekEndDate ? weekEndDate : eventEnd;
+
+      const startCol = Math.max(0, differenceInCalendarDays(visStart, days[0]));
+      const endCol = Math.min(7, differenceInCalendarDays(visEnd, days[0]));
+      const span = endCol - startCol;
+
+      if (span <= 0) continue;
+
+      // Find first available lane
+      let lane = 0;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        let conflict = false;
+        for (let c = startCol; c < startCol + span; c++) {
+          if (laneCols.get(lane)?.has(c)) {
+            conflict = true;
+            break;
+          }
+        }
+        if (!conflict) break;
+        lane++;
+      }
+
+      // Reserve the lane
+      if (!laneCols.has(lane)) laneCols.set(lane, new Set());
+      for (let c = startCol; c < startCol + span; c++) {
+        laneCols.get(lane)!.add(c);
+      }
+
+      spans.push({ event, startCol, span, lane });
+    }
+
+    const maxLane = spans.length > 0 ? Math.max(...spans.map(s => s.lane)) + 1 : 0;
+
+    return {
+      multiDaySpans: spans,
+      singleAllDayByDay: singleAllDay,
+      timedByDay: timed,
+      allDayLaneCount: maxLane,
+    };
   }, [days, visibleEvents]);
 
   const hasAnyAllDay = useMemo(() => {
-    for (const evts of allDayByDay.values()) {
+    if (multiDaySpans.length > 0) return true;
+    for (const evts of singleAllDayByDay.values()) {
       if (evts.length > 0) return true;
     }
     return false;
-  }, [allDayByDay]);
+  }, [multiDaySpans, singleAllDayByDay]);
 
   // Scroll to current hour on mount
   useEffect(() => {
@@ -123,6 +216,34 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
     return (h - START_HOUR) * 72;
   }, []);
 
+  // --- Drag handlers ---
+  const handleDragStart = useCallback((event: CalendarEvent, e: React.DragEvent) => {
+    setDragEvent(event);
+    e.dataTransfer.effectAllowed = 'move';
+    // Set minimal drag image data
+    e.dataTransfer.setData('text/plain', event.id);
+  }, []);
+
+  const handleDragOver = useCallback((date: string, hour: number, e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragGhost({ date, hour });
+  }, []);
+
+  const handleDrop = useCallback((date: string, hour: number, e: React.DragEvent) => {
+    e.preventDefault();
+    if (dragEvent && onEventReschedule) {
+      onEventReschedule(dragEvent, date, hour);
+    }
+    setDragEvent(null);
+    setDragGhost(null);
+  }, [dragEvent, onEventReschedule]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragEvent(null);
+    setDragGhost(null);
+  }, []);
+
   return (
     <div className="week-calendar">
       {/* Column Headers */}
@@ -142,30 +263,66 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
         })}
       </div>
 
-      {/* All-day events row */}
+      {/* All-day events area (includes multi-day spanning bars) */}
       {hasAnyAllDay && (
-        <div className="week-allday-row">
-          <div className="week-allday-label">All day</div>
-          {days.map((day) => {
-            const key = format(day, 'yyyy-MM-dd');
-            const dayAllDay = allDayByDay.get(key) || [];
-            const isToday = isSameDay(day, today);
-            return (
+        <div className="week-allday-section">
+          {/* Multi-day spanning bars (absolutely positioned over day columns) */}
+          {multiDaySpans.length > 0 && (
+            <div className="week-allday-multiday-wrapper">
+              <div className="week-allday-multiday-spacer" />
               <div
-                key={key}
-                className={`week-allday-cell ${isToday ? 'week-allday-cell--today' : ''}`}
+                className="week-allday-spans"
+                style={{ height: `${allDayLaneCount * 26 + 4}px` }}
               >
-                {dayAllDay.map((event) => (
-                  <EventBlock
-                    key={`${event.id}-${key}`}
-                    event={event}
-                    onClick={onEventClick}
-                    allDay
-                  />
+                {multiDaySpans.map((mds) => (
+                  <button
+                    key={`multiday-${mds.event.id}`}
+                    className="event-block event-block--multiday"
+                    style={{
+                      left: `calc(${(mds.startCol / 7) * 100}% + 2px)`,
+                      width: `calc(${(mds.span / 7) * 100}% - 4px)`,
+                      top: `${mds.lane * 26 + 2}px`,
+                    }}
+                    onClick={() => onEventClick(mds.event)}
+                    type="button"
+                    title={mds.event.title}
+                  >
+                    <EventBlock
+                      event={mds.event}
+                      onClick={onEventClick}
+                      allDay
+                      multiDay
+                    />
+                  </button>
                 ))}
               </div>
-            );
-          })}
+            </div>
+          )}
+
+          {/* Single all-day events row */}
+          <div className="week-allday-row">
+            <div className="week-allday-label">All day</div>
+            {days.map((day) => {
+              const key = format(day, 'yyyy-MM-dd');
+              const dayAllDay = singleAllDayByDay.get(key) || [];
+              const isToday = isSameDay(day, today);
+              return (
+                <div
+                  key={key}
+                  className={`week-allday-cell ${isToday ? 'week-allday-cell--today' : ''}`}
+                >
+                  {dayAllDay.map((event) => (
+                    <EventBlock
+                      key={`${event.id}-${key}`}
+                      event={event}
+                      onClick={onEventClick}
+                      allDay
+                    />
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -198,17 +355,28 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                   gridRow: `1 / ${HOURS.length + 1}`,
                 }}
               >
-                {/* Hour cells (for grid lines and click targets) */}
-                {HOURS.map((hour) => (
-                  <div key={`cell-${hour}`} className="week-hour-cell">
-                    <button
-                      className="week-hour-cell-btn"
-                      type="button"
-                      onClick={() => onSlotClick(key, hour)}
-                      aria-label={`Add event on ${format(day, 'EEEE')} at ${formatHour(hour)}`}
-                    />
-                  </div>
-                ))}
+                {/* Hour cells (for grid lines, click targets, and drop targets) */}
+                {HOURS.map((hour) => {
+                  const isGhostTarget = dragGhost?.date === key && dragGhost?.hour === hour;
+                  return (
+                    <div key={`cell-${hour}`} className="week-hour-cell">
+                      <button
+                        className={`week-hour-cell-btn ${isGhostTarget ? 'week-hour-cell-btn--drop-target' : ''}`}
+                        type="button"
+                        onClick={() => onSlotClick(key, hour)}
+                        onDragOver={(e) => handleDragOver(key, hour, e)}
+                        onDrop={(e) => handleDrop(key, hour, e)}
+                        aria-label={`Add event on ${format(day, 'EEEE')} at ${formatHour(hour)}`}
+                      />
+                      {/* Ghost preview */}
+                      {isGhostTarget && dragEvent && (
+                        <div className="drag-ghost-preview">
+                          <span className="drag-ghost-title">{dragEvent.title}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
 
                 {/* Events positioned absolutely */}
                 {dayEvents.map((event) => (
@@ -217,6 +385,9 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                     event={event}
                     onClick={onEventClick}
                     style={getEventStyle(event)}
+                    draggable
+                    onDragStart={(e) => handleDragStart(event, e)}
+                    onDragEnd={handleDragEnd}
                   />
                 ))}
 

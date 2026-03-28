@@ -197,6 +197,7 @@ export class HomeAssistantClient {
     start_date?: string;
     end_date?: string;
     description?: string;
+    rrule?: string;
   }): Promise<void> {
     await this.sendMessage({
       type: 'call_service',
@@ -204,6 +205,23 @@ export class HomeAssistantClient {
       service: 'create_event',
       target: { entity_id: calendarId },
       service_data: event,
+    });
+  }
+
+  async updateEvent(calendarId: string, uid: string, event: {
+    summary?: string;
+    start_date_time?: string;
+    end_date_time?: string;
+    start_date?: string;
+    end_date?: string;
+    description?: string;
+  }): Promise<void> {
+    await this.sendMessage({
+      type: 'call_service',
+      domain: 'calendar',
+      service: 'update_event',
+      target: { entity_id: calendarId },
+      service_data: { uid, ...event },
     });
   }
 

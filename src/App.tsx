@@ -18,9 +18,13 @@ import { MusicView } from './components/MusicView';
 import { PhotoFrame } from './components/PhotoFrame';
 import { NowPlayingBar } from './components/NowPlayingBar';
 import { useMusic } from './hooks/useMusic';
+import { useNotifications } from './hooks/useNotifications';
+import { ScreenSaver } from './components/ScreenSaver';
+import { Timer } from './components/Timer';
 import { CalendarEvent } from './types';
+import { getConfig } from './config';
 
-const FAMILY_NAME = import.meta.env.VITE_FAMILY_NAME || 'Sachs Family';
+const { family_name: FAMILY_NAME } = getConfig();
 
 export function App() {
   const { client, connected } = useHomeAssistant();
@@ -30,6 +34,7 @@ export function App() {
     fetchCalendars,
     fetchEvents,
     createEvent,
+    updateEvent,
     deleteEvent,
   } = useCalendarEvents(client);
 
@@ -56,6 +61,10 @@ export function App() {
   const [prefillTime, setPrefillTime] = useState<string | null>(null);
   const [showFamilyManager, setShowFamilyManager] = useState(false);
   const [activeView, setActiveView] = useState<SidebarView>('dashboard');
+  const [showTimer, setShowTimer] = useState(false);
+
+  // Event notifications (browser + HA mobile_app)
+  useNotifications(events, client);
 
   // Chores and leaderboard are now slide-over panels triggered from sidebar
   const showChoresPanel = activeView === 'chores';
@@ -130,6 +139,14 @@ export function App() {
             description: data.description || undefined,
           };
 
+      // Build rrule if recurrence is set
+      if (data.recurrence && data.recurrence !== 'none') {
+        const freqMap = { daily: 'DAILY', weekly: 'WEEKLY', monthly: 'MONTHLY' } as const;
+        const freq = freqMap[data.recurrence];
+        const until = data.recurrenceEnd.replace(/-/g, '') + 'T235959Z';
+        (eventData as Record<string, unknown>).rrule = `FREQ=${freq};UNTIL=${until}`;
+      }
+
       await createEvent(calendarId, eventData);
 
       const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
@@ -155,6 +172,38 @@ export function App() {
       console.error('Failed to delete event:', err);
     }
   }, [deleteEvent, fetchEvents, handleCloseModal]);
+
+  const handleEventReschedule = useCallback(async (event: CalendarEvent, newDate: string, newHour: number) => {
+    try {
+      const oldStart = new Date(event.start);
+      const oldEnd = new Date(event.end);
+      const durationMs = oldEnd.getTime() - oldStart.getTime();
+
+      if (event.allDay) {
+        // For all-day events, move to the new date
+        const newEndDate = new Date(new Date(newDate).getTime() + durationMs);
+        await updateEvent(event.calendarId, event.id, {
+          start_date: newDate,
+          end_date: format(newEndDate, 'yyyy-MM-dd'),
+        });
+      } else {
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const newStartDt = `${newDate}T${pad(newHour)}:00:00`;
+        const newEndTime = new Date(new Date(newStartDt).getTime() + durationMs);
+        const newEndDt = `${format(newEndTime, 'yyyy-MM-dd')}T${pad(newEndTime.getHours())}:${pad(newEndTime.getMinutes())}:00`;
+        await updateEvent(event.calendarId, event.id, {
+          start_date_time: newStartDt,
+          end_date_time: newEndDt,
+        });
+      }
+
+      const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
+      const weekEnd = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
+      await fetchEvents(weekStart.toISOString(), weekEnd.toISOString());
+    } catch (err) {
+      console.error('Failed to reschedule event:', err);
+    }
+  }, [updateEvent, fetchEvents]);
 
   const handleAddEvent = useCallback(() => {
     setSelectedEvent(null);
@@ -202,6 +251,8 @@ export function App() {
         activeView={activeView}
         onChangeView={handleChangeView}
         onOpenSettings={() => setShowFamilyManager(true)}
+        onToggleTimer={() => setShowTimer((prev) => !prev)}
+        timerOpen={showTimer}
       />
 
       {/* Main content area */}
@@ -272,6 +323,7 @@ export function App() {
                 hiddenCalendars={hiddenCalendars}
                 onEventClick={handleEventClick}
                 onSlotClick={handleSlotClick}
+                onEventReschedule={handleEventReschedule}
               />
             </div>
 
@@ -350,6 +402,32 @@ export function App() {
           onExpand={() => setActiveView('music')}
         />
       )}
+
+      {/* Timer Slide Panel */}
+      <div className={`timer-panel ${showTimer ? 'timer-panel--open' : ''}`}>
+        <div className="timer-panel-header">
+          <span className="timer-panel-title">Timer</span>
+          <button
+            type="button"
+            className="timer-panel-close"
+            onClick={() => setShowTimer(false)}
+          >
+            &times;
+          </button>
+        </div>
+        <div className="timer-panel-body">
+          <Timer />
+        </div>
+      </div>
+      {showTimer && (
+        <div
+          className="slide-panel-backdrop"
+          onClick={() => setShowTimer(false)}
+        />
+      )}
+
+      {/* Screen saver / dim mode */}
+      <ScreenSaver />
 
       {/* Demo indicator */}
       {!connected && (

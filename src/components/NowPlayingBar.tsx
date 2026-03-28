@@ -7,6 +7,7 @@ import {
   VolumeX,
 } from 'lucide-react';
 import { MediaPlayer } from '../types/music';
+import { getConfig } from '../config';
 
 interface NowPlayingBarProps {
   player: MediaPlayer | null;
@@ -32,7 +33,7 @@ export function NowPlayingBar({
   }
 
   const isPlaying = player.state === 'playing';
-  const haUrl = (import.meta.env.VITE_HA_URL || '').replace(/\/$/, '');
+  const haUrl = getConfig().ha_url.replace(/\/$/, '');
   const artSrc = player.entity_picture
     ? (player.entity_picture.startsWith('http')
       ? player.entity_picture
