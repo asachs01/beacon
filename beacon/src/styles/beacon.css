@@ -209,6 +209,13 @@ input, select, textarea {
 .filter-bar {
   padding: 8px 16px 0;
   flex-shrink: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.filter-bar::-webkit-scrollbar {
+  display: none;
 }
 
 
@@ -272,18 +279,21 @@ input, select, textarea {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: nowrap;
 }
 
 .filter-pill {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: var(--radius-pill);
   background: var(--bg-primary);
   border: 1px solid var(--border);
   transition: all var(--transition);
   min-height: 36px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .filter-pill:hover {

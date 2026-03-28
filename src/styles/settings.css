@@ -436,6 +436,10 @@
   color: var(--text-primary);
   cursor: pointer;
   transition: all var(--transition);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .settings-btn:hover {
