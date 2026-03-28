@@ -281,6 +281,36 @@ export class HomeAssistantClient {
     this.subscriptions.clear();
   }
 
+  async getStates(): Promise<Array<{
+    entity_id: string;
+    state: string;
+    attributes: Record<string, unknown>;
+  }>> {
+    return this.sendMessage({ type: 'get_states' }) as Promise<Array<{
+      entity_id: string;
+      state: string;
+      attributes: Record<string, unknown>;
+    }>>;
+  }
+
+  async callService(domain: string, service: string, entityId: string, data?: Record<string, unknown>): Promise<unknown> {
+    return this.sendMessage({
+      type: 'call_service',
+      domain,
+      service,
+      target: { entity_id: entityId },
+      service_data: data || {},
+    });
+  }
+
+  async subscribeStateChanges(handler: MessageHandler): Promise<number> {
+    return this.subscribeEvents('state_changed', handler);
+  }
+
+  unsubscribe(subscriptionId: number): void {
+    this.subscriptions.delete(subscriptionId);
+  }
+
   get isConnected(): boolean {
     return this.authenticated;
   }

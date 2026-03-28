@@ -1,14 +1,17 @@
 import {
+  LayoutDashboard,
   Calendar,
   ListChecks,
   ShoppingCart,
   Trophy,
+  Music,
+  Image,
   Settings,
 } from 'lucide-react';
 import beaconIcon from '../assets/beacon-icon.svg';
 import { ThemeSelector } from './ThemeSelector';
 
-export type SidebarView = 'calendar' | 'chores' | 'grocery' | 'leaderboard';
+export type SidebarView = 'dashboard' | 'calendar' | 'chores' | 'grocery' | 'leaderboard' | 'music' | 'photos';
 
 interface SidebarProps {
   activeView: SidebarView;
@@ -26,10 +29,13 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+  { id: 'dashboard', icon: <LayoutDashboard size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Dashboard' },
   { id: 'calendar', icon: <Calendar size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Calendar' },
   { id: 'chores', icon: <ListChecks size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Chores' },
   { id: 'grocery', icon: <ShoppingCart size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Grocery' },
   { id: 'leaderboard', icon: <Trophy size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Leaderboard' },
+  { id: 'music', icon: <Music size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Music' },
+  { id: 'photos', icon: <Image size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Photos' },
 ];
 
 export function Sidebar({

@@ -1,16 +1,23 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { startOfWeek, endOfWeek, addDays, format } from 'date-fns';
 import { useHomeAssistant } from './hooks/useHomeAssistant';
 import { useCalendarEvents } from './hooks/useCalendarEvents';
 import { useFamily } from './hooks/useFamily';
+import { useWeather } from './hooks/useWeather';
+import { useChores } from './hooks/useChores';
 import { Clock } from './components/Clock';
 import { WeekCalendar } from './components/WeekCalendar';
+import { DashboardView } from './components/DashboardView';
 import { EventModal, EventFormData } from './components/EventModal';
 import { FamilyFilter } from './components/FamilyFilter';
 import { FamilyManager } from './components/FamilyManager';
 import { ChoresPanel } from './components/ChoresPanel';
 import { Leaderboard } from './components/Leaderboard';
 import { Sidebar, SidebarView } from './components/Sidebar';
+import { MusicView } from './components/MusicView';
+import { PhotoFrame } from './components/PhotoFrame';
+import { NowPlayingBar } from './components/NowPlayingBar';
+import { useMusic } from './hooks/useMusic';
 import { CalendarEvent } from './types';
 
 const FAMILY_NAME = import.meta.env.VITE_FAMILY_NAME || 'Sachs Family';
@@ -33,13 +40,22 @@ export function App() {
     removeMember,
   } = useFamily(client);
 
+  const { weather } = useWeather(client);
+  const music = useMusic(client, connected);
+  const {
+    chores,
+    completionsToday,
+    completeChore,
+    uncompleteChore,
+  } = useChores(client);
+
   const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [prefillTime, setPrefillTime] = useState<string | null>(null);
   const [showFamilyManager, setShowFamilyManager] = useState(false);
-  const [activeView, setActiveView] = useState<SidebarView>('calendar');
+  const [activeView, setActiveView] = useState<SidebarView>('dashboard');
 
   // Chores and leaderboard are now slide-over panels triggered from sidebar
   const showChoresPanel = activeView === 'chores';
@@ -152,8 +168,32 @@ export function App() {
   }, []);
 
   const handleClosePanel = useCallback(() => {
-    setActiveView('calendar');
+    setActiveView('dashboard');
   }, []);
+
+  // Build a set of chore IDs completed today (for the dashboard checklist).
+  // We use the first member for now; a member-picker could be added later.
+  const firstMemberId = members.length > 0 ? members[0].id : '__none__';
+  const completedChoreIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const c of completionsToday) {
+      if (c.member_id === firstMemberId) {
+        ids.add(c.chore_id);
+      }
+    }
+    return ids;
+  }, [completionsToday, firstMemberId]);
+
+  const handleToggleChore = useCallback(
+    (choreId: string) => {
+      if (completedChoreIds.has(choreId)) {
+        uncompleteChore(choreId, firstMemberId);
+      } else {
+        completeChore(choreId, firstMemberId);
+      }
+    },
+    [completedChoreIds, completeChore, uncompleteChore, firstMemberId]
+  );
 
   return (
     <div className="beacon">
@@ -166,52 +206,86 @@ export function App() {
 
       {/* Main content area */}
       <div className="beacon-main">
-        {/* Header */}
-        <header className="beacon-header">
-          <div className="header-left">
-            <span className="header-family-name">{FAMILY_NAME}</span>
-            <span className="header-separator" />
-            <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
-            {!connected && (
-              <div className="connection-status">
-                <span className="connection-dot" />
-                Connecting...
-              </div>
-            )}
-          </div>
-          <div className="header-right">
-            <Clock />
-          </div>
-        </header>
-
-        {/* Family filter pills — above the calendar */}
-        <div className="filter-bar">
-          <FamilyFilter
-            calendars={calendars}
-            hiddenCalendars={hiddenCalendars}
-            onToggle={handleToggleCalendar}
-          />
-        </div>
-
-        {/* Calendar Body */}
-        <div className="beacon-body">
-          <WeekCalendar
+        {activeView === 'dashboard' ? (
+          <DashboardView
             events={events}
-            hiddenCalendars={hiddenCalendars}
-            onEventClick={handleEventClick}
-            onSlotClick={handleSlotClick}
+            weather={weather}
+            chores={chores}
+            completedChoreIds={completedChoreIds}
+            onToggleChore={handleToggleChore}
           />
-        </div>
+        ) : activeView === 'music' ? (
+          <MusicView
+            activePlayer={music.activePlayer}
+            players={music.players}
+            selectedPlayerId={music.selectedPlayerId}
+            onPlay={music.play}
+            onPause={music.pause}
+            onNext={music.next}
+            onPrevious={music.previous}
+            onSetVolume={music.setVolume}
+            onSelectPlayer={music.selectPlayer}
+          />
+        ) : activeView === 'photos' ? (
+          <PhotoFrame
+            musicPlayer={music.activePlayer}
+            onMusicPlay={() => music.activePlayer && music.play(music.activePlayer.entity_id)}
+            onMusicPause={() => music.activePlayer && music.pause(music.activePlayer.entity_id)}
+            onMusicNext={() => music.activePlayer && music.next(music.activePlayer.entity_id)}
+            onMusicPrevious={() => music.activePlayer && music.previous(music.activePlayer.entity_id)}
+            onMusicSetVolume={(v) => music.activePlayer && music.setVolume(v, music.activePlayer.entity_id)}
+            onBack={() => setActiveView('dashboard')}
+          />
+        ) : (
+          <>
+            {/* Header */}
+            <header className="beacon-header">
+              <div className="header-left">
+                <span className="header-family-name">{FAMILY_NAME}</span>
+                <span className="header-separator" />
+                <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
+                {!connected && (
+                  <div className="connection-status">
+                    <span className="connection-dot" />
+                    Connecting...
+                  </div>
+                )}
+              </div>
+              <div className="header-right">
+                <Clock />
+              </div>
+            </header>
 
-        {/* FAB */}
-        <button
-          type="button"
-          className="btn--fab"
-          onClick={handleAddEvent}
-          aria-label="Add event"
-        >
-          +
-        </button>
+            {/* Family filter pills — above the calendar */}
+            <div className="filter-bar">
+              <FamilyFilter
+                calendars={calendars}
+                hiddenCalendars={hiddenCalendars}
+                onToggle={handleToggleCalendar}
+              />
+            </div>
+
+            {/* Calendar Body */}
+            <div className="beacon-body">
+              <WeekCalendar
+                events={events}
+                hiddenCalendars={hiddenCalendars}
+                onEventClick={handleEventClick}
+                onSlotClick={handleSlotClick}
+              />
+            </div>
+
+            {/* FAB */}
+            <button
+              type="button"
+              className="btn--fab"
+              onClick={handleAddEvent}
+              aria-label="Add event"
+            >
+              +
+            </button>
+          </>
+        )}
       </div>
 
       {/* Event Modal */}
@@ -261,6 +335,19 @@ export function App() {
         <div
           className="slide-panel-backdrop"
           onClick={handleClosePanel}
+        />
+      )}
+
+      {/* Now Playing Bar — shows when music is playing, hidden in photo/music views */}
+      {activeView !== 'music' && activeView !== 'photos' && music.activePlayer?.state === 'playing' && (
+        <NowPlayingBar
+          player={music.activePlayer}
+          onPlay={() => music.play(music.activePlayer!.entity_id)}
+          onPause={() => music.pause(music.activePlayer!.entity_id)}
+          onNext={() => music.next(music.activePlayer!.entity_id)}
+          onPrevious={() => music.previous(music.activePlayer!.entity_id)}
+          onSetVolume={(v) => music.setVolume(v, music.activePlayer!.entity_id)}
+          onExpand={() => setActiveView('music')}
         />
       )}
 
