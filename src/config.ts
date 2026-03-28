@@ -32,7 +32,7 @@ export function getConfig(): BeaconConfig {
   const runtime = window.__BEACON_CONFIG__ ?? {};
 
   cached = {
-    ha_url: runtime.ha_url || import.meta.env.VITE_HA_URL || 'http://supervisor/core',
+    ha_url: runtime.ha_url ?? import.meta.env.VITE_HA_URL ?? '',
     ha_token: runtime.ha_token || import.meta.env.VITE_HA_TOKEN || '',
     family_name: runtime.family_name || import.meta.env.VITE_FAMILY_NAME || 'My Family',
     theme: runtime.theme || import.meta.env.VITE_THEME || 'skylight',
