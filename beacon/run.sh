@@ -10,10 +10,12 @@ SUPERVISOR_TOKEN="${BEACON_HA_TOKEN:-${SUPERVISOR_TOKEN:-}}"
 if [ -f /data/options.json ]; then
   FAMILY_NAME="$(cat /data/options.json | sed -n 's/.*"family_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
   USER_HA_TOKEN="$(cat /data/options.json | sed -n 's/.*"ha_token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
-  # Prefer user-provided token over supervisor token
+  # Prefer user-provided token over supervisor token (supervisor token doesn't work browser-side)
   if [ -n "$USER_HA_TOKEN" ]; then
     SUPERVISOR_TOKEN="$USER_HA_TOKEN"
   fi
+  # If still no user token, try to use the supervisor token to create an ingress session
+  # For now, the supervisor token will at least allow internal API calls
   THEME="$(cat /data/options.json | sed -n 's/.*"theme"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
   AUTO_DARK_MODE="$(cat /data/options.json | sed -n 's/.*"auto_dark_mode"[[:space:]]*:[[:space:]]*\([a-z]*\).*/\1/p')"
   WEATHER_ENTITY="$(cat /data/options.json | sed -n 's/.*"weather_entity"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"

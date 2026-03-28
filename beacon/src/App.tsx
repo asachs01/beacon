@@ -445,8 +445,8 @@ export function App() {
       {/* Screen saver / dim mode */}
       <ScreenSaver />
 
-      {/* Demo indicator */}
-      {!connected && (
+      {/* Demo indicator — only show outside of add-on ingress */}
+      {!connected && !window.__BEACON_CONFIG__?.ha_token && (
         <div className="demo-badge">Demo Mode</div>
       )}
     </div>

@@ -1091,12 +1091,13 @@ input, select, textarea {
     left: 0;
     right: 0;
     height: var(--mobile-tab-bar-height);
-    background: var(--bg-surface);
-    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-surface, #ffffff);
+    border-top: 1px solid var(--border, #e5e5e5);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
     z-index: 90;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-around;
-    padding: 0 4px;
+    padding: 4px 4px;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
