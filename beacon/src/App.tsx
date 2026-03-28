@@ -231,8 +231,13 @@ export function App() {
     [],
   );
 
+  const previousView = useMemo(() => {
+    if (['chores', 'leaderboard', 'grocery'].includes(activeView)) return 'calendar';
+    return activeView;
+  }, [activeView]);
+
   const handleClosePanel = useCallback(() => {
-    setActiveView('dashboard');
+    setActiveView('calendar');
   }, []);
 
   // Build a set of chore IDs completed today (for the dashboard checklist).
