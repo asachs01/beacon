@@ -22,8 +22,8 @@ export function useIngressDetect() {
     function checkWidth() {
       // When HA sidebar is expanded (~256px), our iframe is narrower
       // When collapsed (~56px), we have more room
-      // If iframe width < 900px, HA sidebar is probably expanded — go compact
-      setCompact(window.innerWidth < 900);
+      // Only go compact on truly narrow viewports (phone-width)
+      setCompact(window.innerWidth < 600);
     }
 
     checkWidth();
