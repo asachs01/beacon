@@ -1,7 +1,7 @@
 ---
 title: "Themes"
 date: 2026-03-24
-description: "Explore Beacon's built-in dark and light themes, automatic switching, and how to create your own custom theme."
+description: "All 7 built-in themes with color palettes, auto dark mode, and a developer guide for creating custom themes."
 categories: ["docs"]
 tags: ["themes", "dark-mode", "customization", "design"]
 slug: "themes"
@@ -10,109 +10,300 @@ draft: false
 
 # Themes
 
-Beacon ships with two built-in themes optimized for wall-mounted displays. You can also create your own.
+Beacon ships with 7 built-in themes plus an automatic day/night switching mode. Themes are applied via CSS custom properties, making it easy to create your own.
 
 ---
 
-## Dark mode (default)
+## Changing the theme
 
-The dark theme is Beacon's default and recommended choice. It uses a deep navy background (`#0f172a`) with warm white text (`#f8fafc`) and Beacon Gold (`#f59e0b`) accents.
+### From the sidebar
 
-**Why dark mode is the default:**
+1. Click the **palette icon** at the bottom of the sidebar (below the gear icon)
+2. A dropdown appears showing all available themes with color preview dots
+3. Click a theme name to apply it immediately
+4. The selection is saved to localStorage and persists across reloads
 
-- Wall-mounted displays are part of your living space. A bright white screen glowing in the corner of a room is distracting, especially in the evening.
-- Dark backgrounds reduce power consumption on OLED and AMOLED displays.
-- The dark palette provides a calmer, more ambient feel — like a soft nightlight, not a computer monitor.
+### From the configuration
 
-### Dark mode palette
+Set the `theme` option:
+- **Add-on**: Configuration tab > `theme: "midnight"`
+- **Docker**: Environment variable in the container config
+- **Development**: `VITE_THEME=midnight` in `.env`
 
-| Role | Color |
-|------|-------|
-| Background | `#0f172a` Deep Navy |
-| Surface (cards) | `#1e293b` |
-| Borders | `#475569` |
-| Primary text | `#f8fafc` Warm White |
-| Secondary text | `#94a3b8` |
-| Accent | `#f59e0b` Beacon Gold |
-| Interactive | `#3b82f6` Soft Blue |
+The theme selector in the sidebar overrides the configuration value (since it saves to localStorage).
 
 ---
 
-## Light mode
+## All 7 themes
 
-The light theme inverts the palette for daytime readability. It uses a warm white background with deep navy text. The same Beacon Gold accent carries through for consistency.
+### 1. Skylight (default light theme)
 
-Light mode is ideal for:
-- Displays in bright, sunny rooms
-- Kitchen displays where ambient light washes out dark interfaces
-- Users who simply prefer a lighter aesthetic
+A warm, clean light theme with soft pastels. Designed for well-lit rooms and daytime use.
 
-### Light mode palette
+| Token | Color | Hex |
+|-------|-------|-----|
+| Background | Warm off-white | `#faf9f6` |
+| Surface | White | `#ffffff` |
+| Text | Near black | `#1a1a1a` |
+| Text secondary | Gray | `#6b7280` |
+| Grid lines | Light gray | `#e5e5e5` |
+| Accent | Blue | `#3b82f6` |
+| Header | White | `#ffffff` |
+| Today highlight | Blue tint | `rgba(59, 130, 246, 0.04)` |
 
-| Role | Color |
-|------|-------|
-| Background | `#f8fafc` Warm White |
-| Surface (cards) | `#ffffff` |
-| Borders | `#e2e8f0` |
-| Primary text | `#0f172a` Deep Navy |
-| Secondary text | `#475569` |
-| Accent | `#f59e0b` Beacon Gold |
-| Interactive | `#3b82f6` Soft Blue |
+**Event colors**: Soft blue, soft green, soft purple, soft orange, soft pink, soft teal
 
 ---
 
-## Auto theme switching
+### 2. Midnight (default dark theme)
 
-Set `theme: auto` in your configuration to let Beacon switch themes based on time of day:
+A deep navy dark theme with warm amber accents. The recommended theme for wall-mounted displays, especially in the evening.
 
-| Time | Theme |
-|------|-------|
-| 7:00 AM - 7:00 PM | Light mode |
-| 7:00 PM - 7:00 AM | Dark mode |
+| Token | Color | Hex |
+|-------|-------|-----|
+| Background | Deep navy | `#0f172a` |
+| Surface | Dark slate | `#1e293b` |
+| Text | Near white | `#f8fafc` |
+| Text secondary | Slate gray | `#94a3b8` |
+| Grid lines | Dark slate | `#334155` |
+| Accent | Amber/Gold | `#f59e0b` |
+| Header | Dark slate | `#1e293b` |
+| Today highlight | Amber tint | `rgba(245, 158, 11, 0.06)` |
 
-The transition happens smoothly with a 200ms fade. The schedule is fixed for now — future versions may tie this to sunrise/sunset data from your weather entity.
+**Event colors**: Bright blue, bright green, bright purple, bright orange, bright pink, bright teal
 
-```yaml
-theme: auto
+---
+
+### 3. Nord Ice
+
+Inspired by the [Nord color palette](https://www.nordtheme.com/). A cool-toned light theme with frost and aurora accents.
+
+| Token | Color | Hex |
+|-------|-------|-----|
+| Background | Snow storm | `#ECEFF4` |
+| Surface | Lighter snow | `#E5E9F0` |
+| Text | Polar night | `#2E3440` |
+| Text secondary | Dark gray | `#4C566A` |
+| Grid lines | Frost | `#D8DEE9` |
+| Accent | Frost blue | `#5E81AC` |
+| Header | Lighter snow | `#E5E9F0` |
+| Today highlight | Blue tint | `rgba(94, 129, 172, 0.08)` |
+
+**Event colors**: Frost blue, Aurora green, Aurora purple, Aurora orange, Aurora red, Frost cyan
+
+---
+
+### 4. Dracula
+
+Based on the popular [Dracula theme](https://draculatheme.com/). A purple-accented dark theme with vibrant event colors.
+
+| Token | Color | Hex |
+|-------|-------|-----|
+| Background | Dark gray | `#282A36` |
+| Surface | Medium gray | `#44475A` |
+| Text | White | `#F8F8F2` |
+| Text secondary | Blue-gray | `#6272A4` |
+| Grid lines | Medium gray | `#44475A` |
+| Accent | Purple | `#BD93F9` |
+| Header | Medium gray | `#44475A` |
+| Today highlight | Purple tint | `rgba(189, 147, 249, 0.08)` |
+
+**Event colors**: Cyan, Green, Purple, Orange, Pink, Yellow
+
+---
+
+### 5. Monokai
+
+Inspired by the [Monokai](https://monokai.pro/) color scheme. A warm dark theme with a green accent.
+
+| Token | Color | Hex |
+|-------|-------|-----|
+| Background | Dark olive | `#272822` |
+| Surface | Medium olive | `#3E3D32` |
+| Text | White | `#F8F8F2` |
+| Text secondary | Olive gray | `#75715E` |
+| Grid lines | Medium olive | `#3E3D32` |
+| Accent | Green | `#A6E22E` |
+| Header | Medium olive | `#3E3D32` |
+| Today highlight | Green tint | `rgba(166, 226, 46, 0.06)` |
+
+**Event colors**: Blue, Green, Purple, Orange, Pink/Magenta, Yellow
+
+---
+
+### 6. Rose
+
+A soft, warm light theme with pink and rose tones. Ideal for a feminine or playful aesthetic.
+
+| Token | Color | Hex |
+|-------|-------|-----|
+| Background | Pale rose | `#fff1f2` |
+| Surface | White | `#ffffff` |
+| Text | Dark brown | `#4a2c2a` |
+| Text secondary | Muted brown | `#9b7a78` |
+| Grid lines | Light rose | `#fce7e8` |
+| Accent | Rose red | `#e11d48` |
+| Header | White | `#ffffff` |
+| Today highlight | Rose tint | `rgba(225, 29, 72, 0.05)` |
+
+**Event colors**: Rose, Lavender, Peach, Pink, Sky, Lime
+
+---
+
+### 7. Forest
+
+An earthy, nature-inspired light theme with warm greens and natural tones.
+
+| Token | Color | Hex |
+|-------|-------|-----|
+| Background | Beige | `#f5f5dc` |
+| Surface | Warm white | `#fefdf5` |
+| Text | Dark olive | `#3d3929` |
+| Text secondary | Muted olive | `#7c7560` |
+| Grid lines | Sand | `#e8e4cc` |
+| Accent | Forest green | `#5f7c47` |
+| Header | Warm white | `#fefdf5` |
+| Today highlight | Green tint | `rgba(95, 124, 71, 0.06)` |
+
+**Event colors**: Sage, Olive/gold, Terracotta, Moss, Wheat, Muted teal
+
+---
+
+## Auto dark mode
+
+Select **Auto (time)** in the theme selector to let Beacon switch themes automatically based on time of day.
+
+| Time Range | Theme Used |
+|------------|------------|
+| 6:00 AM - 6:59 PM | Skylight (light) |
+| 7:00 PM - 5:59 AM | Midnight (dark) |
+
+### How it works
+
+1. On load, Beacon checks the current hour
+2. If between 6 AM and 7 PM, the Skylight theme is applied
+3. Otherwise, the Midnight theme is applied
+4. A timer re-evaluates every 60 seconds, so the switch happens automatically at the threshold hours
+5. The `data-theme` attribute on `<html>` is set to `light` or `dark` based on the background color luminance
+
+### Customizing the dark theme
+
+The dark theme used by auto mode defaults to Midnight. The auto dark theme ID is stored in localStorage under `beacon-auto-dark-theme`. You can change it by setting that key to any theme ID (e.g., `dracula`, `monokai`).
+
+---
+
+## Creating custom themes (developer guide)
+
+### Theme structure
+
+Each theme is a TypeScript object implementing the `Theme` interface:
+
+```typescript
+interface Theme {
+  id: string;
+  name: string;
+  colors: {
+    background: string;    // Main background color
+    surface: string;       // Card/panel background
+    text: string;          // Primary text color
+    textSecondary: string; // Secondary/muted text
+    gridLines: string;     // Calendar grid lines, borders
+    accent: string;        // Primary accent (buttons, highlights)
+    headerBg: string;      // Header and sidebar background
+    todayHighlight: string; // Today column background tint
+    shadow: string;        // Box shadow for cards
+  };
+  eventColors: string[];   // 6 colors for calendar events
+  fonts: {
+    display: string;       // Large text (clock, headings)
+    body: string;          // Body text
+    mono: string;          // Monospace text
+  };
+}
 ```
 
----
+### Step 1: Create the theme file
 
-## Creating a custom theme
+Create a new file at `src/styles/themes/mytheme.ts`:
 
-You can override any of Beacon's color tokens through the `custom_colors` configuration. Here's a step-by-step guide to creating a cohesive custom theme.
+```typescript
+import type { Theme } from './index';
 
-### Step 1: Choose your base colors
-
-Pick a background, a text color, and an accent. Good themes have strong contrast between background and text, with an accent that stands out without being overwhelming.
-
-```yaml
-custom_colors:
-  background: "#1a1a2e"
-  surface: "#16213e"
-  text: "#eaeaea"
-  text_secondary: "#a0a0b0"
-  accent: "#e94560"
+export const mytheme: Theme = {
+  id: 'mytheme',
+  name: 'My Theme',
+  colors: {
+    background: '#1a1a2e',
+    surface: '#16213e',
+    text: '#eaeaea',
+    textSecondary: '#a0a0b0',
+    gridLines: '#2a2a4e',
+    accent: '#e94560',
+    headerBg: '#16213e',
+    todayHighlight: 'rgba(233, 69, 96, 0.06)',
+    shadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+  },
+  eventColors: ['#4cc9f0', '#7209b7', '#f72585', '#4361ee', '#4895ef', '#560bad'],
+  fonts: {
+    display: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
+    body: "'Inter', system-ui, -apple-system, sans-serif",
+    mono: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
+  },
+};
 ```
 
-### Step 2: Test readability
+### Step 2: Register the theme
 
-Load your theme and check it from the distance you'll actually view the display. Text should be clearly readable from 6 feet (1.8 meters) away. If not, increase the contrast between background and text colors.
+Edit `src/styles/themes/index.ts`:
 
-### Step 3: Check calendar colors
+1. Add the export: `export { mytheme } from './mytheme';`
+2. Add the import: `import { mytheme } from './mytheme';`
+3. Add it to the `themes` array: `export const themes: Theme[] = [..., mytheme];`
 
-Make sure the family member calendar colors are still distinguishable against your custom background. The built-in palette (ocean, sage, lavender, coral, rose, teal) was chosen to work on both dark and light backgrounds, but very saturated custom backgrounds might cause issues.
+### Step 3: Test
 
-### Tips for good themes
+Run `npm run dev` and select your theme from the palette dropdown. Check:
 
-- **Avoid pure black** (`#000000`) backgrounds. They create harsh contrast and make OLED displays look like "holes" in the wall.
-- **Avoid pure white** (`#ffffff`) text on dark backgrounds. Use an off-white like `#f0f0f0` or `#f8fafc` for a softer look.
-- **Keep accent usage minimal.** The accent color should highlight the current time, active day, and primary actions — not fill large areas.
-- **Test in dim lighting.** Your wall display will often be viewed in a dimly lit room. Colors that look great on a bright desk monitor may wash out or glare on a wall display.
+- Text readability from 6 feet away
+- Event color contrast against the background
+- The theme in both bright and dim lighting conditions
 
 ---
 
-## Next steps
+## CSS custom properties reference
 
-- [Configuration reference](/docs/configuration/) — all settings and options
-- [FAQ](/docs/faq/) — common questions
+These CSS custom properties are set on `:root` by the theme system and used throughout all stylesheets:
+
+| Property | Maps To | Description |
+|----------|---------|-------------|
+| `--bg-primary` | `colors.background` | Main page background |
+| `--bg-surface` | `colors.surface` | Card and panel backgrounds |
+| `--bg-header` | `colors.headerBg` | Header bar background |
+| `--bg-sidebar` | `colors.headerBg` | Sidebar background |
+| `--bg-today` | `colors.todayHighlight` | Today column tint |
+| `--border` | `colors.gridLines` | Primary border color |
+| `--border-subtle` | `colors.gridLines` | Subtle border color |
+| `--text-primary` | `colors.text` | Primary text color |
+| `--text-secondary` | `colors.textSecondary` | Secondary/muted text |
+| `--grid-lines` | `colors.gridLines` | Calendar grid line color |
+| `--accent` | `colors.accent` | Accent color for buttons, links |
+| `--shadow` | `colors.shadow` | Box shadow for elevated elements |
+| `--event-1` through `--event-6` | `eventColors[0-5]` | Calendar event colors |
+| `--font-display` | `fonts.display` | Display/heading font family |
+| `--font-body` | `fonts.body` | Body text font family |
+| `--font-mono` | `fonts.mono` | Monospace font family |
+
+### data-theme attribute
+
+The `data-theme` attribute on `<html>` is automatically set to `light` or `dark` based on the perceived brightness of the background color. This allows CSS to use `[data-theme="dark"]` selectors for theme-specific styles that cannot be expressed through custom properties alone.
+
+---
+
+## Tips for good themes
+
+- **Avoid pure black** (`#000000`) backgrounds. They create harsh contrast and look like holes on OLED displays.
+- **Avoid pure white** (`#ffffff`) text on dark backgrounds. Use an off-white like `#f0f0f0` for a softer look.
+- **Keep accent usage minimal.** The accent should highlight the current time, active day, and primary actions.
+- **Test in dim lighting.** Wall displays are often viewed in dimly lit rooms.
+- **Ensure event color contrast.** All 6 event colors must be distinguishable against both the background and the calendar grid.
+- **Use the same font stack.** The default fonts (Plus Jakarta Sans, Inter, JetBrains Mono) work well at all sizes. Only change fonts if you have a specific reason.
