@@ -1,6 +1,5 @@
 import { format, parseISO } from 'date-fns';
-import { CalendarEvent } from '../types';
-import { getPastelColor, getFullColor } from '../types';
+import { CalendarEvent, getPastelColor, getFullColor } from '../types';
 
 interface EventBlockProps {
   event: CalendarEvent;

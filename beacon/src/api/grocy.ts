@@ -1,13 +1,7 @@
 import { GroceryItem, GroceryList, MealPlanEntry } from '../types/grocery';
-import { getConfig } from '../config';
+import { hasToken, getEntityState, callHaService } from './ha-rest';
 
-const config = getConfig();
-const HA_TOKEN = config.ha_token;
-function getHaUrl(): string {
-  if (config.ha_url) return config.ha_url.replace(/\/$/, '');
-  try { return window.parent.location.origin; } catch { return window.location.origin.replace(/^http:/, 'https:'); }
-}
-const HA_URL = getHaUrl();
+const EMPTY_LIST: GroceryList = { id: 'grocy', name: 'Grocy Shopping List', items: [] };
 
 /**
  * Grocy API client that works through Home Assistant's REST API.
@@ -19,69 +13,24 @@ const HA_URL = getHaUrl();
 export class GrocyClient {
   private available: boolean | null = null;
 
-  private async haFetch(path: string, options?: RequestInit): Promise<unknown> {
-    const res = await fetch(`${HA_URL}${path}`, {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${HA_TOKEN}`,
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
-    if (!res.ok) throw new Error(`HA API ${res.status}: ${res.statusText}`);
-    return res.json();
-  }
-
-  private async getState(entityId: string): Promise<{
-    entity_id: string;
-    state: string;
-    attributes: Record<string, unknown>;
-  } | null> {
-    try {
-      return await this.haFetch(`/api/states/${entityId}`) as {
-        entity_id: string;
-        state: string;
-        attributes: Record<string, unknown>;
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  private async callService(
-    domain: string,
-    service: string,
-    data?: Record<string, unknown>,
-  ): Promise<unknown> {
-    return this.haFetch(`/api/services/${domain}/${service}`, {
-      method: 'POST',
-      body: JSON.stringify(data ?? {}),
-    });
-  }
-
   private async checkAvailability(): Promise<boolean> {
     if (this.available !== null) return this.available;
 
-    try {
-      const state = await this.getState('sensor.grocy_shopping_list');
-      this.available = state !== null;
-    } catch {
-      this.available = false;
-    }
-
+    const state = await getEntityState('sensor.grocy_shopping_list');
+    this.available = state !== null;
     return this.available;
   }
 
+  private async isReady(): Promise<boolean> {
+    return hasToken() && await this.checkAvailability();
+  }
+
   async getShoppingList(): Promise<GroceryList> {
-    if (!HA_TOKEN || !(await this.checkAvailability())) {
-      return { id: 'grocy', name: 'Grocy Shopping List', items: [] };
-    }
+    if (!(await this.isReady())) return EMPTY_LIST;
 
     try {
-      const state = await this.getState('sensor.grocy_shopping_list');
-      if (!state) {
-        return { id: 'grocy', name: 'Grocy Shopping List', items: [] };
-      }
+      const state = await getEntityState('sensor.grocy_shopping_list');
+      if (!state) return EMPTY_LIST;
 
       const rawItems = (state.attributes.items ?? []) as Array<{
         id: number;
@@ -103,15 +52,15 @@ export class GrocyClient {
       return { id: 'grocy', name: 'Grocy Shopping List', items };
     } catch (err) {
       console.warn('Beacon: Failed to fetch Grocy shopping list', err);
-      return { id: 'grocy', name: 'Grocy Shopping List', items: [] };
+      return EMPTY_LIST;
     }
   }
 
   async addItem(name: string): Promise<void> {
-    if (!HA_TOKEN || !(await this.checkAvailability())) return;
+    if (!(await this.isReady())) return;
 
     try {
-      await this.callService('grocy', 'add_generic', {
+      await callHaService('grocy', 'add_generic', {
         entity_type: 'shopping_list',
         data: { note: name, amount: 1 },
       });
@@ -121,10 +70,10 @@ export class GrocyClient {
   }
 
   async checkItem(id: string): Promise<void> {
-    if (!HA_TOKEN || !(await this.checkAvailability())) return;
+    if (!(await this.isReady())) return;
 
     try {
-      await this.callService('grocy', 'execute_chore', {
+      await callHaService('grocy', 'execute_chore', {
         entity_type: 'shopping_list',
         entity_id: Number(id),
         data: { done: 1 },
@@ -135,10 +84,10 @@ export class GrocyClient {
   }
 
   async uncheckItem(id: string): Promise<void> {
-    if (!HA_TOKEN || !(await this.checkAvailability())) return;
+    if (!(await this.isReady())) return;
 
     try {
-      await this.callService('grocy', 'execute_chore', {
+      await callHaService('grocy', 'execute_chore', {
         entity_type: 'shopping_list',
         entity_id: Number(id),
         data: { done: 0 },
@@ -149,10 +98,10 @@ export class GrocyClient {
   }
 
   async getExpiringProducts(days: number): Promise<GroceryItem[]> {
-    if (!HA_TOKEN || !(await this.checkAvailability())) return [];
+    if (!(await this.isReady())) return [];
 
     try {
-      const state = await this.getState('sensor.grocy_expiring_products');
+      const state = await getEntityState('sensor.grocy_expiring_products');
       if (!state) return [];
 
       const rawProducts = (state.attributes.items ?? []) as Array<{
@@ -181,10 +130,10 @@ export class GrocyClient {
   }
 
   async getMealPlan(startDate: string, endDate: string): Promise<MealPlanEntry[]> {
-    if (!HA_TOKEN || !(await this.checkAvailability())) return [];
+    if (!(await this.isReady())) return [];
 
     try {
-      const state = await this.getState('sensor.grocy_meal_plan');
+      const state = await getEntityState('sensor.grocy_meal_plan');
       if (!state) return [];
 
       const rawMeals = (state.attributes.items ?? []) as Array<{

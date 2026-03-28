@@ -1,8 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
 import { CalendarEvent, CalendarInfo, getCalendarColor } from '../types';
-
-const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
   const [calendars, setCalendars] = useState<CalendarInfo[]>([]);
@@ -95,17 +93,6 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
     if (!client?.isConnected) return;
     await client.deleteEvent(calendarId, uid);
   }, [getClient]);
-
-  // Auto-refresh events
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (events.length > 0) {
-        // Re-fetch with the same date range the consumer set
-        // Consumer should call fetchEvents when dates change
-      }
-    }, REFRESH_INTERVAL);
-    return () => clearInterval(interval);
-  }, [events.length]);
 
   return {
     calendars,

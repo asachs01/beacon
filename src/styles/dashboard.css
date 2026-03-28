@@ -17,7 +17,7 @@
 .dashboard-left {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   height: 100%;
   padding-top: 24px;
 }
@@ -311,6 +311,15 @@
   .dashboard-left {
     height: auto;
     padding-top: 0;
+    order: 1;
+  }
+
+  .dashboard-center {
+    order: 2;
+  }
+
+  .dashboard-right {
+    order: 3;
   }
 
   .dashboard-clock {

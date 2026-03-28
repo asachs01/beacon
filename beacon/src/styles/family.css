@@ -312,23 +312,6 @@
   border-top: none;
 }
 
-/* --- Settings Button (for triggering FamilyManager) --- */
-.settings-btn {
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: var(--text-muted);
-  transition: all var(--transition);
-}
-
-.settings-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
 /* --- Chores Panel --- */
 .chores-empty {
   text-align: center;
@@ -813,6 +796,11 @@
 
 .sidebar-nav-icon {
   font-size: 1.2rem;
+}
+
+/* Adjust slide panel position for sidebar-left layout */
+.beacon--sidebar-left .slide-panel {
+  right: var(--sidebar-width);
 }
 
 /* --- Responsive: Tablet < 768px --- */

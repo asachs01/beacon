@@ -9,7 +9,7 @@
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.75);
+  background: color-mix(in srgb, var(--bg-surface) 75%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-subtle);
@@ -110,7 +110,7 @@
 }
 
 .now-playing-btn--play:hover {
-  background: #2563eb;
+  opacity: 0.9;
 }
 
 .now-playing-volume {

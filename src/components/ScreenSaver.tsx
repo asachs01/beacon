@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
-import '../styles/screensaver.css';
 
 const DIM_AFTER_MS = 5 * 60 * 1000;        // 5 minutes
 const SCREENSAVER_AFTER_MS = 10 * 60 * 1000; // 10 minutes

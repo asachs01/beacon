@@ -99,6 +99,22 @@ input, select, textarea {
   font-size: inherit;
 }
 
+/* Global focus-visible styles for keyboard accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Remove outline for mouse/touch */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* --- Sidebar width variable --- */
 :root {
   --sidebar-width: 64px;
@@ -108,13 +124,55 @@ input, select, textarea {
 .beacon {
   height: 100vh;
   display: grid;
-  grid-template-columns: 1fr var(--sidebar-width);
   overflow: hidden;
   background: var(--bg-primary);
 }
 
-.beacon-main {
+/* Sidebar LEFT (default) */
+.beacon--sidebar-left {
+  grid-template-columns: var(--sidebar-width) 1fr;
+}
+
+.beacon--sidebar-left .beacon-main {
+  grid-column: 2;
+}
+
+.beacon--sidebar-left .sidebar {
   grid-column: 1;
+  border-right: 1px solid var(--border-subtle);
+  border-left: none;
+}
+
+/* Sidebar RIGHT */
+.beacon--sidebar-right {
+  grid-template-columns: 1fr var(--sidebar-width);
+}
+
+.beacon--sidebar-right .beacon-main {
+  grid-column: 1;
+}
+
+.beacon--sidebar-right .sidebar {
+  grid-column: 2;
+  border-left: 1px solid var(--border-subtle);
+  border-right: none;
+}
+
+/* Sidebar BOTTOM */
+.beacon--sidebar-bottom {
+  grid-template-columns: 1fr;
+  padding-bottom: var(--mobile-tab-bar-height, 72px);
+}
+
+.beacon--sidebar-bottom .beacon-main {
+  grid-column: 1;
+}
+
+.beacon--sidebar-bottom .mobile-tab-bar {
+  display: flex;
+}
+
+.beacon-main {
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -124,12 +182,10 @@ input, select, textarea {
 /* --- Sidebar --- */
 .sidebar {
   grid-row: 1 / -1;
-  grid-column: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   background: var(--bg-sidebar, #f0eeeb);
-  border-left: 1px solid var(--border-subtle);
   padding: 12px 0;
   height: 100vh;
   z-index: 15;
@@ -197,12 +253,23 @@ input, select, textarea {
 .sidebar-icon--active::before {
   content: '';
   position: absolute;
-  left: -8px;
   top: 8px;
   bottom: 8px;
   width: 3px;
-  border-radius: 0 3px 3px 0;
   background: var(--color-blue-full);
+}
+
+/* Active indicator on the correct edge based on sidebar position */
+.beacon--sidebar-left .sidebar-icon--active::before {
+  right: -8px;
+  left: auto;
+  border-radius: 3px 0 0 3px;
+}
+
+.beacon--sidebar-right .sidebar-icon--active::before {
+  left: -8px;
+  right: auto;
+  border-radius: 0 3px 3px 0;
 }
 
 /* --- Filter Bar (above calendar) --- */
@@ -510,7 +577,7 @@ input, select, textarea {
   left: 0;
   right: 0;
   top: 50%;
-  border-bottom: 1px dashed #f0efec;
+  border-bottom: 1px dashed var(--border-subtle);
 }
 
 /* Clickable empty hour cell */
@@ -733,6 +800,19 @@ input, select, textarea {
 .btn--fab {
   position: absolute;
   bottom: 24px;
+}
+
+/* FAB position depends on sidebar side -- default right */
+.beacon--sidebar-left .btn--fab,
+.beacon--sidebar-bottom .btn--fab {
+  right: 24px;
+}
+
+.beacon--sidebar-right .btn--fab {
+  right: 24px;
+}
+
+.btn--fab {
   right: 24px;
   width: 56px;
   height: 56px;
@@ -1086,8 +1166,12 @@ input, select, textarea {
 
   /* --- Layout: remove sidebar column, add bottom padding for tab bar --- */
   .beacon {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     padding-bottom: var(--mobile-tab-bar-height);
+  }
+
+  .beacon .beacon-main {
+    grid-column: 1;
   }
 
   /* Desktop sidebar visibility controlled by inline style in component */
@@ -1172,13 +1256,19 @@ input, select, textarea {
   }
 
   .mobile-more-close {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     color: var(--text-muted);
+    transition: all var(--transition);
+  }
+
+  .mobile-more-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
   }
 
   .mobile-more-item {
@@ -1501,12 +1591,18 @@ input, select, textarea {
 }
 
 /* --- HA Ingress mode --- */
-/* --- HA Ingress mode --- */
 /* Beacon sidebar should show alongside HA's sidebar.
    The ingress iframe already gets the space after HA's sidebar,
    so Beacon's sidebar just needs to be slightly narrower. */
 .beacon--ingress {
   --sidebar-width: 52px;
+}
+
+.beacon--ingress.beacon--sidebar-left {
+  grid-template-columns: 52px 1fr;
+}
+
+.beacon--ingress.beacon--sidebar-right {
   grid-template-columns: 1fr 52px;
 }
 
@@ -1514,7 +1610,7 @@ input, select, textarea {
 /* compact sidebar hiding is handled via inline style in component */
 
 .beacon--compact {
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr !important;
   --sidebar-width: 0px;
   padding-bottom: var(--mobile-tab-bar-height, 72px);
 }

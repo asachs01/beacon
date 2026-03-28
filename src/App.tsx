@@ -226,9 +226,10 @@ export function App() {
     setShowModal(true);
   }, []);
 
-  const handleChangeView = useCallback((view: SidebarView) => {
-    setActiveView(view);
-  }, []);
+  const handleChangeView = useCallback(
+    (view: SidebarView) => setActiveView(view),
+    [],
+  );
 
   const handleClosePanel = useCallback(() => {
     setActiveView('dashboard');
@@ -258,12 +259,15 @@ export function App() {
     [completedChoreIds, completeChore, uncompleteChore, firstMemberId]
   );
 
+  const sidebarPos = settings.sidebarPosition || 'left';
+
   return (
-    <div className={`beacon ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
-      {/* Left Sidebar */}
+    <div className={`beacon beacon--sidebar-${sidebarPos} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
+      {/* Sidebar */}
       <Sidebar
         activeView={activeView}
         onChangeView={handleChangeView}
+        position={sidebarPos}
       />
 
       {/* Main content area */}
@@ -384,8 +388,6 @@ export function App() {
           prefillTime={prefillTime}
         />
       )}
-
-      {/* (FamilyManager is now embedded in SettingsView) */}
 
       {/* Chores Slide Panel */}
       <ChoresPanel

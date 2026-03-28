@@ -34,6 +34,11 @@
   font-weight: 600;
   color: var(--text-muted);
   transition: all var(--transition);
+  min-height: 36px;
+}
+
+.timer-mode-btn:hover {
+  color: var(--text-secondary);
 }
 
 .timer-mode-btn--active {

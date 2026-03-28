@@ -102,11 +102,7 @@ export function PhotoFrame({
   }, [showControls, setActive, scheduleHide]);
 
   const handlePauseToggle = useCallback(() => {
-    if (isActive) {
-      setActive(false);
-    } else {
-      setActive(true);
-    }
+    setActive(!isActive);
     scheduleHide();
   }, [isActive, setActive, scheduleHide]);
 

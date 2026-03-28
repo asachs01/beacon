@@ -19,6 +19,7 @@ export type SidebarView = 'dashboard' | 'calendar' | 'chores' | 'grocery' | 'lea
 interface SidebarProps {
   activeView: SidebarView;
   onChangeView: (view: SidebarView) => void;
+  position?: 'left' | 'right' | 'bottom';
 }
 
 const ICON_SIZE = 24;
@@ -47,6 +48,7 @@ const MOBILE_TAB_IDS: SidebarView[] = ['dashboard', 'calendar', 'chores', 'music
 export function Sidebar({
   activeView,
   onChangeView,
+  position = 'left',
 }: SidebarProps) {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
 
@@ -62,9 +64,9 @@ export function Sidebar({
     <>
       {/* Desktop sidebar */}
       <nav
-        className="sidebar sidebar--desktop"
+        className={`sidebar sidebar--desktop sidebar--${position}`}
         aria-label="Main navigation"
-        style={{ display: 'flex' }}
+        style={{ display: position === 'bottom' ? 'none' : 'flex' }}
       >
         {/* Beacon logo */}
         <div className="sidebar-logo">

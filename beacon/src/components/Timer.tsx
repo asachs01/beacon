@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Flag, Timer as TimerIcon } from 'lucide-react';
+import { Play, Pause, RotateCcw, Flag } from 'lucide-react';
 
 const PRESETS = [
   { label: '1m', seconds: 60 },
@@ -242,23 +242,3 @@ export function Timer({ compact = false }: TimerProps) {
   );
 }
 
-/** Small icon button for the sidebar */
-export function TimerSidebarIcon({
-  onClick,
-  active,
-}: {
-  onClick: () => void;
-  active: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      className={`sidebar-icon ${active ? 'sidebar-icon--active' : ''}`}
-      onClick={onClick}
-      title="Timer"
-      aria-label="Timer"
-    >
-      <TimerIcon size={24} strokeWidth={1.5} />
-    </button>
-  );
-}

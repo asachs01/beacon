@@ -462,7 +462,7 @@
 }
 
 .settings-btn--danger:hover {
-  background: #fef2f2;
+  background: rgba(239, 68, 68, 0.06);
 }
 
 .settings-btn-group {
@@ -570,7 +570,7 @@
 }
 
 .settings-fm-btn--danger:hover {
-  background: #fef2f2;
+  background: rgba(239, 68, 68, 0.06);
   color: #ef4444;
 }
 

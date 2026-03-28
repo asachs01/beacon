@@ -10,7 +10,7 @@
   left: 0;
   right: 0;
   z-index: 80;
-  background: #fefefe;
+  background: var(--bg-surface);
   border-radius: 16px 16px 0 0;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08), 0 -1px 4px rgba(0, 0, 0, 0.04);
   transform: translateY(calc(100% - 52px));
@@ -18,8 +18,8 @@
   max-height: 45vh;
   display: flex;
   flex-direction: column;
-  color: #1e293b;
-  font-family: var(--font);
+  color: var(--text-primary);
+  font-family: var(--font-body);
 }
 
 .grocery-drawer--expanded {
@@ -48,7 +48,7 @@
   width: 36px;
   height: 4px;
   border-radius: 2px;
-  background: #cbd5e1;
+  background: var(--border);
 }
 
 .grocery-drawer-handle-label {
@@ -57,11 +57,11 @@
   gap: 8px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-secondary);
 }
 
 .grocery-drawer-badge {
-  background: #3b82f6;
+  background: var(--accent);
   color: white;
   font-size: 0.7rem;
   font-weight: 700;
@@ -77,7 +77,7 @@
 .grocery-drawer-source {
   font-size: 0.7rem;
   font-weight: 400;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 /* Content */
@@ -99,19 +99,19 @@
   margin-bottom: 12px;
   position: sticky;
   top: 0;
-  background: #fefefe;
+  background: var(--bg-surface);
   padding: 4px 0 8px;
   z-index: 1;
 }
 
 .grocery-drawer-input {
   flex: 1;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--border);
   border-radius: 12px;
   padding: 10px 14px;
   font-size: 0.95rem;
-  background: #f8fafc;
-  color: #1e293b;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   min-height: 44px;
   outline: none;
   transition: border-color 200ms ease;
@@ -119,15 +119,15 @@
 }
 
 .grocery-drawer-input:focus {
-  border-color: #3b82f6;
+  border-color: var(--accent);
 }
 
 .grocery-drawer-input::placeholder {
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .grocery-drawer-add-btn {
-  background: #3b82f6;
+  background: var(--accent);
   color: white;
   border: none;
   border-radius: 12px;
@@ -141,11 +141,11 @@
 }
 
 .grocery-drawer-add-btn:hover {
-  background: #2563eb;
+  opacity: 0.9;
 }
 
 .grocery-drawer-add-btn:disabled {
-  background: #cbd5e1;
+  background: var(--border);
   cursor: default;
 }
 
@@ -205,18 +205,18 @@
 }
 
 .grocery-item:hover {
-  background: #f1f5f9;
+  background: var(--bg-hover);
 }
 
 .grocery-item:active {
-  background: #e2e8f0;
+  background: var(--bg-hover);
 }
 
 .grocery-item-checkbox {
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  border: 2px solid #cbd5e1;
+  border: 2px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -226,41 +226,41 @@
 }
 
 .grocery-item--checked .grocery-item-checkbox {
-  background: #22c55e;
-  border-color: #22c55e;
+  background: var(--color-green-full);
+  border-color: var(--color-green-full);
 }
 
 .grocery-item-name {
   flex: 1;
   font-size: 0.95rem;
-  color: #1e293b;
+  color: var(--text-primary);
   transition: all 200ms ease;
 }
 
 .grocery-item--checked .grocery-item-name {
   text-decoration: line-through;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .grocery-item-qty {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #64748b;
-  background: #f1f5f9;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
   padding: 2px 8px;
   border-radius: 8px;
 }
 
 .grocery-item-category {
   font-size: 0.7rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 /* Empty / loading states */
 .grocery-drawer-empty {
   text-align: center;
   padding: 24px 16px;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -268,22 +268,22 @@
 .grocery-drawer-loading {
   text-align: center;
   padding: 20px;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
 
 /* --- Meal Plan Bar --- */
 .meal-plan-bar {
-  background: #fefefe;
-  border-bottom: 1px solid #f1f5f9;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  font-family: var(--font);
-  color: #1e293b;
+  font-family: var(--font-body);
+  color: var(--text-primary);
   z-index: 60;
 }
 
 .meal-plan-bar--collapsed {
-  background: #fefefe;
+  background: var(--bg-surface);
   border: none;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   cursor: pointer;
@@ -293,12 +293,12 @@
   padding: 4px;
   min-height: 28px;
   width: 100%;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-family: inherit;
 }
 
 .meal-plan-bar--collapsed:hover {
-  background: #f8fafc;
+  background: var(--bg-hover);
 }
 
 .meal-plan-bar-content {
@@ -320,13 +320,13 @@
 }
 
 .meal-plan-bar-content:hover {
-  background: #f8fafc;
+  background: var(--bg-hover);
 }
 
 .meal-plan-bar-label {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   flex-shrink: 0;
@@ -335,7 +335,7 @@
 .meal-plan-bar-meals {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #1e293b;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -343,7 +343,7 @@
 
 .meal-plan-bar-notes {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   margin-left: auto;
   flex-shrink: 0;
 }
@@ -352,6 +352,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Adjust grocery drawer position for sidebar layouts */
+.beacon--sidebar-left .grocery-drawer {
+  left: var(--sidebar-width);
+}
+
+.beacon--sidebar-right .grocery-drawer {
+  right: var(--sidebar-width);
 }
 
 /* --- Responsive: Tablet < 768px --- */
