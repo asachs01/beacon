@@ -26,4 +26,12 @@ const pagePath = Astro.url.pathname;
     </main>
   </div>
   <Footer />
+  <script>
+    // Clone sidebar nav into mobile menu
+    const desktopSidebar = document.querySelector('.sidebar-nav');
+    const mobileNav = document.getElementById('mobile-sidebar-content');
+    if (desktopSidebar && mobileNav) {
+      mobileNav.innerHTML = desktopSidebar.innerHTML;
+    }
+  </script>
 </BaseLayout>
