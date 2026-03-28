@@ -10,6 +10,7 @@ interface GroceryDrawerProps {
   onAddItem: (name: string) => Promise<void>;
   onCheckItem: (id: string) => Promise<void>;
   onUncheckItem: (id: string) => Promise<void>;
+  forceOpen?: boolean;
 }
 
 export function GroceryDrawer({
@@ -20,8 +21,10 @@ export function GroceryDrawer({
   onAddItem,
   onCheckItem,
   onUncheckItem,
+  forceOpen = false,
 }: GroceryDrawerProps) {
   const [expanded, setExpanded] = useState(false);
+  const isOpen = expanded || forceOpen;
   const [inputValue, setInputValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -85,7 +88,7 @@ export function GroceryDrawer({
   return (
     <div
       ref={drawerRef}
-      className={`grocery-drawer ${expanded ? 'grocery-drawer--expanded' : ''}`}
+      className={`grocery-drawer ${isOpen ? 'grocery-drawer--expanded' : ''}`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

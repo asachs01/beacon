@@ -21,6 +21,8 @@ import { NowPlayingBar } from './components/NowPlayingBar';
 import { useMusic } from './hooks/useMusic';
 import { useNotifications } from './hooks/useNotifications';
 import { ScreenSaver } from './components/ScreenSaver';
+import { GroceryDrawer } from './components/GroceryDrawer';
+import { useGrocery } from './hooks/useGrocery';
 import { Timer } from './components/Timer';
 import { useIngressDetect } from './hooks/useIngressDetect';
 import { CalendarEvent } from './types';
@@ -78,8 +80,10 @@ export function App() {
   useNotifications(events, client);
 
   // Chores and leaderboard are now slide-over panels triggered from sidebar
+  const grocery = useGrocery(connected);
   const showChoresPanel = activeView === 'chores';
   const showLeaderboard = activeView === 'leaderboard';
+  const showGrocery = activeView === 'grocery';
 
   // Fetch data when connected
   useEffect(() => {
@@ -402,6 +406,24 @@ export function App() {
         haClient={client}
       />
       {showLeaderboard && (
+        <div
+          className="slide-panel-backdrop"
+          onClick={handleClosePanel}
+        />
+      )}
+
+      {/* Grocery Drawer */}
+      <GroceryDrawer
+        list={grocery.list}
+        source={grocery.source}
+        loading={grocery.loading}
+        expiringItems={grocery.expiringItems}
+        onAddItem={grocery.addItem}
+        onCheckItem={grocery.checkItem}
+        onUncheckItem={grocery.uncheckItem}
+        forceOpen={showGrocery}
+      />
+      {showGrocery && (
         <div
           className="slide-panel-backdrop"
           onClick={handleClosePanel}
