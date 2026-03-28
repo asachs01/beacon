@@ -13,7 +13,6 @@ import {
   X,
 } from 'lucide-react';
 import beaconIcon from '../assets/beacon-icon.svg';
-import { ThemeSelector } from './ThemeSelector';
 
 export type SidebarView = 'dashboard' | 'calendar' | 'chores' | 'grocery' | 'leaderboard' | 'music' | 'photos' | 'timer' | 'settings';
 
@@ -102,7 +101,6 @@ export function Sidebar({
           >
             <Settings size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
           </button>
-          <ThemeSelector />
         </div>
       </nav>
 
