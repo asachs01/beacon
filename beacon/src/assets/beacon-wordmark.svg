@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!-- Wordmark -->
+  <text x="0" y="36"
+        font-family="'Plus Jakarta Sans', system-ui, sans-serif"
+        font-size="32"
+        font-weight="600"
+        letter-spacing="-0.02em"
+        fill="#f8fafc">Beacon</text>
+
+  <!-- Optional gold dot accent on 'a' -->
+  <circle cx="55" cy="24" r="3" fill="#f59e0b" opacity="0.9"/>
+</svg>

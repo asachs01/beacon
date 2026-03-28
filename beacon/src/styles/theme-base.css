@@ -1,0 +1,43 @@
+/*
+ * Beacon Theme Base
+ *
+ * CSS custom properties populated by the theme system (useTheme hook).
+ * These are the default values (Skylight theme). The JS theme engine
+ * overrides them on :root at runtime.
+ *
+ * Other stylesheets should reference these variables instead of
+ * hard-coding colors.
+ */
+
+:root {
+  /* Backgrounds */
+  --bg-primary: #faf9f6;
+  --bg-surface: #ffffff;
+  --bg-header: #ffffff;
+  --bg-today: rgba(59, 130, 246, 0.04);
+
+  /* Text */
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b7280;
+
+  /* Structure */
+  --grid-lines: #e5e5e5;
+  --accent: #3b82f6;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  /* Event / family member colors */
+  --event-1: #bfdbfe;
+  --event-2: #bbf7d0;
+  --event-3: #ddd6fe;
+  --event-4: #fed7aa;
+  --event-5: #fbcfe8;
+  --event-6: #99f6e4;
+
+  /* Typography */
+  --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+  /* Layout tokens (stable across themes) */
+  --radius: 12px;
+}

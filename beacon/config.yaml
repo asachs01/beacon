@@ -1,0 +1,33 @@
+name: Beacon
+version: "1.0.0"
+slug: beacon
+description: "Family command center for wall-mounted displays"
+url: "https://github.com/asachs01/beacon"
+arch:
+  - amd64
+  - aarch64
+  - armv7
+startup: application
+boot: auto
+ingress: true
+ingress_port: 3000
+panel_icon: mdi:calendar-clock
+panel_title: Beacon
+homeassistant_api: true
+auth_api: true
+options:
+  family_name: "My Family"
+  theme: "skylight"
+  auto_dark_mode: true
+  weather_entity: "weather.home"
+  photo_directory: "/media/beacon/photos"
+  photo_interval: 30
+  screen_saver_timeout: 5
+schema:
+  family_name: str
+  theme: str
+  auto_dark_mode: bool
+  weather_entity: str
+  photo_directory: str
+  photo_interval: int
+  screen_saver_timeout: int

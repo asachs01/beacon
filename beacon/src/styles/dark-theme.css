@@ -1,0 +1,249 @@
+/* ============================================================
+   Beacon — Theme System
+   Light & dark mode via data-theme attribute on <html>
+   ============================================================ */
+
+/* --- Smooth transitions between themes --- */
+html[data-theme] body,
+html[data-theme] .beacon,
+html[data-theme] .panel,
+html[data-theme] .week-day,
+html[data-theme] .forecast-day,
+html[data-theme] .family-filter,
+html[data-theme] .modal,
+html[data-theme] .modal-overlay {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+/* --- Dark theme (matches existing defaults) --- */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-hover: #475569;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --border: #334155;
+  --border-subtle: #1e293b;
+
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+
+  /* Slightly brighter event pastels for dark backgrounds */
+  --accent-blue: #60a5fa;
+  --accent-green: #4ade80;
+  --accent-purple: #c084fc;
+  --accent-orange: #fb923c;
+  --accent-pink: #f472b6;
+  --accent-teal: #2dd4bf;
+}
+
+/* --- Light theme --- */
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e2e8f0;
+  --bg-hover: #cbd5e1;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --border: #e2e8f0;
+  --border-subtle: #f1f5f9;
+
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
+
+  --accent-blue: #3b82f6;
+  --accent-green: #22c55e;
+  --accent-purple: #a855f7;
+  --accent-orange: #f97316;
+  --accent-pink: #ec4899;
+  --accent-teal: #14b8a6;
+}
+
+/* Light-mode overrides for elements that use hardcoded dark colors */
+[data-theme="light"] .week-event {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .week-event:hover,
+[data-theme="light"] .week-event:active {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .week-day--today {
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .toggle-knob {
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .demo-badge {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .connection-dot {
+  background: var(--accent-orange);
+}
+
+/* --- WeatherWidget styles --- */
+.weather-widget {
+  position: relative;
+  display: inline-flex;
+}
+
+.weather-widget-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: var(--bg-tertiary);
+  transition: background var(--transition);
+  min-height: 36px;
+  white-space: nowrap;
+}
+
+.weather-widget-btn:hover {
+  background: var(--bg-hover);
+}
+
+.weather-widget-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.weather-widget-temp {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.weather-widget-condition {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Forecast popup */
+.weather-widget-popup {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+  min-width: 260px;
+  animation: fade-in 150ms ease;
+}
+
+.weather-widget-popup-header {
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.weather-widget-popup-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.weather-widget-forecast {
+  padding: 8px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.weather-widget-forecast-day {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.weather-widget-forecast-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.weather-widget-forecast-icon {
+  font-size: 1.1rem;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.weather-widget-forecast-high {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.weather-widget-forecast-low {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* --- ThemeToggle styles --- */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--bg-hover);
+}
+
+.theme-toggle-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* --- Responsive adjustments for widgets --- */
+@media (max-width: 768px) {
+  .weather-widget-condition {
+    display: none;
+  }
+
+  .weather-widget-popup {
+    right: auto;
+    left: 0;
+    min-width: 220px;
+  }
+}

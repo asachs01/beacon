@@ -1,0 +1,256 @@
+/* ============================================================
+   Beacon — Photo Frame Mode
+   Full-screen slideshow with crossfade transitions
+   ============================================================ */
+
+.photo-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* Photo image with crossfade */
+.photo-frame-image-wrapper {
+  position: absolute;
+  inset: 0;
+  animation: photo-crossfade 1s ease;
+}
+
+.photo-frame-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@keyframes photo-crossfade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Bottom gradient overlay */
+.photo-frame-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 80px 32px 32px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.photo-frame-clock {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 300;
+  color: white;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.photo-frame-date {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+}
+
+.photo-frame-weather {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+  margin-top: 4px;
+}
+
+/* Controls overlay */
+.photo-frame-controls {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+.photo-frame-controls--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.photo-frame-control-btn {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: white;
+  transition: all 200ms ease;
+}
+
+.photo-frame-control-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.photo-frame-control-btn:active {
+  transform: scale(0.95);
+}
+
+.photo-frame-control-btn--play {
+  width: 72px;
+  height: 72px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Back button */
+.photo-frame-back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: white;
+  transition: all 200ms ease;
+  z-index: 10;
+}
+
+.photo-frame-back:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Music bar positioned at bottom over the photo */
+.photo-frame-music {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+}
+
+.photo-frame-music .now-playing-bar {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+}
+
+.photo-frame-music .now-playing-title,
+.photo-frame-music .now-playing-btn,
+.photo-frame-music .now-playing-btn--play {
+  color: white;
+}
+
+.photo-frame-music .now-playing-artist {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.photo-frame-music .now-playing-btn--play {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.photo-frame-music .now-playing-btn--play:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Empty state */
+.photo-frame-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.photo-frame-empty-hint {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 8px;
+}
+
+/* --- Responsive: Tablet < 768px --- */
+@media (max-width: 768px) {
+  .photo-frame-clock {
+    font-size: 2.5rem;
+  }
+
+  .photo-frame-overlay {
+    padding: 60px 20px 20px;
+  }
+
+  /* Ensure controls are touch-accessible */
+  .photo-frame-control-btn {
+    width: 56px;
+    height: 56px;
+  }
+
+  .photo-frame-control-btn--play {
+    width: 64px;
+    height: 64px;
+  }
+
+  .photo-frame-back {
+    width: 48px;
+    height: 48px;
+  }
+
+  /* Keep the photo music bar above the mobile tab bar */
+  .photo-frame-music {
+    bottom: var(--mobile-tab-bar-height, 0px);
+  }
+}
+
+/* --- Responsive: Phone < 480px --- */
+@media (max-width: 480px) {
+  .photo-frame-clock {
+    font-size: 2rem;
+  }
+
+  .photo-frame-date {
+    font-size: 0.9rem;
+  }
+
+  .photo-frame-overlay {
+    padding: 40px 16px 16px;
+  }
+
+  .photo-frame-controls {
+    gap: 20px;
+  }
+
+  .photo-frame-control-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .photo-frame-control-btn--play {
+    width: 56px;
+    height: 56px;
+  }
+}

@@ -1,0 +1,88 @@
+/* ============================================================
+   Beacon — Screen Saver / Dim Mode
+   ============================================================ */
+
+/* Dim overlay — 70% dark, covers everything */
+.screensaver-dim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 9999;
+  cursor: pointer;
+  animation: screensaver-fade-in 1s ease;
+}
+
+/* Full screensaver overlay */
+.screensaver-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-primary, #000);
+  z-index: 9999;
+  cursor: pointer;
+  animation: screensaver-fade-in 1.5s ease;
+}
+
+/* Force dark background in screensaver regardless of theme */
+[data-theme="light"] .screensaver-overlay {
+  background: #0a0a0a;
+}
+
+[data-theme="dark"] .screensaver-overlay {
+  background: var(--bg-primary, #0a0a0a);
+}
+
+/* Clock element — absolutely positioned, moves around */
+.screensaver-clock {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  transition: left 2s ease-in-out, top 2s ease-in-out;
+  user-select: none;
+}
+
+.screensaver-time {
+  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
+  font-size: 120px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1;
+  letter-spacing: -3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.screensaver-date {
+  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
+  font-size: 24px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 12px;
+}
+
+@keyframes screensaver-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Responsive: Tablet < 768px */
+@media (max-width: 768px) {
+  .screensaver-time {
+    font-size: 72px;
+  }
+
+  .screensaver-date {
+    font-size: 18px;
+  }
+}
+
+/* Responsive: Phone < 480px */
+@media (max-width: 480px) {
+  .screensaver-time {
+    font-size: 56px;
+    letter-spacing: -2px;
+  }
+
+  .screensaver-date {
+    font-size: 15px;
+    margin-top: 8px;
+  }
+}
