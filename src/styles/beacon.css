@@ -1069,7 +1069,7 @@ input, select, textarea {
     --time-axis-width: 44px;
     --hour-height: 56px;
     --sidebar-width: 0px;
-    --mobile-tab-bar-height: 64px;
+    --mobile-tab-bar-height: 72px;
   }
 
   /* --- Layout: remove sidebar column, add bottom padding for tab bar --- */
@@ -1097,8 +1097,8 @@ input, select, textarea {
     z-index: 90;
     align-items: stretch;
     justify-content: space-around;
-    padding: 4px 4px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding: 8px 4px 0;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
   }
 
   .mobile-tab {
