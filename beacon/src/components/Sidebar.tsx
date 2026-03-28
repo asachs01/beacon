@@ -64,8 +64,12 @@ export function Sidebar({
 
   return (
     <>
-      {/* Desktop sidebar (hidden on mobile via CSS) */}
-      <nav className="sidebar sidebar--desktop" aria-label="Main navigation">
+      {/* Desktop sidebar */}
+      <nav
+        className="sidebar sidebar--desktop"
+        aria-label="Main navigation"
+        style={{ display: 'flex' }}
+      >
         {/* Beacon logo */}
         <div className="sidebar-logo">
           <img src={beaconIcon} alt="Beacon" width={32} height={32} />

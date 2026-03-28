@@ -108,12 +108,13 @@ input, select, textarea {
 .beacon {
   height: 100vh;
   display: grid;
-  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-columns: 1fr var(--sidebar-width);
   overflow: hidden;
   background: var(--bg-primary);
 }
 
 .beacon-main {
+  grid-column: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -123,11 +124,12 @@ input, select, textarea {
 /* --- Sidebar --- */
 .sidebar {
   grid-row: 1 / -1;
+  grid-column: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   background: var(--bg-sidebar, #f0eeeb);
-  border-right: 1px solid var(--border-subtle);
+  border-left: 1px solid var(--border-subtle);
   padding: 12px 0;
   height: 100vh;
   z-index: 15;
@@ -769,7 +771,7 @@ input, select, textarea {
 .demo-badge {
   position: fixed;
   bottom: 24px;
-  left: calc(var(--sidebar-width) + 24px);
+  left: 24px;
   background: var(--bg-surface);
   color: var(--text-muted);
   font-size: 0.65rem;
@@ -1078,10 +1080,7 @@ input, select, textarea {
     padding-bottom: var(--mobile-tab-bar-height);
   }
 
-  /* --- Hide desktop sidebar --- */
-  .sidebar--desktop {
-    display: none;
-  }
+  /* Desktop sidebar visibility controlled by inline style in component */
 
   /* --- Show mobile bottom tab bar --- */
   .mobile-tab-bar {
@@ -1498,19 +1497,11 @@ input, select, textarea {
    so Beacon's sidebar just needs to be slightly narrower. */
 .beacon--ingress {
   --sidebar-width: 52px;
-  grid-template-columns: 52px 1fr;
-}
-
-.beacon--ingress .sidebar--desktop {
-  width: 52px;
-  min-width: 52px;
-  display: flex !important;
+  grid-template-columns: 1fr 52px;
 }
 
 /* On very narrow viewports in ingress (phone), switch to bottom tabs */
-.beacon--compact .sidebar--desktop {
-  display: none !important;
-}
+/* compact sidebar hiding is handled via inline style in component */
 
 .beacon--compact {
   grid-template-columns: 1fr;
