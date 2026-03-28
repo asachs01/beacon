@@ -11,7 +11,7 @@
   /* These are fallback defaults — the theme hook overrides them at runtime */
   --bg-primary: #faf9f6;
   --bg-surface: #ffffff;
-  --bg-hover: #f5f4f1;
+  --bg-hover: color-mix(in srgb, var(--text-primary, #1a1a1a) 6%, var(--bg-primary, #faf9f6));
   --bg-today: rgba(59, 130, 246, 0.04);
   --bg-header: #ffffff;
   --bg-sidebar: #f0eeeb;
@@ -185,13 +185,13 @@ input, select, textarea {
 }
 
 .sidebar-icon:hover {
-  background: var(--bg-hover);
+  background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent);
   color: var(--text-primary);
 }
 
 .sidebar-icon--active {
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--color-blue-full);
+  background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent);
+  color: var(--accent, #3b82f6);
 }
 
 .sidebar-icon--active::before {
