@@ -22,6 +22,7 @@ import { useMusic } from './hooks/useMusic';
 import { useNotifications } from './hooks/useNotifications';
 import { ScreenSaver } from './components/ScreenSaver';
 import { Timer } from './components/Timer';
+import { useIngressDetect } from './hooks/useIngressDetect';
 import { CalendarEvent } from './types';
 import { getConfig } from './config';
 
@@ -29,6 +30,7 @@ const config = getConfig();
 
 export function App() {
   const { client, connected } = useHomeAssistant();
+  const { isIngress, compact } = useIngressDetect();
   const {
     calendars,
     events,
@@ -254,7 +256,7 @@ export function App() {
   );
 
   return (
-    <div className="beacon">
+    <div className={`beacon ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
       {/* Left Sidebar */}
       <Sidebar
         activeView={activeView}

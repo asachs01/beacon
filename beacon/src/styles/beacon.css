@@ -1490,3 +1490,60 @@ input, select, textarea {
     font-size: 0.55rem;
   }
 }
+
+/* --- HA Ingress mode --- */
+.beacon--ingress {
+  /* No left sidebar in ingress — HA already has one */
+  grid-template-columns: 1fr;
+}
+
+.beacon--ingress .sidebar--desktop {
+  display: none;
+}
+
+/* Add a floating nav button in ingress mode instead */
+.beacon--ingress .beacon-main {
+  padding: 0;
+}
+
+/* --- HA Ingress mode --- */
+/* In ingress, HA's sidebar takes space from the viewport.
+   Beacon's sidebar should still show for internal navigation.
+   The iframe already gets only the remaining space, so no offset needed.
+   Just ensure our sidebar isn't too wide. */
+.beacon--ingress .sidebar--desktop {
+  width: 52px;
+  min-width: 52px;
+}
+
+.beacon--ingress {
+  --sidebar-width: 52px;
+}
+
+/* When HA sidebar is expanded (compact mode), hide Beacon's sidebar
+   and show the mobile bottom tab bar instead */
+
+/* --- HA Ingress mode --- */
+.beacon--ingress .sidebar--desktop {
+  width: 52px;
+  min-width: 52px;
+}
+
+.beacon--ingress {
+  --sidebar-width: 52px;
+}
+
+/* When HA sidebar is expanded and our iframe is narrow, switch to bottom tabs */
+.beacon--compact .sidebar--desktop {
+  display: none;
+}
+
+.beacon--compact {
+  grid-template-columns: 1fr;
+  --sidebar-width: 0px;
+  padding-bottom: var(--mobile-tab-bar-height, 72px);
+}
+
+.beacon--compact .mobile-tab-bar {
+  display: flex;
+}
