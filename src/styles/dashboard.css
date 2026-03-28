@@ -134,26 +134,25 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-secondary);
-  opacity: 0.8;
+  color: rgba(0, 0, 0, 0.5);
 }
 
 .event-card-title {
   font-family: var(--font-display);
   font-size: 15px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: rgba(0, 0, 0, 0.85);
   line-height: 1.3;
 }
 
 .event-card-time {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: rgba(0, 0, 0, 0.5);
 }
 
-/* Dark mode: slightly translucent card backgrounds */
+/* Event cards always use dark text on pastel backgrounds — regardless of theme */
 [data-theme="dark"] .event-card {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* --- RIGHT COLUMN: Weather + Tasks --- */
