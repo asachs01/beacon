@@ -1,3 +1,10 @@
+## [1.4.2](https://github.com/asachs01/beacon/compare/v1.4.1...v1.4.2) (2026-03-29)
+
+
+### Bug Fixes
+
+* calendar/lists work via API proxy without WebSocket or user token ([9840db4](https://github.com/asachs01/beacon/commit/9840db4d7415519b01791a7fa5719c682d0d1913))
+
 ## [1.4.1](https://github.com/asachs01/beacon/compare/v1.4.0...v1.4.1) (2026-03-29)
 
 
