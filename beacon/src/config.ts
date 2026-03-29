@@ -45,3 +45,13 @@ export function getConfig(): BeaconConfig {
 
   return cached;
 }
+
+/**
+ * Override the cached config with dynamic credentials (from onboarding/OAuth).
+ * Call this after the user completes setup to inject the HA URL + token
+ * without requiring a page reload.
+ */
+export function patchConfig(patch: Partial<BeaconConfig>): void {
+  const current = getConfig();
+  cached = { ...current, ...patch };
+}

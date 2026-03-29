@@ -1,0 +1,194 @@
+/* ============================================================
+   Omni-Add FAB — expanding quick-add menu
+   ============================================================ */
+
+.omni-add {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+/* Sidebar position adjustments */
+.omni-add--sidebar-left {
+  right: 24px;
+}
+.omni-add--sidebar-right {
+  right: calc(var(--sidebar-width, 72px) + 24px);
+}
+.omni-add--sidebar-bottom {
+  right: 24px;
+}
+
+/* ---- Backdrop ---- */
+.omni-add-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: -1;
+  pointer-events: auto;
+  animation: omni-backdrop-in 200ms ease forwards;
+}
+
+@keyframes omni-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---- Action buttons container ---- */
+.omni-add-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.omni-add--expanded .omni-add-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* ---- Individual action button ---- */
+.omni-add-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0;
+  transform: translateY(16px) scale(0.8);
+  transition: opacity 200ms ease, transform 200ms ease;
+  transition-delay: var(--omni-delay, 0ms);
+  pointer-events: auto;
+}
+
+.omni-add--expanded .omni-add-action {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.omni-add-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  color: var(--accent, var(--color-blue-full));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.omni-add-action:hover .omni-add-action-icon {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+}
+
+.omni-add-action:active .omni-add-action-icon {
+  transform: scale(0.95);
+}
+
+.omni-add-action-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  font-family: var(--font-body);
+}
+
+/* ---- Main FAB ---- */
+.omni-add-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-blue-full, #3b82f6);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35), 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 200ms ease, box-shadow 200ms ease, background 200ms ease;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 1;
+}
+
+.omni-add-fab:hover {
+  background: #2563eb;
+  transform: scale(1.08);
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.3);
+}
+
+.omni-add-fab:active {
+  transform: scale(0.95);
+}
+
+/* ---- Plus icon with rotate ---- */
+.omni-add-fab-icon {
+  font-size: 1.8rem;
+  font-weight: 300;
+  line-height: 1;
+  display: block;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.omni-add--expanded .omni-add-fab-icon {
+  transform: rotate(45deg);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .omni-add {
+    bottom: calc(var(--mobile-tab-bar-height, 64px) + 16px);
+    right: 16px;
+  }
+
+  .omni-add-fab {
+    width: 52px;
+    height: 52px;
+  }
+
+  .omni-add-fab-icon {
+    font-size: 1.5rem;
+  }
+
+  .omni-add-action-icon {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .omni-add {
+    bottom: calc(var(--mobile-tab-bar-height, 64px) + 12px);
+    right: 12px;
+  }
+
+  .omni-add-fab {
+    width: 48px;
+    height: 48px;
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "beacon",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Family command center for wall-mounted displays — a Home Assistant add-on",
@@ -11,6 +11,13 @@
     "serve": "vite build && npx serve dist -l 3000"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/keyboard": "^8.0.2",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "date-fns": "^4.1.0",
     "lucide-react": "^1.7.0",
     "react": "^19.0.0",

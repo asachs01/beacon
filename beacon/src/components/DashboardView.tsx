@@ -74,7 +74,7 @@ export function DashboardView({
         <h2 className="dashboard-section-title">Today</h2>
         <div className="dashboard-events-scroll">
           {todayEvents.length === 0 ? (
-            <div className="dashboard-empty">Nothing on the calendar today</div>
+            <div className="dashboard-empty">Nothing scheduled — your day is wide open</div>
           ) : (
             <div className="dashboard-events-list">
               {todayEvents.map((event) => (

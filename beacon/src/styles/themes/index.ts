@@ -21,14 +21,6 @@ export interface Theme {
   };
 }
 
-export { skylight } from './skylight';
-export { midnight } from './midnight';
-export { nord } from './nord';
-export { dracula } from './dracula';
-export { monokai } from './monokai';
-export { rose } from './rose';
-export { forest } from './forest';
-
 import { skylight } from './skylight';
 import { midnight } from './midnight';
 import { nord } from './nord';
