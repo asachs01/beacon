@@ -29,6 +29,7 @@ import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
+import { useGoogleCalendar } from './hooks/useGoogleCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView from './components/OnboardingView';
 import { CalendarEvent } from './types';
@@ -51,15 +52,16 @@ export function App() {
   } = useCalendarEvents(connected);
 
   const localCal = useLocalCalendar();
+  const googleCal = useGoogleCalendar();
 
-  // Merge HA + local calendars and events
+  // Merge HA + local + Google calendars and events
   const calendars = useMemo(
-    () => [localCal.calendar, ...haCalendars],
-    [localCal.calendar, haCalendars],
+    () => [localCal.calendar, ...haCalendars, ...googleCal.calendars],
+    [localCal.calendar, haCalendars, googleCal.calendars],
   );
   const events = useMemo(
-    () => [...localCal.events, ...haEvents].sort((a, b) => a.start.localeCompare(b.start)),
-    [localCal.events, haEvents],
+    () => [...localCal.events, ...haEvents, ...googleCal.events].sort((a, b) => a.start.localeCompare(b.start)),
+    [localCal.events, haEvents, googleCal.events],
   );
 
   // Route create/update/delete to local or HA based on calendar ID
@@ -158,6 +160,23 @@ export function App() {
 
     return () => clearInterval(interval);
   }, [connected, fetchCalendars, fetchEvents]);
+
+  // Fetch Google Calendar events when signed in
+  useEffect(() => {
+    if (!googleCal.signedIn || googleCal.calendars.length === 0) return;
+
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
+    const weekEnd = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
+    googleCal.fetchEvents(weekStart.toISOString(), weekEnd.toISOString());
+
+    const interval = setInterval(() => {
+      const ws = startOfWeek(new Date(), { weekStartsOn: 0 });
+      const we = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
+      googleCal.fetchEvents(ws.toISOString(), we.toISOString());
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [googleCal.signedIn, googleCal.calendars.length, googleCal.fetchEvents]);
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
     setHiddenCalendars(prev => {
@@ -461,6 +480,7 @@ export function App() {
             connected={connected}
             haUrl={config.ha_url}
             calendars={calendars}
+            googleCalendar={googleCal}
           />
         ) : activeView === 'grocery' ? (
           <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" />
