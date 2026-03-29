@@ -124,13 +124,49 @@ function loadSettings(): BeaconSettings {
   }
 }
 
+function getDataApiBase(): string {
+  if (window.__BEACON_CONFIG__) {
+    return window.location.pathname.replace(/\/$/, '');
+  }
+  return '';
+}
+
 function persistSettings(settings: BeaconSettings): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
   } catch {
     // localStorage unavailable
   }
+  // Also persist to server in add-on mode
+  if (window.__BEACON_CONFIG__) {
+    const base = getDataApiBase();
+    fetch(`${base}/beacon-data/${STORAGE_KEY}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    }).catch(() => {});
+  }
 }
+
+/** Restore settings from server if localStorage is empty */
+async function restoreSettingsFromServer(): Promise<void> {
+  if (!window.__BEACON_CONFIG__) return;
+  try {
+    const localRaw = localStorage.getItem(STORAGE_KEY);
+    if (localRaw) return; // localStorage has data, don't overwrite
+
+    const base = getDataApiBase();
+    const res = await fetch(`${base}/beacon-data/${STORAGE_KEY}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && typeof data === 'object') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+  } catch { /* best-effort */ }
+}
+
+// Kick off server restore on module load
+restoreSettingsFromServer();
 
 // ---------------------------------------------------------------------------
 // Hook

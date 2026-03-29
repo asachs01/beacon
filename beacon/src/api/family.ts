@@ -15,19 +15,19 @@ const STORAGE_KEYS = {
   routines: 'beacon_routines',
 } as const;
 
-/** HA entity IDs for syncing family data (input_text helpers) */
-const HA_HELPERS = {
-  members: 'input_text.beacon_family_members',
-  chores: 'input_text.beacon_chores',
-  completions: 'input_text.beacon_completions',
-  streaks: 'input_text.beacon_streaks',
-  routines: 'input_text.beacon_routines',
-} as const;
-
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** Get the base path for beacon-data API calls (ingress-aware) */
+function getDataApiBase(): string {
+  if (window.__BEACON_CONFIG__) {
+    return window.location.pathname.replace(/\/$/, '');
+  }
+  return '';
+}
+
+/** Load data: try server-side persistence first, fall back to localStorage */
 function loadFromStorage<T>(key: string): T[] {
   try {
     const raw = localStorage.getItem(key);
@@ -37,47 +37,62 @@ function loadFromStorage<T>(key: string): T[] {
   }
 }
 
+/** Save data to localStorage AND server-side persistence (fire-and-forget) */
 function saveToStorage<T>(key: string, data: T[]): void {
   localStorage.setItem(key, JSON.stringify(data));
+  // Also persist to server if in add-on mode
+  if (window.__BEACON_CONFIG__) {
+    const base = getDataApiBase();
+    fetch(`${base}/beacon-data/${key}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).catch(() => { /* server persistence is best-effort */ });
+  }
+}
+
+/**
+ * Load data from server-side persistence and merge into localStorage.
+ * Called once on startup to restore data that may have been lost from localStorage.
+ */
+async function restoreFromServer(key: string): Promise<void> {
+  if (!window.__BEACON_CONFIG__) return;
+  try {
+    const base = getDataApiBase();
+    const res = await fetch(`${base}/beacon-data/${key}`);
+    if (!res.ok) return;
+    const serverData = await res.json();
+    if (!serverData || !Array.isArray(serverData) || serverData.length === 0) return;
+
+    // Only restore if localStorage is empty (don't overwrite newer local data)
+    const localRaw = localStorage.getItem(key);
+    const localData = localRaw ? JSON.parse(localRaw) : [];
+    if (localData.length === 0 && serverData.length > 0) {
+      localStorage.setItem(key, JSON.stringify(serverData));
+    }
+  } catch { /* best-effort */ }
 }
 
 /**
  * Family data store.
- * Uses localStorage as the primary store.
- * When an HA client is provided and connected, syncs data to HA input_text helpers.
+ * Uses localStorage as the primary store with server-side persistence
+ * in add-on mode (/data/ directory survives container rebuilds).
  */
 export class FamilyStore {
-  private haClient: (() => HomeAssistantClient | null) | null = null;
+  private _restored = false;
 
-  constructor(haClient?: () => HomeAssistantClient | null) {
-    this.haClient = haClient ?? null;
+  constructor(_haClient?: () => HomeAssistantClient | null) {
+    // Restore server-side data on first load (async, best-effort)
+    if (!this._restored) {
+      this._restored = true;
+      this.restoreAll();
+    }
   }
 
-  // --- HA Sync Helpers ---
-
-  private async syncToHA(helperEntity: string, data: unknown): Promise<void> {
-    const client = this.haClient?.();
-    if (!client?.isConnected) return;
-
-    try {
-      // HA input_text has a 255-char limit; use a truncated version or skip
-      const json = JSON.stringify(data);
-      if (json.length > 255) {
-        // For larger payloads, we rely on localStorage only
-        // A production system would use HA's REST API or a custom component
-        return;
-      }
-      await (client as unknown as { sendMessage(msg: Record<string, unknown>): Promise<unknown> })
-        .sendMessage?.({
-          type: 'call_service',
-          domain: 'input_text',
-          service: 'set_value',
-          target: { entity_id: helperEntity },
-          service_data: { value: json },
-        });
-    } catch {
-      // Silently fall back to localStorage-only
-    }
+  private async restoreAll(): Promise<void> {
+    await Promise.all(
+      Object.values(STORAGE_KEYS).map(key => restoreFromServer(key))
+    );
   }
 
   // --- Members ---
@@ -91,7 +106,6 @@ export class FamilyStore {
     const newMember: FamilyMember = { ...member, id: generateId() };
     members.push(newMember);
     saveToStorage(STORAGE_KEYS.members, members);
-    this.syncToHA(HA_HELPERS.members, members);
     return newMember;
   }
 
@@ -101,7 +115,6 @@ export class FamilyStore {
     if (index === -1) return null;
     members[index] = { ...members[index], ...data };
     saveToStorage(STORAGE_KEYS.members, members);
-    this.syncToHA(HA_HELPERS.members, members);
     return members[index];
   }
 
@@ -110,7 +123,6 @@ export class FamilyStore {
     const filtered = members.filter((m) => m.id !== id);
     if (filtered.length === members.length) return false;
     saveToStorage(STORAGE_KEYS.members, filtered);
-    this.syncToHA(HA_HELPERS.members, filtered);
     return true;
   }
 
@@ -125,7 +137,6 @@ export class FamilyStore {
     const newChore: Chore = { ...chore, id: generateId() };
     chores.push(newChore);
     saveToStorage(STORAGE_KEYS.chores, chores);
-    this.syncToHA(HA_HELPERS.chores, chores);
     return newChore;
   }
 
@@ -135,7 +146,6 @@ export class FamilyStore {
     if (index === -1) return null;
     chores[index] = { ...chores[index], ...data };
     saveToStorage(STORAGE_KEYS.chores, chores);
-    this.syncToHA(HA_HELPERS.chores, chores);
     return chores[index];
   }
 
@@ -144,7 +154,6 @@ export class FamilyStore {
     const filtered = chores.filter((c) => c.id !== id);
     if (filtered.length === chores.length) return false;
     saveToStorage(STORAGE_KEYS.chores, filtered);
-    this.syncToHA(HA_HELPERS.chores, filtered);
     return true;
   }
 
@@ -240,7 +249,6 @@ export class FamilyStore {
     streak.last_completed = new Date().toISOString();
 
     saveToStorage(STORAGE_KEYS.streaks, streaks);
-    this.syncToHA(HA_HELPERS.streaks, streaks);
   }
 
   // --- Routines ---
@@ -258,7 +266,6 @@ export class FamilyStore {
     const newRoutine: Routine = { ...routine, id: generateId() };
     routines.push(newRoutine);
     saveToStorage(STORAGE_KEYS.routines, routines);
-    this.syncToHA(HA_HELPERS.routines, routines);
     return newRoutine;
   }
 
@@ -267,7 +274,6 @@ export class FamilyStore {
     const filtered = routines.filter((r) => r.id !== id);
     if (filtered.length === routines.length) return false;
     saveToStorage(STORAGE_KEYS.routines, filtered);
-    this.syncToHA(HA_HELPERS.routines, filtered);
     return true;
   }
 }

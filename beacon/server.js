@@ -2,9 +2,9 @@
 /**
  * Beacon add-on server.
  *
- * Serves the static SPA from /app/dist and proxies /api/* requests
- * to the HA Supervisor API using SUPERVISOR_TOKEN. This means the
- * browser never needs its own HA auth token — the add-on handles it.
+ * - Serves the static SPA from /app/dist
+ * - Proxies /api/* to HA Supervisor API with SUPERVISOR_TOKEN
+ * - Provides /beacon-data/* for persistent storage (survives rebuilds)
  */
 
 const http = require('http');
@@ -15,6 +15,8 @@ const PORT = 3000;
 const DIST = process.env.BEACON_DIST || '/app/dist';
 const SUPERVISOR_TOKEN = process.env.SUPERVISOR_TOKEN || '';
 const HA_API_BASE = 'http://supervisor/core';
+// /data/ is HA add-on persistent storage (survives container rebuilds)
+const DATA_DIR = process.env.BEACON_DATA || '/data';
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -30,10 +32,12 @@ const MIME_TYPES = {
   '.webmanifest': 'application/manifest+json',
 };
 
+// Ensure data directory exists
+try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch { /* ignore */ }
+
 function serveStatic(req, res) {
   let filePath = path.join(DIST, req.url === '/' ? '/index.html' : req.url.split('?')[0]);
 
-  // SPA fallback: if file doesn't exist, serve index.html
   if (!fs.existsSync(filePath)) {
     filePath = path.join(DIST, 'index.html');
   }
@@ -54,7 +58,6 @@ function serveStatic(req, res) {
 function proxyToHA(req, res) {
   const targetUrl = `${HA_API_BASE}${req.url}`;
 
-  // Read request body if present
   const chunks = [];
   req.on('data', (chunk) => chunks.push(chunk));
   req.on('end', () => {
@@ -92,8 +95,71 @@ function proxyToHA(req, res) {
   });
 }
 
+/**
+ * Persistent data API — stores JSON in /data/ (survives add-on rebuilds).
+ *
+ * GET  /beacon-data/:key  → read stored JSON
+ * PUT  /beacon-data/:key  → write JSON body to storage
+ */
+function handleDataApi(req, res) {
+  // Sanitize key: only allow alphanumeric, hyphens, underscores
+  const key = req.url.replace('/beacon-data/', '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!key) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Missing key' }));
+    return;
+  }
+
+  const filePath = path.join(DATA_DIR, `${key}.json`);
+
+  if (req.method === 'GET') {
+    try {
+      if (fs.existsSync(filePath)) {
+        const data = fs.readFileSync(filePath, 'utf8');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(data);
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end('null');
+      }
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  if (req.method === 'PUT') {
+    const chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const body = Buffer.concat(chunks).toString('utf8');
+        // Validate JSON
+        JSON.parse(body);
+        fs.writeFileSync(filePath, body, 'utf8');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  res.writeHead(405, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ error: 'Method not allowed' }));
+}
+
 const server = http.createServer((req, res) => {
-  // Proxy API and WebSocket upgrade requests to HA
+  // Persistent data API
+  if (req.url.startsWith('/beacon-data/')) {
+    handleDataApi(req, res);
+    return;
+  }
+
+  // Proxy API requests to HA
   if (req.url.startsWith('/api/')) {
     if (SUPERVISOR_TOKEN) {
       proxyToHA(req, res);
@@ -149,4 +215,5 @@ server.on('upgrade', (req, socket, head) => {
 server.listen(PORT, () => {
   console.log(`Beacon server listening on port ${PORT}`);
   console.log(`Supervisor token: ${SUPERVISOR_TOKEN ? 'available' : 'NOT available'}`);
+  console.log(`Data directory: ${DATA_DIR}`);
 });
