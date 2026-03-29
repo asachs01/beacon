@@ -1,3 +1,10 @@
+## [1.10.7](https://github.com/asachs01/beacon/compare/v1.10.6...v1.10.7) (2026-03-29)
+
+
+### Bug Fixes
+
+* weather works via REST proxy, auto-discovers weather entity ([496d0f8](https://github.com/asachs01/beacon/commit/496d0f89d8b0c75e8625b30d5476f59684dba699))
+
 ## [1.10.6](https://github.com/asachs01/beacon/compare/v1.10.5...v1.10.6) (2026-03-29)
 
 
