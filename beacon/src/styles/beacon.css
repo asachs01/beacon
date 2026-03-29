@@ -1386,12 +1386,12 @@ a:focus:not(:focus-visible) {
   }
 
   .filter-name {
-    display: none;
+    font-size: 0.7rem;
   }
 
   .filter-pill {
-    padding: 6px 8px;
-    min-height: 44px;
+    padding: 4px 10px;
+    min-height: 32px;
   }
 
   /* --- Calendar header --- */
