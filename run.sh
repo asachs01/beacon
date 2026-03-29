@@ -1,25 +1,29 @@
 #!/usr/bin/with-contenv bashio
 # Beacon -- Home Assistant Add-on entry point
 
-# Read the Supervisor token from environment
-SUPERVISOR_TOKEN="${SUPERVISOR_TOKEN:-}"
-
 # Read options from /data/options.json (populated by HA Supervisor)
 FAMILY_NAME="$(bashio::config 'family_name' 2>/dev/null || echo 'My Family')"
+HA_TOKEN="$(bashio::config 'ha_token' 2>/dev/null || echo '')"
 THEME="$(bashio::config 'theme' 2>/dev/null || echo 'skylight')"
 AUTO_DARK_MODE="$(bashio::config 'auto_dark_mode' 2>/dev/null || echo 'true')"
 WEATHER_ENTITY="$(bashio::config 'weather_entity' 2>/dev/null || echo 'weather.home')"
 PHOTO_DIRECTORY="$(bashio::config 'photo_directory' 2>/dev/null || echo '/media/beacon/photos')"
 PHOTO_INTERVAL="$(bashio::config 'photo_interval' 2>/dev/null || echo '30')"
 SCREEN_SAVER_TIMEOUT="$(bashio::config 'screen_saver_timeout' 2>/dev/null || echo '5')"
-HA_URL="$(bashio::config 'ha_url' 2>/dev/null || echo 'http://supervisor/core')"
+
+if [ -z "${HA_TOKEN}" ]; then
+  bashio::log.warning "No HA token configured. Go to add-on Configuration and paste a long-lived access token."
+  bashio::log.info "Create one at: HA Profile → Long-lived Access Tokens → Create Token"
+else
+  bashio::log.info "HA token configured."
+fi
 
 # Generate runtime-config.js that injects config into the static build
 CONFIG_JS="/app/dist/runtime-config.js"
 cat > "${CONFIG_JS}" <<EOF
 window.__BEACON_CONFIG__ = {
-  ha_url: "${HA_URL}",
-  ha_token: "${SUPERVISOR_TOKEN}",
+  ha_url: "",
+  ha_token: "${HA_TOKEN}",
   family_name: "${FAMILY_NAME}",
   theme: "${THEME}",
   auto_dark_mode: ${AUTO_DARK_MODE},
