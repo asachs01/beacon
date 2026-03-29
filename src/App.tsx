@@ -30,7 +30,8 @@ import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
-import OnboardingView from './components/OnboardingView';
+import OnboardingView, { OnboardingData } from './components/OnboardingView';
+import { setWeatherLocation } from './hooks/useStandaloneWeather';
 import { CalendarEvent } from './types';
 import { getConfig, patchConfig } from './config';
 
@@ -331,16 +332,33 @@ export function App() {
     [completedChoreIds, completeChore, uncompleteChore, firstMemberId]
   );
 
-  // Handle onboarding completion
-  const handleOnboardingComplete = useCallback(async (haUrl: string, haToken: string) => {
-    await auth.saveManualToken(haUrl, haToken);
-    patchConfig({ ha_url: haUrl, ha_token: haToken });
-    window.location.reload();
-  }, [auth]);
+  // Handle onboarding completion (new wizard flow)
+  const handleOnboardingComplete = useCallback(async (data: OnboardingData) => {
+    // Save family name
+    updateSettings({ familyName: data.familyName });
 
-  const handleOAuthStart = useCallback((haUrl: string) => {
-    auth.startOAuth(haUrl);
-  }, [auth]);
+    // Add family members
+    for (const member of data.members) {
+      addMember(member);
+    }
+
+    // Save weather location
+    if (data.weatherLocation) {
+      setWeatherLocation(data.weatherLocation);
+      updateSettings({ weatherLocation: data.weatherLocation });
+    }
+
+    // If HA was configured, save credentials
+    if (data.calendarMode === 'ha' && data.haUrl && data.haToken) {
+      await auth.saveManualToken(data.haUrl, data.haToken);
+      patchConfig({ ha_url: data.haUrl, ha_token: data.haToken });
+    } else {
+      // Mark as onboarded for standalone mode (no HA)
+      await auth.markOnboarded();
+    }
+
+    window.location.reload();
+  }, [auth, updateSettings, addMember]);
 
   // Keyboard shortcuts for quick view switching
   useEffect(() => {
@@ -384,20 +402,17 @@ export function App() {
     );
   }
 
-  // Show onboarding ONLY when running as a standalone app with no HA connection configured.
-  // Skip if: __BEACON_CONFIG__ exists (add-on injected it), or env token set, or already onboarded,
-  // or running in an iframe (HA ingress), or URL has /ingress/ path.
-  const isHaManaged = !!(
+  // Show onboarding wizard for first-time users, unless running inside HA add-on
+  // (which injects its own config and doesn't need onboarding).
+  const isHaAddOn = !!(
     window.__BEACON_CONFIG__ ||
-    import.meta.env.VITE_HA_TOKEN ||
     window !== window.parent ||
     window.location.pathname.includes('/ingress/')
   );
-  if (!isHaManaged && !auth.state.isOnboarded) {
+  if (!isHaAddOn && !auth.state.isOnboarded) {
     return (
       <OnboardingView
         onComplete={handleOnboardingComplete}
-        onOAuthStart={handleOAuthStart}
       />
     );
   }
@@ -490,7 +505,7 @@ export function App() {
                 <span className="header-family-name">{settings.familyName}</span>
                 <span className="header-separator" />
                 <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
-                {!connected && (
+                {!connected && config.ha_token && (
                   <div className="connection-status">
                     <span className="connection-dot" />
                     Connecting...
@@ -591,10 +606,7 @@ export function App() {
       {/* Screen saver / dim mode */}
       <ScreenSaver />
 
-      {/* Demo indicator — only show outside of add-on ingress */}
-      {!connected && !isHaManaged && (
-        <div className="demo-badge">Demo Mode</div>
-      )}
+      {/* Demo badge removed — standalone mode works silently */}
     </div>
   );
 }
