@@ -2,17 +2,25 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
 import { getConfig } from '../config';
 
+/** Are we running inside HA's ingress proxy? */
+function isIngress(): boolean {
+  return window.location.pathname.includes('/ingress/') || (window !== window.parent);
+}
+
 function resolveHaUrl(): string {
   const config = getConfig();
-  if (config.ha_url) return config.ha_url;
-  // In ingress mode, use the parent frame's origin (not the inner iframe)
-  try {
-    return window.parent.location.origin;
-  } catch {
-    // Cross-origin — fall back to current origin but force https
-    const origin = window.location.origin;
-    return origin.replace(/^http:/, 'https:');
+
+  // In ingress mode, connect through the current origin — HA's proxy handles auth
+  if (isIngress()) {
+    try {
+      return window.parent.location.origin;
+    } catch {
+      return window.location.origin;
+    }
   }
+
+  if (config.ha_url) return config.ha_url;
+  return window.location.origin;
 }
 
 export function useHomeAssistant() {
@@ -23,12 +31,15 @@ export function useHomeAssistant() {
     const { ha_token: HA_TOKEN } = getConfig();
     const HA_URL = resolveHaUrl();
 
-    if (!HA_TOKEN) {
-      console.warn('Beacon: No HA token configured. Set VITE_HA_TOKEN env var.');
+    // In ingress mode, HA's proxy handles auth — we can use the access_token
+    // from the hassio ingress session. If no token, try connecting anyway
+    // (ingress may provide session-based auth).
+    if (!HA_TOKEN && !isIngress()) {
+      console.warn('Beacon: No HA token configured. Running in demo mode.');
       return;
     }
 
-    const client = new HomeAssistantClient(HA_URL, HA_TOKEN);
+    const client = new HomeAssistantClient(HA_URL, HA_TOKEN || '');
     client.setConnectionChangeHandler(setConnected);
     clientRef.current = client;
 

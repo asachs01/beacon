@@ -513,7 +513,7 @@ export function App() {
       <ScreenSaver />
 
       {/* Demo indicator — only show outside of add-on ingress */}
-      {!connected && !window.__BEACON_CONFIG__?.ha_token && (
+      {!connected && !isHaManaged && (
         <div className="demo-badge">Demo Mode</div>
       )}
     </div>
