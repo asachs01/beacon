@@ -116,47 +116,38 @@ export function DashboardView({
         )}
 
         <h2 className="dashboard-section-title">Tasks</h2>
-        {/* Show todo list items from HA/local lists */}
-        {todoItems.length > 0 ? (
-          <ul className="task-checklist">
-            {todoItems.filter(t => t.status === 'needs_action').map(item => (
-              <li key={item.uid} className="task-checklist-item">
-                <button
-                  type="button"
-                  className="task-checkbox"
-                  onClick={() => onToggleTodo?.(item.uid, item.status)}
-                  aria-label={`Complete ${item.summary}`}
-                >
-                  <span className="task-checkbox-box" />
-                </button>
-                <span className="task-checklist-label">{item.summary}</span>
-              </li>
-            ))}
-            {todoItems.filter(t => t.status === 'completed').slice(0, 3).map(item => (
-              <li key={item.uid} className="task-checklist-item task-checklist-item--done">
-                <button
-                  type="button"
-                  className="task-checkbox task-checkbox--checked"
-                  onClick={() => onToggleTodo?.(item.uid, item.status)}
-                  aria-label={`Undo ${item.summary}`}
-                >
-                  <span className="task-checkbox-box">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </span>
-                </button>
-                <span className="task-checklist-label task-checklist-label--done">{item.summary}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <TaskChecklist
-            chores={chores}
-            completedIds={completedChoreIds}
-            onToggle={onToggleChore}
-          />
-        )}
+        {/* Show uncompleted todo items only — completed tasks are hidden */}
+        {(() => {
+          const pending = todoItems.filter(t => t.status === 'needs_action');
+          if (todoItems.length > 0) {
+            return pending.length > 0 ? (
+              <ul className="task-checklist">
+                {pending.map(item => (
+                  <li key={item.uid} className="task-checklist-item">
+                    <button
+                      type="button"
+                      className="task-checkbox"
+                      onClick={() => onToggleTodo?.(item.uid, item.status)}
+                      aria-label={`Complete ${item.summary}`}
+                    >
+                      <span className="task-checkbox-box" />
+                    </button>
+                    <span className="task-checklist-label">{item.summary}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="task-checklist-done">All done — great job!</div>
+            );
+          }
+          return (
+            <TaskChecklist
+              chores={chores}
+              completedIds={completedChoreIds}
+              onToggle={onToggleChore}
+            />
+          );
+        })()}
 
         <CountdownWidget events={events} />
       </section>
