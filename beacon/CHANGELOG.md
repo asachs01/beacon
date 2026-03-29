@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/asachs01/beacon/compare/v1.8.1...v1.9.0) (2026-03-29)
+
+
+### Features
+
+* default view setting, Midnight Light theme, updated README ([29662a3](https://github.com/asachs01/beacon/commit/29662a33a521c5d3c70683ad7ffe46f9a477dda0))
+
 ## [1.8.1](https://github.com/asachs01/beacon/compare/v1.8.0...v1.8.1) (2026-03-29)
 
 
