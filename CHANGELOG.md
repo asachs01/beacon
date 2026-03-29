@@ -1,3 +1,10 @@
+## [1.4.4](https://github.com/asachs01/beacon/compare/v1.4.3...v1.4.4) (2026-03-29)
+
+
+### Bug Fixes
+
+* route API calls through ingress path in add-on proxy mode ([2ef91e1](https://github.com/asachs01/beacon/commit/2ef91e16ca74211a5bbc79caecdbf12be5c5254a))
+
 ## [1.4.3](https://github.com/asachs01/beacon/compare/v1.4.2...v1.4.3) (2026-03-29)
 
 
