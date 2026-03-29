@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/asachs01/beacon/compare/v1.4.4...v1.5.0) (2026-03-29)
+
+
+### Features
+
+* separate Lists and Tasks views with auto-categorization ([136ddc6](https://github.com/asachs01/beacon/commit/136ddc60120776d102b314b92dd972e8839a2728))
+
 ## [1.4.4](https://github.com/asachs01/beacon/compare/v1.4.3...v1.4.4) (2026-03-29)
 
 
