@@ -46,7 +46,7 @@ EOF
 # Inject the runtime-config script tag into index.html if not already present
 INDEX_HTML="/app/dist/index.html"
 if ! grep -q 'runtime-config.js' "${INDEX_HTML}"; then
-  sed -i 's|</head>|<script src="/runtime-config.js"></script></head>|' "${INDEX_HTML}"
+  sed -i 's|</head>|<script src="./runtime-config.js"></script></head>|' "${INDEX_HTML}"
 fi
 
 bashio::log.info "Starting Beacon server on port 3000 (API proxy enabled)..."
