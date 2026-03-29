@@ -1,0 +1,228 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Phase 1: Zero-Config Standalone Mode",
+      "description": "Make Beacon work out of the box without Home Assistant. Install → 2-minute setup wizard → working dashboard.",
+      "status": "pending",
+      "priority": "high",
+      "tags": ["phase-1", "standalone"],
+      "subtasks": [
+        {
+          "id": 101,
+          "title": "Setup wizard — guided onboarding flow",
+          "description": "First-launch wizard: family name, add members (name/avatar/color), enter zip code for weather. Should feel like setting up an iPhone — minimal steps, friendly UI.",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-1"]
+        },
+        {
+          "id": 102,
+          "title": "OpenWeatherMap integration",
+          "description": "Free tier weather API integration. User enters zip code during setup, Beacon fetches weather without HA. Needs API key management (built-in free key or user-provided).",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-1"]
+        },
+        {
+          "id": 103,
+          "title": "PWA support — service worker and offline",
+          "description": "Proper service worker for offline caching, manifest for installability, 'Add to Home Screen' prompt on mobile browsers.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-1"]
+        },
+        {
+          "id": 104,
+          "title": "Default to standalone mode",
+          "description": "Local calendar, lists, and tasks should be the defaults. HA integration becomes an optional 'Connect Home Assistant' step in settings. Remove 'demo mode' messaging.",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-1"]
+        },
+        {
+          "id": 105,
+          "title": "Improve error states and empty states",
+          "description": "Friendly messages when things aren't configured. No API error codes shown to users. Helpful 'Get started' prompts instead of blank screens.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-1"]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Phase 2: Direct Service Integrations",
+      "description": "Connect to the services families already use — Google, Spotify, Apple — without requiring Home Assistant.",
+      "status": "pending",
+      "priority": "high",
+      "tags": ["phase-2", "integrations"],
+      "subtasks": [
+        {
+          "id": 201,
+          "title": "Google Calendar OAuth integration",
+          "description": "Sign in with Google button, OAuth 2.0 flow, fetch all user calendars via Google Calendar API v3. Replace HA calendar dependency for standalone users.",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-2"]
+        },
+        {
+          "id": 202,
+          "title": "Google Photos API integration",
+          "description": "OAuth sign-in, browse/select albums, fetch photos for slideshow. Replace HA media directory dependency.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-2"]
+        },
+        {
+          "id": 203,
+          "title": "Spotify Connect integration",
+          "description": "Spotify OAuth, playback control (play/pause/skip), now playing display, browse playlists. Spotify Web Playback SDK or Connect API.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-2"]
+        },
+        {
+          "id": 204,
+          "title": "Apple Music via MusicKit JS",
+          "description": "MusicKit JS integration for Apple ecosystem families. Playback control, now playing, browse library.",
+          "status": "pending",
+          "priority": "low",
+          "tags": ["phase-2"]
+        },
+        {
+          "id": 205,
+          "title": "iCloud Calendar via CalDAV",
+          "description": "CalDAV integration for Apple calendar users who don't use Google.",
+          "status": "pending",
+          "priority": "low",
+          "tags": ["phase-2"]
+        },
+        {
+          "id": 206,
+          "title": "Todoist / Microsoft To-Do integration",
+          "description": "Direct API integrations for popular task management apps beyond HA todo entities.",
+          "status": "pending",
+          "priority": "low",
+          "tags": ["phase-2"]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Phase 3: Distribution",
+      "description": "One-click install on any platform. Minimize friction to zero.",
+      "status": "pending",
+      "priority": "medium",
+      "tags": ["phase-3", "distribution"],
+      "subtasks": [
+        {
+          "id": 301,
+          "title": "Android APK on Play Store",
+          "description": "Capacitor build → signed APK → Play Store listing. Beacon as a native Android app.",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-3"]
+        },
+        {
+          "id": 302,
+          "title": "iOS app on App Store",
+          "description": "Capacitor build → Xcode archive → App Store submission. Beacon as a native iOS app.",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-3"]
+        },
+        {
+          "id": 303,
+          "title": "Docker one-liner self-hosting",
+          "description": "docker run -p 3000:3000 ghcr.io/asachs01/beacon — works on any server, NAS, or home lab.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-3"]
+        },
+        {
+          "id": 304,
+          "title": "Raspberry Pi ready-to-flash image",
+          "description": "Pre-built image: flash SD card, plug in monitor, boot directly to Beacon in kiosk mode. Cheapest possible hardware path.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-3"]
+        },
+        {
+          "id": 305,
+          "title": "Submit to official HA add-on repository",
+          "description": "Meet HA add-on store requirements, submit PR to community add-ons repo for wider visibility.",
+          "status": "pending",
+          "priority": "low",
+          "tags": ["phase-3"]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Phase 4: Polish & Delight",
+      "description": "Make Beacon feel like a premium product that happens to be free.",
+      "status": "pending",
+      "priority": "medium",
+      "tags": ["phase-4", "polish"],
+      "subtasks": [
+        {
+          "id": 401,
+          "title": "Interactive onboarding tutorial",
+          "description": "Walkthrough of features on first use — highlight each section, explain what it does, how to customize.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-4"]
+        },
+        {
+          "id": 402,
+          "title": "Family invite links",
+          "description": "Share a URL to add family members from their own device. QR code on the display for easy scanning.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-4"]
+        },
+        {
+          "id": 403,
+          "title": "Kiosk mode with auto-launch",
+          "description": "Prevent navigation away, auto-launch on boot, wake on touch, prevent screen burn-in.",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-4"]
+        },
+        {
+          "id": 404,
+          "title": "Touch-optimized gestures",
+          "description": "Swipe between views, pull to refresh, long-press for actions, pinch to zoom calendar.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-4"]
+        },
+        {
+          "id": 405,
+          "title": "Push notifications",
+          "description": "Calendar reminders, chore reminders, family member alerts via browser push or native notifications.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-4"]
+        },
+        {
+          "id": 406,
+          "title": "Accessibility — screen reader, high contrast, font scaling",
+          "description": "ARIA labels, keyboard navigation, high contrast theme, user-configurable font sizes.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-4"]
+        },
+        {
+          "id": 407,
+          "title": "Internationalization (i18n)",
+          "description": "Extract all strings, support multiple languages. Start with Spanish, French, German.",
+          "status": "pending",
+          "priority": "low",
+          "tags": ["phase-4"]
+        }
+      ]
+    }
+  ]
+}
