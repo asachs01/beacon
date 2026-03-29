@@ -1,3 +1,10 @@
+## [1.10.4](https://github.com/asachs01/beacon/compare/v1.10.3...v1.10.4) (2026-03-29)
+
+
+### Bug Fixes
+
+* Now Playing bar fixed to bottom on mobile, flush with tab bar ([8dd4edb](https://github.com/asachs01/beacon/commit/8dd4edb64c6aa9e574394623d31aa508bb4bf446))
+
 ## [1.10.3](https://github.com/asachs01/beacon/compare/v1.10.2...v1.10.3) (2026-03-29)
 
 
