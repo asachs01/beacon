@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/asachs01/beacon/compare/v1.6.0...v1.7.0) (2026-03-29)
+
+
+### Features
+
+* expand avatar emojis (150+) and color palette (20 colors) ([64c6c8f](https://github.com/asachs01/beacon/commit/64c6c8f9d461961ad3b4ef70012f3402b2cc0fc2))
+
 # [1.6.0](https://github.com/asachs01/beacon/compare/v1.5.0...v1.6.0) (2026-03-29)
 
 
