@@ -1,3 +1,10 @@
+## [1.10.2](https://github.com/asachs01/beacon/compare/v1.10.1...v1.10.2) (2026-03-29)
+
+
+### Bug Fixes
+
+* mobile dashboard layout — no overlap, constrained events, better sizing ([008103d](https://github.com/asachs01/beacon/commit/008103df3400944c2ec23694bf7f7124fd5a6bdd))
+
 ## [1.10.1](https://github.com/asachs01/beacon/compare/v1.10.0...v1.10.1) (2026-03-29)
 
 
