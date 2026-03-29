@@ -4,7 +4,7 @@
       "id": 1,
       "title": "Phase 1: Zero-Config Standalone Mode",
       "description": "Make Beacon work out of the box without Home Assistant. Install → 2-minute setup wizard → working dashboard.",
-      "status": "pending",
+      "status": "in-review",
       "priority": "high",
       "tags": ["phase-1", "standalone"],
       "subtasks": [
@@ -54,7 +54,7 @@
       "id": 2,
       "title": "Phase 2: Direct Service Integrations",
       "description": "Connect to the services families already use — Google, Spotify, Apple — without requiring Home Assistant.",
-      "status": "pending",
+      "status": "in-review",
       "priority": "high",
       "tags": ["phase-2", "integrations"],
       "subtasks": [
@@ -112,7 +112,7 @@
       "id": 3,
       "title": "Phase 3: Distribution",
       "description": "One-click install on any platform. Minimize friction to zero.",
-      "status": "pending",
+      "status": "in-review",
       "priority": "medium",
       "tags": ["phase-3", "distribution"],
       "subtasks": [
@@ -162,7 +162,7 @@
       "id": 4,
       "title": "Phase 4: Polish & Delight",
       "description": "Make Beacon feel like a premium product that happens to be free.",
-      "status": "pending",
+      "status": "in-review",
       "priority": "medium",
       "tags": ["phase-4", "polish"],
       "subtasks": [
