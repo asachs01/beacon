@@ -5,28 +5,45 @@ import { getConfig } from '../config';
 
 function resolveHaUrl(): string {
   const config = getConfig();
-  if (config.ha_url) return config.ha_url.replace(/\/$/, '');
-  try {
-    return window.parent.location.origin;
-  } catch {
-    return window.location.origin.replace(/^http:/, 'https:');
+  // If a real HA URL is configured (not the internal supervisor URL), use it
+  if (config.ha_url && !config.ha_url.includes('supervisor')) {
+    return config.ha_url.replace(/\/$/, '');
   }
+  // In ingress/iframe mode, use the parent frame's origin
+  try {
+    if (window !== window.parent) return window.parent.location.origin;
+  } catch { /* cross-origin */ }
+  return window.location.origin;
 }
 
-const haUrl = resolveHaUrl();
-const haToken = getConfig().ha_token;
+// Lazy-resolve to avoid issues with config loading timing
+let _haUrl: string | null = null;
+let _haToken: string | null = null;
+
+function getHaUrl() {
+  if (!_haUrl) _haUrl = resolveHaUrl();
+  return _haUrl;
+}
+
+function getHaToken() {
+  if (_haToken === null) _haToken = getConfig().ha_token;
+  return _haToken;
+}
 
 /**
  * Fetch from the HA REST API with automatic auth headers.
  */
 export async function haFetch(path: string, options?: RequestInit): Promise<unknown> {
-  const res = await fetch(`${haUrl}${path}`, {
+  const token = getHaToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options?.headers as Record<string, string>,
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${getHaUrl()}${path}`, {
     ...options,
-    headers: {
-      Authorization: `Bearer ${haToken}`,
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
   });
   if (!res.ok) throw new Error(`HA API ${res.status}: ${res.statusText}`);
   return res.json();
@@ -68,5 +85,5 @@ export async function getEntityState(entityId: string): Promise<{
 
 /** Whether an HA token is configured */
 export function hasToken(): boolean {
-  return !!haToken;
+  return !!getHaToken();
 }

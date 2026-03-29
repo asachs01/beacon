@@ -10,16 +10,19 @@ function isIngress(): boolean {
 function resolveHaUrl(): string {
   const config = getConfig();
 
-  // In ingress mode, connect through the current origin — HA's proxy handles auth
+  // If a real HA URL is configured (not the internal supervisor URL), use it
+  if (config.ha_url && !config.ha_url.includes('supervisor')) return config.ha_url;
+
+  // In ingress or iframe mode, use the parent frame's origin (the HA frontend)
   if (isIngress()) {
     try {
       return window.parent.location.origin;
     } catch {
+      // Cross-origin iframe — use current origin
       return window.location.origin;
     }
   }
 
-  if (config.ha_url) return config.ha_url;
   return window.location.origin;
 }
 
