@@ -82,7 +82,7 @@ export function useHomeAssistant() {
       }
 
       if (!token) {
-        console.warn('Beacon: No HA token available. Running in demo mode.');
+        // Standalone mode — no HA connection needed, works silently
         return;
       }
 
