@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/asachs01/beacon/compare/v1.4.0...v1.4.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* show calendar filter pill names on mobile instead of dot-only ([f2f19fe](https://github.com/asachs01/beacon/commit/f2f19feb96e1718ac6fe54ddad319b97c2d63d46))
+
 # [1.4.0](https://github.com/asachs01/beacon/compare/v1.3.1...v1.4.0) (2026-03-29)
 
 
