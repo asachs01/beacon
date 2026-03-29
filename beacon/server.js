@@ -506,7 +506,14 @@ function handleVoiceAction(req, res) {
 
       try {
         const qs = intent.domain === 'todo' ? '?return_response' : '';
-        const resp = await haRequest('POST', `/api/services/${intent.domain}/${intent.service}${qs}`, serviceData);
+        let resp = await haRequest('POST', `/api/services/${intent.domain}/${intent.service}${qs}`, serviceData);
+
+        // Fallback: if media_play/media_pause fails, try media_play_pause
+        if (resp.status >= 400 && intent.domain === 'media_player' &&
+            (intent.service === 'media_play' || intent.service === 'media_pause')) {
+          resp = await haRequest('POST', `/api/services/media_player/media_play_pause`, serviceData);
+        }
+
         const ok = resp.status >= 200 && resp.status < 300;
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({

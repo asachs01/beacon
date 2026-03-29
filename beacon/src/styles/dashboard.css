@@ -329,6 +329,8 @@
     grid-template-rows: auto auto auto;
     gap: 20px;
     padding: 20px;
+    height: auto;        /* override desktop height:100% so grid rows grow naturally */
+    min-height: 0;
     overflow-y: auto;
     padding-bottom: 80px; /* clear now-playing + tab bar */
   }

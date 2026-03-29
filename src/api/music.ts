@@ -75,10 +75,12 @@ async function callMedia(
 }
 
 export const play = (client: HomeAssistantClient | null, entityId: string) =>
-  callMedia(client, 'media_play', entityId);
+  callMedia(client, 'media_play', entityId)
+    .catch(() => callMedia(client, 'media_play_pause', entityId));
 
 export const pause = (client: HomeAssistantClient | null, entityId: string) =>
-  callMedia(client, 'media_pause', entityId);
+  callMedia(client, 'media_pause', entityId)
+    .catch(() => callMedia(client, 'media_play_pause', entityId));
 
 export const next = (client: HomeAssistantClient | null, entityId: string) =>
   callMedia(client, 'media_next_track', entityId);
