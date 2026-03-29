@@ -132,9 +132,9 @@ export function App() {
   // Event notifications (browser + HA mobile_app)
   useNotifications(events, client);
 
-  // Chores and leaderboard are now slide-over panels triggered from sidebar
-  const showChoresPanel = activeView === 'chores';
-  const showLeaderboard = activeView === 'leaderboard';
+  // Chores and leaderboard are slide-over panels (not full views)
+  const [showChoresPanel, setShowChoresPanel] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   // Fetch data when connected
   useEffect(() => {
@@ -282,12 +282,29 @@ export function App() {
   }, []);
 
   const handleChangeView = useCallback(
-    (view: SidebarView) => setActiveView(view),
+    (view: SidebarView) => {
+      // Chores and leaderboard open as overlays, don't change the main view
+      if (view === 'chores') {
+        setShowChoresPanel(true);
+        setShowLeaderboard(false);
+        return;
+      }
+      if (view === 'leaderboard') {
+        setShowLeaderboard(true);
+        setShowChoresPanel(false);
+        return;
+      }
+      // All other views: close any open panels and switch view
+      setShowChoresPanel(false);
+      setShowLeaderboard(false);
+      setActiveView(view);
+    },
     [],
   );
 
   const handleClosePanel = useCallback(() => {
-    setActiveView('calendar');
+    setShowChoresPanel(false);
+    setShowLeaderboard(false);
   }, []);
 
   // Build a set of chore IDs completed today (for the dashboard checklist).

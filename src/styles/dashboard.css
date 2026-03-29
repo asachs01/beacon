@@ -371,7 +371,17 @@
   }
 
   .dashboard-weather {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .dashboard-weather-icon {
+    font-size: 24px;
+  }
+
+  .dashboard-weather-temp {
+    font-size: 1.3rem;
   }
 
   .task-checklist-item {
