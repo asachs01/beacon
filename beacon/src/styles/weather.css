@@ -1,0 +1,263 @@
+/* ============================================================
+   Beacon — Weather View
+   ============================================================ */
+
+.weather-view {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  height: 100%;
+  padding: 40px 48px;
+  overflow-y: auto;
+}
+
+.weather-loading,
+.weather-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 16px;
+  gap: 16px;
+}
+
+.weather-retry-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* --- Current Conditions --- */
+.weather-current {
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.weather-current-main {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.weather-current-icon {
+  font-size: 80px;
+  line-height: 1;
+}
+
+.weather-current-temp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weather-current-temp {
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+  letter-spacing: -1px;
+}
+
+.weather-current-condition {
+  font-size: 20px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.weather-current-details {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.weather-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weather-detail-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.weather-detail-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.weather-refresh-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.weather-refresh-btn:hover {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary);
+}
+
+/* --- Forecast --- */
+.weather-forecast {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.weather-forecast-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.weather-forecast-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar but keep functionality */
+.weather-forecast-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.weather-forecast-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.weather-forecast-scroll::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 2px;
+  opacity: 0.3;
+}
+
+.weather-forecast-card {
+  flex: 0 0 auto;
+  width: 120px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+
+.weather-forecast-card:hover {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
+}
+
+.weather-forecast-day {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.weather-forecast-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.weather-forecast-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.weather-forecast-temps {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.weather-forecast-high {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.weather-forecast-low {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.weather-forecast-precip {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* --- Dashboard weather widget clickable --- */
+.dashboard-weather--clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 12px;
+}
+
+.dashboard-weather--clickable:hover {
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .weather-view {
+    padding: 20px 16px;
+    gap: 24px;
+  }
+
+  .weather-current {
+    padding: 24px 20px;
+  }
+
+  .weather-current-icon {
+    font-size: 56px;
+  }
+
+  .weather-current-temp {
+    font-size: 48px;
+  }
+
+  .weather-current-condition {
+    font-size: 16px;
+  }
+
+  .weather-current-details {
+    gap: 20px;
+  }
+
+  .weather-detail-value {
+    font-size: 16px;
+  }
+
+  .weather-forecast-card {
+    width: 100px;
+    padding: 12px;
+  }
+}

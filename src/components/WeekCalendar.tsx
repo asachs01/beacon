@@ -11,6 +11,8 @@ import {
 } from 'date-fns';
 import { CalendarEvent } from '../types';
 import { EventBlock } from './EventBlock';
+import { useWeatherForecast } from '../hooks/useWeatherForecast';
+import { weatherIcon } from '../types/weather-icons';
 
 interface WeekCalendarProps {
   events: CalendarEvent[];
@@ -66,6 +68,7 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
   const weekStart = startOfWeek(today, { weekStartsOn: 0 });
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const forecast = useWeatherForecast();
 
   // Drag state
   const [dragEvent, setDragEvent] = useState<CalendarEvent | null>(null);
@@ -93,6 +96,15 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
 
   const dayCount = days.length;
   const maxMobileGroup = Math.ceil(7 / MOBILE_DAYS) - 1;
+
+  // Build date→forecast lookup for quick access in header
+  const forecastByDate = useMemo(() => {
+    const map = new Map<string, { condition: string; high: number; low: number }>();
+    for (const f of forecast) {
+      map.set(f.date, { condition: f.condition, high: f.tempHigh, low: f.tempLow });
+    }
+    return map;
+  }, [forecast]);
 
   // Swipe handlers for mobile day navigation
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -432,13 +444,23 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
         <div className="week-header-spacer" />
         {days.map((day) => {
           const isToday = isSameDay(day, today);
+          const dayKey = format(day, 'yyyy-MM-dd');
+          const wx = forecastByDate.get(dayKey);
           return (
             <div
-              key={format(day, 'yyyy-MM-dd')}
+              key={dayKey}
               className={`week-header-day ${isToday ? 'week-header-day--today' : ''}`}
             >
               <span className="week-header-day-name">{format(day, 'EEE')}</span>
               <span className="week-header-day-number">{format(day, 'd')}</span>
+              {wx && (
+                <span className="week-header-weather">
+                  <span className="week-header-weather-icon">{weatherIcon(wx.condition)}</span>
+                  <span className="week-header-weather-temps">
+                    {Math.round(wx.high)}° / {Math.round(wx.low)}°
+                  </span>
+                </span>
+              )}
             </div>
           );
         })}

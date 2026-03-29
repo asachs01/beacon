@@ -512,6 +512,27 @@ a:focus:not(:focus-visible) {
   color: var(--color-blue-full);
 }
 
+/* Weather indicator in day header */
+.week-header-weather {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.week-header-weather-icon {
+  font-size: 12px;
+}
+
+.week-header-weather-temps {
+  font-family: var(--font-body);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
 /* All-day Events Row */
 .week-allday-row {
   display: grid;
@@ -1407,6 +1428,14 @@ a:focus:not(:focus-visible) {
 
   .week-header-day {
     padding: 8px 2px;
+  }
+
+  .week-header-weather-temps {
+    display: none;
+  }
+
+  .week-header-weather {
+    font-size: 10px;
   }
 
   /* --- Mobile 3-day calendar navigation --- */

@@ -24,6 +24,7 @@ import { ScreenSaver } from './components/ScreenSaver';
 import { GroceryView } from './components/GroceryView';
 import { OmniAdd } from './components/OmniAdd';
 import { Timer } from './components/Timer';
+import { WeatherView } from './components/WeatherView';
 import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
@@ -406,6 +407,7 @@ export function App() {
               familyName={settings.familyName}
               todoItems={dashboardTasks.items}
               onToggleTodo={dashboardTasks.toggleItem}
+              onWeatherClick={() => setActiveView('weather')}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}
@@ -451,6 +453,8 @@ export function App() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
             <Timer />
           </div>
+        ) : activeView === 'weather' ? (
+          <WeatherView />
         ) : activeView === 'photos' ? (
           <PhotoFrame
             musicPlayer={music.activePlayer}

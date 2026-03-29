@@ -11,6 +11,7 @@ import './styles/screensaver.css';
 import './styles/widgets.css';
 import './styles/omni-add.css';
 import './styles/settings.css';
+import './styles/weather.css';
 import { initNativeBridge } from './native';
 import { applyStoredTheme } from './hooks/useTheme';
 

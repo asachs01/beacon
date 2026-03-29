@@ -32,6 +32,7 @@ interface DashboardViewProps {
   familyName?: string;
   todoItems?: TodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string) => void;
+  onWeatherClick?: () => void;
 }
 
 export function DashboardView({
@@ -43,6 +44,7 @@ export function DashboardView({
   familyName,
   todoItems = [],
   onToggleTodo,
+  onWeatherClick,
 }: DashboardViewProps) {
   const [now, setNow] = useState(new Date());
 
@@ -100,7 +102,13 @@ export function DashboardView({
       {/* RIGHT: Weather + Tasks */}
       <section className="dashboard-right">
         {weather && (
-          <div className="dashboard-weather">
+          <div
+            className={`dashboard-weather ${onWeatherClick ? 'dashboard-weather--clickable' : ''}`}
+            onClick={onWeatherClick}
+            role={onWeatherClick ? 'button' : undefined}
+            tabIndex={onWeatherClick ? 0 : undefined}
+            onKeyDown={onWeatherClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onWeatherClick(); } : undefined}
+          >
             <span className="dashboard-weather-icon">
               {weatherIcon(weather.condition)}
             </span>
