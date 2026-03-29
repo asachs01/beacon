@@ -28,6 +28,10 @@ export interface BeaconSettings {
   defaultEventDuration: 30 | 60 | 120;
   notificationMinutes: 5 | 10 | 15 | 30;
 
+  // Standalone weather
+  weatherLocation: string; // zip code or city name for OpenWeatherMap
+  owmApiKey: string; // optional OpenWeatherMap API key override
+
   // Integrations
   weatherEntity: string;
   grocyEnabled: boolean;
@@ -82,6 +86,9 @@ function buildDefaults(): BeaconSettings {
     calendarColors: {},
     defaultEventDuration: 60,
     notificationMinutes: 10,
+
+    weatherLocation: '',
+    owmApiKey: '',
 
     weatherEntity: config.weather_entity,
     grocyEnabled: false,

@@ -3,12 +3,16 @@ import { HomeAssistantClient } from '../api/homeassistant';
 import { WeatherData } from '../types';
 import { getConfig } from '../config';
 import { haFetch, hasToken } from '../api/ha-rest';
+import { useStandaloneWeather, getWeatherLocation } from './useStandaloneWeather';
 
 const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
 export function useWeather(getClient: () => HomeAssistantClient | null) {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [haWeather, setHaWeather] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Standalone weather as fallback
+  const standalone = useStandaloneWeather();
 
   const fetchWeather = useCallback(async () => {
     const client = getClient();
@@ -18,7 +22,7 @@ export function useWeather(getClient: () => HomeAssistantClient | null) {
     if (client?.isConnected) {
       try {
         const data = await client.getWeather(configEntity);
-        setWeather(data);
+        setHaWeather(data);
         setError(null);
         return;
       } catch (err) {
@@ -54,7 +58,7 @@ export function useWeather(getClient: () => HomeAssistantClient | null) {
 
         if (entity) {
           const attrs = entity.attributes;
-          setWeather({
+          setHaWeather({
             temperature: (attrs.temperature as number) ?? 0,
             temperatureUnit: (attrs.temperature_unit as string) ?? '°F',
             condition: entity.state,
@@ -76,5 +80,13 @@ export function useWeather(getClient: () => HomeAssistantClient | null) {
     return () => clearInterval(interval);
   }, [fetchWeather]);
 
-  return { weather, error, refresh: fetchWeather };
+  // Use HA weather if available, otherwise fall back to standalone
+  const weather = haWeather || standalone.weather;
+  const hasLocation = !!getWeatherLocation();
+
+  return {
+    weather: hasLocation || haWeather ? weather : null,
+    error: haWeather ? error : standalone.error,
+    refresh: haWeather ? fetchWeather : standalone.refresh,
+  };
 }
