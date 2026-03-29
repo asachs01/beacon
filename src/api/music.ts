@@ -22,6 +22,7 @@ export function parseMediaPlayer(entity: {
     media_duration: attrs.media_duration as number | undefined,
     media_position: attrs.media_position as number | undefined,
     entity_picture: attrs.entity_picture as string | undefined,
+    app_name: attrs.app_name as string | undefined,
     volume_level: attrs.volume_level as number | undefined,
     is_volume_muted: attrs.is_volume_muted as boolean | undefined,
   };

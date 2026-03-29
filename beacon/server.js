@@ -96,6 +96,69 @@ function proxyToHA(req, res) {
 }
 
 /**
+ * Direct HA service call — avoids proxy issues with POST body forwarding.
+ * POST /beacon-action/service { domain, service, data }
+ */
+function handleServiceCall(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+
+  const chunks = [];
+  req.on('data', (chunk) => chunks.push(chunk));
+  req.on('end', () => {
+    try {
+      const { domain, service, data, return_response } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      if (!domain || !service) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing domain or service' }));
+        return;
+      }
+
+      const qs = return_response ? '?return_response' : '';
+      const bodyStr = JSON.stringify(data || {});
+      const bodyBuf = Buffer.from(bodyStr, 'utf8');
+
+      const options = {
+        hostname: 'supervisor',
+        port: 80,
+        path: `/core/api/services/${domain}/${service}${qs}`,
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
+          'Content-Type': 'application/json',
+          'Content-Length': bodyBuf.length,
+        },
+      };
+
+      const proxyReq = http.request(options, (proxyRes) => {
+        const respChunks = [];
+        proxyRes.on('data', (c) => respChunks.push(c));
+        proxyRes.on('end', () => {
+          const respBody = Buffer.concat(respChunks).toString('utf8');
+          res.writeHead(proxyRes.statusCode, { 'Content-Type': 'application/json' });
+          res.end(respBody);
+        });
+      });
+
+      proxyReq.on('error', (err) => {
+        console.error('Service call error:', err.message);
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      });
+
+      proxyReq.write(bodyBuf);
+      proxyReq.end();
+    } catch (err) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+  });
+}
+
+/**
  * Persistent data API — stores JSON in /data/ (survives add-on rebuilds).
  *
  * GET  /beacon-data/:key  → read stored JSON
@@ -153,6 +216,12 @@ function handleDataApi(req, res) {
 }
 
 const server = http.createServer((req, res) => {
+  // Service call API (avoids ingress POST issues)
+  if (req.url === '/beacon-action/service') {
+    handleServiceCall(req, res);
+    return;
+  }
+
   // Persistent data API
   if (req.url.startsWith('/beacon-data/')) {
     handleDataApi(req, res);

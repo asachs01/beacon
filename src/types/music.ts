@@ -11,6 +11,7 @@ export interface MediaPlayer {
   media_duration?: number;
   media_position?: number;
   entity_picture?: string;
+  app_name?: string;
   volume_level?: number;
   is_volume_muted?: boolean;
 }

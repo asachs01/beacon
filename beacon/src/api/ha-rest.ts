@@ -92,6 +92,7 @@ export async function haFetch(path: string, options?: RequestInit): Promise<unkn
 
 /**
  * Call a HA service via the REST API.
+ * In add-on mode, uses /beacon-action/service to avoid ingress POST issues.
  */
 export async function callHaService(
   domain: string,
@@ -99,6 +100,19 @@ export async function callHaService(
   data?: Record<string, unknown>,
   returnResponse = false,
 ): Promise<unknown> {
+  // In add-on mode, route through the dedicated service endpoint
+  // (HA ingress proxy can mangle POST bodies on /api/* paths)
+  if (isAddOn()) {
+    const base = getBaseUrl();
+    const res = await fetch(`${base}/beacon-action/service`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain, service, data: data ?? {}, return_response: returnResponse }),
+    });
+    if (!res.ok) throw new Error(`Service call ${res.status}: ${res.statusText}`);
+    return res.json();
+  }
+
   const qs = returnResponse ? '?return_response' : '';
   return haFetch(`/api/services/${domain}/${service}${qs}`, {
     method: 'POST',

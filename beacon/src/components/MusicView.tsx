@@ -137,7 +137,7 @@ export function MusicView({
       {/* Track info */}
       <div className="music-track-info">
         <h2 className="music-track-title">
-          {player?.media_title || 'Nothing Playing'}
+          {player?.media_title || player?.app_name || 'Nothing Playing'}
         </h2>
         <p className="music-track-artist">
           {player?.media_artist || ''}
