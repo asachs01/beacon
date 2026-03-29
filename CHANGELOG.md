@@ -1,3 +1,10 @@
+## [1.10.3](https://github.com/asachs01/beacon/compare/v1.10.2...v1.10.3) (2026-03-29)
+
+
+### Bug Fixes
+
+* media controls fallback to media_play_pause, mobile layout height ([fe66dc8](https://github.com/asachs01/beacon/commit/fe66dc87e8b998c7d979c2fbd33c640a888143da))
+
 ## [1.10.2](https://github.com/asachs01/beacon/compare/v1.10.1...v1.10.2) (2026-03-29)
 
 
