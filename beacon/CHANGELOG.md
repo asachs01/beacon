@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/asachs01/beacon/compare/v1.7.0...v1.7.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* music player works via REST API proxy (no WebSocket required) ([71f8f9c](https://github.com/asachs01/beacon/commit/71f8f9c209ec744c971c80d997c95ac3a05eb14b))
+
 # [1.7.0](https://github.com/asachs01/beacon/compare/v1.6.0...v1.7.0) (2026-03-29)
 
 
