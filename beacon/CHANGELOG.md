@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/asachs01/beacon/compare/v1.10.0...v1.10.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* hide completed tasks from dashboard, only show pending items ([123bb34](https://github.com/asachs01/beacon/commit/123bb342a554bb8a4cab60148e44625edbb663cc))
+
 # [1.10.0](https://github.com/asachs01/beacon/compare/v1.9.0...v1.10.0) (2026-03-29)
 
 
