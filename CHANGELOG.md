@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/asachs01/beacon/compare/v1.5.0...v1.6.0) (2026-03-29)
+
+
+### Features
+
+* server-side data persistence for family, settings, chores ([8bf3391](https://github.com/asachs01/beacon/commit/8bf3391b2e2950cb24f99ded23311bed7069f37a))
+
 # [1.5.0](https://github.com/asachs01/beacon/compare/v1.4.4...v1.5.0) (2026-03-29)
 
 
