@@ -1,19 +1,28 @@
 import { useState, useCallback, useRef } from 'react';
-import { HomeAssistantClient } from '../api/homeassistant';
 import { CalendarEvent, CalendarInfo, getCalendarColor } from '../types';
+import { haFetch, hasToken } from '../api/ha-rest';
 
-export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
+/**
+ * Calendar events hook — uses HA REST API via haFetch.
+ * Works with both direct HA connections and the add-on API proxy.
+ * The `connected` flag indicates whether the HA API is reachable.
+ */
+export function useCalendarEvents(connected: boolean) {
   const [calendars, setCalendars] = useState<CalendarInfo[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const calendarsRef = useRef<CalendarInfo[]>([]);
 
   const fetchCalendars = useCallback(async () => {
-    const client = getClient();
-    if (!client?.isConnected) return [];
+    if (!connected && !hasToken()) return [];
 
     try {
-      const cals = await client.getCalendars();
+      const data = await haFetch('/api/calendars') as Array<{ entity_id: string; name: string }>;
+      const cals = data.map((cal, index) => ({
+        id: cal.entity_id,
+        name: cal.name,
+        color: getCalendarColor(index),
+      }));
       calendarsRef.current = cals;
       setCalendars(cals);
       return cals;
@@ -21,15 +30,13 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
       console.error('Failed to fetch calendars:', err);
       return [];
     }
-  }, [getClient]);
+  }, [connected]);
 
   const fetchEvents = useCallback(async (start: string, end: string) => {
-    const client = getClient();
-    if (!client?.isConnected) return;
+    if (!connected && !hasToken()) return;
 
     setLoading(true);
     try {
-      // Always use ref for current calendars; fetch if empty
       let cals = calendarsRef.current;
       if (cals.length === 0) {
         cals = (await fetchCalendars()) || [];
@@ -39,13 +46,36 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
       const allEvents: CalendarEvent[] = [];
       for (const cal of cals) {
         try {
-          const calEvents = await client.getEvents(cal.id, start, end);
+          const params = new URLSearchParams({ start, end });
+          const result = await haFetch(`/api/calendars/${cal.id}?${params}`) as Array<{
+            uid?: string;
+            summary: string;
+            start: string | { dateTime: string; date: string };
+            end: string | { dateTime: string; date: string };
+            description?: string;
+            recurrence_id?: string;
+          }>;
+
           const colorIndex = cals.findIndex(c => c.id === cal.id);
-          for (const ev of calEvents) {
-            ev.color = getCalendarColor(colorIndex);
-            ev.calendarName = cal.name;
+          for (const ev of (result || [])) {
+            const startStr = typeof ev.start === 'string' ? ev.start : (ev.start.dateTime || ev.start.date);
+            const endStr = typeof ev.end === 'string' ? ev.end : (ev.end.dateTime || ev.end.date);
+            const allDay = typeof ev.start === 'string'
+              ? ev.start.length === 10
+              : !!ev.start.date && !ev.start.dateTime;
+
+            allEvents.push({
+              id: ev.uid || ev.recurrence_id || `${cal.id}-${allEvents.length}`,
+              title: ev.summary,
+              start: startStr,
+              end: endStr,
+              allDay,
+              description: ev.description,
+              calendarId: cal.id,
+              calendarName: cal.name,
+              color: getCalendarColor(colorIndex),
+            });
           }
-          allEvents.push(...calEvents);
         } catch (err) {
           console.error(`Failed to fetch events for ${cal.name}:`, err);
         }
@@ -56,7 +86,7 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
     } finally {
       setLoading(false);
     }
-  }, [getClient, fetchCalendars]);
+  }, [connected, fetchCalendars]);
 
   const createEvent = useCallback(async (
     calendarId: string,
@@ -70,10 +100,11 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
       rrule?: string;
     }
   ) => {
-    const client = getClient();
-    if (!client?.isConnected) return;
-    await client.createEvent(calendarId, event);
-  }, [getClient]);
+    await haFetch(`/api/services/calendar/create_event`, {
+      method: 'POST',
+      body: JSON.stringify({ ...event, entity_id: calendarId }),
+    });
+  }, []);
 
   const updateEvent = useCallback(async (
     calendarId: string,
@@ -87,16 +118,18 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
       description?: string;
     }
   ) => {
-    const client = getClient();
-    if (!client?.isConnected) return;
-    await client.updateEvent(calendarId, uid, event);
-  }, [getClient]);
+    await haFetch(`/api/services/calendar/update_event`, {
+      method: 'POST',
+      body: JSON.stringify({ ...event, entity_id: calendarId, uid }),
+    });
+  }, []);
 
   const deleteEvent = useCallback(async (calendarId: string, uid: string) => {
-    const client = getClient();
-    if (!client?.isConnected) return;
-    await client.deleteEvent(calendarId, uid);
-  }, [getClient]);
+    await haFetch(`/api/services/calendar/delete_event`, {
+      method: 'POST',
+      body: JSON.stringify({ entity_id: calendarId, uid }),
+    });
+  }, []);
 
   return {
     calendars,

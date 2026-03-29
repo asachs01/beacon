@@ -46,7 +46,7 @@ export function App() {
     createEvent: createHaEvent,
     updateEvent: updateHaEvent,
     deleteEvent: deleteHaEvent,
-  } = useCalendarEvents(client);
+  } = useCalendarEvents(connected);
 
   const localCal = useLocalCalendar();
 

@@ -20,26 +20,19 @@ else
   bashio::log.warning "No HA token and no Supervisor token. Calendar/list integrations will not work."
 fi
 
-# When using the proxy server, the browser calls /api/* on the same origin
-# and the server proxies to http://supervisor/core with SUPERVISOR_TOKEN.
-# So ha_url should be empty (same-origin) and ha_token is only needed for
-# direct browser→HA calls (user-provided long-lived token).
-# If the user provided a token, we still set ha_url so the browser can
-# connect directly (bypasses proxy, works outside ingress too).
+# The proxy server handles /api/* requests — the browser always uses same-origin.
+# ha_url stays empty so the frontend uses window.location.origin (the proxy).
+# ha_token is cleared in the runtime config — the proxy injects auth server-side.
+# This means zero config needed from the user for HA connectivity.
 HA_URL=""
-if [ -n "${HA_TOKEN}" ] && [ -n "${SUPERVISOR_TOKEN:-}" ]; then
-  HA_URL="$(curl -s -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" http://supervisor/core/api/config 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('external_url') or d.get('internal_url') or '')" 2>/dev/null || echo '')"
-  if [ -n "${HA_URL}" ]; then
-    bashio::log.info "Resolved HA URL: ${HA_URL}"
-  fi
-fi
+HA_BROWSER_TOKEN=""
 
 # Generate runtime-config.js that injects config into the static build
 CONFIG_JS="/app/dist/runtime-config.js"
 cat > "${CONFIG_JS}" <<EOF
 window.__BEACON_CONFIG__ = {
   ha_url: "${HA_URL}",
-  ha_token: "${HA_TOKEN}",
+  ha_token: "${HA_BROWSER_TOKEN}",
   family_name: "${FAMILY_NAME}",
   theme: "${THEME}",
   auto_dark_mode: ${AUTO_DARK_MODE},
