@@ -1,3 +1,12 @@
+## [Unreleased]
+
+### Added
+
+* Standalone Docker image (`Dockerfile.standalone`) — run Beacon without Home Assistant
+* `server-standalone.js` — lightweight Node.js server with `/health` and `/beacon-data/*` persistence
+* `docker-compose.yml` — one-command local launch with persistent volume
+* `.github/workflows/docker-standalone.yml` — CI build for `ghcr.io/asachs01/beacon-standalone` (amd64 + arm64)
+
 ## [1.11.2](https://github.com/asachs01/beacon/compare/v1.11.1...v1.11.2) (2026-03-29)
 
 

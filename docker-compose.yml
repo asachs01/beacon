@@ -1,0 +1,12 @@
+services:
+  beacon:
+    build:
+      context: .
+      dockerfile: Dockerfile.standalone
+    ports:
+      - "3000:3000"
+    volumes:
+      - beacon-data:/data
+
+volumes:
+  beacon-data:
