@@ -1,0 +1,146 @@
+# Beacon Custom Intent Handlers
+# These call HA services in response to voice commands.
+# Requires: Beacon add-on running, todo entities, calendar entities.
+
+# ── List Management ──────────────────────────────────────────────
+BeaconAddItem:
+  action:
+    - service: todo.add_item
+      data:
+        entity_id: "todo.{{ list_name | lower | replace(' ', '_') }}"
+        item: "{{ item }}"
+  speech:
+    text: "Added {{ item }} to the {{ list_name }} list."
+
+# ── Chore Tracking ──────────────────────────────────────────────
+# Marks a chore as complete in a todo list named "chores".
+# Adjust entity_id if your chore list has a different name.
+BeaconCompleteChore:
+  action:
+    - service: todo.update_item
+      data:
+        entity_id: "todo.chores"
+        item: "{{ chore }}"
+        status: "completed"
+  speech:
+    text: "Marked {{ chore }} as done."
+
+BeaconCompleteChoreByPerson:
+  action:
+    - service: todo.update_item
+      data:
+        entity_id: "todo.chores"
+        item: "{{ chore }}"
+        status: "completed"
+  speech:
+    text: "{{ name }} finished {{ chore }}. Nice work!"
+
+# ── Calendar ────────────────────────────────────────────────────
+# Calendar queries use the built-in conversation response.
+# HA Assist will read today's events from the default calendar.
+BeaconCalendarToday:
+  action:
+    - service: calendar.get_events
+      target:
+        entity_id: "calendar.family"
+      data:
+        start_date_time: "{{ now().strftime('%Y-%m-%dT00:00:00') }}"
+        end_date_time: "{{ now().strftime('%Y-%m-%dT23:59:59') }}"
+      response_variable: result
+  speech:
+    text: >-
+      {% set events = result['calendar.family']['events'] %}
+      {% if events | length == 0 %}
+        Nothing on the calendar today.
+      {% else %}
+        Today you have {{ events | length }} event{{ 's' if events | length > 1 else '' }}:
+        {% for e in events %}
+          {{ e.summary }}{% if not loop.last %}, {% endif %}
+        {% endfor %}.
+      {% endif %}
+
+BeaconCalendarTomorrow:
+  action:
+    - service: calendar.get_events
+      target:
+        entity_id: "calendar.family"
+      data:
+        start_date_time: "{{ (now() + timedelta(days=1)).strftime('%Y-%m-%dT00:00:00') }}"
+        end_date_time: "{{ (now() + timedelta(days=1)).strftime('%Y-%m-%dT23:59:59') }}"
+      response_variable: result
+  speech:
+    text: >-
+      {% set events = result['calendar.family']['events'] %}
+      {% if events | length == 0 %}
+        Nothing on the calendar tomorrow.
+      {% else %}
+        Tomorrow you have {{ events | length }} event{{ 's' if events | length > 1 else '' }}:
+        {% for e in events %}
+          {{ e.summary }}{% if not loop.last %}, {% endif %}
+        {% endfor %}.
+      {% endif %}
+
+# ── Navigation ──────────────────────────────────────────────────
+# Fires an event that the Beacon SPA can listen for via the HA WebSocket.
+# The SPA should handle `beacon_navigate` events to switch views.
+BeaconShowView:
+  action:
+    - event: beacon_navigate
+      event_data:
+        view: "{{ view | lower }}"
+  speech:
+    text: "Switching to {{ view }}."
+
+# ── Timer ───────────────────────────────────────────────────────
+# Uses HA's built-in timer helper. Requires a timer.beacon_voice entity.
+# Create it in Settings > Devices & Services > Helpers > Timer.
+BeaconSetTimer:
+  action:
+    - service: timer.start
+      target:
+        entity_id: "timer.beacon_voice"
+      data:
+        duration: "{{ duration }}"
+  speech:
+    text: "Timer set for {{ duration }}."
+
+# ── Quick Status ────────────────────────────────────────────────
+BeaconGroceryList:
+  action:
+    - service: todo.get_items
+      target:
+        entity_id: "todo.grocery"
+      data:
+        status: "needs_action"
+      response_variable: result
+  speech:
+    text: >-
+      {% set items = result['todo.grocery']['items'] %}
+      {% if items | length == 0 %}
+        The grocery list is empty.
+      {% else %}
+        You have {{ items | length }} item{{ 's' if items | length > 1 else '' }} on the grocery list:
+        {% for i in items %}
+          {{ i.summary }}{% if not loop.last %}, {% endif %}
+        {% endfor %}.
+      {% endif %}
+
+BeaconChoreStatus:
+  action:
+    - service: todo.get_items
+      target:
+        entity_id: "todo.chores"
+      data:
+        status: "needs_action"
+      response_variable: result
+  speech:
+    text: >-
+      {% set items = result['todo.chores']['items'] %}
+      {% if items | length == 0 %}
+        All chores are done!
+      {% else %}
+        {{ items | length }} chore{{ 's' if items | length > 1 else '' }} left:
+        {% for i in items %}
+          {{ i.summary }}{% if not loop.last %}, {% endif %}
+        {% endfor %}.
+      {% endif %}

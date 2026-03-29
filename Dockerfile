@@ -12,14 +12,15 @@ RUN npm run build
 # ---------- Runtime stage ----------
 FROM ${BUILD_FROM}
 
-RUN apk add --no-cache nodejs npm \
-    && npm install -g serve@14 \
-    && npm cache clean --force
+RUN apk add --no-cache nodejs
 
 WORKDIR /app
 
 COPY --from=builder /app/dist /app/dist
 COPY run.sh /app/run.sh
+COPY server.js /app/server.js
+COPY custom_sentences/ /app/custom_sentences/
+COPY custom_intents/ /app/custom_intents/
 RUN chmod a+x /app/run.sh
 
 EXPOSE 3000

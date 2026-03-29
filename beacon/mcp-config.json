@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "beacon": {
+      "command": "node",
+      "args": ["beacon/mcp-server.cjs"],
+      "env": {
+        "SUPERVISOR_TOKEN": "your-long-lived-access-token",
+        "HA_URL": "http://supervisor/core"
+      }
+    }
+  }
+}

@@ -60,49 +60,31 @@ export async function getMediaPlayers(client?: HomeAssistantClient | null): Prom
   return [];
 }
 
-export async function play(client: HomeAssistantClient | null, entityId: string): Promise<void> {
-  if (client?.isConnected) {
-    await client.callService('media_player', 'media_play', entityId);
-  } else {
-    await callHaService('media_player', 'media_play', { entity_id: entityId });
-  }
-}
-
-export async function pause(client: HomeAssistantClient | null, entityId: string): Promise<void> {
-  if (client?.isConnected) {
-    await client.callService('media_player', 'media_pause', entityId);
-  } else {
-    await callHaService('media_player', 'media_pause', { entity_id: entityId });
-  }
-}
-
-export async function next(client: HomeAssistantClient | null, entityId: string): Promise<void> {
-  if (client?.isConnected) {
-    await client.callService('media_player', 'media_next_track', entityId);
-  } else {
-    await callHaService('media_player', 'media_next_track', { entity_id: entityId });
-  }
-}
-
-export async function previous(client: HomeAssistantClient | null, entityId: string): Promise<void> {
-  if (client?.isConnected) {
-    await client.callService('media_player', 'media_previous_track', entityId);
-  } else {
-    await callHaService('media_player', 'media_previous_track', { entity_id: entityId });
-  }
-}
-
-export async function setVolume(
+/** Call a media_player service via WS (if connected) or REST (proxy) */
+async function callMedia(
   client: HomeAssistantClient | null,
+  service: string,
   entityId: string,
-  level: number,
+  extraData?: Record<string, unknown>,
 ): Promise<void> {
-  const data = { entity_id: entityId, volume_level: Math.max(0, Math.min(1, level)) };
   if (client?.isConnected) {
-    await client.callService('media_player', 'volume_set', entityId, {
-      volume_level: data.volume_level,
-    });
+    await client.callService('media_player', service, entityId, extraData);
   } else {
-    await callHaService('media_player', 'volume_set', data);
+    await callHaService('media_player', service, { entity_id: entityId, ...extraData });
   }
 }
+
+export const play = (client: HomeAssistantClient | null, entityId: string) =>
+  callMedia(client, 'media_play', entityId);
+
+export const pause = (client: HomeAssistantClient | null, entityId: string) =>
+  callMedia(client, 'media_pause', entityId);
+
+export const next = (client: HomeAssistantClient | null, entityId: string) =>
+  callMedia(client, 'media_next_track', entityId);
+
+export const previous = (client: HomeAssistantClient | null, entityId: string) =>
+  callMedia(client, 'media_previous_track', entityId);
+
+export const setVolume = (client: HomeAssistantClient | null, entityId: string, level: number) =>
+  callMedia(client, 'volume_set', entityId, { volume_level: Math.max(0, Math.min(1, level)) });

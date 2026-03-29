@@ -2,16 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
 import { getConfig } from '../config';
 import { setHaToken } from '../api/ha-rest';
-
-/** Are we running inside HA's ingress proxy? */
-function isIngress(): boolean {
-  return window.location.pathname.includes('/ingress/') || (window !== window.parent);
-}
-
-/** Is this running as an HA add-on? (runtime config injected by run.sh) */
-function isAddOn(): boolean {
-  return !!window.__BEACON_CONFIG__;
-}
+import { isAddOn, isIngress } from '../utils/ha-env';
 
 function resolveHaUrl(): string {
   const config = getConfig();

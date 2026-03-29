@@ -49,5 +49,19 @@ if ! grep -q 'runtime-config.js' "${INDEX_HTML}"; then
   sed -i 's|</head>|<script src="./runtime-config.js"></script></head>|' "${INDEX_HTML}"
 fi
 
+# Install Beacon voice intents into HA config (idempotent)
+VOICE_SENTENCES_SRC="/app/custom_sentences/en/beacon.yaml"
+VOICE_INTENTS_SRC="/app/custom_intents/beacon.yaml"
+if [ -f "${VOICE_SENTENCES_SRC}" ]; then
+  mkdir -p /config/custom_sentences/en
+  cp "${VOICE_SENTENCES_SRC}" /config/custom_sentences/en/beacon.yaml
+  bashio::log.info "Installed Beacon voice sentences to /config/custom_sentences/en/"
+fi
+if [ -f "${VOICE_INTENTS_SRC}" ]; then
+  mkdir -p /config/custom_intents
+  cp "${VOICE_INTENTS_SRC}" /config/custom_intents/beacon.yaml
+  bashio::log.info "Installed Beacon voice intents to /config/custom_intents/"
+fi
+
 bashio::log.info "Starting Beacon server on port 3000 (API proxy enabled)..."
 exec node /app/server.js

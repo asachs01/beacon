@@ -84,10 +84,11 @@ export function useMusic(
 
     init().catch(console.error);
 
-    // In REST-only mode (no WS client), poll every 10 seconds
+    // In REST-only mode, poll every 10s (skip when tab is hidden)
     let pollInterval: ReturnType<typeof setInterval> | null = null;
     if (!client?.isConnected) {
       pollInterval = setInterval(async () => {
+        if (document.hidden || cancelled) return;
         try {
           const updated = await getMediaPlayers(null);
           if (!cancelled) setPlayers(updated);

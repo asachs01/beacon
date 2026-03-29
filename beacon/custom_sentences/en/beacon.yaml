@@ -1,0 +1,119 @@
+language: en
+intents:
+  # ── List Management ──────────────────────────────────────────────
+  BeaconAddItem:
+    data:
+      - sentences:
+          - "add {item} to [the] {list_name} list"
+          - "put {item} on [the] {list_name} list"
+          - "add {item} to [the] {list_name}"
+          - "put {item} on [the] {list_name}"
+        requires_context:
+          domain: todo
+        slots:
+          item:
+            type: text
+          list_name:
+            type: text
+
+  # ── Chore Tracking ──────────────────────────────────────────────
+  BeaconCompleteChore:
+    data:
+      - sentences:
+          - "mark {chore} as done"
+          - "mark {chore} as complete"
+          - "complete [the] {chore} chore"
+          - "{chore} is done"
+          - "I finished {chore}"
+          - "finished {chore}"
+        slots:
+          chore:
+            type: text
+
+  BeaconCompleteChoreByPerson:
+    data:
+      - sentences:
+          - "{name} finished {chore}"
+          - "{name} completed {chore}"
+          - "{name} did {chore}"
+          - "{name} did [the] {chore} chore"
+        slots:
+          name:
+            type: text
+          chore:
+            type: text
+
+  # ── Calendar ────────────────────────────────────────────────────
+  BeaconCalendarToday:
+    data:
+      - sentences:
+          - "what's on the calendar today"
+          - "what is on the calendar today"
+          - "what's on the calendar"
+          - "what is on the calendar"
+          - "show today's calendar"
+          - "what's happening today"
+          - "what do we have today"
+          - "any events today"
+          - "what's on the schedule"
+          - "what is on the schedule"
+
+  BeaconCalendarTomorrow:
+    data:
+      - sentences:
+          - "what's on the calendar tomorrow"
+          - "what is on the calendar tomorrow"
+          - "what's happening tomorrow"
+          - "any events tomorrow"
+          - "what do we have tomorrow"
+
+  # ── Navigation ──────────────────────────────────────────────────
+  BeaconShowView:
+    data:
+      - sentences:
+          - "show [the] {view}"
+          - "switch to [the] {view}"
+          - "open [the] {view}"
+          - "go to [the] {view}"
+          - "navigate to [the] {view}"
+          - "show [the] {view} view"
+          - "switch to [the] {view} view"
+          - "open [the] {view} view"
+          - "show [the] {view} screen"
+          - "show [the] {view} page"
+        slots:
+          view:
+            type: text
+
+  # ── Timer ───────────────────────────────────────────────────────
+  BeaconSetTimer:
+    data:
+      - sentences:
+          - "set a timer for {duration}"
+          - "set a {duration} timer"
+          - "start a timer for {duration}"
+          - "start a {duration} timer"
+          - "timer for {duration}"
+          - "set [a] {duration} countdown"
+        slots:
+          duration:
+            type: text
+
+  # ── Quick Status ────────────────────────────────────────────────
+  BeaconGroceryList:
+    data:
+      - sentences:
+          - "what's on the grocery list"
+          - "what is on the grocery list"
+          - "what do we need from the store"
+          - "read the grocery list"
+          - "what groceries do we need"
+
+  BeaconChoreStatus:
+    data:
+      - sentences:
+          - "what chores are left"
+          - "what chores need to be done"
+          - "any chores left"
+          - "show the chore list"
+          - "what needs to be done"

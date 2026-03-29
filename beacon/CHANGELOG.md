@@ -1,9 +1,11 @@
-# [1.9.0](https://github.com/asachs01/beacon/compare/v1.8.1...v1.9.0) (2026-03-29)
+## [Unreleased]
 
+### Added
 
-### Features
-
-* default view setting, Midnight Light theme, updated README ([29662a3](https://github.com/asachs01/beacon/commit/29662a33a521c5d3c70683ad7ffe46f9a477dda0))
+* HA custom sentences and intent handlers for voice control of Beacon features
+* Voice commands: add to lists, complete chores, check calendar, navigate views, set timers, query grocery/chore status
+* Auto-install of voice intents into HA config on add-on startup
+* Install script at `scripts/install-voice-intents.sh` for manual deployment
 
 ## [1.8.1](https://github.com/asachs01/beacon/compare/v1.8.0...v1.8.1) (2026-03-29)
 

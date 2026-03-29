@@ -9,11 +9,7 @@
  * user-provided long-lived access token.
  */
 import { getConfig } from '../config';
-
-/** Detect if we're running as an HA add-on (runtime config was injected) */
-function isAddOn(): boolean {
-  return !!window.__BEACON_CONFIG__;
-}
+import { isAddOn, getIngressBasePath } from '../utils/ha-env';
 
 /**
  * Get the base URL for API calls.
@@ -21,15 +17,7 @@ function isAddOn(): boolean {
  * - Standalone mode: use the configured HA URL or current origin
  */
 function resolveBaseUrl(): string {
-  // Add-on proxy mode: API calls go through the ingress path
-  if (isAddOn()) {
-    // The page is loaded at /api/hassio_ingress/<token>/
-    // API calls should go to /api/hassio_ingress/<token>/api/...
-    // Using '.' as base resolves relative to the current path
-    const pathname = window.location.pathname;
-    // Strip trailing slash for clean joining
-    return pathname.replace(/\/$/, '');
-  }
+  if (isAddOn()) return getIngressBasePath();
 
   const config = getConfig();
   if (config.ha_url && !config.ha_url.includes('supervisor')) {

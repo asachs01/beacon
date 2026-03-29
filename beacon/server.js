@@ -108,7 +108,7 @@ function handleServiceCall(req, res) {
 
   const chunks = [];
   req.on('data', (chunk) => chunks.push(chunk));
-  req.on('end', () => {
+  req.on('end', async () => {
     try {
       const { domain, service, data, return_response } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
       if (!domain || !service) {
@@ -118,41 +118,11 @@ function handleServiceCall(req, res) {
       }
 
       const qs = return_response ? '?return_response' : '';
-      const bodyStr = JSON.stringify(data || {});
-      const bodyBuf = Buffer.from(bodyStr, 'utf8');
-
-      const options = {
-        hostname: 'supervisor',
-        port: 80,
-        path: `/core/api/services/${domain}/${service}${qs}`,
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
-          'Content-Type': 'application/json',
-          'Content-Length': bodyBuf.length,
-        },
-      };
-
-      const proxyReq = http.request(options, (proxyRes) => {
-        const respChunks = [];
-        proxyRes.on('data', (c) => respChunks.push(c));
-        proxyRes.on('end', () => {
-          const respBody = Buffer.concat(respChunks).toString('utf8');
-          res.writeHead(proxyRes.statusCode, { 'Content-Type': 'application/json' });
-          res.end(respBody);
-        });
-      });
-
-      proxyReq.on('error', (err) => {
-        console.error('Service call error:', err.message);
-        res.writeHead(502, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err.message }));
-      });
-
-      proxyReq.write(bodyBuf);
-      proxyReq.end();
+      const result = await haRequest('POST', `/api/services/${domain}/${service}${qs}`, data || {});
+      res.writeHead(result.status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result.data));
     } catch (err) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.writeHead(502, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message }));
     }
   });
@@ -215,7 +185,342 @@ function handleDataApi(req, res) {
   res.end(JSON.stringify({ error: 'Method not allowed' }));
 }
 
+/* ------------------------------------------------------------------ */
+/*  Voice / natural-language intent parser (keyword-based, no LLM)    */
+/* ------------------------------------------------------------------ */
+
+const INTENT_PATTERNS = [
+  {
+    name: 'add_item',
+    patterns: [/add\s+(.+?)\s+to\s+(?:the\s+)?(.+)/i],
+    handler: (m) => ({
+      domain: 'todo', service: 'add_item',
+      data: { item: m[1].trim() },
+      entityHint: m[2].trim(),
+      response: `Added ${m[1].trim()} to ${m[2].trim()}`,
+    }),
+  },
+  {
+    name: 'complete_item',
+    patterns: [
+      /(?:check off|mark)\s+(.+?)\s+(?:as\s+)?(?:done|complete|completed)/i,
+      /(?:complete|finish)\s+(.+)/i,
+    ],
+    handler: (m) => ({
+      domain: 'todo', service: 'update_item',
+      data: { item: m[1].trim(), status: 'completed' },
+      entityHint: null,
+      response: `Marked ${m[1].trim()} as done`,
+    }),
+  },
+  {
+    name: 'play_music',
+    patterns: [/\b(?:play\s+music|resume\s+music|resume\s+playback|play)\b/i],
+    handler: () => ({
+      domain: 'media_player', service: 'media_play',
+      data: {},
+      entityHint: null,
+      response: 'Playing music',
+    }),
+  },
+  {
+    name: 'pause_music',
+    patterns: [/\b(?:pause|stop\s+music|pause\s+music|stop\s+playback)\b/i],
+    handler: () => ({
+      domain: 'media_player', service: 'media_pause',
+      data: {},
+      entityHint: null,
+      response: 'Paused music',
+    }),
+  },
+  {
+    name: 'next_track',
+    patterns: [/\b(?:next\s+(?:song|track)|skip)\b/i],
+    handler: () => ({
+      domain: 'media_player', service: 'media_next_track',
+      data: {},
+      entityHint: null,
+      response: 'Skipping to next track',
+    }),
+  },
+  {
+    name: 'set_volume',
+    patterns: [/set\s+volume\s+(?:to\s+)?(\d+)/i, /volume\s+(\d+)/i],
+    handler: (m) => {
+      const level = Math.min(100, Math.max(0, parseInt(m[1], 10)));
+      return {
+        domain: 'media_player', service: 'volume_set',
+        data: { volume_level: level / 100 },
+        entityHint: null,
+        response: `Volume set to ${level}%`,
+      };
+    },
+  },
+  {
+    name: 'navigate',
+    patterns: [/(?:show|go\s+to|open|navigate\s+to)\s+(?:the\s+)?(.+)/i],
+    handler: (m) => ({
+      navigation: true,
+      view: m[1].trim().toLowerCase(),
+      response: `Navigating to ${m[1].trim()}`,
+    }),
+  },
+  {
+    name: 'calendar',
+    patterns: [/\b(?:what(?:'s| is)\s+on\s+(?:today|my\s+calendar|my\s+schedule)|today(?:'s)?\s+(?:schedule|events|calendar|agenda))\b/i],
+    handler: () => ({
+      fetch: 'calendar',
+      response: null, // filled after fetch
+    }),
+  },
+  {
+    name: 'weather',
+    patterns: [/\b(?:what(?:'s| is)\s+the\s+weather|weather\s+(?:today|now|forecast))\b/i],
+    handler: () => ({
+      fetch: 'weather',
+      response: null, // filled after fetch
+    }),
+  },
+];
+
+function parseIntent(text) {
+  for (const intent of INTENT_PATTERNS) {
+    for (const pat of intent.patterns) {
+      const match = text.match(pat);
+      if (match) {
+        return { name: intent.name, ...intent.handler(match) };
+      }
+    }
+  }
+  return null;
+}
+
+/** Helper: make a request to the HA Supervisor API and return parsed JSON. */
+function haRequest(method, apiPath, body) {
+  return new Promise((resolve, reject) => {
+    const bodyBuf = body ? Buffer.from(JSON.stringify(body), 'utf8') : null;
+    const options = {
+      hostname: 'supervisor',
+      port: 80,
+      path: `/core${apiPath}`,
+      method,
+      headers: {
+        'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+    };
+    if (bodyBuf) options.headers['Content-Length'] = bodyBuf.length;
+
+    const r = http.request(options, (resp) => {
+      const chunks = [];
+      resp.on('data', (c) => chunks.push(c));
+      resp.on('end', () => {
+        const raw = Buffer.concat(chunks).toString('utf8');
+        try { resolve({ status: resp.statusCode, data: JSON.parse(raw) }); }
+        catch { resolve({ status: resp.statusCode, data: raw }); }
+      });
+    });
+    r.on('error', reject);
+    if (bodyBuf) r.write(bodyBuf);
+    r.end();
+  });
+}
+
+/**
+ * POST /beacon-action/voice
+ * Body: { "text": "add milk to the grocery list" }
+ * Returns: { "response": "...", "action": "...", "success": true|false }
+ */
+function handleVoiceAction(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+
+  const chunks = [];
+  req.on('data', (chunk) => chunks.push(chunk));
+  req.on('end', async () => {
+    try {
+      const { text } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      if (!text || typeof text !== 'string') {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing or invalid "text" field' }));
+        return;
+      }
+
+      const intent = parseIntent(text.trim());
+      if (!intent) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          response: "Sorry, I didn't understand that.",
+          action: null,
+          success: false,
+        }));
+        return;
+      }
+
+      // --- Navigation intent (no HA call needed) ---
+      if (intent.navigation) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          response: intent.response,
+          action: 'navigate',
+          view: intent.view,
+          success: true,
+        }));
+        return;
+      }
+
+      // --- Calendar fetch ---
+      if (intent.fetch === 'calendar') {
+        try {
+          // Get all calendar entities
+          const statesResp = await haRequest('GET', '/api/states');
+          const calendars = (statesResp.data || []).filter(
+            (e) => typeof e.entity_id === 'string' && e.entity_id.startsWith('calendar.')
+          );
+
+          const now = new Date();
+          const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+
+          const calResults = await Promise.all(
+            calendars.map(async (cal) => {
+              try {
+                const evResp = await haRequest(
+                  'GET',
+                  `/api/calendars/${cal.entity_id}?start=${encodeURIComponent(startOfDay)}&end=${encodeURIComponent(endOfDay)}`
+                );
+                if (Array.isArray(evResp.data)) {
+                  return evResp.data.map((ev) => ({ calendar: cal.attributes?.friendly_name || cal.entity_id, ...ev }));
+                }
+              } catch { /* skip unavailable calendars */ }
+              return [];
+            })
+          );
+          const allEvents = calResults.flat();
+
+          const summary = allEvents.length === 0
+            ? 'No events on your calendar today.'
+            : `You have ${allEvents.length} event${allEvents.length > 1 ? 's' : ''} today: ${allEvents.map((e) => e.summary || 'Untitled').join(', ')}.`;
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            response: summary,
+            action: 'calendar',
+            events: allEvents,
+            success: true,
+          }));
+        } catch (err) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ response: 'Failed to fetch calendar.', action: 'calendar', success: false, error: err.message }));
+        }
+        return;
+      }
+
+      // --- Weather fetch ---
+      if (intent.fetch === 'weather') {
+        try {
+          const statesResp = await haRequest('GET', '/api/states');
+          const weatherEntity = (statesResp.data || []).find(
+            (e) => typeof e.entity_id === 'string' && e.entity_id.startsWith('weather.')
+          );
+          if (!weatherEntity) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ response: 'No weather entity found.', action: 'weather', success: false }));
+            return;
+          }
+          const attrs = weatherEntity.attributes || {};
+          const temp = attrs.temperature != null ? `${attrs.temperature}${attrs.temperature_unit || ''}` : '';
+          const condition = weatherEntity.state || '';
+          const summary = `Currently ${condition}${temp ? `, ${temp}` : ''}.`;
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            response: summary,
+            action: 'weather',
+            entity: weatherEntity.entity_id,
+            state: weatherEntity.state,
+            attributes: attrs,
+            success: true,
+          }));
+        } catch (err) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ response: 'Failed to fetch weather.', action: 'weather', success: false, error: err.message }));
+        }
+        return;
+      }
+
+      // --- Service call intents (add_item, complete_item, media, volume) ---
+      // For todo intents, resolve the entity_id from the hint
+      let entityId = null;
+      if (intent.domain === 'todo' && intent.entityHint) {
+        try {
+          const statesResp = await haRequest('GET', '/api/states');
+          const todoEntities = (statesResp.data || []).filter(
+            (e) => typeof e.entity_id === 'string' && e.entity_id.startsWith('todo.')
+          );
+          // Match by friendly name (case-insensitive, partial)
+          const hint = intent.entityHint.toLowerCase();
+          const match = todoEntities.find((e) => {
+            const name = (e.attributes?.friendly_name || '').toLowerCase();
+            return name === hint || name.includes(hint) || e.entity_id.toLowerCase().includes(hint);
+          });
+          if (match) entityId = match.entity_id;
+        } catch { /* proceed without entity */ }
+      }
+
+      // For media_player, find the first active media player
+      if (intent.domain === 'media_player' && !entityId) {
+        try {
+          const statesResp = await haRequest('GET', '/api/states');
+          const players = (statesResp.data || []).filter(
+            (e) => typeof e.entity_id === 'string' && e.entity_id.startsWith('media_player.')
+          );
+          // Prefer one that's playing, then paused, then any
+          const playing = players.find((e) => e.state === 'playing');
+          const paused = players.find((e) => e.state === 'paused');
+          entityId = (playing || paused || players[0])?.entity_id || null;
+        } catch { /* proceed without entity */ }
+      }
+
+      const serviceData = { ...intent.data };
+      if (entityId) serviceData.entity_id = entityId;
+
+      try {
+        const qs = intent.domain === 'todo' ? '?return_response' : '';
+        const resp = await haRequest('POST', `/api/services/${intent.domain}/${intent.service}${qs}`, serviceData);
+        const ok = resp.status >= 200 && resp.status < 300;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          response: ok ? intent.response : `Action failed (${resp.status}).`,
+          action: intent.name,
+          entity_id: entityId,
+          success: ok,
+        }));
+      } catch (err) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          response: `Action failed: ${err.message}`,
+          action: intent.name,
+          success: false,
+        }));
+      }
+    } catch (err) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+  });
+}
+
 const server = http.createServer((req, res) => {
+  // Voice / natural-language action API
+  if (req.url === '/beacon-action/voice') {
+    handleVoiceAction(req, res);
+    return;
+  }
+
   // Service call API (avoids ingress POST issues)
   if (req.url === '/beacon-action/service') {
     handleServiceCall(req, res);

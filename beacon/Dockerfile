@@ -19,6 +19,8 @@ WORKDIR /app
 COPY --from=builder /app/dist /app/dist
 COPY run.sh /app/run.sh
 COPY server.js /app/server.js
+COPY custom_sentences/ /app/custom_sentences/
+COPY custom_intents/ /app/custom_intents/
 RUN chmod a+x /app/run.sh
 
 EXPOSE 3000
