@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/asachs01/beacon/compare/v1.9.0...v1.10.0) (2026-03-29)
+
+
+### Features
+
+* voice control, MCP server, HA custom sentences + code cleanup ([03b7133](https://github.com/asachs01/beacon/commit/03b7133d390cf8f8dee496a34cada8056f0e243d))
+
 ## [Unreleased]
 
 ### Added
