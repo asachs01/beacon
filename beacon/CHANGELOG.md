@@ -1,3 +1,10 @@
+## [1.10.6](https://github.com/asachs01/beacon/compare/v1.10.5...v1.10.6) (2026-03-29)
+
+
+### Bug Fixes
+
+* deduplicate media players, prefer device_class entity for controls ([4d0b587](https://github.com/asachs01/beacon/commit/4d0b58780279bde3993403ac594899ff7b7fff30))
+
 ## [1.10.5](https://github.com/asachs01/beacon/compare/v1.10.4...v1.10.5) (2026-03-29)
 
 
