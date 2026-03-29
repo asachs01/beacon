@@ -75,7 +75,8 @@ export async function haFetch(path: string, options?: RequestInit): Promise<unkn
     headers,
   });
   if (!res.ok) throw new Error(`HA API ${res.status}: ${res.statusText}`);
-  return res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 /**

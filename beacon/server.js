@@ -55,6 +55,16 @@ function serveStatic(req, res) {
   }
 }
 
+/** Collect request body into a Buffer. */
+function collectBody(req) {
+  return new Promise((resolve) => {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => resolve(chunks.length > 0 ? Buffer.concat(chunks) : null));
+    req.on('error', () => resolve(null));
+  });
+}
+
 function proxyToHA(req, res) {
   const targetUrl = `${HA_API_BASE}${req.url}`;
 
@@ -106,11 +116,9 @@ function handleServiceCall(req, res) {
     return;
   }
 
-  const chunks = [];
-  req.on('data', (chunk) => chunks.push(chunk));
-  req.on('end', async () => {
+  collectBody(req).then(async (bodyBuf) => {
     try {
-      const { domain, service, data, return_response } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      const { domain, service, data, return_response } = JSON.parse((bodyBuf || '{}').toString('utf8'));
       if (!domain || !service) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Missing domain or service' }));
@@ -350,6 +358,14 @@ function handleVoiceAction(req, res) {
       }
 
       const intent = parseIntent(text.trim());
+
+      // Cache states for the duration of this request (avoids 4x /api/states calls)
+      let _cachedStates = null;
+      async function getStates() {
+        if (!_cachedStates) _cachedStates = haRequest('GET', '/api/states').then(r => r.data || []);
+        return _cachedStates;
+      }
+
       if (!intent) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -376,8 +392,8 @@ function handleVoiceAction(req, res) {
       if (intent.fetch === 'calendar') {
         try {
           // Get all calendar entities
-          const statesResp = await haRequest('GET', '/api/states');
-          const calendars = (statesResp.data || []).filter(
+          const states = await getStates();
+          const calendars = states.filter(
             (e) => typeof e.entity_id === 'string' && e.entity_id.startsWith('calendar.')
           );
 
@@ -422,8 +438,8 @@ function handleVoiceAction(req, res) {
       // --- Weather fetch ---
       if (intent.fetch === 'weather') {
         try {
-          const statesResp = await haRequest('GET', '/api/states');
-          const weatherEntity = (statesResp.data || []).find(
+          const states = await getStates();
+          const weatherEntity = states.find(
             (e) => typeof e.entity_id === 'string' && e.entity_id.startsWith('weather.')
           );
           if (!weatherEntity) {
@@ -457,8 +473,8 @@ function handleVoiceAction(req, res) {
       let entityId = null;
       if (intent.domain === 'todo' && intent.entityHint) {
         try {
-          const statesResp = await haRequest('GET', '/api/states');
-          const todoEntities = (statesResp.data || []).filter(
+          const states = await getStates();
+          const todoEntities = states.filter(
             (e) => typeof e.entity_id === 'string' && e.entity_id.startsWith('todo.')
           );
           // Match by friendly name (case-insensitive, partial)
@@ -474,8 +490,8 @@ function handleVoiceAction(req, res) {
       // For media_player, find the first active media player
       if (intent.domain === 'media_player' && !entityId) {
         try {
-          const statesResp = await haRequest('GET', '/api/states');
-          const players = (statesResp.data || []).filter(
+          const states = await getStates();
+          const players = states.filter(
             (e) => typeof e.entity_id === 'string' && e.entity_id.startsWith('media_player.')
           );
           // Prefer one that's playing, then paused, then any
