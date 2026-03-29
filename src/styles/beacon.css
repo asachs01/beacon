@@ -175,11 +175,14 @@ a:focus:not(:focus-visible) {
 .beacon-main {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: clip;
   min-width: 0;
   min-height: 0;
   height: 100%;
   position: relative;
+  background: var(--bg-primary);
+  /* Prevent iOS WebView from showing content behind this container */
+  isolation: isolate;
 }
 
 /* Each child view fills the main area */
