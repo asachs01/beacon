@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/asachs01/beacon/compare/v1.3.1...v1.4.0) (2026-03-29)
+
+
+### Features
+
+* add-on API proxy — zero-config HA connection ([e16dbf5](https://github.com/asachs01/beacon/commit/e16dbf5c3e42d6d65db2e7cb0e04e4131aebec8e))
+
 ## [1.3.1](https://github.com/asachs01/beacon/compare/v1.3.0...v1.3.1) (2026-03-29)
 
 
