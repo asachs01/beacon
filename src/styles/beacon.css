@@ -185,8 +185,8 @@ a:focus:not(:focus-visible) {
   isolation: isolate;
 }
 
-/* Each child view fills the main area */
-.beacon-main > *:first-child {
+/* The calendar body fills the remaining space */
+.beacon-body {
   flex: 1;
   min-height: 0;
 }
