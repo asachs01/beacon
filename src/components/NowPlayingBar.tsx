@@ -84,7 +84,7 @@ export function NowPlayingBar({
         )}
         <div className="now-playing-text">
           <span className="now-playing-title">
-            {player.media_title || 'Unknown'}
+            {player.media_title || player.app_name || player.friendly_name}
           </span>
           <span className="now-playing-artist">
             {player.media_artist || player.friendly_name}

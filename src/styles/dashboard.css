@@ -327,9 +327,10 @@
   .dashboard {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
-    gap: 24px;
-    padding: 24px;
+    gap: 20px;
+    padding: 20px;
     overflow-y: auto;
+    padding-bottom: 80px; /* clear now-playing + tab bar */
   }
 
   .dashboard-left {
@@ -340,60 +341,17 @@
 
   .dashboard-center {
     order: 2;
+    height: auto;
+    overflow: visible;
   }
 
   .dashboard-right {
     order: 3;
-  }
-
-  .dashboard-clock {
-    font-size: 64px;
-  }
-
-  .dashboard-date {
-    font-size: 18px;
-  }
-
-  .dashboard-greeting {
-    font-size: 22px;
-  }
-
-  .dashboard-center {
     height: auto;
   }
 
-  .dashboard-events-scroll {
-    max-height: 40vh;
-  }
-
-  .dashboard-right {
-    height: auto;
-  }
-
-  /* Weather widget: full width */
-  .dashboard-weather {
-    margin-bottom: 16px;
-  }
-
-  /* Task items: ensure touch targets */
-  .task-checklist-item {
-    min-height: 48px;
-  }
-
-  .event-card {
-    padding: 16px;
-  }
-}
-
-/* --- Responsive: Phone < 480px --- */
-@media (max-width: 480px) {
-  .dashboard {
-    padding: 16px;
-    gap: 16px;
-  }
-
   .dashboard-clock {
-    font-size: 48px;
+    font-size: 56px;
   }
 
   .dashboard-date {
@@ -401,21 +359,64 @@
   }
 
   .dashboard-greeting {
-    font-size: 18px;
-    margin-top: 8px;
+    font-size: 20px;
   }
 
-  .dashboard-section-title {
-    font-size: 14px;
+  /* Limit events to prevent overflow — show 3-4 cards then scroll */
+  .dashboard-events-scroll {
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .dashboard-weather {
     margin-bottom: 12px;
   }
 
+  .task-checklist-item {
+    min-height: 48px;
+  }
+
   .event-card {
-    padding: 12px 14px;
+    padding: 14px;
+  }
+}
+
+/* --- Responsive: Phone < 480px --- */
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 16px;
+    gap: 14px;
+    padding-bottom: 80px;
+  }
+
+  .dashboard-clock {
+    font-size: 44px;
+  }
+
+  .dashboard-date {
+    font-size: 14px;
+  }
+
+  .dashboard-greeting {
+    font-size: 16px;
+    margin-top: 4px;
+  }
+
+  .dashboard-section-title {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .dashboard-events-scroll {
+    max-height: 220px;
+  }
+
+  .event-card {
+    padding: 10px 12px;
   }
 
   .event-card-title {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .event-card-time {
