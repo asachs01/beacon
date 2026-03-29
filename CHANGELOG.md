@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/asachs01/beacon/compare/v1.7.1...v1.8.0) (2026-03-29)
+
+
+### Features
+
+* dashboard shows todo items from HA lists, music works via REST ([513f748](https://github.com/asachs01/beacon/commit/513f748faed1f40a9eadbff7edfa7f591aacfcd1))
+
 ## [1.7.1](https://github.com/asachs01/beacon/compare/v1.7.0...v1.7.1) (2026-03-29)
 
 
