@@ -28,6 +28,7 @@ import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
+import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView from './components/OnboardingView';
 import { CalendarEvent } from './types';
 import { getConfig, patchConfig } from './config';
@@ -100,6 +101,8 @@ export function App() {
     completeChore,
     uncompleteChore,
   } = useChores(client);
+
+  const dashboardTasks = useDashboardTasks(connected);
 
   const {
     settings,
@@ -399,6 +402,8 @@ export function App() {
               completedChoreIds={completedChoreIds}
               onToggleChore={handleToggleChore}
               familyName={settings.familyName}
+              todoItems={dashboardTasks.items}
+              onToggleTodo={dashboardTasks.toggleItem}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}

@@ -17,6 +17,12 @@ function getGreeting(hour: number): string {
   return 'Good night';
 }
 
+export interface TodoItem {
+  uid: string;
+  summary: string;
+  status: 'needs_action' | 'completed';
+}
+
 interface DashboardViewProps {
   events: CalendarEvent[];
   weather: WeatherData | null;
@@ -24,6 +30,8 @@ interface DashboardViewProps {
   completedChoreIds: Set<string>;
   onToggleChore: (choreId: string) => void;
   familyName?: string;
+  todoItems?: TodoItem[];
+  onToggleTodo?: (uid: string, currentStatus: string) => void;
 }
 
 export function DashboardView({
@@ -33,6 +41,8 @@ export function DashboardView({
   completedChoreIds,
   onToggleChore,
   familyName,
+  todoItems = [],
+  onToggleTodo,
 }: DashboardViewProps) {
   const [now, setNow] = useState(new Date());
 
@@ -106,11 +116,47 @@ export function DashboardView({
         )}
 
         <h2 className="dashboard-section-title">Tasks</h2>
-        <TaskChecklist
-          chores={chores}
-          completedIds={completedChoreIds}
-          onToggle={onToggleChore}
-        />
+        {/* Show todo list items from HA/local lists */}
+        {todoItems.length > 0 ? (
+          <ul className="task-checklist">
+            {todoItems.filter(t => t.status === 'needs_action').map(item => (
+              <li key={item.uid} className="task-checklist-item">
+                <button
+                  type="button"
+                  className="task-checkbox"
+                  onClick={() => onToggleTodo?.(item.uid, item.status)}
+                  aria-label={`Complete ${item.summary}`}
+                >
+                  <span className="task-checkbox-box" />
+                </button>
+                <span className="task-checklist-label">{item.summary}</span>
+              </li>
+            ))}
+            {todoItems.filter(t => t.status === 'completed').slice(0, 3).map(item => (
+              <li key={item.uid} className="task-checklist-item task-checklist-item--done">
+                <button
+                  type="button"
+                  className="task-checkbox task-checkbox--checked"
+                  onClick={() => onToggleTodo?.(item.uid, item.status)}
+                  aria-label={`Undo ${item.summary}`}
+                >
+                  <span className="task-checkbox-box">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                </button>
+                <span className="task-checklist-label task-checklist-label--done">{item.summary}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <TaskChecklist
+            chores={chores}
+            completedIds={completedChoreIds}
+            onToggle={onToggleChore}
+          />
+        )}
 
         <CountdownWidget events={events} />
       </section>
