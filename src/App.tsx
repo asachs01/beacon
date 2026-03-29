@@ -326,11 +326,12 @@ export function App() {
       '2': 'calendar',
       '3': 'chores',
       '4': 'grocery',
-      '5': 'leaderboard',
-      '6': 'music',
-      '7': 'photos',
-      '8': 'timer',
-      '9': 'settings',
+      '5': 'tasks',
+      '6': 'leaderboard',
+      '7': 'music',
+      '8': 'photos',
+      '9': 'timer',
+      '0': 'settings',
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -436,7 +437,9 @@ export function App() {
             calendars={calendars}
           />
         ) : activeView === 'grocery' ? (
-          <GroceryView defaultListId={settings.defaultGroceryList || undefined} />
+          <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" />
+        ) : activeView === 'tasks' ? (
+          <GroceryView mode="tasks" />
         ) : activeView === 'timer' ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
             <Timer />

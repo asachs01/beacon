@@ -18,11 +18,26 @@ interface UnifiedList {
   source: 'ha' | 'local';
 }
 
-interface GroceryViewProps {
-  defaultListId?: string;
+/** Keywords that identify a list as grocery/shopping (vs tasks) */
+const GROCERY_KEYWORDS = [
+  'grocer', 'shopping', 'costco', 'walmart', 'target', 'store',
+  'pantry', 'fridge', 'freezer', 'inventory', 'meal',
+];
+
+function isGroceryList(name: string): boolean {
+  const lower = name.toLowerCase();
+  return GROCERY_KEYWORDS.some(kw => lower.includes(kw));
 }
 
-export function GroceryView({ defaultListId }: GroceryViewProps) {
+export type ListViewMode = 'grocery' | 'tasks';
+
+interface GroceryViewProps {
+  defaultListId?: string;
+  /** Which lists to show: 'grocery' for shopping lists, 'tasks' for everything else */
+  mode?: ListViewMode;
+}
+
+export function GroceryView({ defaultListId, mode = 'grocery' }: GroceryViewProps) {
   const [haLists, setHaLists] = useState<GroceryList[]>([]);
   const [selectedListId, setSelectedListId] = useState<string>(defaultListId || '');
   const [haItems, setHaItems] = useState<TodoItem[]>([]);
@@ -35,12 +50,23 @@ export function GroceryView({ defaultListId }: GroceryViewProps) {
 
   const localTasks = useLocalTasks();
 
-  // Merge HA lists + local lists into unified list
+  // Merge HA lists + local lists, then filter by mode
   const allLists = useMemo<UnifiedList[]>(() => {
     const ha: UnifiedList[] = haLists.map(l => ({ id: l.id, name: l.name, source: 'ha' }));
     const local: UnifiedList[] = localTasks.lists.map(l => ({ id: l.id, name: l.name, source: 'local' }));
-    return [...local, ...ha];
-  }, [haLists, localTasks.lists]);
+    const merged = [...local, ...ha];
+
+    // Filter by mode: grocery lists vs task lists
+    if (mode === 'grocery') {
+      return merged.filter(l =>
+        l.id === 'beacon-shopping' || (l.source === 'ha' && isGroceryList(l.name))
+      );
+    }
+    // tasks mode: local To-Do + all HA lists that aren't grocery
+    return merged.filter(l =>
+      l.id === 'beacon-todo' || (l.source === 'ha' && !isGroceryList(l.name))
+    );
+  }, [haLists, localTasks.lists, mode]);
 
   const selectedList = allLists.find(l => l.id === selectedListId);
   const isLocal = selectedList?.source === 'local';
