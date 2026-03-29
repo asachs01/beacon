@@ -44,31 +44,34 @@ export function WeatherView() {
       setLoading(true);
       setError(null);
 
-      // Discover weather entity
+      // Discover weather entity — try configured, then auto-discover
       const configEntity = getConfig().weather_entity;
-      let entityId = configEntity;
+      let entity: { entity_id: string; state: string; attributes: Record<string, unknown> } | null = null;
 
-      if (!entityId) {
+      // Try configured entity first
+      if (configEntity) {
+        try {
+          entity = await haFetch(`/api/states/${configEntity}`) as typeof entity;
+        } catch { /* entity doesn't exist, fall through to discovery */ }
+      }
+
+      // Auto-discover if configured entity doesn't exist
+      if (!entity) {
         const states = await haFetch('/api/states') as Array<{
           entity_id: string;
           state: string;
           attributes: Record<string, unknown>;
         }>;
-        const weatherEntity = states.find(s => s.entity_id.startsWith('weather.'));
-        if (!weatherEntity) {
+        const found = states.find(s => s.entity_id.startsWith('weather.'));
+        if (!found) {
           setError('No weather entity found');
           setLoading(false);
           return;
         }
-        entityId = weatherEntity.entity_id;
+        entity = found;
       }
 
-      // Fetch current state
-      const entity = await haFetch(`/api/states/${entityId}`) as {
-        entity_id: string;
-        state: string;
-        attributes: Record<string, unknown>;
-      };
+      const entityId = entity!.entity_id;
 
       const attrs = entity.attributes;
       setCurrent({

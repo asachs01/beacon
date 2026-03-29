@@ -16,13 +16,19 @@ export function useWeatherForecast(): ForecastDay[] {
     if (!hasToken()) return;
 
     try {
-      // Resolve weather entity
-      let entityId = getConfig().weather_entity;
+      // Resolve weather entity — try configured, then auto-discover
+      const configEntity = getConfig().weather_entity;
+      let entityId = '';
+
+      if (configEntity) {
+        try {
+          await haFetch(`/api/states/${configEntity}`);
+          entityId = configEntity;
+        } catch { /* doesn't exist, fall through */ }
+      }
 
       if (!entityId) {
-        const states = (await haFetch('/api/states')) as Array<{
-          entity_id: string;
-        }>;
+        const states = (await haFetch('/api/states')) as Array<{ entity_id: string }>;
         const found = states.find((s) => s.entity_id.startsWith('weather.'));
         if (!found) return;
         entityId = found.entity_id;
