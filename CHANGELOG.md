@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/asachs01/beacon/compare/v1.3.0...v1.3.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* calendar layout whitespace and add-on auth/URL resolution ([0daec9f](https://github.com/asachs01/beacon/commit/0daec9f94b89b51b55926f5781e7a426fa3c7430))
+
 # [1.3.0](https://github.com/asachs01/beacon/compare/v1.2.1...v1.3.0) (2026-03-29)
 
 
