@@ -1,3 +1,5 @@
+ARG BUILD_FROM=ghcr.io/hassio-addons/base:16.3.2
+
 # ---------- Build stage ----------
 FROM node:20-alpine AS builder
 
@@ -8,7 +10,6 @@ COPY . .
 RUN npm run build
 
 # ---------- Runtime stage ----------
-ARG BUILD_FROM=ghcr.io/hassio-addons/base:16.3.2
 FROM ${BUILD_FROM}
 
 RUN apk add --no-cache nodejs npm \

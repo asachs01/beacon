@@ -32,6 +32,7 @@ export interface BeaconSettings {
   weatherEntity: string;
   grocyEnabled: boolean;
   anylistEnabled: boolean;
+  defaultGroceryList: string;
   musicDefaultPlayer: string;
   photoDirectory: string;
   photoInterval: number;
@@ -85,6 +86,7 @@ function buildDefaults(): BeaconSettings {
     weatherEntity: config.weather_entity,
     grocyEnabled: false,
     anylistEnabled: false,
+    defaultGroceryList: '',
     musicDefaultPlayer: '',
     photoDirectory: config.photo_directory,
     photoInterval: config.photo_interval,

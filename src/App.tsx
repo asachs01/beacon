@@ -21,16 +21,19 @@ import { NowPlayingBar } from './components/NowPlayingBar';
 import { useMusic } from './hooks/useMusic';
 import { useNotifications } from './hooks/useNotifications';
 import { ScreenSaver } from './components/ScreenSaver';
-import { GroceryDrawer } from './components/GroceryDrawer';
-import { useGrocery } from './hooks/useGrocery';
+import { GroceryView } from './components/GroceryView';
+import { OmniAdd } from './components/OmniAdd';
 import { Timer } from './components/Timer';
 import { useIngressDetect } from './hooks/useIngressDetect';
+import { useHaAuth } from './hooks/useHaAuth';
+import OnboardingView from './components/OnboardingView';
 import { CalendarEvent } from './types';
-import { getConfig } from './config';
+import { getConfig, patchConfig } from './config';
 
 const config = getConfig();
 
 export function App() {
+  const auth = useHaAuth();
   const { client, connected } = useHomeAssistant();
   const { isIngress, compact } = useIngressDetect();
   const {
@@ -79,10 +82,8 @@ export function App() {
   useNotifications(events, client);
 
   // Chores and leaderboard are now slide-over panels triggered from sidebar
-  const grocery = useGrocery(connected);
   const showChoresPanel = activeView === 'chores';
   const showLeaderboard = activeView === 'leaderboard';
-  const showGrocery = activeView === 'grocery';
 
   // Fetch data when connected
   useEffect(() => {
@@ -259,7 +260,68 @@ export function App() {
     [completedChoreIds, completeChore, uncompleteChore, firstMemberId]
   );
 
+  // Handle onboarding completion
+  const handleOnboardingComplete = useCallback(async (haUrl: string, haToken: string) => {
+    await auth.saveManualToken(haUrl, haToken);
+    patchConfig({ ha_url: haUrl, ha_token: haToken });
+    window.location.reload();
+  }, [auth]);
+
+  const handleOAuthStart = useCallback((haUrl: string) => {
+    auth.startOAuth(haUrl);
+  }, [auth]);
+
+  // Keyboard shortcuts for quick view switching
+  useEffect(() => {
+    const viewMap: Record<string, SidebarView> = {
+      '1': 'dashboard',
+      '2': 'calendar',
+      '3': 'chores',
+      '4': 'grocery',
+      '5': 'leaderboard',
+      '6': 'music',
+      '7': 'photos',
+      '8': 'timer',
+      '9': 'settings',
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      const view = viewMap[e.key];
+      if (view) {
+        e.preventDefault();
+        setActiveView(view);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const sidebarPos = settings.sidebarPosition || 'left';
+
+  // Show loading screen while checking stored credentials
+  if (auth.state.loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
+      </div>
+    );
+  }
+
+  // Show onboarding when running standalone (no injected HA config) and not yet set up
+  const hasInjectedConfig = !!(window.__BEACON_CONFIG__?.ha_token || import.meta.env.VITE_HA_TOKEN);
+  if (!hasInjectedConfig && !auth.state.isOnboarded) {
+    return (
+      <OnboardingView
+        onComplete={handleOnboardingComplete}
+        onOAuthStart={handleOAuthStart}
+      />
+    );
+  }
 
   return (
     <div className={`beacon beacon--sidebar-${sidebarPos} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
@@ -273,14 +335,23 @@ export function App() {
       {/* Main content area */}
       <div className="beacon-main">
         {activeView === 'dashboard' ? (
-          <DashboardView
-            events={events}
-            weather={weather}
-            chores={chores}
-            completedChoreIds={completedChoreIds}
-            onToggleChore={handleToggleChore}
-            familyName={settings.familyName}
-          />
+          <>
+            <DashboardView
+              events={events}
+              weather={weather}
+              chores={chores}
+              completedChoreIds={completedChoreIds}
+              onToggleChore={handleToggleChore}
+              familyName={settings.familyName}
+            />
+            <OmniAdd
+              onAddEvent={handleAddEvent}
+              onAddGroceryItem={() => setActiveView('grocery')}
+              onAddChore={() => setActiveView('chores')}
+              onNavigateTimer={() => setActiveView('timer')}
+              sidebarPosition={sidebarPos}
+            />
+          </>
         ) : activeView === 'music' ? (
           <MusicView
             activePlayer={music.activePlayer}
@@ -309,6 +380,8 @@ export function App() {
             haUrl={config.ha_url}
             calendars={calendars}
           />
+        ) : activeView === 'grocery' ? (
+          <GroceryView defaultListId={settings.defaultGroceryList || undefined} />
         ) : activeView === 'timer' ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
             <Timer />
@@ -363,15 +436,14 @@ export function App() {
               />
             </div>
 
-            {/* FAB */}
-            <button
-              type="button"
-              className="btn--fab"
-              onClick={handleAddEvent}
-              aria-label="Add event"
-            >
-              +
-            </button>
+            {/* Omni-Add FAB */}
+            <OmniAdd
+              onAddEvent={handleAddEvent}
+              onAddGroceryItem={() => setActiveView('grocery')}
+              onAddChore={() => setActiveView('chores')}
+              onNavigateTimer={() => setActiveView('timer')}
+              sidebarPosition={sidebarPos}
+            />
           </>
         )}
       </div>
@@ -415,23 +487,7 @@ export function App() {
         />
       )}
 
-      {/* Grocery Drawer */}
-      <GroceryDrawer
-        list={grocery.list}
-        source={grocery.source}
-        loading={grocery.loading}
-        expiringItems={grocery.expiringItems}
-        onAddItem={grocery.addItem}
-        onCheckItem={grocery.checkItem}
-        onUncheckItem={grocery.uncheckItem}
-        forceOpen={showGrocery}
-      />
-      {showGrocery && (
-        <div
-          className="slide-panel-backdrop"
-          onClick={handleClosePanel}
-        />
-      )}
+      {/* GroceryView is now rendered as a full view above */}
 
       {/* Now Playing Bar — shows when music is playing, hidden in photo/music views */}
       {activeView !== 'music' && activeView !== 'photos' && music.activePlayer?.state === 'playing' && (

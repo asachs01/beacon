@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import {
   Settings as SettingsIcon,
@@ -14,6 +14,8 @@ import {
   Trash2,
   ChevronLeft,
 } from 'lucide-react';
+import { AnyListClient } from '../api/anylist';
+import { GroceryList } from '../types/grocery';
 import { themes } from '../styles/themes';
 import { FamilyMember, MEMBER_COLORS, AVATAR_CATEGORIES } from '../types/family';
 import type { BeaconSettings } from '../hooks/useSettings';
@@ -193,6 +195,14 @@ export function SettingsView({
   const [memberForm, setMemberForm] = useState<MemberForm>(EMPTY_FORM);
   const [memberFormMode, setMemberFormMode] = useState<'list' | 'add' | 'edit'>('list');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  // ---- Fetch todo lists for grocery default dropdown ----
+  const [todoLists, setTodoLists] = useState<GroceryList[]>([]);
+  useEffect(() => {
+    if (!connected) return;
+    const client = new AnyListClient();
+    client.getLists().then(setTodoLists).catch(() => {});
+  }, [connected]);
 
   // ---- Family member handlers ----
   const handleStartAdd = useCallback(() => {
@@ -853,6 +863,26 @@ export function SettingsView({
             checked={settings.anylistEnabled}
             onChange={(v) => onUpdateSettings({ anylistEnabled: v })}
           />
+        </div>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Grocery</div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">Default Grocery List</div>
+            <div className="settings-row-sublabel">List shown when opening grocery view</div>
+          </div>
+          <select
+            className="settings-input"
+            value={settings.defaultGroceryList}
+            onChange={(e) => onUpdateSettings({ defaultGroceryList: e.target.value })}
+          >
+            <option value="">Auto (first available)</option>
+            {todoLists.map(list => (
+              <option key={list.id} value={list.id}>{list.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 

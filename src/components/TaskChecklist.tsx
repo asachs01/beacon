@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Chore } from '../types/family';
+import { hapticMedium, hapticSuccess } from '../hooks/useHaptics';
 
 interface TaskChecklistProps {
   chores: Chore[];
@@ -14,6 +15,9 @@ export function TaskChecklist({ chores, completedIds, onToggle }: TaskChecklistP
     if (!completedIds.has(choreId)) {
       setAnimatingId(choreId);
       setTimeout(() => setAnimatingId(null), 400);
+      hapticMedium();
+      // Check if this completes all tasks
+      if (incomplete.length === 1) hapticSuccess();
     }
     onToggle(choreId);
   };
@@ -24,7 +28,7 @@ export function TaskChecklist({ chores, completedIds, onToggle }: TaskChecklistP
   if (chores.length === 0) {
     return (
       <div className="task-checklist-empty">
-        No tasks for today
+        No tasks for today — enjoy the free time
       </div>
     );
   }
@@ -32,7 +36,7 @@ export function TaskChecklist({ chores, completedIds, onToggle }: TaskChecklistP
   if (incomplete.length === 0) {
     return (
       <div className="task-checklist-done">
-        All done!
+        All done — great job!
       </div>
     );
   }

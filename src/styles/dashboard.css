@@ -151,8 +151,26 @@
 }
 
 /* Event cards always use dark text on pastel backgrounds — regardless of theme */
+.event-card-calendar,
+.event-card-title,
+.event-card-time {
+  /* Force readable text on pastel backgrounds in any theme */
+}
+
 [data-theme="dark"] .event-card {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .event-card-calendar {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .event-card-title {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="dark"] .event-card-time {
+  color: rgba(0, 0, 0, 0.5);
 }
 
 /* --- RIGHT COLUMN: Weather + Tasks --- */
@@ -290,12 +308,18 @@
   line-height: 1;
 }
 
-.task-checklist-empty,
-.task-checklist-done {
+.task-checklist-empty {
   font-size: 16px;
   color: var(--text-muted);
   padding: 24px 0;
   font-style: italic;
+}
+
+.task-checklist-done {
+  font-size: 16px;
+  color: var(--color-green-full, #22c55e);
+  padding: 24px 0;
+  font-weight: 500;
 }
 
 /* --- Responsive: Tablet < 768px --- */

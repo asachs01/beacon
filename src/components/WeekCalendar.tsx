@@ -250,8 +250,67 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Compute overlap layout for a list of events in one day column.
+  // Returns a map of eventId → { column, totalColumns } for side-by-side rendering.
+  function computeOverlapLayout(dayEvents: CalendarEvent[]): Map<string, { col: number; total: number }> {
+    const result = new Map<string, { col: number; total: number }>();
+    if (dayEvents.length === 0) return result;
+
+    // Sort by start time, then longer events first
+    const sorted = [...dayEvents].sort((a, b) => {
+      const cmp = a.start.localeCompare(b.start);
+      if (cmp !== 0) return cmp;
+      return b.end.localeCompare(a.end);
+    });
+
+    // Groups of overlapping events
+    const groups: CalendarEvent[][] = [];
+    let currentGroup: CalendarEvent[] = [];
+    let currentGroupEnd = '';
+
+    for (const event of sorted) {
+      if (currentGroup.length === 0 || event.start < currentGroupEnd) {
+        currentGroup.push(event);
+        if (event.end > currentGroupEnd) currentGroupEnd = event.end;
+      } else {
+        groups.push(currentGroup);
+        currentGroup = [event];
+        currentGroupEnd = event.end;
+      }
+    }
+    if (currentGroup.length > 0) groups.push(currentGroup);
+
+    // Assign columns within each group
+    for (const group of groups) {
+      const columns: CalendarEvent[][] = [];
+      for (const event of group) {
+        let placed = false;
+        for (let c = 0; c < columns.length; c++) {
+          const lastInCol = columns[c][columns[c].length - 1];
+          if (event.start >= lastInCol.end) {
+            columns[c].push(event);
+            result.set(event.id, { col: c, total: 0 });
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          columns.push([event]);
+          result.set(event.id, { col: columns.length - 1, total: 0 });
+        }
+      }
+      // Set total columns for the group
+      for (const event of group) {
+        const entry = result.get(event.id);
+        if (entry) entry.total = columns.length;
+      }
+    }
+
+    return result;
+  }
+
   // Calculate position and height for a timed event
-  function getEventStyle(event: CalendarEvent): React.CSSProperties {
+  function getEventStyle(event: CalendarEvent, layout?: { col: number; total: number }): React.CSSProperties {
     const start = parseISO(event.start);
     const end = parseISO(event.end);
     const startHour = getHours(start) + getMinutes(start) / 60;
@@ -263,18 +322,37 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
     const topOffset = (clampedStart - START_HOUR) * 72;
     const height = Math.max((clampedEnd - clampedStart) * 72, 22);
 
-    return {
+    const style: React.CSSProperties = {
       top: `${topOffset}px`,
       height: `${height}px`,
     };
+
+    // Side-by-side columns for overlapping events
+    if (layout && layout.total > 1) {
+      const widthPct = 100 / layout.total;
+      style.left = `calc(${layout.col * widthPct}% + 1px)`;
+      style.width = `calc(${widthPct}% - 2px)`;
+    }
+
+    return style;
   }
 
-  // Current time indicator position
-  const currentTimeTop = useMemo(() => {
+  // Current time indicator position — updates every 30s so the red line moves
+  const [currentTimeTop, setCurrentTimeTop] = useState<number | null>(() => {
     const now = new Date();
     const h = getHours(now) + getMinutes(now) / 60;
     if (h < START_HOUR || h > END_HOUR) return null;
     return (h - START_HOUR) * 72;
+  });
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      const h = getHours(now) + getMinutes(now) / 60;
+      setCurrentTimeTop(h < START_HOUR || h > END_HOUR ? null : (h - START_HOUR) * 72);
+    };
+    const interval = setInterval(tick, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   // --- Drag handlers ---
@@ -466,6 +544,7 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
             const key = format(day, 'yyyy-MM-dd');
             const isToday = isSameDay(day, today);
             const dayEvents = timedByDay.get(key) || [];
+            const overlapLayout = computeOverlapLayout(dayEvents);
 
             return (
               <div
@@ -499,13 +578,13 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                   );
                 })}
 
-                {/* Events positioned absolutely */}
+                {/* Events positioned absolutely (with overlap column splitting) */}
                 {dayEvents.map((event) => (
                   <EventBlock
                     key={`${event.id}-${key}`}
                     event={event}
                     onClick={onEventClick}
-                    style={getEventStyle(event)}
+                    style={getEventStyle(event, overlapLayout.get(event.id))}
                     draggable
                     onDragStart={(e) => handleDragStart(event, e)}
                     onDragEnd={handleDragEnd}

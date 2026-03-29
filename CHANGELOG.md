@@ -12,6 +12,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Multi-day event spanning bars in the all-day row, rendered across day columns with lane stacking
 - PWA manifest (public/manifest.json) with Beacon branding, icons, standalone display, and iOS meta tags
 - HA API updateEvent method for rescheduling events via calendar.update_event service
+- Overlapping event column splitting: concurrent events render side-by-side instead of stacking
+- Live current-time indicator: red line updates every 30 seconds instead of being static
+- NowPlayingBar progress indicator: thin accent-color bar shows track position
+- Keyboard shortcuts: press 1-9 to switch views (dashboard, calendar, chores, grocery, etc.)
+- Mobile bottom tab active indicator pill along top edge
+- Smooth view transitions: fade-and-slide animation when switching between views
+- `prefers-reduced-motion` support: all animations/transitions disabled for accessibility
+- Capacitor integration for native iOS and Android builds
+- Native haptic feedback on task completion, FAB interaction (via @capacitor/haptics)
+- Android back button handling: navigates back or minimizes app
+- Native status bar and splash screen configuration
+- npm scripts: `cap:sync`, `cap:ios`, `cap:android`, `cap:run:ios`, `cap:run:android`
+- Makefile targets: `cap-sync`, `cap-ios`, `cap-android`
+- Onboarding setup wizard: 3-step flow (welcome → HA URL → authentication)
+- HA OAuth2 authentication: full public-client flow with token exchange and refresh
+- Manual long-lived access token authentication option
+- Secure token storage: native Capacitor Preferences on iOS/Android, localStorage on web
+- Dynamic config patching: `patchConfig()` allows injecting credentials without page reload
+- Auth gate in App.tsx: shows onboarding when running standalone without injected HA config
+
+### Fixed
+- Missing CSS imports: grocery.css and omni-add.css were not imported in main.tsx
+
+### Improved
+- Screensaver clock drift: smoother 4s cubic-bezier transition when repositioning
+- OmniAdd FAB icon rotates from + to x when expanded (class-based, not just parent selector)
+- Event card text colors forced dark on pastel backgrounds in dark themes
+- Dashboard empty states: warmer, friendlier copy ("your day is wide open", "great job!")
+- Task checklist "All done" state now uses green accent color instead of muted gray
 
 ### Changed
 - Dockerfile: multi-stage build with `serve` for static assets, proper HEALTHCHECK

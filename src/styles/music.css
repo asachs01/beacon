@@ -5,6 +5,7 @@
 
 /* --- Now Playing Bar (compact bottom bar) --- */
 .now-playing-bar {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -16,6 +17,23 @@
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   animation: now-playing-slide-up 300ms ease;
   min-height: 64px;
+  overflow: hidden;
+}
+
+/* Thin progress bar along the top edge */
+.now-playing-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border-subtle, rgba(0, 0, 0, 0.06));
+}
+
+.now-playing-progress-fill {
+  height: 100%;
+  background: var(--accent, #3b82f6);
+  transition: width 1s linear;
 }
 
 [data-theme="dark"] .now-playing-bar {

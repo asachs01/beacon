@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import {
   Play,
   Pause,
@@ -28,11 +29,28 @@ export function NowPlayingBar({
   onSetVolume,
   onExpand,
 }: NowPlayingBarProps) {
+  // Local progress tracking
+  const [position, setPosition] = useState(player?.media_position ?? 0);
+  const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    setPosition(player?.media_position ?? 0);
+  }, [player?.media_position]);
+
+  useEffect(() => {
+    if (animRef.current) clearInterval(animRef.current);
+    if (player?.state !== 'playing') return;
+    animRef.current = setInterval(() => setPosition((prev) => prev + 1), 1000);
+    return () => { if (animRef.current) clearInterval(animRef.current); };
+  }, [player?.state, player?.media_position]);
+
   if (!player || (player.state !== 'playing' && player.state !== 'paused')) {
     return null;
   }
 
   const isPlaying = player.state === 'playing';
+  const duration = player.media_duration ?? 0;
+  const progressPct = duration > 0 ? Math.min(position / duration, 1) * 100 : 0;
   const haUrl = getConfig().ha_url.replace(/\/$/, '');
   const artSrc = player.entity_picture
     ? (player.entity_picture.startsWith('http')
@@ -42,6 +60,12 @@ export function NowPlayingBar({
 
   return (
     <div className="now-playing-bar" role="region" aria-label="Now playing">
+      {/* Thin progress bar across the top */}
+      {duration > 0 && (
+        <div className="now-playing-progress">
+          <div className="now-playing-progress-fill" style={{ width: `${progressPct}%` }} />
+        </div>
+      )}
       {/* Album art + info — tap to expand */}
       <button
         type="button"
