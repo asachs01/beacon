@@ -1,5 +1,6 @@
 import { HomeAssistantClient } from './homeassistant';
 import { MediaPlayer, MediaPlayerState } from '../types/music';
+import { haFetch, hasToken, callHaService } from './ha-rest';
 
 /**
  * Parses a Home Assistant state entity into a MediaPlayer object.
@@ -27,38 +28,80 @@ export function parseMediaPlayer(entity: {
 }
 
 /**
- * Fetches all media_player entities from Home Assistant.
+ * Fetches all media_player entities via WebSocket client or REST API.
  */
-export async function getMediaPlayers(client: HomeAssistantClient): Promise<MediaPlayer[]> {
-  const states = await client.getStates();
-  return states
-    .filter((s) => s.entity_id.startsWith('media_player.'))
-    .map(parseMediaPlayer);
+export async function getMediaPlayers(client?: HomeAssistantClient | null): Promise<MediaPlayer[]> {
+  // Try WebSocket client first
+  if (client?.isConnected) {
+    const states = await client.getStates();
+    return states
+      .filter((s) => s.entity_id.startsWith('media_player.'))
+      .map(parseMediaPlayer);
+  }
+
+  // Fall back to REST API (proxy mode)
+  if (hasToken()) {
+    try {
+      const states = await haFetch('/api/states') as Array<{
+        entity_id: string;
+        state: string;
+        attributes: Record<string, unknown>;
+      }>;
+      return states
+        .filter(s => s.entity_id.startsWith('media_player.'))
+        .map(parseMediaPlayer);
+    } catch (err) {
+      console.warn('Failed to fetch media players via REST:', err);
+      return [];
+    }
+  }
+
+  return [];
 }
 
-export async function play(client: HomeAssistantClient, entityId: string): Promise<void> {
-  await client.callService('media_player', 'media_play', entityId);
+export async function play(client: HomeAssistantClient | null, entityId: string): Promise<void> {
+  if (client?.isConnected) {
+    await client.callService('media_player', 'media_play', entityId);
+  } else {
+    await callHaService('media_player', 'media_play', { entity_id: entityId });
+  }
 }
 
-export async function pause(client: HomeAssistantClient, entityId: string): Promise<void> {
-  await client.callService('media_player', 'media_pause', entityId);
+export async function pause(client: HomeAssistantClient | null, entityId: string): Promise<void> {
+  if (client?.isConnected) {
+    await client.callService('media_player', 'media_pause', entityId);
+  } else {
+    await callHaService('media_player', 'media_pause', { entity_id: entityId });
+  }
 }
 
-export async function next(client: HomeAssistantClient, entityId: string): Promise<void> {
-  await client.callService('media_player', 'media_next_track', entityId);
+export async function next(client: HomeAssistantClient | null, entityId: string): Promise<void> {
+  if (client?.isConnected) {
+    await client.callService('media_player', 'media_next_track', entityId);
+  } else {
+    await callHaService('media_player', 'media_next_track', { entity_id: entityId });
+  }
 }
 
-export async function previous(client: HomeAssistantClient, entityId: string): Promise<void> {
-  await client.callService('media_player', 'media_previous_track', entityId);
+export async function previous(client: HomeAssistantClient | null, entityId: string): Promise<void> {
+  if (client?.isConnected) {
+    await client.callService('media_player', 'media_previous_track', entityId);
+  } else {
+    await callHaService('media_player', 'media_previous_track', { entity_id: entityId });
+  }
 }
 
 export async function setVolume(
-  client: HomeAssistantClient,
+  client: HomeAssistantClient | null,
   entityId: string,
   level: number,
 ): Promise<void> {
-  await client.callService('media_player', 'volume_set', entityId, {
-    volume_level: Math.max(0, Math.min(1, level)),
-  });
+  const data = { entity_id: entityId, volume_level: Math.max(0, Math.min(1, level)) };
+  if (client?.isConnected) {
+    await client.callService('media_player', 'volume_set', entityId, {
+      volume_level: data.volume_level,
+    });
+  } else {
+    await callHaService('media_player', 'volume_set', data);
+  }
 }
-

@@ -31,67 +31,77 @@ export function useMusic(
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const subscriptionRef = useRef<number | null>(null);
 
-  // Find the active player: the one currently playing, or the selected one
   const activePlayer =
     players.find((p) => p.state === 'playing') ||
     players.find((p) => p.entity_id === selectedPlayerId) ||
     null;
 
-  // Fetch players and subscribe to state changes
+  // Fetch players and subscribe to state changes (or poll in REST mode)
   useEffect(() => {
     if (!connected) return;
     const client = getClient();
-    if (!client) return;
-
     let cancelled = false;
 
     async function init() {
-      // Initial fetch
-      const initialPlayers = await getMediaPlayers(client!);
+      // Initial fetch — works via WS or REST
+      const initialPlayers = await getMediaPlayers(client);
       if (!cancelled) {
         setPlayers(initialPlayers);
       }
 
-      // Subscribe to state changes
-      const subId = await client!.subscribeStateChanges((event: Record<string, unknown>) => {
-        const data = event as {
-          data?: {
-            new_state?: {
-              entity_id: string;
-              state: string;
-              attributes: Record<string, unknown>;
+      // If we have a WS client, subscribe to live state changes
+      if (client?.isConnected) {
+        const subId = await client.subscribeStateChanges((event: Record<string, unknown>) => {
+          const data = event as {
+            data?: {
+              new_state?: {
+                entity_id: string;
+                state: string;
+                attributes: Record<string, unknown>;
+              };
             };
           };
-        };
-        const newState = data.data?.new_state;
-        if (!newState || !newState.entity_id.startsWith('media_player.')) return;
+          const newState = data.data?.new_state;
+          if (!newState || !newState.entity_id.startsWith('media_player.')) return;
 
-        const parsed = parseMediaPlayer(newState);
-
-        setPlayers((prev) => {
-          const exists = prev.some((p) => p.entity_id === newState.entity_id);
-          if (exists) {
-            return prev.map((p) =>
-              p.entity_id === newState.entity_id ? parsed : p,
-            );
-          }
-          return [...prev, parsed];
+          const parsed = parseMediaPlayer(newState);
+          setPlayers((prev) => {
+            const exists = prev.some((p) => p.entity_id === newState.entity_id);
+            if (exists) {
+              return prev.map((p) =>
+                p.entity_id === newState.entity_id ? parsed : p,
+              );
+            }
+            return [...prev, parsed];
+          });
         });
-      });
 
-      if (!cancelled) {
-        subscriptionRef.current = subId;
+        if (!cancelled) {
+          subscriptionRef.current = subId;
+        }
       }
     }
 
     init().catch(console.error);
 
+    // In REST-only mode (no WS client), poll every 10 seconds
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    if (!client?.isConnected) {
+      pollInterval = setInterval(async () => {
+        try {
+          const updated = await getMediaPlayers(null);
+          if (!cancelled) setPlayers(updated);
+        } catch { /* ignore poll errors */ }
+      }, 10_000);
+    }
+
     return () => {
       cancelled = true;
-      if (subscriptionRef.current !== null) {
+      if (subscriptionRef.current !== null && client) {
         client.unsubscribe(subscriptionRef.current);
         subscriptionRef.current = null;
       }
+      if (pollInterval) clearInterval(pollInterval);
     };
   }, [connected, getClient]);
 
@@ -104,7 +114,7 @@ export function useMusic(
     async (entityId?: string) => {
       const client = getClient();
       const id = resolveEntityId(entityId);
-      if (!client || !id) return;
+      if (!id) return;
       await apiPlay(client, id);
     },
     [getClient, resolveEntityId],
@@ -114,7 +124,7 @@ export function useMusic(
     async (entityId?: string) => {
       const client = getClient();
       const id = resolveEntityId(entityId);
-      if (!client || !id) return;
+      if (!id) return;
       await apiPause(client, id);
     },
     [getClient, resolveEntityId],
@@ -124,7 +134,7 @@ export function useMusic(
     async (entityId?: string) => {
       const client = getClient();
       const id = resolveEntityId(entityId);
-      if (!client || !id) return;
+      if (!id) return;
       await apiNext(client, id);
     },
     [getClient, resolveEntityId],
@@ -134,7 +144,7 @@ export function useMusic(
     async (entityId?: string) => {
       const client = getClient();
       const id = resolveEntityId(entityId);
-      if (!client || !id) return;
+      if (!id) return;
       await apiPrevious(client, id);
     },
     [getClient, resolveEntityId],
@@ -144,7 +154,7 @@ export function useMusic(
     async (level: number, entityId?: string) => {
       const client = getClient();
       const id = resolveEntityId(entityId);
-      if (!client || !id) return;
+      if (!id) return;
       await apiSetVolume(client, id, level);
     },
     [getClient, resolveEntityId],
