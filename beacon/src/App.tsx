@@ -312,11 +312,16 @@ export function App() {
     );
   }
 
-  // Show onboarding when running standalone (no injected HA config) and not yet set up.
-  // Skip onboarding if: running in HA ingress (iframe), or config was injected, or already onboarded.
-  const isInIframe = window !== window.parent;
-  const hasInjectedConfig = !!(window.__BEACON_CONFIG__ || import.meta.env.VITE_HA_TOKEN);
-  if (!isInIframe && !hasInjectedConfig && !auth.state.isOnboarded) {
+  // Show onboarding ONLY when running as a standalone app with no HA connection configured.
+  // Skip if: __BEACON_CONFIG__ exists (add-on injected it), or env token set, or already onboarded,
+  // or running in an iframe (HA ingress), or URL has /ingress/ path.
+  const isHaManaged = !!(
+    window.__BEACON_CONFIG__ ||
+    import.meta.env.VITE_HA_TOKEN ||
+    window !== window.parent ||
+    window.location.pathname.includes('/ingress/')
+  );
+  if (!isHaManaged && !auth.state.isOnboarded) {
     return (
       <OnboardingView
         onComplete={handleOnboardingComplete}
