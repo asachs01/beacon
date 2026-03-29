@@ -1,3 +1,10 @@
+## [1.10.5](https://github.com/asachs01/beacon/compare/v1.10.4...v1.10.5) (2026-03-29)
+
+
+### Bug Fixes
+
+* media control fallback chain includes toggle for TV integrations ([bfa780f](https://github.com/asachs01/beacon/commit/bfa780fabc333090f666b5fe71bb94b91db0b44d))
+
 ## [1.10.4](https://github.com/asachs01/beacon/compare/v1.10.3...v1.10.4) (2026-03-29)
 
 
