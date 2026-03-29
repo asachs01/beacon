@@ -31,6 +31,14 @@ function getHaToken() {
 }
 
 /**
+ * Set the HA token dynamically (e.g. from ingress token request).
+ * Called by useHomeAssistant after obtaining a token.
+ */
+export function setHaToken(token: string) {
+  _haToken = token;
+}
+
+/**
  * Fetch from the HA REST API with automatic auth headers.
  */
 export async function haFetch(path: string, options?: RequestInit): Promise<unknown> {

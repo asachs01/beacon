@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
 import { getConfig } from '../config';
+import { setHaToken } from '../api/ha-rest';
 
 /** Are we running inside HA's ingress proxy? */
 function isIngress(): boolean {
@@ -18,7 +19,6 @@ function resolveHaUrl(): string {
     try {
       return window.parent.location.origin;
     } catch {
-      // Cross-origin iframe — use current origin
       return window.location.origin;
     }
   }
@@ -26,32 +26,85 @@ function resolveHaUrl(): string {
   return window.location.origin;
 }
 
+/**
+ * Request an access token from the HA frontend via the ingress postMessage API.
+ * HA panels use this to get a short-lived token for API calls.
+ * Returns null if not in ingress or if the request times out.
+ */
+function requestIngressToken(): Promise<string | null> {
+  return new Promise((resolve) => {
+    if (!isIngress()) {
+      resolve(null);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      window.removeEventListener('message', handler);
+      resolve(null);
+    }, 3000);
+
+    function handler(event: MessageEvent) {
+      if (event.data?.type === 'auth/token') {
+        clearTimeout(timeout);
+        window.removeEventListener('message', handler);
+        resolve(event.data.access_token || null);
+      }
+    }
+
+    window.addEventListener('message', handler);
+
+    // Request token from HA frontend
+    try {
+      window.parent.postMessage({ type: 'auth/request' }, '*');
+    } catch {
+      clearTimeout(timeout);
+      window.removeEventListener('message', handler);
+      resolve(null);
+    }
+  });
+}
+
 export function useHomeAssistant() {
   const clientRef = useRef<HomeAssistantClient | null>(null);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const { ha_token: HA_TOKEN } = getConfig();
-    const HA_URL = resolveHaUrl();
+    let cancelled = false;
 
-    // In ingress mode, HA's proxy handles auth — we can use the access_token
-    // from the hassio ingress session. If no token, try connecting anyway
-    // (ingress may provide session-based auth).
-    if (!HA_TOKEN && !isIngress()) {
-      console.warn('Beacon: No HA token configured. Running in demo mode.');
-      return;
+    async function connect() {
+      const config = getConfig();
+      let token = config.ha_token;
+      const url = resolveHaUrl();
+
+      // If no token from config, try requesting one from HA ingress
+      if (!token && isIngress()) {
+        token = await requestIngressToken() || '';
+      }
+
+      if (!token) {
+        console.warn('Beacon: No HA token available. Running in demo mode.');
+        return;
+      }
+
+      // Share the token with the REST API module so grocery/calendar REST calls work too
+      setHaToken(token);
+
+      if (cancelled) return;
+
+      const client = new HomeAssistantClient(url, token);
+      client.setConnectionChangeHandler(setConnected);
+      clientRef.current = client;
+
+      client.connect().catch((err) => {
+        console.error('Beacon: Failed to connect to Home Assistant', err);
+      });
     }
 
-    const client = new HomeAssistantClient(HA_URL, HA_TOKEN || '');
-    client.setConnectionChangeHandler(setConnected);
-    clientRef.current = client;
-
-    client.connect().catch((err) => {
-      console.error('Beacon: Failed to connect to Home Assistant', err);
-    });
+    connect();
 
     return () => {
-      client.disconnect();
+      cancelled = true;
+      clientRef.current?.disconnect();
       clientRef.current = null;
     };
   }, []);
