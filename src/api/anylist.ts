@@ -1,20 +1,18 @@
 import { GroceryItem, GroceryList } from '../types/grocery';
-import { hasToken, haFetch, callHaService } from './ha-rest';
+import { haFetch, callHaService } from './ha-rest';
 
 /**
- * AnyList integration via Home Assistant's REST API and todo entities.
+ * AnyList / Todo integration via Home Assistant's REST API.
  *
- * AnyList has no official public API. When the AnyList HA integration is
- * installed, it exposes todo.anylist_* entities. This client uses HA's
- * REST API to call the todo service on those entities.
- *
- * If no AnyList entities are found, all methods return empty results gracefully.
+ * Discovers all todo.* entities (AnyList, Shopping List, etc.) and provides
+ * a unified interface for listing, adding, checking, and unchecking items.
  */
 export class AnyListClient {
   private entityIds: string[] | null = null;
 
   /**
-   * Discover AnyList todo entities by fetching all states and filtering.
+   * Discover available todo entities by fetching all states and filtering
+   * to entities that are actually available (not unavailable/unknown).
    */
   private async discoverEntities(): Promise<string[]> {
     if (this.entityIds !== null) return this.entityIds;
@@ -27,7 +25,7 @@ export class AnyListClient {
       }>;
 
       this.entityIds = states
-        .filter(s => s.entity_id.startsWith('todo.'))
+        .filter(s => s.entity_id.startsWith('todo.') && s.state !== 'unavailable')
         .map(s => s.entity_id);
     } catch {
       this.entityIds = [];
@@ -37,8 +35,6 @@ export class AnyListClient {
   }
 
   async getLists(): Promise<GroceryList[]> {
-    if (!hasToken()) return [];
-
     const entityIds = await this.discoverEntities();
     if (entityIds.length === 0) return [];
 
@@ -61,54 +57,41 @@ export class AnyListClient {
         };
       });
     } catch (err) {
-      console.warn('Beacon: Failed to fetch AnyList lists', err);
+      console.warn('Beacon: Failed to fetch todo lists', err);
       return [];
     }
   }
 
   async getItems(listId: string): Promise<GroceryItem[]> {
-    if (!hasToken()) return [];
-
     const entityIds = await this.discoverEntities();
     if (!entityIds.includes(listId)) return [];
 
     try {
+      // Use todo.get_items with return_response to get actual items
       const result = await callHaService('todo', 'get_items', {
         entity_id: listId,
-        return_response: true,
-      }) as Array<{
-        entity_id: string;
-        state: string;
-        attributes: Record<string, unknown>;
-      }>;
+      }, true) as {
+        service_response?: Record<string, { items?: Array<{ uid: string; summary: string; status: string }> }>;
+      };
 
-      // HA REST API returns an array of entity states after service call.
-      // For todo.get_items with return_response, the response format varies.
-      const entity = Array.isArray(result)
-        ? result.find(s => s.entity_id === listId)
-        : null;
-
-      if (!entity) {
-        // Fallback: read the entity state directly for its items
-        const state = await haFetch(`/api/states/${listId}`) as {
-          entity_id: string;
-          state: string;
-          attributes: Record<string, unknown>;
-        };
-
-        return parseTodoItems(state.attributes?.items);
+      // Parse the service_response format: { "todo.entity_id": { items: [...] } }
+      const entityResponse = result?.service_response?.[listId];
+      if (entityResponse?.items) {
+        return entityResponse.items.map(item => ({
+          id: item.uid,
+          name: item.summary,
+          checked: item.status === 'completed',
+        }));
       }
 
-      return parseTodoItems(entity.attributes?.items);
+      return [];
     } catch (err) {
-      console.warn('Beacon: Failed to fetch AnyList items', err);
+      console.warn(`Beacon: Failed to fetch items for ${listId}`, err);
       return [];
     }
   }
 
   async addItem(listId: string, name: string): Promise<void> {
-    if (!hasToken()) return;
-
     const entityIds = await this.discoverEntities();
     if (!entityIds.includes(listId)) return;
 
@@ -118,53 +101,35 @@ export class AnyListClient {
         item: name,
       });
     } catch (err) {
-      console.warn('Beacon: Failed to add AnyList item', err);
+      console.warn('Beacon: Failed to add item', err);
     }
   }
 
-  async checkItem(listId: string, itemId: string): Promise<void> {
-    if (!hasToken()) return;
-
+  async checkItem(listId: string, itemName: string): Promise<void> {
     try {
       await callHaService('todo', 'update_item', {
         entity_id: listId,
-        item: itemId,
+        item: itemName,
         status: 'completed',
       });
     } catch (err) {
-      console.warn('Beacon: Failed to check AnyList item', err);
+      console.warn('Beacon: Failed to check item', err);
     }
   }
 
-  async uncheckItem(listId: string, itemId: string): Promise<void> {
-    if (!hasToken()) return;
-
+  async uncheckItem(listId: string, itemName: string): Promise<void> {
     try {
       await callHaService('todo', 'update_item', {
         entity_id: listId,
-        item: itemId,
+        item: itemName,
         status: 'needs_action',
       });
     } catch (err) {
-      console.warn('Beacon: Failed to uncheck AnyList item', err);
+      console.warn('Beacon: Failed to uncheck item', err);
     }
   }
 
   resetEntities(): void {
     this.entityIds = null;
   }
-}
-
-function parseTodoItems(raw: unknown): GroceryItem[] {
-  const items = (raw ?? []) as Array<{
-    uid: string;
-    summary: string;
-    status: string;
-  }>;
-
-  return items.map(item => ({
-    id: item.uid,
-    name: item.summary,
-    checked: item.status === 'completed',
-  }));
 }

@@ -51,13 +51,16 @@ export async function haFetch(path: string, options?: RequestInit): Promise<unkn
 
 /**
  * Call a HA service via the REST API.
+ * Set returnResponse=true for services like todo.get_items that return data.
  */
 export async function callHaService(
   domain: string,
   service: string,
   data?: Record<string, unknown>,
+  returnResponse = false,
 ): Promise<unknown> {
-  return haFetch(`/api/services/${domain}/${service}`, {
+  const qs = returnResponse ? '?return_response' : '';
+  return haFetch(`/api/services/${domain}/${service}${qs}`, {
     method: 'POST',
     body: JSON.stringify(data ?? {}),
   });

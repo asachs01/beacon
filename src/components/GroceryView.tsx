@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { GroceryList } from '../types/grocery';
 import { AnyListClient } from '../api/anylist';
-import { haFetch } from '../api/ha-rest';
+import { callHaService } from '../api/ha-rest';
 
 interface TodoItem {
   uid: string;
@@ -51,20 +51,20 @@ export function GroceryView({ defaultListId }: GroceryViewProps) {
     return () => { cancelled = true; };
   }, [defaultListId]);
 
-  // Load items from entity state directly (avoids 400 from todo/get_items service)
+  // Load items via todo.get_items service call with return_response
   const loadItems = useCallback(async (entityId: string) => {
     if (!entityId) return;
     setLoading(true);
 
     try {
-      const state = await haFetch(`/api/states/${entityId}`) as {
-        entity_id: string;
-        state: string;
-        attributes: Record<string, unknown>;
+      const result = await callHaService('todo', 'get_items', {
+        entity_id: entityId,
+      }, true) as {
+        service_response?: Record<string, { items?: TodoItem[] }>;
       };
 
-      const rawItems = (state.attributes?.items ?? []) as TodoItem[];
-      setItems(rawItems);
+      const entityResponse = result?.service_response?.[entityId];
+      setItems(entityResponse?.items ?? []);
     } catch (err) {
       console.warn('GroceryView: Failed to load items', err);
       setItems([]);
