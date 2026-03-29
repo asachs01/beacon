@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/asachs01/beacon/compare/v1.10.7...v1.11.0) (2026-03-29)
+
+
+### Features
+
+* weather forecast view and calendar day weather headers ([4eebe69](https://github.com/asachs01/beacon/commit/4eebe6965f5309d96b542ea18f97e20e44690330))
+
 ## [1.10.7](https://github.com/asachs01/beacon/compare/v1.10.6...v1.10.7) (2026-03-29)
 
 
