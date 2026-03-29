@@ -28,7 +28,7 @@ export function TaskChecklist({ chores, completedIds, onToggle }: TaskChecklistP
   if (chores.length === 0) {
     return (
       <div className="task-checklist-empty">
-        No tasks for today — enjoy the free time
+        No tasks yet. Add some in the Chores section!
       </div>
     );
   }

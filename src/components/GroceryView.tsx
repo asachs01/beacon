@@ -282,7 +282,7 @@ export function GroceryView({ defaultListId, mode = 'grocery' }: GroceryViewProp
                 <circle cx="20" cy="40" r="2" fill="var(--border)" />
               </svg>
             </div>
-            <p>No items yet — add one above</p>
+            <p>Your list is empty. Tap the field above to add your first item!</p>
           </div>
         ) : (
           <>

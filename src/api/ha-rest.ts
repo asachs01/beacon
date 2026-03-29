@@ -74,7 +74,7 @@ export async function haFetch(path: string, options?: RequestInit): Promise<unkn
     ...options,
     headers,
   });
-  if (!res.ok) throw new Error(`HA API ${res.status}: ${res.statusText}`);
+  if (!res.ok) throw new Error(`Could not reach your smart home (${res.status}). Please check your connection.`);
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }

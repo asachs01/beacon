@@ -703,7 +703,7 @@ export function SettingsView({
         {calendars.length === 0 ? (
           <div className="settings-row">
             <div className="settings-row-label" style={{ color: 'var(--text-secondary)' }}>
-              No calendars found. Connect Home Assistant to see calendars.
+              Using local calendar. Connect Home Assistant in Settings to sync more calendars.
             </div>
           </div>
         ) : (
