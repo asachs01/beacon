@@ -23,6 +23,7 @@ export interface Theme {
 
 import { skylight } from './skylight';
 import { midnight } from './midnight';
+import { midnightLight } from './midnight-light';
 import { nord } from './nord';
 import { dracula } from './dracula';
 import { monokai } from './monokai';
@@ -33,6 +34,7 @@ import { forest } from './forest';
 export const themes: Theme[] = [
   skylight,
   midnight,
+  midnightLight,
   nord,
   dracula,
   monokai,

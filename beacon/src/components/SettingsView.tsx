@@ -351,14 +351,19 @@ export function SettingsView({
             <div className="settings-row-label">Default View</div>
             <div className="settings-row-sublabel">Screen shown at startup</div>
           </div>
-          <Segment
+          <select
+            className="form-select"
             value={settings.defaultView}
-            options={[
-              { value: 'dashboard', label: 'Dashboard' },
-              { value: 'calendar', label: 'Calendar' },
-            ]}
-            onChange={(v) => onUpdateSettings({ defaultView: v })}
-          />
+            onChange={(e) => onUpdateSettings({ defaultView: e.target.value as BeaconSettings['defaultView'] })}
+            style={{ maxWidth: 180 }}
+          >
+            <option value="dashboard">Dashboard</option>
+            <option value="calendar">Calendar</option>
+            <option value="grocery">Lists</option>
+            <option value="tasks">Tasks</option>
+            <option value="music">Music</option>
+            <option value="photos">Photos</option>
+          </select>
         </div>
         <div className="settings-row">
           <div className="settings-row-label">Time Format</div>

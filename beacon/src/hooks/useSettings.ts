@@ -8,7 +8,7 @@ import { getConfig } from '../config';
 export interface BeaconSettings {
   // General
   familyName: string;
-  defaultView: 'dashboard' | 'calendar';
+  defaultView: 'dashboard' | 'calendar' | 'grocery' | 'tasks' | 'music' | 'photos';
   timeFormat: '12h' | '24h';
   weekStartsOn: 0 | 1; // 0 = Sunday, 1 = Monday
   locale: string;

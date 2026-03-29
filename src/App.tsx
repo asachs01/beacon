@@ -124,7 +124,9 @@ export function App() {
   const [showModal, setShowModal] = useState(false);
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [prefillTime, setPrefillTime] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<SidebarView>('dashboard');
+  const [activeView, setActiveView] = useState<SidebarView>(
+    (settings.defaultView as SidebarView) || 'dashboard'
+  );
 
   // Event notifications (browser + HA mobile_app)
   useNotifications(events, client);
