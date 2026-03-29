@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/asachs01/beacon/compare/v1.11.0...v1.11.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* weather view and forecast auto-discover entity on 404 ([4b6f937](https://github.com/asachs01/beacon/commit/4b6f937bdcdf76b61906295e5e9f7076c0d2c8e8))
+
 # [1.11.0](https://github.com/asachs01/beacon/compare/v1.10.7...v1.11.0) (2026-03-29)
 
 
