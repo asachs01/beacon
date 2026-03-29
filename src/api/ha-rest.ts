@@ -47,9 +47,16 @@ export async function haFetch(path: string, options?: RequestInit): Promise<unkn
     'Content-Type': 'application/json',
     ...options?.headers as Record<string, string>,
   };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  // When using the add-on proxy (__proxy__ marker), skip the Authorization header
+  // — the server.js proxy injects the Supervisor token server-side.
+  if (token && token !== '__proxy__') {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
-  const res = await fetch(`${getHaUrl()}${path}`, {
+  // In proxy mode, call same-origin /api/* directly
+  const baseUrl = token === '__proxy__' ? '' : getHaUrl();
+
+  const res = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers,
   });

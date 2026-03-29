@@ -8,11 +8,19 @@ function isIngress(): boolean {
   return window.location.pathname.includes('/ingress/') || (window !== window.parent);
 }
 
+/** Is the add-on's API proxy available? (server.js proxies /api/* to HA) */
+function isAddOn(): boolean {
+  return !!window.__BEACON_CONFIG__;
+}
+
 function resolveHaUrl(): string {
   const config = getConfig();
 
   // If a real HA URL is configured (not the internal supervisor URL), use it
   if (config.ha_url && !config.ha_url.includes('supervisor')) return config.ha_url;
+
+  // In add-on mode with the proxy server, use same-origin (proxy handles /api/*)
+  if (isAddOn()) return window.location.origin;
 
   // In ingress or iframe mode, use the parent frame's origin (the HA frontend)
   if (isIngress()) {
@@ -64,6 +72,19 @@ function requestIngressToken(): Promise<string | null> {
   });
 }
 
+/**
+ * Check if the add-on's API proxy is working by hitting a lightweight endpoint.
+ * The proxy injects the Supervisor token server-side.
+ */
+async function probeProxy(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/config', { headers: { 'Accept': 'application/json' } });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export function useHomeAssistant() {
   const clientRef = useRef<HomeAssistantClient | null>(null);
   const [connected, setConnected] = useState(false);
@@ -79,6 +100,35 @@ export function useHomeAssistant() {
       // If no token from config, try requesting one from HA ingress
       if (!token && isIngress()) {
         token = await requestIngressToken() || '';
+      }
+
+      // If still no token and we're in add-on mode, check if the proxy works.
+      // The proxy adds the Supervisor token server-side, so the WebSocket
+      // auth message needs a token. Fetch one from the proxy's /api/ endpoint.
+      if (!token && isAddOn()) {
+        const proxyWorks = await probeProxy();
+        if (proxyWorks) {
+          // The proxy handles auth — use a special "proxy" marker.
+          // The WebSocket connection goes through the proxy which injects
+          // the Supervisor token. We still need *something* for the WS
+          // auth message, but the proxy rewrites it.
+          // Actually, the HA WS protocol requires auth_required → auth message.
+          // The proxy forwards the raw WS frames, so we need a real token.
+          // Let's get one from the Supervisor API via the proxy.
+          try {
+            const res = await fetch('/api/config');
+            if (res.ok) {
+              // Proxy works — we can make REST API calls without a token.
+              // For WebSocket, we need the token. But the proxy can't easily
+              // inject tokens into WebSocket frames. So we'll skip WS and
+              // use REST-only mode.
+              console.info('Beacon: API proxy available. Using REST-only mode.');
+              setHaToken('__proxy__');
+              if (!cancelled) setConnected(true);
+              return;
+            }
+          } catch { /* fall through */ }
+        }
       }
 
       if (!token) {

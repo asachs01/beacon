@@ -11,23 +11,23 @@ PHOTO_DIRECTORY="$(bashio::config 'photo_directory' 2>/dev/null || echo '/media/
 PHOTO_INTERVAL="$(bashio::config 'photo_interval' 2>/dev/null || echo '30')"
 SCREEN_SAVER_TIMEOUT="$(bashio::config 'screen_saver_timeout' 2>/dev/null || echo '5')"
 
-# Resolve auth: prefer user-provided long-lived token, fall back to Supervisor token
-if [ -z "${HA_TOKEN}" ] && [ -n "${SUPERVISOR_TOKEN:-}" ]; then
-  HA_TOKEN="${SUPERVISOR_TOKEN}"
-  bashio::log.info "Using Supervisor token for HA API access."
-elif [ -z "${HA_TOKEN}" ]; then
-  bashio::log.warning "No HA token configured. Go to add-on Configuration and paste a long-lived access token."
-  bashio::log.info "Create one at: HA Profile → Long-lived Access Tokens → Create Token"
-else
+# Log token status
+if [ -n "${HA_TOKEN}" ]; then
   bashio::log.info "HA token configured (user-provided)."
+elif [ -n "${SUPERVISOR_TOKEN:-}" ]; then
+  bashio::log.info "No user token — using API proxy with Supervisor token."
+else
+  bashio::log.warning "No HA token and no Supervisor token. Calendar/list integrations will not work."
 fi
 
-# Resolve HA URL for browser-side API calls
-# In ingress mode, the browser can reach HA at the ingress origin
-# For container-side calls, http://supervisor/core works but not from the browser
+# When using the proxy server, the browser calls /api/* on the same origin
+# and the server proxies to http://supervisor/core with SUPERVISOR_TOKEN.
+# So ha_url should be empty (same-origin) and ha_token is only needed for
+# direct browser→HA calls (user-provided long-lived token).
+# If the user provided a token, we still set ha_url so the browser can
+# connect directly (bypasses proxy, works outside ingress too).
 HA_URL=""
-if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
-  # Get the HA external URL from the Supervisor API
+if [ -n "${HA_TOKEN}" ] && [ -n "${SUPERVISOR_TOKEN:-}" ]; then
   HA_URL="$(curl -s -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" http://supervisor/core/api/config 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('external_url') or d.get('internal_url') or '')" 2>/dev/null || echo '')"
   if [ -n "${HA_URL}" ]; then
     bashio::log.info "Resolved HA URL: ${HA_URL}"
@@ -56,5 +56,5 @@ if ! grep -q 'runtime-config.js' "${INDEX_HTML}"; then
   sed -i 's|</head>|<script src="/runtime-config.js"></script></head>|' "${INDEX_HTML}"
 fi
 
-bashio::log.info "Starting Beacon on port 3000..."
-exec serve /app/dist -l 3000 -s
+bashio::log.info "Starting Beacon server on port 3000 (API proxy enabled)..."
+exec node /app/server.js
