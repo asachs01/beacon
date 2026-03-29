@@ -312,9 +312,11 @@ export function App() {
     );
   }
 
-  // Show onboarding when running standalone (no injected HA config) and not yet set up
-  const hasInjectedConfig = !!(window.__BEACON_CONFIG__?.ha_token || import.meta.env.VITE_HA_TOKEN);
-  if (!hasInjectedConfig && !auth.state.isOnboarded) {
+  // Show onboarding when running standalone (no injected HA config) and not yet set up.
+  // Skip onboarding if: running in HA ingress (iframe), or config was injected, or already onboarded.
+  const isInIframe = window !== window.parent;
+  const hasInjectedConfig = !!(window.__BEACON_CONFIG__ || import.meta.env.VITE_HA_TOKEN);
+  if (!isInIframe && !hasInjectedConfig && !auth.state.isOnboarded) {
     return (
       <OnboardingView
         onComplete={handleOnboardingComplete}
