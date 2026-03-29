@@ -26,3 +26,24 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
+// Register service worker in production for offline PWA support
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      // When a new SW is found, notify the user on next visit
+      reg.onupdatefound = () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.onstatechange = () => {
+          if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+            // New content available — will be used on next reload
+            console.info('[Beacon] New version available. Refresh to update.');
+          }
+        };
+      };
+    }).catch((err) => {
+      console.warn('[Beacon] SW registration failed:', err);
+    });
+  });
+}
