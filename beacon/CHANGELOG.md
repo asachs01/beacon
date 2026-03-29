@@ -1,3 +1,15 @@
+# [1.3.0](https://github.com/asachs01/beacon/compare/v1.2.1...v1.3.0) (2026-03-29)
+
+
+### Bug Fixes
+
+* release workflow — upgrade to Node 22, fix sed for Linux, enable git credentials ([e6e1cac](https://github.com/asachs01/beacon/commit/e6e1caca4ef781efe94413879b8e35b5d5f194f3))
+
+
+### Features
+
+* standalone mode with local calendar/tasks, fix theme flash and calendar loading ([36609d2](https://github.com/asachs01/beacon/commit/36609d297e0ec9e3ca43eb48fb82c600b8b8d165))
+
 # Changelog
 
 ## Unreleased
