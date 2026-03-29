@@ -1548,9 +1548,15 @@ a:focus:not(:focus-visible) {
     bottom: var(--mobile-tab-bar-height);
   }
 
-  /* --- Now playing bar above tab bar --- */
+  /* --- Now playing bar: fixed above tab bar on mobile --- */
   .now-playing-bar {
-    margin-bottom: var(--mobile-tab-bar-height);
+    position: fixed;
+    bottom: var(--mobile-tab-bar-height);
+    left: 0;
+    right: 0;
+    z-index: 80;
+    margin-bottom: 0;
+    border-radius: 0;
   }
 }
 
