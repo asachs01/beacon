@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Beacon is a free, open-source family command center for wall-mounted displays — a Skylight alternative that runs as a Home Assistant add-on or standalone. Turn any tablet or spare screen into a beautiful family dashboard with no subscription fees, no cloud dependency, and no $650 price tag.
+  Beacon is a free, open-source family command center for wall-mounted displays. It runs as a Home Assistant add-on or standalone — turn any tablet or spare screen into a beautiful family dashboard with no subscription fees and no cloud dependency.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@
 
 ## Features
 
-- **Weekly Calendar** -- Skylight-style week view with color-coded family members; supports HA calendar entities and a built-in local calendar
+- **Weekly Calendar** -- Beautiful week view with color-coded family members; supports HA calendar entities and a built-in local calendar
 - **Grocery & Shopping Lists** -- AnyList, Home Assistant Shopping List, and local list support
 - **Task / Todo Lists** -- Home Assistant todo entities and local task lists with dashboard integration
 - **Chore Tracking** -- Assign chores, track streaks, and celebrate completions with a family leaderboard
@@ -35,7 +35,7 @@
 - **Timer / Countdown** -- On-screen timer for cooking, homework, and more
 - **Screen Saver** -- Automatic screen saver with clock overlay
 - **Weather** -- Real-time weather from your Home Assistant weather entity
-- **7+ Themes** -- Skylight, Nord, Dracula, Monokai, Rose, Forest, Midnight, and dark mode (automatic or manual)
+- **8+ Themes** -- Skylight, Midnight, Midnight Light, Nord, Dracula, Monokai, Rose, Forest, and dark mode (automatic or manual)
 - **Family Management** -- Per-member colors, calendar filtering, and PIN-based profiles
 - **Meal Planning** -- Meal plan bar with weekly dinner overview
 - **Standalone Mode** -- Works without Home Assistant using local calendars, lists, and tasks
@@ -79,24 +79,14 @@ Beacon is configured through the Home Assistant add-on options panel:
 
 Additional settings (themes, family members, chores, calendar sources, list providers) are configured through the Beacon UI itself.
 
-## How Beacon Compares
+## Why Beacon?
 
-| | Skylight | DAKBoard | **Beacon** |
-|---|:---:|:---:|:---:|
-| **Cost** | $650+ | $200+ | **Free** |
-| **Subscription** | Optional | $5/mo for Pro | **None** |
-| **Calendar** | Yes | Yes | **Yes** |
-| **Grocery Lists** | No | No | **Yes** |
-| **Todo / Tasks** | No | No | **Yes** |
-| **Chores** | Yes | No | **Yes** |
-| **Music Control** | No | No | **Yes** |
-| **Weather** | Yes | Yes | **Yes** |
-| **Photo Slideshow** | Yes | Yes | **Yes** |
-| **Custom Themes** | No | Limited | **7+ built-in** |
-| **Dark Mode** | No | No | **Yes** |
-| **Open Source** | No | No | **Yes** |
-| **Local / Private** | No (cloud) | No (cloud) | **Yes** |
-| **Home Assistant** | No | No | **Native** |
+- **Free & open source** — no subscriptions, no cloud accounts, no vendor lock-in
+- **Private by design** — all data stays on your network; nothing phones home
+- **Home Assistant native** — deep integration with calendars, media players, lists, weather, and more
+- **Works standalone** — built-in local calendar, task lists, and shopping lists work without HA
+- **Fully themeable** — 8+ themes with automatic dark mode
+- **Voice & LLM ready** — MCP server, voice API, and HA custom sentences for hands-free control
 
 ## Built With
 
