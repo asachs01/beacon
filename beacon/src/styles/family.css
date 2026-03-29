@@ -798,8 +798,8 @@
   font-size: 1.2rem;
 }
 
-/* Adjust slide panel position for sidebar-left layout */
-.beacon--sidebar-left .slide-panel {
+/* Adjust slide panel position for sidebar-right layout (avoid overlap with sidebar) */
+.beacon--sidebar-right .slide-panel {
   right: var(--sidebar-width);
 }
 

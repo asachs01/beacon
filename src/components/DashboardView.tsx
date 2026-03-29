@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { format, parseISO, isSameDay } from 'date-fns';
+import { format, parseISO, isSameDay, startOfDay } from 'date-fns';
 import { CalendarEvent, WeatherData } from '../types';
 import { Chore } from '../types/family';
 import { weatherIcon, conditionLabel } from '../types/weather-icons';
@@ -49,10 +49,12 @@ export function DashboardView({
 
   // Filter to today's events, sorted by start time
   const todayEvents = useMemo(() => {
-    const today = new Date();
+    const today = startOfDay(new Date());
     return events
       .filter((e) => {
-        const start = parseISO(e.start);
+        // For date-only strings (all-day events), parseISO returns UTC midnight
+        // which can shift the date. Normalize both to local day start.
+        const start = startOfDay(parseISO(e.start));
         return isSameDay(start, today);
       })
       .sort((a, b) => a.start.localeCompare(b.start));

@@ -12,6 +12,10 @@ import './styles/widgets.css';
 import './styles/omni-add.css';
 import './styles/settings.css';
 import { initNativeBridge } from './native';
+import { applyStoredTheme } from './hooks/useTheme';
+
+// Apply stored theme immediately (before first paint) to prevent flash
+applyStoredTheme();
 
 // Initialize Capacitor native bridge (no-op on web)
 initNativeBridge();

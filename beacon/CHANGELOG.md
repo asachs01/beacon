@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### New
+- Built-in local task lists (To-Do, Shopping List) that work without any HA integration
+- Built-in local calendar ("Beacon") for standalone event management
+- Both local and HA-powered lists/calendars can be used side by side
+
+### Fixed
+- Theme no longer flashes to Skylight default on page load — applied before first paint
+- Theme now stays active across all views (was previously only applied when visiting Settings)
+- Calendar events load reliably on startup (fixed stale closure in calendar fetch)
+- Leaderboard panel no longer peeks out when sidebar is positioned on the left
+- Dashboard now correctly shows today's all-day events (timezone normalization fix)
+- Grocery/todo lists show local lists immediately even without HA connection
+
 ## 1.2.0
 
 ### New

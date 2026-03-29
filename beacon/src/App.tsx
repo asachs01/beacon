@@ -26,6 +26,8 @@ import { OmniAdd } from './components/OmniAdd';
 import { Timer } from './components/Timer';
 import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
+import { useTheme } from './hooks/useTheme';
+import { useLocalCalendar } from './hooks/useLocalCalendar';
 import OnboardingView from './components/OnboardingView';
 import { CalendarEvent } from './types';
 import { getConfig, patchConfig } from './config';
@@ -37,14 +39,51 @@ export function App() {
   const { client, connected } = useHomeAssistant();
   const { isIngress, compact } = useIngressDetect();
   const {
-    calendars,
-    events,
+    calendars: haCalendars,
+    events: haEvents,
     fetchCalendars,
     fetchEvents,
-    createEvent,
-    updateEvent,
-    deleteEvent,
+    createEvent: createHaEvent,
+    updateEvent: updateHaEvent,
+    deleteEvent: deleteHaEvent,
   } = useCalendarEvents(client);
+
+  const localCal = useLocalCalendar();
+
+  // Merge HA + local calendars and events
+  const calendars = useMemo(
+    () => [localCal.calendar, ...haCalendars],
+    [localCal.calendar, haCalendars],
+  );
+  const events = useMemo(
+    () => [...localCal.events, ...haEvents].sort((a, b) => a.start.localeCompare(b.start)),
+    [localCal.events, haEvents],
+  );
+
+  // Route create/update/delete to local or HA based on calendar ID
+  const createEvent = useCallback(async (calendarId: string, eventData: Parameters<typeof createHaEvent>[1]) => {
+    if (calendarId === localCal.calendar.id) {
+      localCal.createEvent(eventData);
+    } else {
+      await createHaEvent(calendarId, eventData);
+    }
+  }, [localCal, createHaEvent]);
+
+  const updateEvent = useCallback(async (calendarId: string, uid: string, eventData: Parameters<typeof updateHaEvent>[2]) => {
+    if (calendarId === localCal.calendar.id) {
+      localCal.updateEvent(uid, eventData);
+    } else {
+      await updateHaEvent(calendarId, uid, eventData);
+    }
+  }, [localCal, updateHaEvent]);
+
+  const deleteEvent = useCallback(async (calendarId: string, uid: string) => {
+    if (calendarId === localCal.calendar.id) {
+      localCal.deleteEvent(uid);
+    } else {
+      await deleteHaEvent(calendarId, uid);
+    }
+  }, [localCal, deleteHaEvent]);
 
   const {
     members,
@@ -71,6 +110,12 @@ export function App() {
     clearLocalStorage,
   } = useSettings();
 
+  // Apply theme at App level so it stays active regardless of which view is shown
+  const { setTheme } = useTheme();
+  useEffect(() => {
+    setTheme(settings.themeId);
+  }, [settings.themeId, setTheme]);
+
   const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -89,11 +134,14 @@ export function App() {
   useEffect(() => {
     if (!connected) return;
 
-    fetchCalendars();
+    const loadData = async () => {
+      await fetchCalendars();
+      const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
+      const weekEnd = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
+      await fetchEvents(weekStart.toISOString(), weekEnd.toISOString());
+    };
 
-    const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-    const weekEnd = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
-    fetchEvents(weekStart.toISOString(), weekEnd.toISOString());
+    loadData();
 
     // Refresh every 5 minutes
     const interval = setInterval(() => {

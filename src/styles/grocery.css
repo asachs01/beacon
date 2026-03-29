@@ -223,6 +223,41 @@
   color: var(--text-muted);
 }
 
+/* Item row — wraps item + optional delete button */
+.grocery-view-item-row {
+  display: flex;
+  align-items: center;
+}
+
+.grocery-view-item-row .grocery-view-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.grocery-view-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms ease, color 150ms ease;
+  flex-shrink: 0;
+}
+
+.grocery-view-item-row:hover .grocery-view-delete {
+  opacity: 1;
+}
+
+.grocery-view-delete:hover {
+  color: #e55;
+}
+
 /* Empty state */
 .grocery-view-empty {
   display: flex;

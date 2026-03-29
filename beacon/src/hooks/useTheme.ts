@@ -77,6 +77,30 @@ function persist(key: string, value: string): void {
 }
 
 // ---------------------------------------------------------------------------
+// Eager theme application (called before React renders to prevent flash)
+// ---------------------------------------------------------------------------
+
+export function applyStoredTheme(): void {
+  const storedId = loadStored(THEME_STORAGE_KEY, 'skylight');
+  // Also check the settings object for themeId (useSettings stores it there)
+  let themeId = storedId;
+  try {
+    const settingsRaw = localStorage.getItem('beacon-settings');
+    if (settingsRaw) {
+      const parsed = JSON.parse(settingsRaw);
+      if (parsed.themeId) themeId = parsed.themeId;
+    }
+  } catch { /* ignore */ }
+
+  if (themeId === 'auto') {
+    const autoDarkId = loadStored(AUTO_DARK_THEME_KEY, 'midnight');
+    applyThemeToDOM(getTheme(isDaytime() ? 'skylight' : autoDarkId));
+  } else {
+    applyThemeToDOM(getTheme(themeId));
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 

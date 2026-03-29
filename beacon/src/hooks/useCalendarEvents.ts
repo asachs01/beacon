@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
 import { CalendarEvent, CalendarInfo, getCalendarColor } from '../types';
 
@@ -6,13 +6,15 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
   const [calendars, setCalendars] = useState<CalendarInfo[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const calendarsRef = useRef<CalendarInfo[]>([]);
 
   const fetchCalendars = useCallback(async () => {
     const client = getClient();
-    if (!client?.isConnected) return;
+    if (!client?.isConnected) return [];
 
     try {
       const cals = await client.getCalendars();
+      calendarsRef.current = cals;
       setCalendars(cals);
       return cals;
     } catch (err) {
@@ -27,10 +29,12 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
 
     setLoading(true);
     try {
-      let cals = calendars;
+      // Always use ref for current calendars; fetch if empty
+      let cals = calendarsRef.current;
       if (cals.length === 0) {
         cals = (await fetchCalendars()) || [];
       }
+      if (cals.length === 0) return;
 
       const allEvents: CalendarEvent[] = [];
       for (const cal of cals) {
@@ -52,7 +56,7 @@ export function useCalendarEvents(getClient: () => HomeAssistantClient | null) {
     } finally {
       setLoading(false);
     }
-  }, [getClient, calendars, fetchCalendars]);
+  }, [getClient, fetchCalendars]);
 
   const createEvent = useCallback(async (
     calendarId: string,
