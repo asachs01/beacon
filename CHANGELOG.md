@@ -1,3 +1,10 @@
+## [1.4.3](https://github.com/asachs01/beacon/compare/v1.4.2...v1.4.3) (2026-03-29)
+
+
+### Bug Fixes
+
+* use relative path for runtime-config.js (fixes ingress 404) ([ddf29f2](https://github.com/asachs01/beacon/commit/ddf29f28ad79541304b43773999b348b767d2ca7))
+
 ## [1.4.2](https://github.com/asachs01/beacon/compare/v1.4.1...v1.4.2) (2026-03-29)
 
 
