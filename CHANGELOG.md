@@ -1,3 +1,10 @@
+## [1.11.2](https://github.com/asachs01/beacon/compare/v1.11.1...v1.11.2) (2026-03-29)
+
+
+### Bug Fixes
+
+* chores/leaderboard panels close on view change, compact mobile weather ([78a4df4](https://github.com/asachs01/beacon/commit/78a4df4fc1388d69e26f7ea8694b8c990280e2ac))
+
 ## [1.11.1](https://github.com/asachs01/beacon/compare/v1.11.0...v1.11.1) (2026-03-29)
 
 
