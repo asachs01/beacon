@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/asachs01/beacon/compare/v1.12.0...v1.13.0) (2026-03-30)
+
+
+### Features
+
+* timer beep loops until dismissed, multiple sound options ([8fbb492](https://github.com/asachs01/beacon/commit/8fbb492146671f1f5b4af1360da0bf629410c7b7))
+
 # [1.12.0](https://github.com/asachs01/beacon/compare/v1.11.7...v1.12.0) (2026-03-30)
 
 
