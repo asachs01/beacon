@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/asachs01/beacon/compare/v1.11.7...v1.12.0) (2026-03-30)
+
+
+### Features
+
+* multiple simultaneous named timers ([6c5e356](https://github.com/asachs01/beacon/commit/6c5e356e09c4b44a99520641d7a182aa7d8f3cd8))
+
 ## [1.11.7](https://github.com/asachs01/beacon/compare/v1.11.6...v1.11.7) (2026-03-30)
 
 
