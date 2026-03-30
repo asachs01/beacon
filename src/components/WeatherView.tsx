@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { format, parseISO } from 'date-fns';
-import { RefreshCw } from 'lucide-react';
+import { format, parseISO, isSameDay } from 'date-fns';
+import { RefreshCw, ChevronDown, Droplets, Wind } from 'lucide-react';
 import { weatherIcon, conditionLabel } from '../types/weather-icons';
 import { haFetch, callHaService, hasToken } from '../api/ha-rest';
 import { getConfig } from '../config';
@@ -10,6 +10,15 @@ interface ForecastItem {
   condition: string;
   temperature: number;
   templow: number;
+  humidity?: number;
+  wind_speed?: number;
+  precipitation_probability?: number;
+}
+
+interface HourlyItem {
+  datetime: string;
+  condition: string;
+  temperature: number;
   humidity?: number;
   wind_speed?: number;
   precipitation_probability?: number;
@@ -30,8 +39,29 @@ interface CurrentWeather {
 export function WeatherView() {
   const [current, setCurrent] = useState<CurrentWeather | null>(null);
   const [forecast, setForecast] = useState<ForecastItem[]>([]);
+  const [hourly, setHourly] = useState<HourlyItem[]>([]);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [hourlyLoading, setHourlyLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchHourly = useCallback(async (entityId: string) => {
+    try {
+      setHourlyLoading(true);
+      const result = await callHaService('weather', 'get_forecasts', {
+        entity_id: entityId,
+        type: 'hourly',
+      }, true) as { service_response?: Record<string, { forecast: HourlyItem[] }> };
+
+      const svcResponse = result?.service_response ?? result;
+      const hourlyData = (svcResponse as Record<string, { forecast: HourlyItem[] }>)?.[entityId]?.forecast ?? [];
+      setHourly(hourlyData);
+    } catch {
+      setHourly([]);
+    } finally {
+      setHourlyLoading(false);
+    }
+  }, []);
 
   const fetchData = useCallback(async () => {
     if (!hasToken()) {
@@ -100,18 +130,29 @@ export function WeatherView() {
         // Forecast not available for this entity
         setForecast([]);
       }
+
+      // Fetch hourly forecast
+      await fetchHourly(entityId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch weather');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchHourly]);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  const handleDayClick = (datetime: string) => {
+    setSelectedDay(prev => prev === datetime ? null : datetime);
+  };
+
+  const hoursForSelectedDay = selectedDay
+    ? hourly.filter(h => isSameDay(parseISO(h.datetime), parseISO(selectedDay)))
+    : [];
 
   if (loading && !current) {
     return (
@@ -203,8 +244,15 @@ export function WeatherView() {
               const date = parseISO(day.datetime);
               const dayName = format(date, 'EEE');
               const dateLabel = format(date, 'MMM d');
+              const isSelected = selectedDay === day.datetime;
               return (
-                <div key={day.datetime} className="weather-forecast-card">
+                <button
+                  key={day.datetime}
+                  type="button"
+                  className={`weather-forecast-card${isSelected ? ' weather-forecast-card--selected' : ''}`}
+                  onClick={() => handleDayClick(day.datetime)}
+                  aria-expanded={isSelected}
+                >
                   <span className="weather-forecast-day">{dayName}</span>
                   <span className="weather-forecast-date">{dateLabel}</span>
                   <span className="weather-forecast-icon">
@@ -219,10 +267,61 @@ export function WeatherView() {
                       {day.precipitation_probability}%
                     </span>
                   )}
-                </div>
+                  <ChevronDown
+                    size={14}
+                    className={`weather-forecast-chevron${isSelected ? ' weather-forecast-chevron--open' : ''}`}
+                  />
+                </button>
               );
             })}
           </div>
+
+          {/* Hourly detail for selected day */}
+          {selectedDay && (
+            <div className="weather-hourly">
+              <div className="weather-hourly-header">
+                <h3 className="weather-hourly-title">
+                  Hourly — {format(parseISO(selectedDay), 'EEEE, MMM d')}
+                </h3>
+                <button
+                  type="button"
+                  className="weather-hourly-close"
+                  onClick={() => setSelectedDay(null)}
+                  aria-label="Close hourly forecast"
+                >
+                  Collapse
+                </button>
+              </div>
+              {hourlyLoading ? (
+                <div className="weather-hourly-loading">Loading hourly data...</div>
+              ) : hoursForSelectedDay.length === 0 ? (
+                <div className="weather-hourly-empty">No hourly data available for this day.</div>
+              ) : (
+                <div className="weather-hourly-scroll">
+                  {hoursForSelectedDay.map((hour) => {
+                    const time = parseISO(hour.datetime);
+                    return (
+                      <div key={hour.datetime} className="weather-hourly-card">
+                        <span className="weather-hourly-time">{format(time, 'h a')}</span>
+                        <span className="weather-hourly-icon">{weatherIcon(hour.condition)}</span>
+                        <span className="weather-hourly-temp">{Math.round(hour.temperature)}°</span>
+                        {hour.precipitation_probability != null && (
+                          <span className="weather-hourly-precip">
+                            <Droplets size={12} /> {hour.precipitation_probability}%
+                          </span>
+                        )}
+                        {hour.wind_speed != null && (
+                          <span className="weather-hourly-wind">
+                            <Wind size={12} /> {Math.round(hour.wind_speed)}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </section>
       )}
     </div>
