@@ -29,6 +29,7 @@ import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
+import { useGoogleCalendar } from './hooks/useGoogleCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView from './components/OnboardingView';
 import { CalendarEvent } from './types';
@@ -51,19 +52,24 @@ export function App() {
   } = useCalendarEvents(connected);
 
   const localCal = useLocalCalendar();
+  const googleCal = useGoogleCalendar();
 
-  // Merge HA + local calendars and events
+  // Merge HA + local + Google calendars and events
   const calendars = useMemo(
-    () => [localCal.calendar, ...haCalendars],
-    [localCal.calendar, haCalendars],
+    () => [localCal.calendar, ...haCalendars, ...googleCal.calendars],
+    [localCal.calendar, haCalendars, googleCal.calendars],
   );
   const events = useMemo(
-    () => [...localCal.events, ...haEvents].sort((a, b) => a.start.localeCompare(b.start)),
-    [localCal.events, haEvents],
+    () => [...localCal.events, ...haEvents, ...googleCal.events].sort((a, b) => a.start.localeCompare(b.start)),
+    [localCal.events, haEvents, googleCal.events],
   );
 
   // Route create/update/delete to local or HA based on calendar ID
   const createEvent = useCallback(async (calendarId: string, eventData: Parameters<typeof createHaEvent>[1]) => {
+    if (calendarId.startsWith('google:')) {
+      console.warn('Cannot create events on read-only Google calendars');
+      return;
+    }
     if (calendarId === localCal.calendar.id) {
       localCal.createEvent(eventData);
     } else {
@@ -158,6 +164,8 @@ export function App() {
 
     return () => clearInterval(interval);
   }, [connected, fetchCalendars, fetchEvents]);
+
+  // Google Calendar polling is handled inside useGoogleCalendar hook
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
     setHiddenCalendars(prev => {
@@ -461,6 +469,7 @@ export function App() {
             connected={connected}
             haUrl={config.ha_url}
             calendars={calendars}
+            googleCalendar={googleCal}
           />
         ) : activeView === 'grocery' ? (
           <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" />

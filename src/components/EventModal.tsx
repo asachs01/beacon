@@ -57,7 +57,9 @@ export function EventModal({
   prefillTime,
 }: EventModalProps) {
   const isEditing = !!event;
-  const defaultCalendar = calendars[0]?.id || '';
+  // Filter out Google calendars (read-only, prefixed with "google:")
+  const writableCalendars = calendars.filter((cal) => !cal.id.startsWith('google:'));
+  const defaultCalendar = writableCalendars[0]?.id || '';
   const defaultDate = prefillDate || format(new Date(), 'yyyy-MM-dd');
   const defaultStartTime = prefillTime || '09:00';
   const defaultEndTime = addHour(defaultStartTime);
@@ -145,7 +147,7 @@ export function EventModal({
                 value={form.calendarId}
                 onChange={(e) => updateField('calendarId', e.target.value)}
               >
-                {calendars.map((cal) => (
+                {writableCalendars.map((cal) => (
                   <option key={cal.id} value={cal.id}>{cal.name}</option>
                 ))}
               </select>

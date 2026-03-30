@@ -902,6 +902,15 @@ export function SettingsView({
               >
                 Disconnect
               </button>
+            ) : googleCalendar.blockedByIngress ? (
+              <button
+                type="button"
+                className="settings-btn settings-btn--primary"
+                disabled
+                title="Google OAuth is not available inside HA ingress. Open Beacon directly to connect."
+              >
+                Unavailable in Ingress
+              </button>
             ) : (
               <button
                 type="button"

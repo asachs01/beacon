@@ -66,6 +66,10 @@ export function App() {
 
   // Route create/update/delete to local or HA based on calendar ID
   const createEvent = useCallback(async (calendarId: string, eventData: Parameters<typeof createHaEvent>[1]) => {
+    if (calendarId.startsWith('google:')) {
+      console.warn('Cannot create events on read-only Google calendars');
+      return;
+    }
     if (calendarId === localCal.calendar.id) {
       localCal.createEvent(eventData);
     } else {
@@ -161,22 +165,7 @@ export function App() {
     return () => clearInterval(interval);
   }, [connected, fetchCalendars, fetchEvents]);
 
-  // Fetch Google Calendar events when signed in
-  useEffect(() => {
-    if (!googleCal.signedIn || googleCal.calendars.length === 0) return;
-
-    const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-    const weekEnd = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
-    googleCal.fetchEvents(weekStart.toISOString(), weekEnd.toISOString());
-
-    const interval = setInterval(() => {
-      const ws = startOfWeek(new Date(), { weekStartsOn: 0 });
-      const we = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
-      googleCal.fetchEvents(ws.toISOString(), we.toISOString());
-    }, 5 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [googleCal.signedIn, googleCal.calendars.length, googleCal.fetchEvents]);
+  // Google Calendar polling is handled inside useGoogleCalendar hook
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
     setHiddenCalendars(prev => {

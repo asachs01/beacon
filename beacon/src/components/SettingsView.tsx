@@ -19,6 +19,7 @@ import { GroceryList } from '../types/grocery';
 import { themes } from '../styles/themes';
 import { FamilyMember, MEMBER_COLORS, AVATAR_CATEGORIES } from '../types/family';
 import type { BeaconSettings } from '../hooks/useSettings';
+import type { GoogleCalendarState } from '../hooks/useGoogleCalendar';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -51,6 +52,8 @@ interface SettingsViewProps {
   haUrl: string;
   // Calendars
   calendars: Array<{ id: string; name: string }>;
+  // Google Calendar
+  googleCalendar: GoogleCalendarState;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,6 +191,7 @@ export function SettingsView({
   connected,
   haUrl,
   calendars,
+  googleCalendar,
 }: SettingsViewProps) {
   const { setTheme: applyTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
@@ -869,6 +873,62 @@ export function SettingsView({
             onChange={(v) => onUpdateSettings({ anylistEnabled: v })}
           />
         </div>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Google Calendar</div>
+        <div className="settings-row">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span
+              className={`settings-status-dot ${googleCalendar.signedIn ? 'settings-status-dot--connected' : 'settings-status-dot--disconnected'}`}
+            />
+            <div>
+              <div className="settings-row-label">Google Calendar</div>
+              <div className="settings-row-sublabel">
+                {!googleCalendar.configured
+                  ? 'Not configured — set VITE_GOOGLE_CLIENT_ID'
+                  : googleCalendar.signedIn
+                    ? `Connected as ${googleCalendar.email || 'Google Account'}`
+                    : 'Not connected'}
+              </div>
+            </div>
+          </div>
+          {googleCalendar.configured && (
+            googleCalendar.signedIn ? (
+              <button
+                type="button"
+                className="settings-btn settings-btn--danger"
+                onClick={googleCalendar.signOut}
+              >
+                Disconnect
+              </button>
+            ) : googleCalendar.blockedByIngress ? (
+              <button
+                type="button"
+                className="settings-btn settings-btn--primary"
+                disabled
+                title="Google OAuth is not available inside HA ingress. Open Beacon directly to connect."
+              >
+                Unavailable in Ingress
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="settings-btn settings-btn--primary"
+                onClick={googleCalendar.signIn}
+              >
+                Connect Google Calendar
+              </button>
+            )
+          )}
+        </div>
+        {googleCalendar.signedIn && googleCalendar.calendars.length > 0 && (
+          <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+            <div className="settings-row-sublabel">
+              {googleCalendar.calendars.length} calendar{googleCalendar.calendars.length !== 1 ? 's' : ''} synced
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="settings-group">
