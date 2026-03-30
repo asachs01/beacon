@@ -27,13 +27,13 @@ import { Timer } from './components/Timer';
 import { WeatherView } from './components/WeatherView';
 import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
+import { isAddOn } from './utils/ha-env';
 import { useTheme } from './hooks/useTheme';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView, { OnboardingData } from './components/OnboardingView';
-import { setWeatherLocation } from './hooks/useStandaloneWeather';
 import { CalendarEvent } from './types';
-import { getConfig, patchConfig } from './config';
+import { getConfig } from './config';
 
 const config = getConfig();
 
@@ -342,16 +342,17 @@ export function App() {
       addMember(member);
     }
 
-    // Save weather location
-    if (data.weatherLocation) {
-      setWeatherLocation(data.weatherLocation);
-      updateSettings({ weatherLocation: data.weatherLocation });
+    // Save weather location and API key
+    if (data.weatherLocation || data.owmApiKey) {
+      updateSettings({
+        weatherLocation: data.weatherLocation || '',
+        owmApiKey: data.owmApiKey || '',
+      });
     }
 
-    // If HA was configured, save credentials
+    // If HA was configured, save credentials to secure storage
     if (data.calendarMode === 'ha' && data.haUrl && data.haToken) {
       await auth.saveManualToken(data.haUrl, data.haToken);
-      patchConfig({ ha_url: data.haUrl, ha_token: data.haToken });
     } else {
       // Mark as onboarded for standalone mode (no HA)
       await auth.markOnboarded();
@@ -404,11 +405,7 @@ export function App() {
 
   // Show onboarding wizard for first-time users, unless running inside HA add-on
   // (which injects its own config and doesn't need onboarding).
-  const isHaAddOn = !!(
-    window.__BEACON_CONFIG__ ||
-    window !== window.parent ||
-    window.location.pathname.includes('/ingress/')
-  );
+  const isHaAddOn = isAddOn();
   if (!isHaAddOn && !auth.state.isOnboarded) {
     return (
       <OnboardingView

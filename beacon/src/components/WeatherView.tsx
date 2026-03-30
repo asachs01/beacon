@@ -4,6 +4,9 @@ import { RefreshCw } from 'lucide-react';
 import { weatherIcon, conditionLabel } from '../types/weather-icons';
 import { haFetch, callHaService, hasToken } from '../api/ha-rest';
 import { getConfig } from '../config';
+import { fetchCurrentWeather, fetchForecast, OWMUnits } from '../api/openweathermap';
+import { getWeatherLocation } from '../hooks/useStandaloneWeather';
+import { useSettings } from '../hooks/useSettings';
 
 interface ForecastItem {
   datetime: string;
@@ -32,11 +35,46 @@ export function WeatherView() {
   const [forecast, setForecast] = useState<ForecastItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { settings } = useSettings();
 
   const fetchData = useCallback(async () => {
     if (!hasToken()) {
-      setError('Not connected to Home Assistant');
-      setLoading(false);
+      // Try standalone weather via OpenWeatherMap
+      const location = settings.weatherLocation || getWeatherLocation();
+      if (!location) {
+        setError('Set your location in Settings to see weather.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const apiKey = settings.owmApiKey || undefined;
+        const units: OWMUnits = settings.locale === 'en-US' ? 'imperial' : 'metric';
+        const [owmCurrent, owmForecast] = await Promise.all([
+          fetchCurrentWeather(location, apiKey, units),
+          fetchForecast(location, apiKey, units),
+        ]);
+        setCurrent({
+          entityId: 'standalone',
+          state: owmCurrent.condition,
+          temperature: owmCurrent.temperature,
+          temperatureUnit: owmCurrent.temperatureUnit,
+          humidity: owmCurrent.humidity,
+          windSpeed: owmCurrent.windSpeed,
+        });
+        setForecast(owmForecast.map((d) => ({
+          datetime: d.date,
+          condition: d.condition,
+          temperature: d.tempHigh,
+          templow: d.tempLow,
+        })));
+      } catch (err) {
+        setError('Could not load weather. Check your location in Settings.');
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -64,7 +102,7 @@ export function WeatherView() {
         }>;
         const found = states.find(s => s.entity_id.startsWith('weather.'));
         if (!found) {
-          setError('No weather entity found');
+          setError('No weather source found. Check your Home Assistant setup.');
           setLoading(false);
           return;
         }
@@ -101,11 +139,11 @@ export function WeatherView() {
         setForecast([]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch weather');
+      setError('Could not load weather data. Please try again later.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [settings.weatherLocation, settings.owmApiKey, settings.locale]);
 
   useEffect(() => {
     fetchData();
@@ -200,7 +238,9 @@ export function WeatherView() {
           <h2 className="weather-forecast-title">7-Day Forecast</h2>
           <div className="weather-forecast-scroll">
             {forecast.map((day) => {
-              const date = parseISO(day.datetime);
+              // Append T12:00:00 for date-only strings to avoid UTC midnight timezone shift
+              const dateStr = day.datetime.includes('T') ? day.datetime : `${day.datetime}T12:00:00`;
+              const date = parseISO(dateStr);
               const dayName = format(date, 'EEE');
               const dateLabel = format(date, 'MMM d');
               return (

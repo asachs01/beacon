@@ -703,7 +703,7 @@ export function SettingsView({
         {calendars.length === 0 ? (
           <div className="settings-row">
             <div className="settings-row-label" style={{ color: 'var(--text-secondary)' }}>
-              No calendars found. Connect Home Assistant to see calendars.
+              Using local calendar. Connect Home Assistant in Settings to sync more calendars.
             </div>
           </div>
         ) : (
@@ -802,6 +802,41 @@ export function SettingsView({
     <>
       <h2 className="settings-section-title">Integrations</h2>
       <p className="settings-section-desc">Manage connections to Home Assistant and other services.</p>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Weather (Standalone)</div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">Location</div>
+            <div className="settings-row-sublabel">Zip code (US only) or city name</div>
+          </div>
+          <input
+            type="text"
+            className="settings-input"
+            value={settings.weatherLocation}
+            onChange={(e) => onUpdateSettings({ weatherLocation: e.target.value })}
+            placeholder="e.g. 90210 or London"
+          />
+        </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">API Key</div>
+            <div className="settings-row-sublabel">
+              Free key from{' '}
+              <a href="https://home.openweathermap.org/api_keys" target="_blank" rel="noopener noreferrer">
+                openweathermap.org
+              </a>
+            </div>
+          </div>
+          <input
+            type="password"
+            className="settings-input"
+            value={settings.owmApiKey}
+            onChange={(e) => onUpdateSettings({ owmApiKey: e.target.value })}
+            placeholder="Paste your API key"
+          />
+        </div>
+      </div>
 
       <div className="settings-group">
         <div className="settings-group-title">Home Assistant</div>

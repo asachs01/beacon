@@ -1,20 +1,48 @@
 import { useState, useCallback } from 'react';
-import { ArrowRight, Check, ExternalLink, Key, LogIn } from 'lucide-react';
+import {
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  Plus,
+  X,
+  Sun,
+  Calendar,
+  Home,
+  Users,
+  Cloud,
+} from 'lucide-react';
 import beaconLogo from '../assets/beacon-icon.svg';
+import {
+  FamilyMember,
+  MEMBER_COLORS,
+  AVATAR_CATEGORIES,
+} from '../types/family';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 interface OnboardingViewProps {
-  onComplete: (haUrl: string, haToken: string) => void;
-  onOAuthStart?: (haUrl: string) => void;
+  onComplete: (data: OnboardingData) => void;
 }
 
-type Step = 1 | 2 | 3;
+export interface OnboardingData {
+  familyName: string;
+  members: Omit<FamilyMember, 'id'>[];
+  weatherLocation: string;
+  owmApiKey: string;
+  calendarMode: 'local' | 'ha';
+  /** Only set if calendarMode === 'ha' */
+  haUrl?: string;
+  haToken?: string;
+}
+
+type Step = 'welcome' | 'family' | 'weather' | 'calendar' | 'done';
+
+const STEPS: Step[] = ['welcome', 'family', 'weather', 'calendar', 'done'];
 
 // ---------------------------------------------------------------------------
-// Styles (inline, using CSS custom properties from the app theme)
+// Styles
 // ---------------------------------------------------------------------------
 
 const styles = {
@@ -30,8 +58,8 @@ const styles = {
 
   container: {
     width: '100%',
-    maxWidth: 480,
-    padding: 40,
+    maxWidth: 520,
+    padding: '32px 40px',
     background: 'var(--bg-surface)',
     borderRadius: 'var(--radius-xl)',
     boxShadow: 'var(--shadow-lg)',
@@ -41,7 +69,7 @@ const styles = {
   logo: {
     width: 72,
     height: 72,
-    marginBottom: 24,
+    marginBottom: 20,
   } as React.CSSProperties,
 
   heading: {
@@ -55,7 +83,7 @@ const styles = {
   subtext: {
     fontSize: '0.95rem',
     color: 'var(--text-secondary)',
-    margin: '0 0 32px',
+    margin: '0 0 28px',
     lineHeight: 1.5,
   } as React.CSSProperties,
 
@@ -63,19 +91,15 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     gap: 8,
-    marginBottom: 32,
+    marginBottom: 28,
   } as React.CSSProperties,
 
   stepDot: (active: boolean, completed: boolean): React.CSSProperties => ({
     width: 8,
     height: 8,
     borderRadius: '50%',
-    background: completed
-      ? 'var(--accent)'
-      : active
-        ? 'var(--accent)'
-        : 'var(--border)',
-    opacity: active || completed ? 1 : 0.5,
+    background: completed || active ? 'var(--accent)' : 'var(--border)',
+    opacity: active || completed ? 1 : 0.4,
     transition: 'all var(--transition)',
   }),
 
@@ -102,6 +126,24 @@ const styles = {
     cursor: 'not-allowed',
   } as React.CSSProperties,
 
+  secondaryButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    width: '100%',
+    padding: '12px 24px',
+    background: 'transparent',
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)',
+    fontFamily: 'var(--font-body)',
+    fontSize: '0.9rem',
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all var(--transition)',
+  } as React.CSSProperties,
+
   input: {
     width: '100%',
     padding: '12px 16px',
@@ -116,10 +158,6 @@ const styles = {
     boxSizing: 'border-box' as const,
   } as React.CSSProperties,
 
-  inputError: {
-    borderColor: '#ef4444',
-  } as React.CSSProperties,
-
   label: {
     display: 'block',
     fontSize: '0.8rem',
@@ -130,15 +168,8 @@ const styles = {
     marginBottom: 8,
   } as React.CSSProperties,
 
-  errorText: {
-    fontSize: '0.82rem',
-    color: '#ef4444',
-    marginTop: 8,
-    lineHeight: 1.4,
-  } as React.CSSProperties,
-
   card: (selected: boolean): React.CSSProperties => ({
-    padding: 20,
+    padding: 16,
     background: selected ? 'var(--bg-today)' : 'var(--bg-primary)',
     border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
     borderRadius: 'var(--radius-lg)',
@@ -159,264 +190,714 @@ const styles = {
   cardDesc: {
     fontSize: '0.82rem',
     color: 'var(--text-secondary)',
-    margin: '8px 0 0',
+    margin: '6px 0 0',
     lineHeight: 1.5,
   } as React.CSSProperties,
 
-  hint: {
-    fontSize: '0.78rem',
-    color: 'var(--text-secondary)',
-    margin: '12px 0 0',
-    lineHeight: 1.5,
+  memberRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
     padding: '10px 12px',
     background: 'var(--bg-primary)',
-    borderRadius: 'var(--radius-sm)',
+    borderRadius: 'var(--radius-md)',
+    marginBottom: 8,
   } as React.CSSProperties,
 
-  secondaryButton: {
+  avatarButton: {
+    width: 40,
+    height: 40,
+    borderRadius: '50%',
+    border: '2px solid var(--border)',
+    background: 'var(--bg-surface)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '1.2rem',
+    cursor: 'pointer',
+    flexShrink: 0,
+  } as React.CSSProperties,
+
+  avatarPicker: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(8, 1fr)',
+    gap: 4,
+    maxHeight: 160,
+    overflowY: 'auto' as const,
+    padding: 8,
+    background: 'var(--bg-surface)',
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--border)',
+    marginTop: 8,
+  } as React.CSSProperties,
+
+  avatarOption: (selected: boolean): React.CSSProperties => ({
+    width: 36,
+    height: 36,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '1.2rem',
+    borderRadius: 'var(--radius-sm)',
+    border: selected ? '2px solid var(--accent)' : '2px solid transparent',
+    background: selected ? 'var(--bg-today)' : 'transparent',
+    cursor: 'pointer',
+  }),
+
+  removeBtn: {
+    background: 'none',
+    border: 'none',
+    color: 'var(--text-muted)',
+    cursor: 'pointer',
+    padding: 4,
+    display: 'flex',
+    alignItems: 'center',
+  } as React.CSSProperties,
+
+  navRow: {
+    display: 'flex',
+    gap: 12,
+    marginTop: 24,
+  } as React.CSSProperties,
+
+  backButton: {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    width: '100%',
-    padding: '12px 24px',
+    gap: 6,
+    padding: '12px 20px',
     background: 'transparent',
-    color: 'var(--accent)',
-    border: '1px solid var(--accent)',
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--border)',
     borderRadius: 'var(--radius-md)',
     fontFamily: 'var(--font-body)',
     fontSize: '0.9rem',
-    fontWeight: 600,
+    fontWeight: 500,
     cursor: 'pointer',
     transition: 'all var(--transition)',
+    flexShrink: 0,
+  } as React.CSSProperties,
+
+  skipLink: {
+    display: 'block',
+    textAlign: 'center' as const,
+    marginTop: 12,
+    fontSize: '0.82rem',
+    color: 'var(--text-muted)',
+    cursor: 'pointer',
+    background: 'none',
+    border: 'none',
+    fontFamily: 'var(--font-body)',
   } as React.CSSProperties,
 } as const;
+
+// ---------------------------------------------------------------------------
+// Member editing sub-component
+// ---------------------------------------------------------------------------
+
+interface MemberDraft {
+  _id: number; // stable key for React rendering
+  name: string;
+  avatar: string;
+  color: string;
+  role: 'parent' | 'child';
+}
+
+let _nextMemberId = 0;
+function defaultMember(index: number): MemberDraft {
+  return {
+    _id: _nextMemberId++,
+    name: '',
+    avatar: '🧑',
+    color: MEMBER_COLORS[index % MEMBER_COLORS.length],
+    role: index === 0 ? 'parent' : 'child',
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingViewProps) {
-  const [step, setStep] = useState<Step>(1);
+export default function OnboardingView({ onComplete }: OnboardingViewProps) {
+  const [step, setStep] = useState<Step>('welcome');
+  const [familyName, setFamilyName] = useState('');
+  const [members, setMembers] = useState<MemberDraft[]>([defaultMember(0)]);
+  const [weatherLocation, setWeatherLocation] = useState('');
+  const [calendarMode, setCalendarMode] = useState<'local' | 'ha'>('local');
   const [haUrl, setHaUrl] = useState('');
-  const [urlError, setUrlError] = useState('');
-  const [connecting, setConnecting] = useState(false);
+  const [haToken, setHaToken] = useState('');
+  const [showAvatarPicker, setShowAvatarPicker] = useState<number | null>(null);
+  const [owmApiKey, setOwmApiKey] = useState('');
+  const [haValidating, setHaValidating] = useState(false);
+  const [haValidationError, setHaValidationError] = useState<string | null>(null);
 
-  const [authMethod, setAuthMethod] = useState<'token' | 'oauth' | null>(null);
-  const [token, setToken] = useState('');
-  const [tokenError, setTokenError] = useState('');
+  const stepIndex = STEPS.indexOf(step);
 
-  // ---- URL validation ----
-  const isValidUrl = useCallback((url: string): boolean => {
-    const trimmed = url.trim();
-    return trimmed.startsWith('http://') || trimmed.startsWith('https://');
+  const goNext = useCallback(() => {
+    const idx = STEPS.indexOf(step);
+    if (idx < STEPS.length - 1) setStep(STEPS[idx + 1]);
+  }, [step]);
+
+  const goBack = useCallback(() => {
+    const idx = STEPS.indexOf(step);
+    if (idx > 0) setStep(STEPS[idx - 1]);
+  }, [step]);
+
+  const handleComplete = useCallback(() => {
+    onComplete({
+      familyName: familyName.trim() || 'My Family',
+      members: members
+        .filter((m) => m.name.trim())
+        .map((m) => ({
+          name: m.name.trim(),
+          avatar: m.avatar,
+          color: m.color,
+          role: m.role,
+        })),
+      weatherLocation: weatherLocation.trim(),
+      owmApiKey: owmApiKey.trim(),
+      calendarMode,
+      haUrl: calendarMode === 'ha' ? haUrl.trim() : undefined,
+      haToken: calendarMode === 'ha' ? haToken.trim() : undefined,
+    });
+  }, [familyName, members, weatherLocation, owmApiKey, calendarMode, haUrl, haToken, onComplete]);
+
+  // Member management
+  const addMember = useCallback(() => {
+    setMembers((prev) => [...prev, defaultMember(prev.length)]);
   }, []);
 
-  // ---- Test HA connection ----
-  const testConnection = useCallback(async () => {
-    const trimmed = haUrl.trim().replace(/\/+$/, '');
-    if (!isValidUrl(trimmed)) {
-      setUrlError('URL must start with http:// or https://');
-      return;
-    }
-    setUrlError('');
-    setConnecting(true);
-    try {
-      const response = await fetch(`${trimmed}/api/`, { method: 'HEAD' });
-      if (response.ok || response.status === 401) {
-        // 401 is expected without auth — the server is reachable
-        setHaUrl(trimmed);
-        setStep(3);
-      } else {
-        setUrlError(`Connection failed (HTTP ${response.status}). Check the URL and try again.`);
-      }
-    } catch {
-      setUrlError('Could not reach Home Assistant. Verify the URL and ensure it is accessible.');
-    } finally {
-      setConnecting(false);
-    }
-  }, [haUrl, isValidUrl]);
+  const removeMember = useCallback((index: number) => {
+    setMembers((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
-  // ---- Complete setup ----
-  const handleComplete = useCallback(() => {
-    if (!token.trim()) {
-      setTokenError('Please enter your access token.');
-      return;
-    }
-    setTokenError('');
-    onComplete(haUrl, token.trim());
-  }, [haUrl, token, onComplete]);
+  const updateMember = useCallback(
+    (index: number, patch: Partial<MemberDraft>) => {
+      setMembers((prev) =>
+        prev.map((m, i) => (i === index ? { ...m, ...patch } : m)),
+      );
+    },
+    [],
+  );
 
-  // ---- Render steps ----
-
+  // ---- Step indicator ----
   const renderStepIndicator = () => (
     <div style={styles.stepIndicator}>
-      {[1, 2, 3].map((s) => (
+      {STEPS.map((s, i) => (
         <div
           key={s}
-          style={styles.stepDot(s === step, s < step)}
+          style={styles.stepDot(s === step, i < stepIndex)}
         />
       ))}
     </div>
   );
 
-  const renderStep1 = () => (
+  // ---- Step 1: Welcome ----
+  const renderWelcome = () => (
     <div style={{ textAlign: 'center' }}>
       <img src={beaconLogo} alt="Beacon" style={styles.logo} />
       <h1 style={styles.heading}>Welcome to Beacon</h1>
-      <p style={styles.subtext}>Connect your Home Assistant to get started.</p>
-      <button
-        style={styles.primaryButton}
-        onClick={() => setStep(2)}
-      >
+      <p style={styles.subtext}>
+        Your family command center. Let's get set up in a few quick steps.
+      </p>
+      <button style={styles.primaryButton} onClick={goNext}>
         Get Started
         <ArrowRight size={18} />
       </button>
     </div>
   );
 
-  const renderStep2 = () => (
+  // ---- Step 2: Family ----
+  const renderFamily = () => (
     <div>
-      <h1 style={{ ...styles.heading, textAlign: 'center' }}>Connect to Home Assistant</h1>
-      <p style={{ ...styles.subtext, textAlign: 'center' }}>
-        Enter the URL of your Home Assistant instance.
-      </p>
-
-      <div style={{ marginBottom: 24 }}>
-        <label style={styles.label}>Home Assistant URL</label>
-        <input
-          type="url"
-          placeholder="https://homeassistant.local:8123"
-          value={haUrl}
-          onChange={(e) => {
-            setHaUrl(e.target.value);
-            if (urlError) setUrlError('');
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') testConnection();
-          }}
-          style={{
-            ...styles.input,
-            ...(urlError ? styles.inputError : {}),
-          }}
-        />
-        {urlError && <p style={styles.errorText}>{urlError}</p>}
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <Users size={28} color="var(--accent)" style={{ marginBottom: 8 }} />
+        <h1 style={{ ...styles.heading, fontSize: '1.4rem' }}>Your Family</h1>
+        <p style={{ ...styles.subtext, marginBottom: 0 }}>
+          Name your family and add members.
+        </p>
       </div>
 
+      <div style={{ marginBottom: 20 }}>
+        <label style={styles.label}>Family Name</label>
+        <input
+          type="text"
+          placeholder="The Smiths"
+          value={familyName}
+          onChange={(e) => setFamilyName(e.target.value)}
+          style={styles.input}
+        />
+      </div>
+
+      <label style={styles.label}>Family Members</label>
+      {members.map((member, index) => (
+        <div key={member._id}>
+          <div style={styles.memberRow}>
+            <button
+              type="button"
+              style={{
+                ...styles.avatarButton,
+                borderColor: member.color,
+              }}
+              onClick={() =>
+                setShowAvatarPicker(showAvatarPicker === index ? null : index)
+              }
+              title="Choose avatar"
+            >
+              {member.avatar}
+            </button>
+            <input
+              type="text"
+              placeholder={index === 0 ? 'Your name' : 'Family member'}
+              value={member.name}
+              onChange={(e) => updateMember(index, { name: e.target.value })}
+              style={{ ...styles.input, flex: 1 }}
+            />
+            <select
+              value={member.role}
+              onChange={(e) =>
+                updateMember(index, {
+                  role: e.target.value as 'parent' | 'child',
+                })
+              }
+              style={{
+                ...styles.input,
+                width: 90,
+                flex: 'none',
+                padding: '10px 8px',
+              }}
+            >
+              <option value="parent">Parent</option>
+              <option value="child">Child</option>
+            </select>
+            {members.length > 1 && (
+              <button
+                type="button"
+                style={styles.removeBtn}
+                onClick={() => removeMember(index)}
+                title="Remove"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          {/* Inline color picker */}
+          <div style={{ display: 'flex', gap: 3, marginBottom: 8, paddingLeft: 52 }}>
+            {MEMBER_COLORS.slice(0, 10).map((color) => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => updateMember(index, { color })}
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  background: color,
+                  border:
+                    member.color === color
+                      ? '2px solid var(--text-primary)'
+                      : '2px solid transparent',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
+          {/* Avatar picker (shown when this member's avatar button is clicked) */}
+          {showAvatarPicker === index && (
+            <div style={{ marginBottom: 12, paddingLeft: 52 }}>
+              {AVATAR_CATEGORIES.map((cat) => (
+                <div key={cat.label}>
+                  <div
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      margin: '8px 0 4px',
+                    }}
+                  >
+                    {cat.label}
+                  </div>
+                  <div style={styles.avatarPicker}>
+                    {cat.emojis.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        style={styles.avatarOption(member.avatar === emoji)}
+                        onClick={() => {
+                          updateMember(index, { avatar: emoji });
+                          setShowAvatarPicker(null);
+                        }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+
       <button
-        style={{
-          ...styles.primaryButton,
-          ...(connecting || !haUrl.trim() ? styles.primaryButtonDisabled : {}),
-        }}
-        disabled={connecting || !haUrl.trim()}
-        onClick={testConnection}
+        type="button"
+        style={styles.secondaryButton}
+        onClick={addMember}
       >
-        {connecting ? 'Connecting...' : 'Connect'}
-        {!connecting && <ArrowRight size={18} />}
+        <Plus size={16} /> Add Family Member
+      </button>
+
+      <div style={styles.navRow}>
+        <button style={styles.backButton} onClick={goBack}>
+          <ArrowLeft size={16} /> Back
+        </button>
+        <button style={{ ...styles.primaryButton, flex: 1 }} onClick={goNext}>
+          Continue <ArrowRight size={18} />
+        </button>
+      </div>
+    </div>
+  );
+
+  // ---- Step 3: Weather ----
+  const renderWeather = () => (
+    <div>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <Cloud size={28} color="var(--accent)" style={{ marginBottom: 8 }} />
+        <h1 style={{ ...styles.heading, fontSize: '1.4rem' }}>Weather</h1>
+        <p style={{ ...styles.subtext, marginBottom: 0 }}>
+          Enter your location to see local weather on your dashboard.
+        </p>
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <label style={styles.label}>Zip Code (US only) or City Name</label>
+        <input
+          type="text"
+          placeholder="e.g. 90210 or Los Angeles"
+          value={weatherLocation}
+          onChange={(e) => setWeatherLocation(e.target.value)}
+          style={styles.input}
+        />
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <label style={styles.label}>OpenWeatherMap API Key</label>
+        <input
+          type="text"
+          placeholder="Paste your free API key"
+          value={owmApiKey}
+          onChange={(e) => setOwmApiKey(e.target.value)}
+          style={styles.input}
+        />
+        <div
+          style={{
+            fontSize: '0.78rem',
+            color: 'var(--text-muted)',
+            marginTop: 8,
+            lineHeight: 1.4,
+          }}
+        >
+          Get a free API key at{' '}
+          <a
+            href="https://home.openweathermap.org/api_keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--accent)' }}
+          >
+            openweathermap.org
+          </a>
+          . You can change this later in Settings.
+        </div>
+      </div>
+
+      <div style={styles.navRow}>
+        <button style={styles.backButton} onClick={goBack}>
+          <ArrowLeft size={16} /> Back
+        </button>
+        <button style={{ ...styles.primaryButton, flex: 1 }} onClick={goNext}>
+          Continue <ArrowRight size={18} />
+        </button>
+      </div>
+      <button type="button" style={styles.skipLink} onClick={goNext}>
+        Skip for now
       </button>
     </div>
   );
 
-  const renderStep3 = () => (
+  // ---- Step 4: Calendar ----
+  const renderCalendar = () => (
     <div>
-      <h1 style={{ ...styles.heading, textAlign: 'center' }}>Authentication</h1>
-      <p style={{ ...styles.subtext, textAlign: 'center' }}>
-        Choose how to authenticate with Home Assistant.
-      </p>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <Calendar size={28} color="var(--accent)" style={{ marginBottom: 8 }} />
+        <h1 style={{ ...styles.heading, fontSize: '1.4rem' }}>Calendar</h1>
+        <p style={{ ...styles.subtext, marginBottom: 0 }}>
+          Choose how you'd like to manage your calendar.
+        </p>
+      </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
-        {/* Token auth card */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
         <div
-          style={styles.card(authMethod === 'token')}
-          onClick={() => setAuthMethod('token')}
+          style={styles.card(calendarMode === 'local')}
+          onClick={() => setCalendarMode('local')}
         >
           <h3 style={styles.cardTitle}>
-            <Key size={18} color="var(--accent)" />
-            Long-lived Access Token
+            <Calendar size={18} color="var(--accent)" />
+            Local Calendar
           </h3>
           <p style={styles.cardDesc}>
-            Use a token generated from your Home Assistant profile.
+            Events are stored on this device. No extra setup needed.
           </p>
-
-          {authMethod === 'token' && (
-            <div style={{ marginTop: 16 }}>
-              <input
-                type="password"
-                placeholder="Paste your token here"
-                value={token}
-                onChange={(e) => {
-                  setToken(e.target.value);
-                  if (tokenError) setTokenError('');
-                }}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  ...styles.input,
-                  ...(tokenError ? styles.inputError : {}),
-                }}
-              />
-              {tokenError && <p style={styles.errorText}>{tokenError}</p>}
-              <div style={styles.hint}>
-                <span style={{ fontWeight: 600 }}>How to create a token:</span>
-                <br />
-                Go to your HA Profile &rarr; Long-lived tokens &rarr; Create Token
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* OAuth card */}
         <div
-          style={styles.card(authMethod === 'oauth')}
-          onClick={() => setAuthMethod('oauth')}
+          style={styles.card(calendarMode === 'ha')}
+          onClick={() => setCalendarMode('ha')}
         >
           <h3 style={styles.cardTitle}>
-            <LogIn size={18} color="var(--accent)" />
-            Sign in with Home Assistant
+            <Home size={18} color="var(--accent)" />
+            Connect Home Assistant
           </h3>
           <p style={styles.cardDesc}>
-            Authenticate using your Home Assistant credentials via OAuth2.
+            Sync calendars, smart home devices, and more with your HA instance.
           </p>
-
-          {authMethod === 'oauth' && (
-            <div style={{ marginTop: 16 }}>
-              <button
-                style={styles.secondaryButton}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOAuthStart?.(haUrl);
-                }}
-              >
-                Open Home Assistant
-                <ExternalLink size={16} />
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
-      {authMethod === 'token' && (
+      {calendarMode === 'ha' && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 12 }}>
+            <label style={styles.label}>Home Assistant URL</label>
+            <input
+              type="url"
+              placeholder="https://homeassistant.local:8123"
+              value={haUrl}
+              onChange={(e) => setHaUrl(e.target.value)}
+              style={styles.input}
+            />
+          </div>
+          <div>
+            <label style={styles.label}>Long-Lived Access Token</label>
+            <input
+              type="password"
+              placeholder="Paste your token here"
+              value={haToken}
+              onChange={(e) => setHaToken(e.target.value)}
+              style={styles.input}
+            />
+            <div
+              style={{
+                fontSize: '0.78rem',
+                color: 'var(--text-muted)',
+                marginTop: 6,
+                lineHeight: 1.4,
+              }}
+            >
+              Go to your HA Profile &rarr; Long-lived tokens &rarr; Create
+              Token
+            </div>
+          </div>
+        </div>
+      )}
+
+      {haValidationError && (
+        <div
+          style={{
+            padding: '10px 14px',
+            background: 'var(--bg-primary)',
+            border: '1px solid #e74c3c',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.82rem',
+            color: '#e74c3c',
+            marginBottom: 12,
+          }}
+        >
+          {haValidationError}
+        </div>
+      )}
+
+      <div style={styles.navRow}>
+        <button style={styles.backButton} onClick={goBack}>
+          <ArrowLeft size={16} /> Back
+        </button>
         <button
           style={{
             ...styles.primaryButton,
-            ...((!token.trim()) ? styles.primaryButtonDisabled : {}),
+            flex: 1,
+            ...(calendarMode === 'ha' && (!haUrl.trim() || !haToken.trim() || haValidating)
+              ? styles.primaryButtonDisabled
+              : {}),
           }}
-          disabled={!token.trim()}
-          onClick={handleComplete}
+          disabled={
+            calendarMode === 'ha' && (!haUrl.trim() || !haToken.trim() || haValidating)
+          }
+          onClick={async () => {
+            if (calendarMode === 'ha' && haUrl.trim() && haToken.trim()) {
+              setHaValidating(true);
+              setHaValidationError(null);
+              try {
+                const url = haUrl.trim().replace(/\/+$/, '');
+                const res = await fetch(`${url}/api/`, {
+                  headers: { Authorization: `Bearer ${haToken.trim()}` },
+                });
+                if (!res.ok) {
+                  setHaValidationError(
+                    `Could not connect (HTTP ${res.status}). Check the URL and token.`,
+                  );
+                  return;
+                }
+                goNext();
+              } catch {
+                setHaValidationError(
+                  'Could not reach that URL. Check the address and try again.',
+                );
+              } finally {
+                setHaValidating(false);
+              }
+            } else {
+              goNext();
+            }
+          }}
         >
-          Complete Setup
-          <Check size={18} />
+          {haValidating ? 'Validating...' : 'Continue'} <ArrowRight size={18} />
         </button>
-      )}
+      </div>
     </div>
   );
+
+  // ---- Step 5: Done ----
+  const renderDone = () => {
+    const displayName = familyName.trim() || 'My Family';
+    const memberNames = members
+      .filter((m) => m.name.trim())
+      .map((m) => `${m.avatar} ${m.name.trim()}`);
+
+    return (
+      <div style={{ textAlign: 'center' }}>
+        <Sun size={48} color="var(--accent)" style={{ marginBottom: 16 }} />
+        <h1 style={styles.heading}>You're all set!</h1>
+        <p style={styles.subtext}>
+          Welcome, {displayName}. Here's a quick preview of your setup:
+        </p>
+
+        <div
+          style={{
+            textAlign: 'left',
+            background: 'var(--bg-primary)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 20,
+            marginBottom: 24,
+          }}
+        >
+          <div style={{ marginBottom: 12 }}>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Family
+            </span>
+            <div
+              style={{
+                fontSize: '1rem',
+                color: 'var(--text-primary)',
+                fontWeight: 600,
+                marginTop: 4,
+              }}
+            >
+              {displayName}
+            </div>
+            {memberNames.length > 0 && (
+              <div
+                style={{
+                  fontSize: '0.85rem',
+                  color: 'var(--text-secondary)',
+                  marginTop: 4,
+                }}
+              >
+                {memberNames.join(', ')}
+              </div>
+            )}
+          </div>
+
+          {weatherLocation.trim() && (
+            <div style={{ marginBottom: 12 }}>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Weather
+              </span>
+              <div
+                style={{
+                  fontSize: '0.9rem',
+                  color: 'var(--text-primary)',
+                  marginTop: 4,
+                }}
+              >
+                {weatherLocation.trim()}
+              </div>
+            </div>
+          )}
+
+          <div>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Calendar
+            </span>
+            <div
+              style={{
+                fontSize: '0.9rem',
+                color: 'var(--text-primary)',
+                marginTop: 4,
+              }}
+            >
+              {calendarMode === 'local'
+                ? 'Local calendar'
+                : 'Home Assistant'}
+            </div>
+          </div>
+        </div>
+
+        <button style={styles.primaryButton} onClick={handleComplete}>
+          Open Beacon
+          <Check size={18} />
+        </button>
+
+        <button type="button" style={styles.skipLink} onClick={goBack}>
+          Go back and make changes
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div style={styles.wrapper}>
       <div style={styles.container}>
         {renderStepIndicator()}
-        {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
+        {step === 'welcome' && renderWelcome()}
+        {step === 'family' && renderFamily()}
+        {step === 'weather' && renderWeather()}
+        {step === 'calendar' && renderCalendar()}
+        {step === 'done' && renderDone()}
       </div>
     </div>
   );

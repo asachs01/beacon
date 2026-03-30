@@ -3,6 +3,7 @@ import { HomeAssistantClient } from '../api/homeassistant';
 import { getConfig } from '../config';
 import { setHaToken } from '../api/ha-rest';
 import { isAddOn, isIngress } from '../utils/ha-env';
+import { getSecureItem, StorageKeys } from '../api/secure-storage';
 
 function resolveHaUrl(): string {
   const config = getConfig();
@@ -65,6 +66,12 @@ export function useHomeAssistant() {
     async function connect() {
       const config = getConfig();
       let token = config.ha_token;
+
+      // Fall back to secure storage if config has no token (e.g. after onboarding reload)
+      if (!token) {
+        token = (await getSecureItem(StorageKeys.HA_TOKEN)) ?? '';
+      }
+
       const url = resolveHaUrl();
 
       // In add-on mode with the proxy, we don't need a browser-side token.
@@ -82,7 +89,7 @@ export function useHomeAssistant() {
       }
 
       if (!token) {
-        console.warn('Beacon: No HA token available. Running in demo mode.');
+        // Standalone mode — no HA connection needed, works silently
         return;
       }
 

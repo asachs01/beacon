@@ -68,7 +68,8 @@ export function useHaAuth() {
 
         if (cancelled) return;
 
-        const isOnboarded = onboarded === 'true' && !!haToken;
+        // Onboarded is true if the flag is set — token is optional (standalone mode)
+        const isOnboarded = onboarded === 'true';
 
         setState({
           isOnboarded,
@@ -233,6 +234,14 @@ export function useHaAuth() {
   }, []);
 
   /**
+   * Mark the user as onboarded without HA credentials (standalone mode).
+   */
+  const markOnboarded = useCallback(async () => {
+    await setSecureItem(StorageKeys.ONBOARDED, 'true');
+    setState((prev) => ({ ...prev, isOnboarded: true }));
+  }, []);
+
+  /**
    * Clear all stored credentials and reset state.
    */
   const logout = useCallback(async () => {
@@ -254,6 +263,7 @@ export function useHaAuth() {
   return {
     state,
     saveManualToken,
+    markOnboarded,
     startOAuth,
     handleOAuthCallback,
     refreshToken,

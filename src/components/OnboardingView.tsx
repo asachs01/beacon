@@ -30,6 +30,7 @@ export interface OnboardingData {
   familyName: string;
   members: Omit<FamilyMember, 'id'>[];
   weatherLocation: string;
+  owmApiKey: string;
   calendarMode: 'local' | 'ha';
   /** Only set if calendarMode === 'ha' */
   haUrl?: string;
@@ -295,14 +296,17 @@ const styles = {
 // ---------------------------------------------------------------------------
 
 interface MemberDraft {
+  _id: number; // stable key for React rendering
   name: string;
   avatar: string;
   color: string;
   role: 'parent' | 'child';
 }
 
+let _nextMemberId = 0;
 function defaultMember(index: number): MemberDraft {
   return {
+    _id: _nextMemberId++,
     name: '',
     avatar: '🧑',
     color: MEMBER_COLORS[index % MEMBER_COLORS.length],
@@ -323,6 +327,9 @@ export default function OnboardingView({ onComplete }: OnboardingViewProps) {
   const [haUrl, setHaUrl] = useState('');
   const [haToken, setHaToken] = useState('');
   const [showAvatarPicker, setShowAvatarPicker] = useState<number | null>(null);
+  const [owmApiKey, setOwmApiKey] = useState('');
+  const [haValidating, setHaValidating] = useState(false);
+  const [haValidationError, setHaValidationError] = useState<string | null>(null);
 
   const stepIndex = STEPS.indexOf(step);
 
@@ -348,11 +355,12 @@ export default function OnboardingView({ onComplete }: OnboardingViewProps) {
           role: m.role,
         })),
       weatherLocation: weatherLocation.trim(),
+      owmApiKey: owmApiKey.trim(),
       calendarMode,
       haUrl: calendarMode === 'ha' ? haUrl.trim() : undefined,
       haToken: calendarMode === 'ha' ? haToken.trim() : undefined,
     });
-  }, [familyName, members, weatherLocation, calendarMode, haUrl, haToken, onComplete]);
+  }, [familyName, members, weatherLocation, owmApiKey, calendarMode, haUrl, haToken, onComplete]);
 
   // Member management
   const addMember = useCallback(() => {
@@ -423,143 +431,116 @@ export default function OnboardingView({ onComplete }: OnboardingViewProps) {
 
       <label style={styles.label}>Family Members</label>
       {members.map((member, index) => (
-        <div key={index} style={styles.memberRow}>
-          <button
-            type="button"
-            style={{
-              ...styles.avatarButton,
-              borderColor: member.color,
-            }}
-            onClick={() =>
-              setShowAvatarPicker(showAvatarPicker === index ? null : index)
-            }
-            title="Choose avatar"
-          >
-            {member.avatar}
-          </button>
-          <input
-            type="text"
-            placeholder={index === 0 ? 'Your name' : 'Family member'}
-            value={member.name}
-            onChange={(e) => updateMember(index, { name: e.target.value })}
-            style={{ ...styles.input, flex: 1 }}
-          />
-          <select
-            value={member.role}
-            onChange={(e) =>
-              updateMember(index, {
-                role: e.target.value as 'parent' | 'child',
-              })
-            }
-            style={{
-              ...styles.input,
-              width: 90,
-              flex: 'none',
-              padding: '10px 8px',
-            }}
-          >
-            <option value="parent">Parent</option>
-            <option value="child">Child</option>
-          </select>
-          {members.length > 1 && (
+        <div key={member._id}>
+          <div style={styles.memberRow}>
             <button
               type="button"
-              style={styles.removeBtn}
-              onClick={() => removeMember(index)}
-              title="Remove"
+              style={{
+                ...styles.avatarButton,
+                borderColor: member.color,
+              }}
+              onClick={() =>
+                setShowAvatarPicker(showAvatarPicker === index ? null : index)
+              }
+              title="Choose avatar"
             >
-              <X size={16} />
+              {member.avatar}
             </button>
+            <input
+              type="text"
+              placeholder={index === 0 ? 'Your name' : 'Family member'}
+              value={member.name}
+              onChange={(e) => updateMember(index, { name: e.target.value })}
+              style={{ ...styles.input, flex: 1 }}
+            />
+            <select
+              value={member.role}
+              onChange={(e) =>
+                updateMember(index, {
+                  role: e.target.value as 'parent' | 'child',
+                })
+              }
+              style={{
+                ...styles.input,
+                width: 90,
+                flex: 'none',
+                padding: '10px 8px',
+              }}
+            >
+              <option value="parent">Parent</option>
+              <option value="child">Child</option>
+            </select>
+            {members.length > 1 && (
+              <button
+                type="button"
+                style={styles.removeBtn}
+                onClick={() => removeMember(index)}
+                title="Remove"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          {/* Inline color picker */}
+          <div style={{ display: 'flex', gap: 3, marginBottom: 8, paddingLeft: 52 }}>
+            {MEMBER_COLORS.slice(0, 10).map((color) => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => updateMember(index, { color })}
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  background: color,
+                  border:
+                    member.color === color
+                      ? '2px solid var(--text-primary)'
+                      : '2px solid transparent',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
+          {/* Avatar picker (shown when this member's avatar button is clicked) */}
+          {showAvatarPicker === index && (
+            <div style={{ marginBottom: 12, paddingLeft: 52 }}>
+              {AVATAR_CATEGORIES.map((cat) => (
+                <div key={cat.label}>
+                  <div
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      margin: '8px 0 4px',
+                    }}
+                  >
+                    {cat.label}
+                  </div>
+                  <div style={styles.avatarPicker}>
+                    {cat.emojis.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        style={styles.avatarOption(member.avatar === emoji)}
+                        onClick={() => {
+                          updateMember(index, { avatar: emoji });
+                          setShowAvatarPicker(null);
+                        }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       ))}
-
-      {showAvatarPicker !== null && (
-        <div style={{ marginBottom: 12 }}>
-          {AVATAR_CATEGORIES.map((cat) => (
-            <div key={cat.label}>
-              <div
-                style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  margin: '8px 0 4px',
-                }}
-              >
-                {cat.label}
-              </div>
-              <div style={styles.avatarPicker}>
-                {cat.emojis.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    style={styles.avatarOption(
-                      members[showAvatarPicker!]?.avatar === emoji,
-                    )}
-                    onClick={() => {
-                      updateMember(showAvatarPicker!, { avatar: emoji });
-                      setShowAvatarPicker(null);
-                    }}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Color row */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 6,
-          flexWrap: 'wrap',
-          marginBottom: 16,
-          marginTop: 8,
-        }}
-      >
-        {members.map((member, idx) =>
-          member.name.trim() ? (
-            <div
-              key={idx}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                fontSize: '0.78rem',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              <span>{member.avatar} {member.name}</span>
-              <div style={{ display: 'flex', gap: 2 }}>
-                {MEMBER_COLORS.slice(0, 10).map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => updateMember(idx, { color })}
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: '50%',
-                      background: color,
-                      border:
-                        member.color === color
-                          ? '2px solid var(--text-primary)'
-                          : '2px solid transparent',
-                      cursor: 'pointer',
-                      padding: 0,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null,
-        )}
-      </div>
 
       <button
         type="button"
@@ -592,12 +573,23 @@ export default function OnboardingView({ onComplete }: OnboardingViewProps) {
       </div>
 
       <div style={{ marginBottom: 20 }}>
-        <label style={styles.label}>Zip Code or City Name</label>
+        <label style={styles.label}>Zip Code (US only) or City Name</label>
         <input
           type="text"
           placeholder="e.g. 90210 or Los Angeles"
           value={weatherLocation}
           onChange={(e) => setWeatherLocation(e.target.value)}
+          style={styles.input}
+        />
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <label style={styles.label}>OpenWeatherMap API Key</label>
+        <input
+          type="text"
+          placeholder="Paste your free API key"
+          value={owmApiKey}
+          onChange={(e) => setOwmApiKey(e.target.value)}
           style={styles.input}
         />
         <div
@@ -608,8 +600,16 @@ export default function OnboardingView({ onComplete }: OnboardingViewProps) {
             lineHeight: 1.4,
           }}
         >
-          Weather data is provided by OpenWeatherMap. You can change this later
-          in Settings.
+          Get a free API key at{' '}
+          <a
+            href="https://home.openweathermap.org/api_keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--accent)' }}
+          >
+            openweathermap.org
+          </a>
+          . You can change this later in Settings.
         </div>
       </div>
 
@@ -702,6 +702,22 @@ export default function OnboardingView({ onComplete }: OnboardingViewProps) {
         </div>
       )}
 
+      {haValidationError && (
+        <div
+          style={{
+            padding: '10px 14px',
+            background: 'var(--bg-primary)',
+            border: '1px solid #e74c3c',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.82rem',
+            color: '#e74c3c',
+            marginBottom: 12,
+          }}
+        >
+          {haValidationError}
+        </div>
+      )}
+
       <div style={styles.navRow}>
         <button style={styles.backButton} onClick={goBack}>
           <ArrowLeft size={16} /> Back
@@ -710,16 +726,42 @@ export default function OnboardingView({ onComplete }: OnboardingViewProps) {
           style={{
             ...styles.primaryButton,
             flex: 1,
-            ...(calendarMode === 'ha' && (!haUrl.trim() || !haToken.trim())
+            ...(calendarMode === 'ha' && (!haUrl.trim() || !haToken.trim() || haValidating)
               ? styles.primaryButtonDisabled
               : {}),
           }}
           disabled={
-            calendarMode === 'ha' && (!haUrl.trim() || !haToken.trim())
+            calendarMode === 'ha' && (!haUrl.trim() || !haToken.trim() || haValidating)
           }
-          onClick={goNext}
+          onClick={async () => {
+            if (calendarMode === 'ha' && haUrl.trim() && haToken.trim()) {
+              setHaValidating(true);
+              setHaValidationError(null);
+              try {
+                const url = haUrl.trim().replace(/\/+$/, '');
+                const res = await fetch(`${url}/api/`, {
+                  headers: { Authorization: `Bearer ${haToken.trim()}` },
+                });
+                if (!res.ok) {
+                  setHaValidationError(
+                    `Could not connect (HTTP ${res.status}). Check the URL and token.`,
+                  );
+                  return;
+                }
+                goNext();
+              } catch {
+                setHaValidationError(
+                  'Could not reach that URL. Check the address and try again.',
+                );
+              } finally {
+                setHaValidating(false);
+              }
+            } else {
+              goNext();
+            }
+          }}
         >
-          Continue <ArrowRight size={18} />
+          {haValidating ? 'Validating...' : 'Continue'} <ArrowRight size={18} />
         </button>
       </div>
     </div>
