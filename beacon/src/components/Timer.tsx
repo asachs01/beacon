@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Flag, X, Plus } from 'lucide-react';
+import { Play, Pause, RotateCcw, Flag, X, Plus, Volume2, BellOff } from 'lucide-react';
 
 const PRESETS = [
   { label: '1m', seconds: 60 },
@@ -11,6 +11,111 @@ const PRESETS = [
 ];
 
 type TimerMode = 'stopwatch' | 'timers';
+
+type SoundName = 'beep' | 'chime' | 'alarm' | 'kitchen' | 'gentle';
+
+const SOUND_OPTIONS: { key: SoundName; label: string }[] = [
+  { key: 'chime', label: 'Chime' },
+  { key: 'beep', label: 'Beep' },
+  { key: 'alarm', label: 'Alarm' },
+  { key: 'kitchen', label: 'Kitchen' },
+  { key: 'gentle', label: 'Gentle' },
+];
+
+const STORAGE_KEY = 'beacon-timer-sound';
+
+function getStoredSound(): SoundName {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    if (v && SOUND_OPTIONS.some((o) => o.key === v)) return v as SoundName;
+  } catch { /* ignore */ }
+  return 'chime';
+}
+
+/** Play a single instance of the chosen sound. Returns the AudioContext so it can be closed. */
+function playSoundOnce(sound: SoundName): AudioContext | null {
+  try {
+    const ctx = new AudioContext();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+
+    if (sound === 'beep') {
+      // 880Hz sine wave, 3 short beeps
+      const osc = ctx.createOscillator();
+      osc.connect(gain);
+      osc.frequency.value = 880;
+      osc.type = 'sine';
+      gain.gain.value = 0.3;
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.setValueAtTime(0, now + 0.15);
+      gain.gain.setValueAtTime(0.3, now + 0.25);
+      gain.gain.setValueAtTime(0, now + 0.4);
+      gain.gain.setValueAtTime(0.3, now + 0.5);
+      gain.gain.setValueAtTime(0, now + 0.65);
+      osc.start(now);
+      osc.stop(now + 0.7);
+    } else if (sound === 'chime') {
+      // Descending tones: C5 (523), G4 (392), E4 (330)
+      const freqs = [523, 392, 330];
+      freqs.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        const t = now + i * 0.3;
+        g.gain.setValueAtTime(0.25, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        osc.start(t);
+        osc.stop(t + 0.45);
+      });
+    } else if (sound === 'alarm') {
+      // Alternating 600Hz/900Hz, urgent
+      const osc = ctx.createOscillator();
+      osc.connect(gain);
+      osc.type = 'square';
+      gain.gain.value = 0.2;
+      for (let i = 0; i < 6; i++) {
+        const t = now + i * 0.15;
+        osc.frequency.setValueAtTime(i % 2 === 0 ? 600 : 900, t);
+      }
+      osc.start(now);
+      osc.stop(now + 0.9);
+    } else if (sound === 'kitchen') {
+      // Rapid high-pitched beeps at 1200Hz
+      const osc = ctx.createOscillator();
+      osc.connect(gain);
+      osc.frequency.value = 1200;
+      osc.type = 'sine';
+      for (let i = 0; i < 5; i++) {
+        const t = now + i * 0.12;
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.setValueAtTime(0, t + 0.06);
+      }
+      osc.start(now);
+      osc.stop(now + 0.65);
+    } else if (sound === 'gentle') {
+      // Soft low tone 440Hz with slow fade
+      const osc = ctx.createOscillator();
+      osc.connect(gain);
+      osc.frequency.value = 440;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+      osc.start(now);
+      osc.stop(now + 1.6);
+    }
+
+    // Auto-close after 2s to free resources
+    setTimeout(() => { try { ctx.close(); } catch { /* */ } }, 2000);
+    return ctx;
+  } catch {
+    return null;
+  }
+}
 
 interface TimerProps {
   compact?: boolean;
@@ -38,39 +143,11 @@ function formatTime(totalMs: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function playBeep() {
-  try {
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.frequency.value = 880;
-    osc.type = 'sine';
-    gain.gain.value = 0.3;
-
-    osc.start();
-    const now = ctx.currentTime;
-    gain.gain.setValueAtTime(0.3, now);
-    gain.gain.setValueAtTime(0, now + 0.15);
-    gain.gain.setValueAtTime(0.3, now + 0.25);
-    gain.gain.setValueAtTime(0, now + 0.4);
-    gain.gain.setValueAtTime(0.3, now + 0.5);
-    gain.gain.setValueAtTime(0, now + 0.65);
-
-    osc.stop(now + 0.7);
-    setTimeout(() => ctx.close(), 1000);
-  } catch {
-    // Audio may not be available
-  }
-}
-
 let nextTimerId = 1;
 
 export function Timer({ compact = false }: TimerProps) {
   const [mode, setMode] = useState<TimerMode>('timers');
+  const [sound, setSound] = useState<SoundName>(getStoredSound);
 
   // --- Multi-timer state ---
   const [timers, setTimers] = useState<TimerInstance[]>([]);
@@ -80,8 +157,45 @@ export function Timer({ compact = false }: TimerProps) {
   const rafRef = useRef<number>(0);
   const beeped = useRef<Set<string>>(new Set());
 
+  // Track looping beep intervals per timer id
+  const loopIntervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
+
   // Keep ref in sync
   timersRef.current = timers;
+
+  // Persist sound choice
+  const changeSound = useCallback((s: SoundName) => {
+    setSound(s);
+    try { localStorage.setItem(STORAGE_KEY, s); } catch { /* */ }
+  }, []);
+
+  // Start looping beep for a timer
+  const startBeepLoop = useCallback((timerId: string, soundName: SoundName) => {
+    // Play immediately
+    playSoundOnce(soundName);
+    // Then repeat every 2.5 seconds
+    const interval = setInterval(() => {
+      playSoundOnce(soundName);
+    }, 2500);
+    loopIntervalsRef.current.set(timerId, interval);
+  }, []);
+
+  // Stop looping beep for a timer
+  const stopBeepLoop = useCallback((timerId: string) => {
+    const interval = loopIntervalsRef.current.get(timerId);
+    if (interval) {
+      clearInterval(interval);
+      loopIntervalsRef.current.delete(timerId);
+    }
+  }, []);
+
+  // Cleanup all loops on unmount
+  useEffect(() => {
+    return () => {
+      loopIntervalsRef.current.forEach((interval) => clearInterval(interval));
+      loopIntervalsRef.current.clear();
+    };
+  }, []);
 
   // --- Stopwatch state ---
   const [swRunning, setSwRunning] = useState(false);
@@ -90,6 +204,10 @@ export function Timer({ compact = false }: TimerProps) {
   const swStartRef = useRef<number>(0);
   const swBaseRef = useRef<number>(0);
   const swRafRef = useRef<number>(0);
+
+  // We need a ref for sound so the tick callback always sees the latest value
+  const soundRef = useRef(sound);
+  soundRef.current = sound;
 
   // Single RAF loop for all countdown timers
   const tickTimers = useCallback(() => {
@@ -102,7 +220,7 @@ export function Timer({ compact = false }: TimerProps) {
         if (currentElapsed >= t.totalMs) {
           if (!beeped.current.has(t.id)) {
             beeped.current.add(t.id);
-            playBeep();
+            startBeepLoop(t.id, soundRef.current);
           }
           return { ...t, running: false, finished: true, pausedElapsed: t.totalMs };
         }
@@ -111,9 +229,8 @@ export function Timer({ compact = false }: TimerProps) {
       return next;
     });
 
-    // We always keep ticking if there are running timers — re-check in the next frame
     rafRef.current = requestAnimationFrame(tickTimers);
-  }, []);
+  }, [startBeepLoop]);
 
   // Start/stop the RAF loop based on whether any timer is running
   useEffect(() => {
@@ -124,7 +241,7 @@ export function Timer({ compact = false }: TimerProps) {
     return () => cancelAnimationFrame(rafRef.current);
   }, [timers, tickTimers]);
 
-  // Compute remaining time for display (called during render)
+  // Compute remaining time for display
   function getRemaining(t: TimerInstance): number {
     if (t.finished) return 0;
     const elapsed = t.running
@@ -167,10 +284,23 @@ export function Timer({ compact = false }: TimerProps) {
     );
   }, []);
 
+  const dismissTimer = useCallback((id: string) => {
+    stopBeepLoop(id);
+    beeped.current.delete(id);
+    setTimers((prev) =>
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        // Reset to initial state so user can restart or just sees it stopped
+        return { ...t, finished: false, running: false, pausedElapsed: 0 };
+      }),
+    );
+  }, [stopBeepLoop]);
+
   const cancelTimer = useCallback((id: string) => {
+    stopBeepLoop(id);
     beeped.current.delete(id);
     setTimers((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  }, [stopBeepLoop]);
 
   // --- Stopwatch logic ---
   const swTick = useCallback(() => {
@@ -225,6 +355,25 @@ export function Timer({ compact = false }: TimerProps) {
 
       {mode === 'timers' && (
         <>
+          {/* Sound picker */}
+          <div className="timer-sound-picker">
+            <Volume2 size={14} className="timer-sound-icon" />
+            {SOUND_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                className={`timer-sound-btn ${sound === opt.key ? 'timer-sound-btn--active' : ''}`}
+                onClick={() => {
+                  changeSound(opt.key);
+                  playSoundOnce(opt.key);
+                }}
+                title={`Preview ${opt.label}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
           {/* Add Timer section */}
           <div className="timer-add-section">
             <input
@@ -273,6 +422,16 @@ export function Timer({ compact = false }: TimerProps) {
                       {formatTime(remaining)}
                     </div>
                     <div className="timer-card-controls">
+                      {t.finished && (
+                        <button
+                          type="button"
+                          className="timer-btn timer-btn--dismiss timer-btn--sm"
+                          onClick={() => dismissTimer(t.id)}
+                          title="Dismiss alarm"
+                        >
+                          <BellOff size={14} />
+                        </button>
+                      )}
                       {!t.finished && (
                         t.running ? (
                           <button

@@ -76,6 +76,54 @@
   50% { opacity: 0.4; }
 }
 
+/* --- Sound Picker --- */
+.timer-sound-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.timer-sound-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.timer-sound-btn {
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.timer-sound-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.timer-sound-btn--active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* --- Dismiss Button --- */
+.timer-btn--dismiss {
+  background: color-mix(in srgb, #ef4444 15%, var(--bg-secondary));
+  color: #ef4444;
+}
+
+.timer-btn--dismiss:hover {
+  background: color-mix(in srgb, #ef4444 25%, var(--bg-secondary));
+}
+
 /* --- Multi-Timer: Add Section --- */
 .timer-add-section {
   display: flex;
