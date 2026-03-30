@@ -1,3 +1,10 @@
+## [1.11.4](https://github.com/asachs01/beacon/compare/v1.11.3...v1.11.4) (2026-03-30)
+
+
+### Bug Fixes
+
+* define missing CSS vars, music empty state, touch target sizes ([e240dd7](https://github.com/asachs01/beacon/commit/e240dd7665800b4645cec134f73594a8f49c358f))
+
 ## [1.11.3](https://github.com/asachs01/beacon/compare/v1.11.2...v1.11.3) (2026-03-30)
 
 
