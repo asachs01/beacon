@@ -174,6 +174,19 @@ export async function signIn(): Promise<void> {
  */
 export async function handleRedirectCallback(): Promise<{ ok: boolean; error?: string }> {
   const params = new URLSearchParams(window.location.search);
+  const returnedState = params.get('state');
+
+  // No OAuth params at all — nothing to handle
+  if (!params.has('code') && !params.has('error')) return { ok: false };
+
+  // Validate state FIRST (before inspecting error or code) to prevent CSRF
+  const expectedState = localStorage.getItem(STATE_KEY);
+  if (!expectedState || expectedState !== returnedState) {
+    localStorage.removeItem(PKCE_KEY);
+    localStorage.removeItem(STATE_KEY);
+    window.history.replaceState({}, '', window.location.pathname);
+    return { ok: false, error: 'OAuth state mismatch — possible CSRF. Please try signing in again.' };
+  }
 
   // Handle error responses (e.g. user denied consent)
   const oauthError = params.get('error');
@@ -185,18 +198,7 @@ export async function handleRedirectCallback(): Promise<{ ok: boolean; error?: s
     return { ok: false, error: `Google sign-in failed: ${description}` };
   }
 
-  const code = params.get('code');
-  if (!code) return { ok: false };
-
-  // Verify the state parameter to prevent CSRF
-  const expectedState = localStorage.getItem(STATE_KEY);
-  const returnedState = params.get('state');
-  if (!expectedState || expectedState !== returnedState) {
-    localStorage.removeItem(PKCE_KEY);
-    localStorage.removeItem(STATE_KEY);
-    window.history.replaceState({}, '', window.location.pathname);
-    return { ok: false, error: 'OAuth state mismatch — possible CSRF. Please try signing in again.' };
-  }
+  const code = params.get('code')!;
 
   const verifier = localStorage.getItem(PKCE_KEY);
   if (!verifier) return { ok: false };
@@ -265,11 +267,12 @@ export function signOut(): void {
 
 /**
  * Attempts to refresh the access token using the stored refresh_token.
- * Returns true if the token was refreshed successfully.
+ * Distinguishes permanent failures (HTTP 4xx from Google, e.g. revoked token)
+ * from transient ones (network errors) so callers can decide whether to sign out.
  */
-async function refreshAccessToken(): Promise<boolean> {
+async function refreshAccessToken(): Promise<'success' | 'permanent_failure' | 'transient_failure'> {
   const token = loadToken();
-  if (!token?.refresh_token) return false;
+  if (!token?.refresh_token) return 'permanent_failure';
 
   try {
     const body = new URLSearchParams({
@@ -284,24 +287,26 @@ async function refreshAccessToken(): Promise<boolean> {
       body: body.toString(),
     });
 
-    if (!res.ok) {
-      console.error('Google token refresh failed:', await res.text());
-      return false;
+    if (res.ok) {
+      const data = await res.json();
+      const refreshed: GoogleTokenData = {
+        access_token: data.access_token,
+        // Keep existing refresh_token — Google doesn't always return a new one
+        refresh_token: data.refresh_token || token.refresh_token,
+        expires_at: Date.now() + data.expires_in * 1000,
+        email: token.email,
+      };
+      saveToken(refreshed);
+      return 'success';
     }
 
-    const data = await res.json();
-    const refreshed: GoogleTokenData = {
-      access_token: data.access_token,
-      // Keep existing refresh_token — Google doesn't always return a new one
-      refresh_token: data.refresh_token || token.refresh_token,
-      expires_at: Date.now() + data.expires_in * 1000,
-      email: token.email,
-    };
-    saveToken(refreshed);
-    return true;
+    // HTTP error from Google (400 invalid_grant, 401, etc.) = permanent
+    console.error('Google token refresh failed:', await res.text());
+    return 'permanent_failure';
   } catch (err) {
+    // Network error = transient
     console.error('Google token refresh error:', err);
-    return false;
+    return 'transient_failure';
   }
 }
 
@@ -312,10 +317,13 @@ async function googleFetch(path: string, params?: Record<string, string>): Promi
   // Refresh expired token before making the request
   if (!isTokenValid()) {
     if (token.refresh_token) {
-      const refreshed = await refreshAccessToken();
-      if (!refreshed) {
+      const result = await refreshAccessToken();
+      if (result === 'permanent_failure') {
         signOut();
         throw new Error('Google session expired. Please sign in again.');
+      }
+      if (result === 'transient_failure') {
+        throw new Error('Unable to reach Google. Please check your connection and try again.');
       }
       token = loadToken()!;
     } else {
