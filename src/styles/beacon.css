@@ -17,9 +17,9 @@
   --bg-sidebar: #f0eeeb;
 
   --text-primary: #1a1a1a;
-  --text-secondary: #6b7280;
-  --text-muted: #9ca3af;
-  --text-light: #d1d5db;
+  --text-secondary: #4b5563;  /* was #6b7280 — darker for better contrast */
+  --text-muted: #6b7280;      /* was #9ca3af — much darker for legibility */
+  --text-light: #9ca3af;
 
   --grid-lines: #e5e5e5;
   --border: #e5e5e5;
