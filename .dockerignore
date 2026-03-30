@@ -1,0 +1,10 @@
+.git
+node_modules
+dist
+android/
+ios/
+*.log
+.env*
+beacon/
+.claude/
+docs/

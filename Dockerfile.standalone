@@ -14,11 +14,14 @@ WORKDIR /app
 COPY --from=builder /app/dist /app/dist
 COPY server-standalone.js /app/server-standalone.js
 
-RUN mkdir -p /data
+RUN mkdir -p /data && \
+    addgroup -S beacon && adduser -S -G beacon beacon && chown -R beacon:beacon /app /data
 
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO /dev/null http://localhost:3000/health || exit 1
+
+USER beacon
 
 CMD ["node", "/app/server-standalone.js"]

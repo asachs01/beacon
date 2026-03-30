@@ -58,7 +58,23 @@ Or install manually:
 
 > **Tip:** For the best experience on a wall-mounted tablet, enable **Show in sidebar** in the add-on's Info tab so Beacon is one tap away.
 
-### Standalone / Development
+### Docker (Standalone)
+
+Run Beacon without Home Assistant using Docker:
+
+```bash
+# Quick start
+docker run -d -p 3000:3000 -v beacon-data:/data ghcr.io/asachs01/beacon-standalone:latest
+
+# Or with docker-compose
+git clone https://github.com/asachs01/beacon.git
+cd beacon
+docker-compose up -d
+```
+
+The `/data` volume persists calendars, lists, and tasks across container restarts. Open [http://localhost:3000](http://localhost:3000) once the container is running.
+
+### Development
 
 ```bash
 git clone https://github.com/asachs01/beacon.git

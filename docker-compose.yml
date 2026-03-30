@@ -3,10 +3,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.standalone
+    image: ghcr.io/asachs01/beacon-standalone
+    restart: unless-stopped
     ports:
       - "3000:3000"
     volumes:
       - beacon-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 
 volumes:
   beacon-data:
