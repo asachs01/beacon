@@ -1,3 +1,10 @@
+## [1.11.7](https://github.com/asachs01/beacon/compare/v1.11.6...v1.11.7) (2026-03-30)
+
+
+### Bug Fixes
+
+* improve text contrast — darken --text-muted and --text-secondary ([f36c3f3](https://github.com/asachs01/beacon/commit/f36c3f371e6cedd02980a9b503a51f014d483e3c)), closes [#9ca3af](https://github.com/asachs01/beacon/issues/9ca3af) [#6b7280](https://github.com/asachs01/beacon/issues/6b7280) [#6b7280](https://github.com/asachs01/beacon/issues/6b7280) [#4b5563](https://github.com/asachs01/beacon/issues/4b5563)
+
 ## [1.11.6](https://github.com/asachs01/beacon/compare/v1.11.5...v1.11.6) (2026-03-30)
 
 
