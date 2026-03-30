@@ -59,7 +59,7 @@ const styles = {
   container: {
     width: '100%',
     maxWidth: 520,
-    padding: '32px 40px',
+    padding: 'clamp(16px, 4vw, 32px) clamp(16px, 5vw, 40px)',
     background: 'var(--bg-surface)',
     borderRadius: 'var(--radius-xl)',
     boxShadow: 'var(--shadow-lg)',
@@ -220,7 +220,7 @@ const styles = {
 
   avatarPicker: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(8, 1fr)',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(36px, 1fr))',
     gap: 4,
     maxHeight: 160,
     overflowY: 'auto' as const,

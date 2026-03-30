@@ -1,8 +1,6 @@
 import { Photo } from '../types/photos';
 import { getConfig } from '../config';
 
-const { ha_url: HA_URL, ha_token: HA_TOKEN, photo_directory: PHOTOS_PATH } = getConfig();
-
 /**
  * Shuffles an array in place using Fisher-Yates.
  */
@@ -18,15 +16,16 @@ function shuffle<T>(arr: T[]): T[] {
  * Fetches photos from HA media browser API.
  */
 async function fetchHAMediaPhotos(): Promise<Photo[]> {
-  if (!HA_TOKEN) return [];
+  const { ha_url, ha_token } = getConfig();
+  if (!ha_token) return [];
 
   try {
-    const baseUrl = HA_URL.replace(/\/$/, '');
+    const baseUrl = ha_url.replace(/\/$/, '');
     const response = await fetch(
       `${baseUrl}/api/media_source/browse_media`,
       {
         headers: {
-          Authorization: `Bearer ${HA_TOKEN}`,
+          Authorization: `Bearer ${ha_token}`,
           'Content-Type': 'application/json',
         },
       },
@@ -59,15 +58,16 @@ async function fetchHAMediaPhotos(): Promise<Photo[]> {
  * Fetches photos from a local directory served by HA.
  */
 async function fetchLocalPhotos(): Promise<Photo[]> {
-  if (!HA_TOKEN) return [];
+  const { ha_url, ha_token, photo_directory } = getConfig();
+  if (!ha_token) return [];
 
   try {
-    const baseUrl = HA_URL.replace(/\/$/, '');
+    const baseUrl = ha_url.replace(/\/$/, '');
     const response = await fetch(
-      `${baseUrl}/api/media_source/browse_media?media_content_id=${encodeURIComponent(PHOTOS_PATH)}`,
+      `${baseUrl}/api/media_source/browse_media?media_content_id=${encodeURIComponent(photo_directory)}`,
       {
         headers: {
-          Authorization: `Bearer ${HA_TOKEN}`,
+          Authorization: `Bearer ${ha_token}`,
           'Content-Type': 'application/json',
         },
       },

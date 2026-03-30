@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { hasToken, callHaService } from '../api/ha-rest';
+import { hasToken, callHaService, haFetch } from '../api/ha-rest';
 import { useLocalTasks } from './useLocalTasks';
 
 export interface DashboardTodoItem {
@@ -24,9 +24,7 @@ export function useDashboardTasks(connected: boolean) {
     async function fetchTasks() {
       try {
         // Get the first non-grocery HA todo entity
-        const states = await (await fetch(
-          `${window.location.pathname.replace(/\/$/, '')}/api/states`
-        )).json() as Array<{ entity_id: string; state: string; attributes: Record<string, unknown> }>;
+        const states = await haFetch('/api/states') as Array<{ entity_id: string; state: string; attributes: Record<string, unknown> }>;
 
         const todoEntities = states.filter(s =>
           s.entity_id.startsWith('todo.') &&

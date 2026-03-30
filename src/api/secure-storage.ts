@@ -1,3 +1,4 @@
+// NOTE: On web, tokens are stored in localStorage (not encrypted). Only native platforms use secure storage.
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 

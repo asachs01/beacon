@@ -6,6 +6,7 @@ import {
   removeSecureItem,
   StorageKeys,
 } from '../api/secure-storage';
+import { isAddOn } from '../utils/ha-env';
 
 interface HaAuthState {
   /** Whether the user has completed onboarding */
@@ -59,6 +60,14 @@ export function useHaAuth() {
     let cancelled = false;
 
     async function loadCredentials() {
+      // Add-on mode: auth is handled by the ingress proxy, no storage reads needed
+      if (isAddOn()) {
+        if (!cancelled) {
+          setState({ isOnboarded: true, haUrl: '', haToken: '', loading: false });
+        }
+        return;
+      }
+
       try {
         const [onboarded, haUrl, haToken] = await Promise.all([
           getSecureItem(StorageKeys.ONBOARDED),

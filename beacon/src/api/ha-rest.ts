@@ -41,7 +41,11 @@ function getBaseUrl() {
 }
 
 function getHaToken() {
-  if (_haToken === null) _haToken = getConfig().ha_token;
+  if (_haToken === null) {
+    const configToken = getConfig().ha_token;
+    if (configToken) _haToken = configToken;
+    return configToken || _haToken || '';
+  }
   return _haToken;
 }
 
