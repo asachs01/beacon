@@ -237,6 +237,7 @@ export function App() {
   }, [createEvent, fetchEvents, handleCloseModal]);
 
   const handleDeleteEvent = useCallback(async (calendarId: string, eventId: string) => {
+    if (calendarId.startsWith('google:')) return; // Google Calendar events are read-only
     try {
       await deleteEvent(calendarId, eventId);
 
@@ -251,6 +252,7 @@ export function App() {
   }, [deleteEvent, fetchEvents, handleCloseModal]);
 
   const handleEventReschedule = useCallback(async (event: CalendarEvent, newDate: string, newHour: number) => {
+    if (event.calendarId.startsWith('google:')) return; // Google Calendar events are read-only
     try {
       const oldStart = new Date(event.start);
       const oldEnd = new Date(event.end);
