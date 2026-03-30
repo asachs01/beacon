@@ -1,18 +1,23 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { FamilyStore } from '../api/family';
 import { Chore, ChoreCompletion, Streak, MemberEarnings } from '../types/family';
-import { HomeAssistantClient } from '../api/homeassistant';
 
-export function useChores(haClient?: () => HomeAssistantClient | null) {
-  const store = useMemo(() => new FamilyStore(haClient), [haClient]);
-  const [chores, setChores] = useState<Chore[]>([]);
+export function useChores() {
+  const store = useMemo(() => new FamilyStore(), []);
+  // Initialize with localStorage data immediately
+  const [chores, setChores] = useState<Chore[]>(() => store.getChoresSync());
   const [completionsToday, setCompletionsToday] = useState<ChoreCompletion[]>([]);
   const [streaks, setStreaks] = useState<Streak[]>([]);
 
-  const refresh = useCallback(() => {
-    setChores(store.getChores());
-    setCompletionsToday(store.getCompletionsToday());
-    setStreaks(store.getStreaks());
+  const refresh = useCallback(async () => {
+    const [c, ct, s] = await Promise.all([
+      store.getChores(),
+      store.getCompletionsToday(),
+      store.getStreaks(),
+    ]);
+    setChores(c);
+    setCompletionsToday(ct);
+    setStreaks(s);
   }, [store]);
 
   useEffect(() => {
@@ -20,41 +25,41 @@ export function useChores(haClient?: () => HomeAssistantClient | null) {
   }, [refresh]);
 
   const addChore = useCallback(
-    (chore: Omit<Chore, 'id'>) => {
-      store.addChore(chore);
-      refresh();
+    async (chore: Omit<Chore, 'id'>) => {
+      await store.addChore(chore);
+      await refresh();
     },
     [store, refresh]
   );
 
   const updateChore = useCallback(
-    (id: string, data: Partial<Omit<Chore, 'id'>>) => {
-      store.updateChore(id, data);
-      refresh();
+    async (id: string, data: Partial<Omit<Chore, 'id'>>) => {
+      await store.updateChore(id, data);
+      await refresh();
     },
     [store, refresh]
   );
 
   const removeChore = useCallback(
-    (id: string) => {
-      store.removeChore(id);
-      refresh();
+    async (id: string) => {
+      await store.removeChore(id);
+      await refresh();
     },
     [store, refresh]
   );
 
   const completeChore = useCallback(
-    (choreId: string, memberId: string) => {
-      store.completeChore(choreId, memberId);
-      refresh();
+    async (choreId: string, memberId: string) => {
+      await store.completeChore(choreId, memberId);
+      await refresh();
     },
     [store, refresh]
   );
 
   const uncompleteChore = useCallback(
-    (choreId: string, memberId: string) => {
-      store.uncompleteChore(choreId, memberId);
-      refresh();
+    async (choreId: string, memberId: string) => {
+      await store.uncompleteChore(choreId, memberId);
+      await refresh();
     },
     [store, refresh]
   );
@@ -103,8 +108,8 @@ export function useChores(haClient?: () => HomeAssistantClient | null) {
   );
 
   const getEarningsForPeriod = useCallback(
-    (startDate: string, endDate: string): MemberEarnings[] => {
-      const completions = store.getCompletionsForPeriod(startDate, endDate);
+    async (startDate: string, endDate: string): Promise<MemberEarnings[]> => {
+      const completions = await store.getCompletionsForPeriod(startDate, endDate);
       const choreMap = new Map(chores.map((c) => [c.id, c]));
       const earningsMap = new Map<string, MemberEarnings>();
 

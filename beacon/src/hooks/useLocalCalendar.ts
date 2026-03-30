@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { CalendarEvent, CalendarInfo } from '../types';
+import { loadData, loadDataSync, saveData } from '../api/beacon-store';
 
 /**
- * Built-in local calendar backed by localStorage.
- * Works without any HA integration — install and go.
+ * Built-in local calendar synced via beacon-store.
+ * Server is source of truth in add-on mode; localStorage is offline cache.
  */
 
 const EVENTS_KEY = 'beacon-local-events';
@@ -16,24 +17,19 @@ export const LOCAL_CALENDAR: CalendarInfo = {
   color: '#6366f1', // indigo accent
 };
 
-function loadEvents(): CalendarEvent[] {
-  try {
-    const raw = localStorage.getItem(EVENTS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return [];
-}
-
-function saveEvents(events: CalendarEvent[]): void {
-  try {
-    localStorage.setItem(EVENTS_KEY, JSON.stringify(events));
-  } catch { /* ignore */ }
-}
-
 export function useLocalCalendar() {
-  const [events, setEvents] = useState<CalendarEvent[]>(loadEvents);
+  // Initialize with localStorage data immediately
+  const [events, setEvents] = useState<CalendarEvent[]>(() =>
+    loadDataSync<CalendarEvent[]>(EVENTS_KEY, [])
+  );
 
-  useEffect(() => { saveEvents(events); }, [events]);
+  // Fetch from server on mount
+  useEffect(() => {
+    loadData<CalendarEvent[]>(EVENTS_KEY, []).then(setEvents);
+  }, []);
+
+  // Persist on change
+  useEffect(() => { saveData(EVENTS_KEY, events); }, [events]);
 
   const getEventsInRange = useCallback((start: string, end: string): CalendarEvent[] => {
     const startDate = new Date(start);

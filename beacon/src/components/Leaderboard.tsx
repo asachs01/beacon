@@ -1,13 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
-import { HomeAssistantClient } from '../api/homeassistant';
+import { MemberEarnings } from '../types/family';
 
 interface LeaderboardProps {
   open: boolean;
   onClose: () => void;
-  haClient?: () => HomeAssistantClient | null;
 }
 
 type Period = 'week' | 'month';
@@ -34,15 +33,19 @@ function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-const RANK_DECORATIONS = ['🥇', '🥈', '🥉'];
+const RANK_DECORATIONS = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
 
-export function Leaderboard({ open, onClose, haClient }: LeaderboardProps) {
-  const { members } = useFamily(haClient);
-  const { getEarningsForPeriod, getStreakForMember } = useChores(haClient);
+export function Leaderboard({ open, onClose }: LeaderboardProps) {
+  const { members } = useFamily();
+  const { getEarningsForPeriod, getStreakForMember } = useChores();
   const [period, setPeriod] = useState<Period>('week');
+  const [earnings, setEarnings] = useState<MemberEarnings[]>([]);
 
   const [start, end] = period === 'week' ? getWeekRange() : getMonthRange();
-  const earnings = getEarningsForPeriod(start, end);
+
+  useEffect(() => {
+    getEarningsForPeriod(start, end).then(setEarnings);
+  }, [start, end, getEarningsForPeriod]);
 
   // Build ranked list — include members with zero earnings too
   const ranked = useMemo(() => {

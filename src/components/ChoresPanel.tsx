@@ -4,18 +4,16 @@ import { ChoreCard } from './ChoreCard';
 import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
-import { HomeAssistantClient } from '../api/homeassistant';
 
 interface ChoresPanelProps {
   open: boolean;
   onClose: () => void;
-  haClient?: () => HomeAssistantClient | null;
 }
 
 const CHORE_ICONS = ['🧹', '🍽️', '🐕', '🛏️', '📚', '🗑️', '👕', '🧺', '🪥', '🚿', '🧼', '💪'];
 
-export function ChoresPanel({ open, onClose, haClient }: ChoresPanelProps) {
-  const { members } = useFamily(haClient);
+export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
+  const { members } = useFamily();
   const {
     addChore,
     completeChore,
@@ -24,7 +22,7 @@ export function ChoresPanel({ open, onClose, haClient }: ChoresPanelProps) {
     getStreakForMember,
     getChoresForMember,
     getMemberProgress,
-  } = useChores(haClient);
+  } = useChores();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newChore, setNewChore] = useState({

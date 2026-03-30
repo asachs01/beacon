@@ -92,7 +92,7 @@ export function App() {
     addMember,
     updateMember,
     removeMember,
-  } = useFamily(client);
+  } = useFamily();
 
   const { weather } = useWeather(client);
   const music = useMusic(client, connected);
@@ -101,7 +101,7 @@ export function App() {
     completionsToday,
     completeChore,
     uncompleteChore,
-  } = useChores(client);
+  } = useChores();
 
   const dashboardTasks = useDashboardTasks(connected);
 
@@ -551,7 +551,6 @@ export function App() {
       <ChoresPanel
         open={showChoresPanel}
         onClose={handleClosePanel}
-        haClient={client}
       />
       {showChoresPanel && (
         <div
@@ -564,7 +563,6 @@ export function App() {
       <Leaderboard
         open={showLeaderboard}
         onClose={handleClosePanel}
-        haClient={client}
       />
       {showLeaderboard && (
         <div

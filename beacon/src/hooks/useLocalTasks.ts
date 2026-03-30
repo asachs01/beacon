@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
+import { loadData, loadDataSync, saveData } from '../api/beacon-store';
 
 /**
- * Built-in local task/todo list backed by localStorage.
- * Works without any HA integration — install and go.
+ * Built-in local task/todo list synced via beacon-store.
+ * Server is source of truth in add-on mode; localStorage is offline cache.
  */
 
 export interface LocalTask {
@@ -27,41 +28,24 @@ const DEFAULT_LISTS: LocalTaskList[] = [
   { id: 'beacon-shopping', name: 'Shopping List' },
 ];
 
-function loadLists(): LocalTaskList[] {
-  try {
-    const raw = localStorage.getItem(LISTS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return DEFAULT_LISTS;
-}
-
-function saveLists(lists: LocalTaskList[]): void {
-  try {
-    localStorage.setItem(LISTS_KEY, JSON.stringify(lists));
-  } catch { /* ignore */ }
-}
-
-function loadTasks(): LocalTask[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return [];
-}
-
-function saveTasks(tasks: LocalTask[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-  } catch { /* ignore */ }
-}
-
 export function useLocalTasks() {
-  const [lists, setLists] = useState<LocalTaskList[]>(loadLists);
-  const [tasks, setTasks] = useState<LocalTask[]>(loadTasks);
+  // Initialize with localStorage data immediately
+  const [lists, setLists] = useState<LocalTaskList[]>(() =>
+    loadDataSync<LocalTaskList[]>(LISTS_KEY, DEFAULT_LISTS)
+  );
+  const [tasks, setTasks] = useState<LocalTask[]>(() =>
+    loadDataSync<LocalTask[]>(STORAGE_KEY, [])
+  );
+
+  // Fetch from server on mount
+  useEffect(() => {
+    loadData<LocalTaskList[]>(LISTS_KEY, DEFAULT_LISTS).then(setLists);
+    loadData<LocalTask[]>(STORAGE_KEY, []).then(setTasks);
+  }, []);
 
   // Persist on change
-  useEffect(() => { saveLists(lists); }, [lists]);
-  useEffect(() => { saveTasks(tasks); }, [tasks]);
+  useEffect(() => { saveData(LISTS_KEY, lists); }, [lists]);
+  useEffect(() => { saveData(STORAGE_KEY, tasks); }, [tasks]);
 
   const getTasksForList = useCallback((listId: string) => {
     return tasks.filter(t => t.listId === listId);

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getConfig } from '../config';
+import { loadData, loadDataSync, saveData } from '../api/beacon-store';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -108,79 +109,39 @@ function buildDefaults(): BeaconSettings {
 }
 
 // ---------------------------------------------------------------------------
-// Persistence
+// Persistence helpers
 // ---------------------------------------------------------------------------
 
-function loadSettings(): BeaconSettings {
+function loadSettingsSync(): BeaconSettings {
   const defaults = buildDefaults();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaults;
-    const stored = JSON.parse(raw);
-    // Merge stored values onto defaults so new keys are always present
-    return { ...defaults, ...stored };
-  } catch {
-    return defaults;
-  }
+  const stored = loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {});
+  return { ...defaults, ...stored };
 }
 
-function getDataApiBase(): string {
-  if (window.__BEACON_CONFIG__) {
-    return window.location.pathname.replace(/\/$/, '');
-  }
-  return '';
+async function loadSettingsAsync(): Promise<BeaconSettings> {
+  const defaults = buildDefaults();
+  const stored = await loadData<Partial<BeaconSettings>>(STORAGE_KEY, {});
+  return { ...defaults, ...stored };
 }
 
 function persistSettings(settings: BeaconSettings): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {
-    // localStorage unavailable
-  }
-  // Also persist to server in add-on mode
-  if (window.__BEACON_CONFIG__) {
-    const base = getDataApiBase();
-    fetch(`${base}/beacon-data/${STORAGE_KEY}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings),
-    }).catch(() => {});
-  }
+  saveData(STORAGE_KEY, settings);
 }
-
-/**
- * Restore settings from server BEFORE React initializes.
- * Uses synchronous XHR to ensure settings are in localStorage
- * before the first useState(loadSettings) call.
- */
-function restoreSettingsFromServerSync(): void {
-  if (!window.__BEACON_CONFIG__) return;
-  const localRaw = localStorage.getItem(STORAGE_KEY);
-  if (localRaw) return; // localStorage has data, don't overwrite
-
-  try {
-    const base = getDataApiBase();
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', `${base}/beacon-data/${STORAGE_KEY}`, false); // synchronous
-    xhr.send();
-    if (xhr.status === 200 && xhr.responseText && xhr.responseText !== 'null') {
-      const data = JSON.parse(xhr.responseText);
-      if (data && typeof data === 'object' && data.familyName) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      }
-    }
-  } catch { /* best-effort */ }
-}
-
-// Restore BEFORE React mounts — must be synchronous
-restoreSettingsFromServerSync();
 
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
 export function useSettings() {
-  const [settings, setSettingsState] = useState<BeaconSettings>(loadSettings);
+  // Initialize with localStorage data immediately
+  const [settings, setSettingsState] = useState<BeaconSettings>(loadSettingsSync);
+
+  // Fetch from server on mount, update if server has newer data
+  useEffect(() => {
+    loadSettingsAsync().then((serverSettings) => {
+      setSettingsState(serverSettings);
+    });
+  }, []);
 
   // Persist whenever settings change
   useEffect(() => {
