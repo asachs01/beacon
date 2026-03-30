@@ -100,6 +100,7 @@ Additional settings (themes, family members, chores, calendar sources, list prov
 
 ## Documentation
 
+- [Getting Started Guide](docs/getting-started.md) -- full walkthrough with screenshots
 - [Contributing Guide](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
 - [Security Policy](SECURITY.md)
