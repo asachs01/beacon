@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/asachs01/beacon/compare/v1.13.0...v1.14.0) (2026-03-30)
+
+
+### Features
+
+* server-first data sync — all devices share same data ([831b344](https://github.com/asachs01/beacon/commit/831b344bedbb592d42a1d78a9597e0544b922b5d))
+
 # [1.13.0](https://github.com/asachs01/beacon/compare/v1.12.0...v1.13.0) (2026-03-30)
 
 
