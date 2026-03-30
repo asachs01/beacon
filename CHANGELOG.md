@@ -1,3 +1,10 @@
+## [1.11.6](https://github.com/asachs01/beacon/compare/v1.11.5...v1.11.6) (2026-03-30)
+
+
+### Bug Fixes
+
+* all-day events align with calendar day columns ([07563f4](https://github.com/asachs01/beacon/commit/07563f44fdb13296ff8bf1e2fee2367abb8bc693))
+
 ## [1.11.5](https://github.com/asachs01/beacon/compare/v1.11.4...v1.11.5) (2026-03-30)
 
 
