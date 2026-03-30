@@ -1,3 +1,10 @@
+## [1.11.3](https://github.com/asachs01/beacon/compare/v1.11.2...v1.11.3) (2026-03-30)
+
+
+### Bug Fixes
+
+* path traversal, shell injection, body limits, async I/O, auth ([6e8c672](https://github.com/asachs01/beacon/commit/6e8c672664e5b5ed376b5e019e03b77104689144))
+
 ## [1.11.2](https://github.com/asachs01/beacon/compare/v1.11.1...v1.11.2) (2026-03-29)
 
 
