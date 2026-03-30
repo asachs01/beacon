@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/asachs01/beacon/compare/v1.15.0...v1.16.0) (2026-03-30)
+
+
+### Features
+
+* hourly forecast detail when tapping a day in weather view ([862eca2](https://github.com/asachs01/beacon/commit/862eca2786b753f13f8655aecde4d3eef2c7792a))
+
 # [1.15.0](https://github.com/asachs01/beacon/compare/v1.14.0...v1.15.0) (2026-03-30)
 
 
