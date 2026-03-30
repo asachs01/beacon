@@ -8,7 +8,7 @@
  */
 
 const http = require('http');
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
 
 const PORT = 3000;
@@ -33,12 +33,22 @@ const MIME_TYPES = {
 };
 
 // Ensure data directory exists
-try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch { /* ignore */ }
+fs.mkdir(DATA_DIR, { recursive: true }).catch(() => {});
 
-function serveStatic(req, res) {
+async function serveStatic(req, res) {
   let filePath = path.join(DIST, req.url === '/' ? '/index.html' : req.url.split('?')[0]);
 
-  if (!fs.existsSync(filePath)) {
+  // Path traversal protection
+  const resolved = path.resolve(filePath);
+  if (!resolved.startsWith(path.resolve(DIST) + path.sep) && resolved !== path.resolve(DIST)) {
+    res.writeHead(400);
+    res.end('Bad request');
+    return;
+  }
+
+  try {
+    await fs.stat(filePath);
+  } catch {
     filePath = path.join(DIST, 'index.html');
   }
 
@@ -46,7 +56,7 @@ function serveStatic(req, res) {
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
   try {
-    const data = fs.readFileSync(filePath);
+    const data = await fs.readFile(filePath);
     res.writeHead(200, { 'Content-Type': contentType });
     res.end(data);
   } catch {
@@ -142,7 +152,7 @@ function handleServiceCall(req, res) {
  * GET  /beacon-data/:key  → read stored JSON
  * PUT  /beacon-data/:key  → write JSON body to storage
  */
-function handleDataApi(req, res) {
+async function handleDataApi(req, res) {
   // Sanitize key: only allow alphanumeric, hyphens, underscores
   const key = req.url.replace('/beacon-data/', '').replace(/[^a-zA-Z0-9_-]/g, '');
   if (!key) {
@@ -155,17 +165,17 @@ function handleDataApi(req, res) {
 
   if (req.method === 'GET') {
     try {
-      if (fs.existsSync(filePath)) {
-        const data = fs.readFileSync(filePath, 'utf8');
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(data);
-      } else {
+      const data = await fs.readFile(filePath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(data);
+    } catch (err) {
+      if (err.code === 'ENOENT') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end('null');
+      } else {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
       }
-    } catch (err) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: err.message }));
     }
     return;
   }
@@ -173,12 +183,12 @@ function handleDataApi(req, res) {
   if (req.method === 'PUT') {
     const chunks = [];
     req.on('data', (chunk) => chunks.push(chunk));
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
         const body = Buffer.concat(chunks).toString('utf8');
         // Validate JSON
         JSON.parse(body);
-        fs.writeFileSync(filePath, body, 'utf8');
+        await fs.writeFile(filePath, body, 'utf8');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
       } catch (err) {
@@ -555,7 +565,10 @@ const server = http.createServer((req, res) => {
 
   // Persistent data API
   if (req.url.startsWith('/beacon-data/')) {
-    handleDataApi(req, res);
+    handleDataApi(req, res).catch((err) => {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    });
     return;
   }
 
@@ -570,7 +583,10 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  serveStatic(req, res);
+  serveStatic(req, res).catch((err) => {
+    res.writeHead(500);
+    res.end('Internal server error');
+  });
 });
 
 // Handle WebSocket upgrades for /api/websocket

@@ -38,7 +38,7 @@ async function serveStatic(req, res) {
 
   // Path traversal protection
   const resolved = path.resolve(filePath);
-  if (!resolved.startsWith(path.resolve(DIST))) {
+  if (!resolved.startsWith(path.resolve(DIST) + path.sep) && resolved !== path.resolve(DIST)) {
     res.writeHead(400);
     res.end('Bad request');
     return;

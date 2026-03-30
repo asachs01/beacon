@@ -7,4 +7,6 @@ ios/
 .env*
 beacon/
 .claude/
+.github/
 docs/
+docs-site/
