@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/asachs01/beacon/compare/v1.14.0...v1.15.0) (2026-03-30)
+
+
+### Features
+
+* rename Midnight → Beacon Dark, Midnight Light → Beacon Light ([6e62124](https://github.com/asachs01/beacon/commit/6e6212432f99fc94a5d2a264343e4738750b2c45)), closes [#0f172a](https://github.com/asachs01/beacon/issues/0f172a) [#f59e0b](https://github.com/asachs01/beacon/issues/f59e0b) [#f8fafc](https://github.com/asachs01/beacon/issues/f8fafc)
+
 # [1.14.0](https://github.com/asachs01/beacon/compare/v1.13.0...v1.14.0) (2026-03-30)
 
 
