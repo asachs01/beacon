@@ -1,3 +1,10 @@
+## [1.11.5](https://github.com/asachs01/beacon/compare/v1.11.4...v1.11.5) (2026-03-30)
+
+
+### Bug Fixes
+
+* synchronous server restore prevents settings/family data loss ([ec5d547](https://github.com/asachs01/beacon/commit/ec5d547d3064f02fb751545cefcd4ebfc44d86d0))
+
 ## [1.11.4](https://github.com/asachs01/beacon/compare/v1.11.3...v1.11.4) (2026-03-30)
 
 
