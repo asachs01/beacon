@@ -560,6 +560,8 @@ a:focus:not(:focus-visible) {
   flex-direction: column;
   gap: 2px;
   min-height: 32px;
+  overflow: hidden;
+  min-width: 0; /* prevent event content from expanding the grid cell */
 }
 
 .week-allday-cell--today {
@@ -721,6 +723,8 @@ a:focus:not(:focus-visible) {
   right: auto;
   border-radius: 6px;
   min-height: 22px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .event-block--allday .event-block-content {
