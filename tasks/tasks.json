@@ -223,6 +223,120 @@
           "tags": ["phase-4"]
         }
       ]
+    },
+    {
+      "id": 5,
+      "title": "Phase 5: Video Production",
+      "description": "Automated video walkthrough series — 10 featurettes using ElevenLabs voice cloning + Playwright screen recordings.",
+      "status": "pending",
+      "priority": "medium",
+      "tags": ["phase-5", "video", "marketing"],
+      "subtasks": [
+        {
+          "id": 501,
+          "title": "Set up demo data and recording environment",
+          "description": "Populate a Beacon instance with realistic demo data (calendar events, lists, chores, media, weather). Configure Playwright for headless screen recording at 1080p/30fps.",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 502,
+          "title": "Set up ElevenLabs voice profile",
+          "description": "Create or select a warm, conversational voice in ElevenLabs. Clone a voice or choose from the Voice Library. Test with sample narration from script 01.",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 503,
+          "title": "Produce featurette 01 — Meet Beacon",
+          "description": "Record screen footage using automation/01-meet-beacon.ts, generate voiceover from scripts/01-meet-beacon.md, composite with FFmpeg.",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 504,
+          "title": "Produce featurette 02 — Family Calendar",
+          "description": "Record screen footage using automation/02-family-calendar.ts, generate voiceover from scripts/02-family-calendar.md, composite with FFmpeg.",
+          "status": "pending",
+          "priority": "high",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 505,
+          "title": "Produce featurette 03 — Lists That Work",
+          "description": "Record screen footage using automation/03-lists-that-work.ts, generate voiceover from scripts/03-lists-that-work.md, composite with FFmpeg.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 506,
+          "title": "Produce featurette 04 — Chore Tracking",
+          "description": "Record screen footage using automation/04-chore-tracking.ts, generate voiceover from scripts/04-chore-tracking.md, composite with FFmpeg.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 507,
+          "title": "Produce featurette 05 — Music Control",
+          "description": "Record screen footage using automation/05-music-control.ts, generate voiceover from scripts/05-music-control.md, composite with FFmpeg.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 508,
+          "title": "Produce featurette 06 — Weather Forecast",
+          "description": "Record screen footage using automation/06-weather-forecast.ts, generate voiceover from scripts/06-weather-forecast.md, composite with FFmpeg.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 509,
+          "title": "Produce featurette 07 — Kitchen Timers",
+          "description": "Record screen footage using automation/07-multiple-timers.ts, generate voiceover from scripts/07-multiple-timers.md, composite with FFmpeg.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 510,
+          "title": "Produce featurette 08 — Any Screen",
+          "description": "Record screen footage using automation/08-any-screen.ts (multi-viewport), generate voiceover from scripts/08-any-screen.md, composite with FFmpeg.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 511,
+          "title": "Produce featurette 09 — Voice & AI",
+          "description": "Mixed recording: manual voice/AI demos + automated dashboard captures. Generate voiceover from scripts/09-voice-ai.md, composite with FFmpeg.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 512,
+          "title": "Produce featurette 10 — Install",
+          "description": "Record HA add-on install flow using automation/10-install.ts, generate voiceover from scripts/10-install.md, composite with FFmpeg.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-5"]
+        },
+        {
+          "id": 513,
+          "title": "Final review, title cards, and export",
+          "description": "Add Beacon logo title cards, intro/outro bumpers, consistent fade transitions. Export all 10 featurettes at 1080p MP4 for YouTube and 720p vertical for social.",
+          "status": "pending",
+          "priority": "medium",
+          "tags": ["phase-5"]
+        }
+      ]
     }
   ]
 }
