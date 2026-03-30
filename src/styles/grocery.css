@@ -254,6 +254,13 @@
   opacity: 1;
 }
 
+/* Always show delete button on touch devices */
+@media (hover: none), (max-width: 1024px) {
+  .grocery-view-delete {
+    opacity: 0.5;
+  }
+}
+
 .grocery-view-delete:hover {
   color: #e55;
 }

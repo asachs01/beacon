@@ -44,6 +44,19 @@ export function MusicView({
   onPrevious,
   onSetVolume,
 }: MusicViewProps) {
+  // Empty state when no media players found
+  if (players.length === 0) {
+    return (
+      <div className="music-view" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🎵</div>
+          <h2 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: 8 }}>No Media Players</h2>
+          <p style={{ fontSize: '0.9rem' }}>Connect a media player in Home Assistant to control music from here.</p>
+        </div>
+      </div>
+    );
+  }
+
   const player = activePlayer || players.find((p) => p.entity_id === selectedPlayerId) || players[0] || null;
   const isPlaying = player?.state === 'playing';
 

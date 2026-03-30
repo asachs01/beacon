@@ -22,6 +22,8 @@ html[data-theme] .modal-overlay {
 [data-theme="dark"] {
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
+  --bg-page: #1e293b;
+  --bg-sidebar: #0f172a;
   --bg-tertiary: #334155;
   --bg-hover: #475569;
 
@@ -48,6 +50,8 @@ html[data-theme] .modal-overlay {
 [data-theme="light"] {
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
+  --bg-page: #ffffff;
+  --bg-sidebar: #f0eeeb;
   --bg-tertiary: #e2e8f0;
   --bg-hover: #cbd5e1;
 
