@@ -8,6 +8,9 @@ export default defineConfig({
     host: true,
   },
   base: './',
+  define: {
+    '__BUILD_TIME__': JSON.stringify(String(Date.now())),
+  },
   build: {
     outDir: 'dist',
     sourcemap: false,

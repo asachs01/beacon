@@ -17,6 +17,8 @@ RUN apk add --no-cache nodejs
 WORKDIR /app
 
 COPY --from=builder /app/dist /app/dist
+# Stamp build time into SW cache name (public/sw.js is not processed by Vite)
+RUN sed -i "s/__BUILD_TIME__/$(date +%s)/g" /app/dist/sw.js || true
 COPY run.sh /app/run.sh
 COPY server.js /app/server.js
 COPY custom_sentences/ /app/custom_sentences/

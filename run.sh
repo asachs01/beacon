@@ -63,5 +63,8 @@ if [ -f "${VOICE_INTENTS_SRC}" ]; then
   bashio::log.info "Installed Beacon voice intents to /config/custom_intents/"
 fi
 
+# Stamp build time into service worker cache name (public/sw.js is copied as-is by Vite)
+sed -i "s/__BUILD_TIME__/$(date +%s)/g" /app/dist/sw.js 2>/dev/null || true
+
 bashio::log.info "Starting Beacon server on port 3000 (API proxy enabled)..."
 exec node /app/server.js
