@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Flag } from 'lucide-react';
+import { Play, Pause, RotateCcw, Flag, X, Plus } from 'lucide-react';
 
 const PRESETS = [
   { label: '1m', seconds: 60 },
@@ -7,12 +7,23 @@ const PRESETS = [
   { label: '10m', seconds: 600 },
   { label: '15m', seconds: 900 },
   { label: '30m', seconds: 1800 },
+  { label: '1h', seconds: 3600 },
 ];
 
-type TimerMode = 'stopwatch' | 'countdown';
+type TimerMode = 'stopwatch' | 'timers';
 
 interface TimerProps {
   compact?: boolean;
+}
+
+interface TimerInstance {
+  id: string;
+  name: string;
+  totalMs: number;
+  startedAt: number;
+  pausedElapsed: number;
+  running: boolean;
+  finished: boolean;
 }
 
 function formatTime(totalMs: number): string {
@@ -27,9 +38,6 @@ function formatTime(totalMs: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-/**
- * Play a short beep using Web Audio API. No external files needed.
- */
 function playBeep() {
   try {
     const ctx = new AudioContext();
@@ -39,12 +47,11 @@ function playBeep() {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    osc.frequency.value = 880; // A5
+    osc.frequency.value = 880;
     osc.type = 'sine';
     gain.gain.value = 0.3;
 
     osc.start();
-    // Beep pattern: 3 short beeps
     const now = ctx.currentTime;
     gain.gain.setValueAtTime(0.3, now);
     gain.gain.setValueAtTime(0, now + 0.15);
@@ -60,82 +67,141 @@ function playBeep() {
   }
 }
 
+let nextTimerId = 1;
+
 export function Timer({ compact = false }: TimerProps) {
-  const [mode, setMode] = useState<TimerMode>('countdown');
-  const [running, setRunning] = useState(false);
-  const [elapsed, setElapsed] = useState(0); // ms elapsed
-  const [countdownTotal, setCountdownTotal] = useState(300_000); // 5 min default
-  const [laps, setLaps] = useState<number[]>([]);
-  const [finished, setFinished] = useState(false);
-  const startTimeRef = useRef<number>(0);
-  const baseElapsedRef = useRef<number>(0);
+  const [mode, setMode] = useState<TimerMode>('timers');
+
+  // --- Multi-timer state ---
+  const [timers, setTimers] = useState<TimerInstance[]>([]);
+  const [newName, setNewName] = useState('');
+  const [selectedPreset, setSelectedPreset] = useState(300); // 5m default
+  const timersRef = useRef<TimerInstance[]>([]);
   const rafRef = useRef<number>(0);
-  const beeped = useRef(false);
+  const beeped = useRef<Set<string>>(new Set());
 
-  const tick = useCallback(() => {
+  // Keep ref in sync
+  timersRef.current = timers;
+
+  // --- Stopwatch state ---
+  const [swRunning, setSwRunning] = useState(false);
+  const [swElapsed, setSwElapsed] = useState(0);
+  const [laps, setLaps] = useState<number[]>([]);
+  const swStartRef = useRef<number>(0);
+  const swBaseRef = useRef<number>(0);
+  const swRafRef = useRef<number>(0);
+
+  // Single RAF loop for all countdown timers
+  const tickTimers = useCallback(() => {
     const now = performance.now();
-    const current = baseElapsedRef.current + (now - startTimeRef.current);
-    setElapsed(current);
 
-    // Check if countdown finished
-    if (mode === 'countdown' && current >= countdownTotal && !beeped.current) {
-      beeped.current = true;
-      setFinished(true);
-      setRunning(false);
-      playBeep();
-      return;
-    }
+    setTimers((prev) => {
+      const next = prev.map((t) => {
+        if (!t.running || t.finished) return t;
+        const currentElapsed = t.pausedElapsed + (now - t.startedAt);
+        if (currentElapsed >= t.totalMs) {
+          if (!beeped.current.has(t.id)) {
+            beeped.current.add(t.id);
+            playBeep();
+          }
+          return { ...t, running: false, finished: true, pausedElapsed: t.totalMs };
+        }
+        return t;
+      });
+      return next;
+    });
 
-    rafRef.current = requestAnimationFrame(tick);
-  }, [mode, countdownTotal]);
-
-  useEffect(() => {
-    if (running) {
-      startTimeRef.current = performance.now();
-      rafRef.current = requestAnimationFrame(tick);
-    }
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [running, tick]);
-
-  const handleStart = useCallback(() => {
-    if (finished) return;
-    setRunning(true);
-  }, [finished]);
-
-  const handlePause = useCallback(() => {
-    baseElapsedRef.current = elapsed;
-    setRunning(false);
-  }, [elapsed]);
-
-  const handleReset = useCallback(() => {
-    cancelAnimationFrame(rafRef.current);
-    setRunning(false);
-    setElapsed(0);
-    setLaps([]);
-    setFinished(false);
-    baseElapsedRef.current = 0;
-    beeped.current = false;
+    // We always keep ticking if there are running timers — re-check in the next frame
+    rafRef.current = requestAnimationFrame(tickTimers);
   }, []);
 
-  const handleLap = useCallback(() => {
-    if (!running) return;
-    setLaps((prev) => [...prev, elapsed]);
-  }, [running, elapsed]);
+  // Start/stop the RAF loop based on whether any timer is running
+  useEffect(() => {
+    const hasRunning = timers.some((t) => t.running && !t.finished);
+    if (hasRunning) {
+      rafRef.current = requestAnimationFrame(tickTimers);
+    }
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [timers, tickTimers]);
 
-  const handlePreset = useCallback((seconds: number) => {
-    handleReset();
-    setMode('countdown');
-    setCountdownTotal(seconds * 1000);
-  }, [handleReset]);
+  // Compute remaining time for display (called during render)
+  function getRemaining(t: TimerInstance): number {
+    if (t.finished) return 0;
+    const elapsed = t.running
+      ? t.pausedElapsed + (performance.now() - t.startedAt)
+      : t.pausedElapsed;
+    return Math.max(0, t.totalMs - elapsed);
+  }
 
-  const handleSwitchMode = useCallback(() => {
-    handleReset();
-    setMode((prev) => (prev === 'stopwatch' ? 'countdown' : 'stopwatch'));
-  }, [handleReset]);
+  const addTimer = useCallback(() => {
+    const name = newName.trim() || `Timer ${nextTimerId}`;
+    const t: TimerInstance = {
+      id: `t-${nextTimerId++}-${Date.now()}`,
+      name,
+      totalMs: selectedPreset * 1000,
+      startedAt: performance.now(),
+      pausedElapsed: 0,
+      running: true,
+      finished: false,
+    };
+    setTimers((prev) => [...prev, t]);
+    setNewName('');
+  }, [newName, selectedPreset]);
 
-  const displayMs = mode === 'countdown'
-    ? Math.max(0, countdownTotal - elapsed)
-    : elapsed;
+  const pauseTimer = useCallback((id: string) => {
+    setTimers((prev) =>
+      prev.map((t) => {
+        if (t.id !== id || !t.running) return t;
+        const elapsed = t.pausedElapsed + (performance.now() - t.startedAt);
+        return { ...t, running: false, pausedElapsed: elapsed };
+      }),
+    );
+  }, []);
+
+  const resumeTimer = useCallback((id: string) => {
+    setTimers((prev) =>
+      prev.map((t) => {
+        if (t.id !== id || t.running || t.finished) return t;
+        return { ...t, running: true, startedAt: performance.now() };
+      }),
+    );
+  }, []);
+
+  const cancelTimer = useCallback((id: string) => {
+    beeped.current.delete(id);
+    setTimers((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // --- Stopwatch logic ---
+  const swTick = useCallback(() => {
+    const now = performance.now();
+    setSwElapsed(swBaseRef.current + (now - swStartRef.current));
+    swRafRef.current = requestAnimationFrame(swTick);
+  }, []);
+
+  useEffect(() => {
+    if (swRunning) {
+      swStartRef.current = performance.now();
+      swRafRef.current = requestAnimationFrame(swTick);
+    }
+    return () => cancelAnimationFrame(swRafRef.current);
+  }, [swRunning, swTick]);
+
+  const swStart = useCallback(() => setSwRunning(true), []);
+  const swPause = useCallback(() => {
+    swBaseRef.current = swElapsed;
+    setSwRunning(false);
+  }, [swElapsed]);
+  const swReset = useCallback(() => {
+    cancelAnimationFrame(swRafRef.current);
+    setSwRunning(false);
+    setSwElapsed(0);
+    setLaps([]);
+    swBaseRef.current = 0;
+  }, []);
+  const swLap = useCallback(() => {
+    if (swRunning) setLaps((prev) => [...prev, swElapsed]);
+  }, [swRunning, swElapsed]);
 
   return (
     <div className={`timer ${compact ? 'timer--compact' : ''}`}>
@@ -143,102 +209,170 @@ export function Timer({ compact = false }: TimerProps) {
       <div className="timer-modes">
         <button
           type="button"
-          className={`timer-mode-btn ${mode === 'countdown' ? 'timer-mode-btn--active' : ''}`}
-          onClick={handleSwitchMode}
+          className={`timer-mode-btn ${mode === 'timers' ? 'timer-mode-btn--active' : ''}`}
+          onClick={() => setMode('timers')}
         >
-          Timer
+          Timers
         </button>
         <button
           type="button"
           className={`timer-mode-btn ${mode === 'stopwatch' ? 'timer-mode-btn--active' : ''}`}
-          onClick={handleSwitchMode}
+          onClick={() => setMode('stopwatch')}
         >
           Stopwatch
         </button>
       </div>
 
-      {/* Display */}
-      <div className={`timer-display ${finished ? 'timer-display--finished' : ''}`}>
-        {formatTime(displayMs)}
-      </div>
-
-      {/* Presets (countdown mode only) */}
-      {mode === 'countdown' && !running && !finished && (
-        <div className="timer-presets">
-          {PRESETS.map((p) => (
+      {mode === 'timers' && (
+        <>
+          {/* Add Timer section */}
+          <div className="timer-add-section">
+            <input
+              type="text"
+              className="timer-name-input"
+              placeholder="Timer name (optional)"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') addTimer(); }}
+            />
+            <div className="timer-presets">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  className={`timer-preset ${selectedPreset === p.seconds ? 'timer-preset--active' : ''}`}
+                  onClick={() => setSelectedPreset(p.seconds)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
             <button
-              key={p.label}
               type="button"
-              className={`timer-preset ${countdownTotal === p.seconds * 1000 ? 'timer-preset--active' : ''}`}
-              onClick={() => handlePreset(p.seconds)}
+              className="timer-btn timer-btn--play timer-start-btn"
+              onClick={addTimer}
+              title="Start timer"
             >
-              {p.label}
+              <Plus size={compact ? 14 : 16} />
+              <span>Start</span>
             </button>
-          ))}
-        </div>
+          </div>
+
+          {/* Active timers list */}
+          {timers.length > 0 && (
+            <div className="timer-list">
+              {timers.map((t) => {
+                const remaining = getRemaining(t);
+                return (
+                  <div
+                    key={t.id}
+                    className={`timer-card ${t.finished ? 'timer-card--finished' : ''}`}
+                  >
+                    <div className="timer-card-name">{t.name}</div>
+                    <div className={`timer-card-time ${t.finished ? 'timer-display--finished' : ''}`}>
+                      {formatTime(remaining)}
+                    </div>
+                    <div className="timer-card-controls">
+                      {!t.finished && (
+                        t.running ? (
+                          <button
+                            type="button"
+                            className="timer-btn timer-btn--pause timer-btn--sm"
+                            onClick={() => pauseTimer(t.id)}
+                            title="Pause"
+                          >
+                            <Pause size={14} />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="timer-btn timer-btn--play timer-btn--sm"
+                            onClick={() => resumeTimer(t.id)}
+                            title="Resume"
+                          >
+                            <Play size={14} />
+                          </button>
+                        )
+                      )}
+                      <button
+                        type="button"
+                        className="timer-btn timer-btn--sm"
+                        onClick={() => cancelTimer(t.id)}
+                        title="Remove"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
-      {/* Controls */}
-      <div className="timer-controls">
-        {!running ? (
-          <button
-            type="button"
-            className="timer-btn timer-btn--play"
-            onClick={finished ? handleReset : handleStart}
-            title={finished ? 'Reset' : 'Start'}
-          >
-            {finished ? (
-              <RotateCcw size={compact ? 16 : 20} />
+      {mode === 'stopwatch' && (
+        <>
+          <div className="timer-display">
+            {formatTime(swElapsed)}
+          </div>
+
+          <div className="timer-controls">
+            {!swRunning ? (
+              <button
+                type="button"
+                className="timer-btn timer-btn--play"
+                onClick={swStart}
+                title="Start"
+              >
+                <Play size={compact ? 16 : 20} />
+              </button>
             ) : (
-              <Play size={compact ? 16 : 20} />
+              <button
+                type="button"
+                className="timer-btn timer-btn--pause"
+                onClick={swPause}
+                title="Pause"
+              >
+                <Pause size={compact ? 16 : 20} />
+              </button>
             )}
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="timer-btn timer-btn--pause"
-            onClick={handlePause}
-            title="Pause"
-          >
-            <Pause size={compact ? 16 : 20} />
-          </button>
-        )}
 
-        {mode === 'stopwatch' && running && (
-          <button
-            type="button"
-            className="timer-btn"
-            onClick={handleLap}
-            title="Lap"
-          >
-            <Flag size={compact ? 16 : 20} />
-          </button>
-        )}
+            {swRunning && (
+              <button
+                type="button"
+                className="timer-btn"
+                onClick={swLap}
+                title="Lap"
+              >
+                <Flag size={compact ? 16 : 20} />
+              </button>
+            )}
 
-        {(elapsed > 0 || finished) && (
-          <button
-            type="button"
-            className="timer-btn"
-            onClick={handleReset}
-            title="Reset"
-          >
-            <RotateCcw size={compact ? 16 : 20} />
-          </button>
-        )}
-      </div>
+            {(swElapsed > 0) && (
+              <button
+                type="button"
+                className="timer-btn"
+                onClick={swReset}
+                title="Reset"
+              >
+                <RotateCcw size={compact ? 16 : 20} />
+              </button>
+            )}
+          </div>
 
-      {/* Laps */}
-      {!compact && laps.length > 0 && (
-        <div className="timer-laps">
-          {laps.map((lap, i) => (
-            <div key={i} className="timer-lap">
-              <span className="timer-lap-label">Lap {i + 1}</span>
-              <span className="timer-lap-time">{formatTime(lap)}</span>
+          {!compact && laps.length > 0 && (
+            <div className="timer-laps">
+              {laps.map((lap, i) => (
+                <div key={i} className="timer-lap">
+                  <span className="timer-lap-label">Lap {i + 1}</span>
+                  <span className="timer-lap-time">{formatTime(lap)}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
 }
-
