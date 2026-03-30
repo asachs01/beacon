@@ -55,8 +55,9 @@ export function useLocalCalendar() {
   }) => {
     const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const allDay = !!event.start_date;
-    const start = allDay ? event.start_date! : event.start_date_time!;
-    const end = allDay ? event.end_date! : event.end_date_time!;
+    const start = allDay ? event.start_date : event.start_date_time;
+    const end = allDay ? event.end_date : event.end_date_time;
+    if (!start || !end) return null; // invalid event data
 
     const newEvent: CalendarEvent = {
       id,

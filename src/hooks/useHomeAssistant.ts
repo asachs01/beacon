@@ -35,7 +35,13 @@ function requestIngressToken(): Promise<string | null> {
       resolve(null);
     }, 3000);
 
+    // Determine the expected origin for postMessage validation
+    let expectedOrigin = '';
+    try { expectedOrigin = window.parent.location.origin; } catch { /* cross-origin */ }
+
     function handler(event: MessageEvent) {
+      // Validate origin to prevent token injection from other frames
+      if (expectedOrigin && event.origin !== expectedOrigin) return;
       if (event.data?.type === 'auth/token') {
         clearTimeout(timeout);
         window.removeEventListener('message', handler);

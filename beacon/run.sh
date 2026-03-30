@@ -27,21 +27,28 @@ fi
 HA_URL=""
 HA_BROWSER_TOKEN=""
 
-# Generate runtime-config.js that injects config into the static build
+# Generate runtime-config.js using node for proper JSON escaping (prevents injection)
 CONFIG_JS="/app/dist/runtime-config.js"
-cat > "${CONFIG_JS}" <<EOF
-window.__BEACON_CONFIG__ = {
-  ha_url: "${HA_URL}",
-  ha_token: "${HA_BROWSER_TOKEN}",
-  family_name: "${FAMILY_NAME}",
-  theme: "${THEME}",
-  auto_dark_mode: ${AUTO_DARK_MODE},
-  weather_entity: "${WEATHER_ENTITY}",
-  photo_directory: "${PHOTO_DIRECTORY}",
-  photo_interval: ${PHOTO_INTERVAL},
-  screen_saver_timeout: ${SCREEN_SAVER_TIMEOUT}
-};
-EOF
+node -e "
+  const config = {
+    ha_url: process.env.HA_URL || '',
+    ha_token: process.env.HA_BROWSER_TOKEN || '',
+    family_name: process.env.FAMILY_NAME || 'My Family',
+    theme: process.env.THEME || 'skylight',
+    auto_dark_mode: process.env.AUTO_DARK_MODE !== 'false',
+    weather_entity: process.env.WEATHER_ENTITY || 'weather.home',
+    photo_directory: process.env.PHOTO_DIRECTORY || '/media/beacon/photos',
+    photo_interval: parseInt(process.env.PHOTO_INTERVAL) || 30,
+    screen_saver_timeout: parseInt(process.env.SCREEN_SAVER_TIMEOUT) || 5,
+  };
+  require('fs').writeFileSync(
+    '${CONFIG_JS}',
+    'window.__BEACON_CONFIG__ = ' + JSON.stringify(config) + ';'
+  );
+" HA_URL="${HA_URL}" HA_BROWSER_TOKEN="${HA_BROWSER_TOKEN}" FAMILY_NAME="${FAMILY_NAME}" \
+  THEME="${THEME}" AUTO_DARK_MODE="${AUTO_DARK_MODE}" WEATHER_ENTITY="${WEATHER_ENTITY}" \
+  PHOTO_DIRECTORY="${PHOTO_DIRECTORY}" PHOTO_INTERVAL="${PHOTO_INTERVAL}" \
+  SCREEN_SAVER_TIMEOUT="${SCREEN_SAVER_TIMEOUT}"
 
 # Inject the runtime-config script tag into index.html if not already present
 INDEX_HTML="/app/dist/index.html"
