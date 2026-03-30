@@ -1,0 +1,215 @@
+---
+title: "AI and Voice Control"
+description: "Control Beacon with voice commands, LLM agents, and Home Assistant Assist — three integration approaches for hands-free family dashboard control."
+order: 14.5
+---
+
+# AI and Voice Control
+
+Beacon supports three approaches for voice and AI control. Choose the one that fits your setup, or use them all together.
+
+| Approach | Best for | Requires LLM? |
+|----------|----------|----------------|
+| [Voice API](#voice-api-built-in) | Quick automations, custom UIs | No |
+| [MCP Server](#mcp-server-for-llm-agents) | Claude Code, LLM agents | Yes |
+| [HA Custom Sentences](#ha-custom-sentences-for-ha-assist) | Home Assistant Assist | No |
+
+---
+
+## Voice API (built-in)
+
+Beacon's server exposes a REST endpoint for natural-language commands. It uses keyword matching — no LLM, no cloud service, and no added latency.
+
+### Endpoint
+
+```
+POST /beacon-action/voice
+Content-Type: application/json
+
+{ "text": "add milk to the grocery list" }
+```
+
+### Response
+
+```json
+{
+  "response": "Added milk to grocery",
+  "action": "add_item",
+  "entity_id": "todo.grocery",
+  "success": true
+}
+```
+
+### Supported commands
+
+**Lists**: `add <item> to <list>` | `mark <item> as done` | `check off <item>` | `complete <item>`
+
+**Media**: `play` | `pause` | `next song` | `skip` | `set volume to 50`
+
+**Navigation**: `show <view>` | `open <view>` | `go to <view>`
+
+**Queries**: `what's on today` | `today's schedule` | `what's the weather`
+
+### Examples
+
+```bash
+# Add a grocery item
+curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "add eggs to the grocery list"}'
+
+# Control media
+curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "set volume to 40"}'
+
+# Check the calendar
+curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "what'\''s on my calendar"}'
+```
+
+The API resolves list names and media players by fuzzy-matching against available HA entities. For media commands, it automatically picks the active player (playing > paused > first available).
+
+---
+
+## MCP Server (for LLM agents)
+
+The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server exposes Beacon's features as structured tools that LLM agents can call. This is the best approach for AI-powered automation where an LLM decides which actions to take.
+
+### Setup
+
+For **Claude Code**:
+
+```bash
+claude mcp add beacon -- node /path/to/beacon/mcp-server.cjs
+```
+
+For **Claude Desktop** or other MCP clients, add to your config file:
+
+```json
+{
+  "mcpServers": {
+    "beacon": {
+      "command": "node",
+      "args": ["beacon/mcp-server.cjs"],
+      "env": {
+        "SUPERVISOR_TOKEN": "your-long-lived-access-token",
+        "HA_URL": "http://your-ha-instance:8123"
+      }
+    }
+  }
+}
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SUPERVISOR_TOKEN` | — | **Required.** HA long-lived access token |
+| `HA_URL` | `http://supervisor/core` | HA URL (change when running outside the add-on) |
+| `DATA_DIR` | `/data` | Beacon data directory (for chore files) |
+
+### All 10 tools
+
+#### Lists
+
+| Tool | Description | Required inputs |
+|------|-------------|-----------------|
+| `beacon_add_list_item` | Add an item to a todo list | `list_name`, `item` |
+| `beacon_get_list_items` | Get all items from a list | `list_name` |
+| `beacon_check_item` | Mark an item as completed | `list_name`, `item` |
+| `beacon_uncheck_item` | Uncomplete an item | `list_name`, `item` |
+
+List names are fuzzy-matched. Pass `"grocery"`, `"shopping list"`, or `"todo.shopping_list"`.
+
+#### Calendar
+
+| Tool | Description | Required inputs |
+|------|-------------|-----------------|
+| `beacon_get_calendar` | Get events for today + N days | `days_ahead` (optional, default 0) |
+| `beacon_create_event` | Create a calendar event | `calendar`, `summary`, `start`, `end` |
+
+For all-day events, pass date strings (`"2026-04-07"`) and set `all_day: true`.
+
+#### Media
+
+| Tool | Description | Required inputs |
+|------|-------------|-----------------|
+| `beacon_get_media_players` | List all players and states | (none) |
+| `beacon_media_control` | Play, pause, next, previous, volume | `entity_id`, `action` |
+
+For volume, also pass `volume_level` (0.0 to 1.0).
+
+#### Weather
+
+| Tool | Description | Required inputs |
+|------|-------------|-----------------|
+| `beacon_get_weather` | Current weather conditions | `entity_id` (optional) |
+
+#### Chores
+
+| Tool | Description | Required inputs |
+|------|-------------|-----------------|
+| `beacon_manage_chore` | Complete/uncomplete a chore | `action`, `chore_name`, `member_name` |
+
+### Example conversation
+
+> **You:** Add milk and eggs to our grocery list, then tell me what's on the calendar this week.
+>
+> The LLM agent would call `beacon_add_list_item` twice (once for milk, once for eggs), then call `beacon_get_calendar` with `days_ahead: 7`, and summarize the results in natural language.
+
+---
+
+## HA Custom Sentences (for HA Assist)
+
+Beacon ships with custom sentence and intent handler files for [Home Assistant Assist](https://www.home-assistant.io/voice_control/). Once installed, you can use voice commands through any Assist-enabled device — smart speakers, the HA companion app, or the Assist dialog in HA.
+
+### Available voice commands
+
+| Say this | What happens |
+|----------|-------------|
+| "Add milk to the grocery list" | Adds item to your todo list |
+| "Mark dishes as done" | Completes a chore |
+| "Alex finished vacuuming" | Completes a chore for a specific person |
+| "What's on the calendar today" | Reads today's events aloud |
+| "What's on the calendar tomorrow" | Reads tomorrow's events |
+| "Show the dashboard" | Navigates the Beacon UI |
+| "Set a timer for 5 minutes" | Starts a countdown timer |
+| "What's on the grocery list" | Reads uncompleted grocery items |
+| "What chores are left" | Lists remaining chores |
+
+### Installation
+
+Run the included install script:
+
+```bash
+# Auto-detect the HA config directory
+beacon/scripts/install-voice-intents.sh
+
+# Or specify it
+beacon/scripts/install-voice-intents.sh /config
+```
+
+Then reload the Conversation integration: **Developer Tools > YAML > Conversation**.
+
+### Prerequisites
+
+The intents reference these entities by default. Create or rename them to match:
+
+| Entity | Purpose | How to create |
+|--------|---------|---------------|
+| `todo.grocery` | Grocery list | Any HA todo integration |
+| `todo.chores` | Chore list | Any HA todo integration |
+| `calendar.family` | Calendar | Google Calendar, CalDAV, or Local Calendar |
+| `timer.beacon_voice` | Timer | Settings > Helpers > Timer, name "Beacon Voice" |
+
+If your entities have different names, edit the installed YAML files in your HA config directory (`custom_intents/beacon.yaml` and `custom_sentences/en/beacon.yaml`).
+
+### Customizing
+
+The sentence files use HA's [custom sentence syntax](https://www.home-assistant.io/voice_control/custom_sentences/):
+
+- `[the]` means the word is optional
+- `{item}` captures a text slot
+- Multiple patterns per intent are supported
+
+To add new phrasings, edit `/config/custom_sentences/en/beacon.yaml`. To add another language, create a file like `/config/custom_sentences/es/beacon.yaml` with the same intent names and translated sentences.

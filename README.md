@@ -101,6 +101,7 @@ Additional settings (themes, family members, chores, calendar sources, list prov
 ## Documentation
 
 - [Getting Started Guide](docs/getting-started.md) -- full walkthrough with screenshots
+- [AI and Voice Control](docs/ai-integration.md) -- voice API, MCP server for LLM agents, HA Assist custom sentences
 - [Contributing Guide](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
 - [Security Policy](SECURITY.md)
