@@ -12,6 +12,8 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" /></a>
   <a href="https://github.com/asachs01/beacon/releases"><img src="https://img.shields.io/github/v/release/asachs01/beacon" alt="Version" /></a>
   <a href="https://github.com/asachs01/beacon/stargazers"><img src="https://img.shields.io/github/stars/asachs01/beacon" alt="Stars" /></a>
+  <a href="https://github.com/sponsors/asachs01"><img src="https://img.shields.io/badge/sponsor-♥-ea4aaa.svg" alt="GitHub Sponsors" /></a>
+  <a href="https://buymeacoffee.com/aaronsachs"><img src="https://img.shields.io/badge/buy%20me%20a%20coffee-☕-yellow.svg" alt="Buy Me A Coffee" /></a>
 </p>
 
 <p align="center">
@@ -100,6 +102,8 @@ Additional settings (themes, family members, chores, calendar sources, list prov
 
 ## Documentation
 
+- [Getting Started Guide](docs/getting-started.md) -- full walkthrough with screenshots
+- [AI and Voice Control](docs/ai-integration.md) -- voice API, MCP server for LLM agents, HA Assist custom sentences
 - [Contributing Guide](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
 - [Security Policy](SECURITY.md)
@@ -109,6 +113,15 @@ Additional settings (themes, family members, chores, calendar sources, list prov
 ## Contributing
 
 Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) before submitting a pull request.
+
+## Support Beacon
+
+Beacon is free and always will be. If it's useful to your family, consider supporting development:
+
+<p>
+  <a href="https://github.com/sponsors/asachs01"><img src="https://img.shields.io/badge/GitHub_Sponsors-♥_Sponsor-ea4aaa?style=for-the-badge&logo=github" alt="GitHub Sponsors" /></a>
+  <a href="https://buymeacoffee.com/aaronsachs"><img src="https://img.shields.io/badge/Buy_Me_A_Coffee-☕_Support-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee" /></a>
+</p>
 
 ## License
 
