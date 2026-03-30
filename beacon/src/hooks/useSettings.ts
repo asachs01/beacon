@@ -148,25 +148,32 @@ function persistSettings(settings: BeaconSettings): void {
   }
 }
 
-/** Restore settings from server if localStorage is empty */
-async function restoreSettingsFromServer(): Promise<void> {
+/**
+ * Restore settings from server BEFORE React initializes.
+ * Uses synchronous XHR to ensure settings are in localStorage
+ * before the first useState(loadSettings) call.
+ */
+function restoreSettingsFromServerSync(): void {
   if (!window.__BEACON_CONFIG__) return;
-  try {
-    const localRaw = localStorage.getItem(STORAGE_KEY);
-    if (localRaw) return; // localStorage has data, don't overwrite
+  const localRaw = localStorage.getItem(STORAGE_KEY);
+  if (localRaw) return; // localStorage has data, don't overwrite
 
+  try {
     const base = getDataApiBase();
-    const res = await fetch(`${base}/beacon-data/${STORAGE_KEY}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (data && typeof data === 'object') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', `${base}/beacon-data/${STORAGE_KEY}`, false); // synchronous
+    xhr.send();
+    if (xhr.status === 200 && xhr.responseText && xhr.responseText !== 'null') {
+      const data = JSON.parse(xhr.responseText);
+      if (data && typeof data === 'object' && data.familyName) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
     }
   } catch { /* best-effort */ }
 }
 
-// Kick off server restore on module load
-restoreSettingsFromServer();
+// Restore BEFORE React mounts — must be synchronous
+restoreSettingsFromServerSync();
 
 // ---------------------------------------------------------------------------
 // Hook

@@ -52,26 +52,30 @@ function saveToStorage<T>(key: string, data: T[]): void {
 }
 
 /**
- * Load data from server-side persistence and merge into localStorage.
- * Called once on startup to restore data that may have been lost from localStorage.
+ * Restore data from server synchronously BEFORE React renders.
+ * Uses synchronous XHR to win the race against useState initializers.
  */
-async function restoreFromServer(key: string): Promise<void> {
+function restoreFromServerSync(key: string): void {
   if (!window.__BEACON_CONFIG__) return;
+  const localRaw = localStorage.getItem(key);
+  if (localRaw) return; // already have data
+
   try {
     const base = getDataApiBase();
-    const res = await fetch(`${base}/beacon-data/${key}`);
-    if (!res.ok) return;
-    const serverData = await res.json();
-    if (!serverData || !Array.isArray(serverData) || serverData.length === 0) return;
-
-    // Only restore if localStorage is empty (don't overwrite newer local data)
-    const localRaw = localStorage.getItem(key);
-    const localData = localRaw ? JSON.parse(localRaw) : [];
-    if (localData.length === 0 && serverData.length > 0) {
-      localStorage.setItem(key, JSON.stringify(serverData));
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', `${base}/beacon-data/${key}`, false); // synchronous
+    xhr.send();
+    if (xhr.status === 200 && xhr.responseText && xhr.responseText !== 'null') {
+      const serverData = JSON.parse(xhr.responseText);
+      if (Array.isArray(serverData) && serverData.length > 0) {
+        localStorage.setItem(key, JSON.stringify(serverData));
+      }
     }
   } catch { /* best-effort */ }
 }
+
+// Restore all family data keys BEFORE React mounts
+Object.values(STORAGE_KEYS).forEach(restoreFromServerSync);
 
 /**
  * Family data store.
@@ -79,20 +83,8 @@ async function restoreFromServer(key: string): Promise<void> {
  * in add-on mode (/data/ directory survives container rebuilds).
  */
 export class FamilyStore {
-  private _restored = false;
-
   constructor(_haClient?: () => HomeAssistantClient | null) {
-    // Restore server-side data on first load (async, best-effort)
-    if (!this._restored) {
-      this._restored = true;
-      this.restoreAll();
-    }
-  }
-
-  private async restoreAll(): Promise<void> {
-    await Promise.all(
-      Object.values(STORAGE_KEYS).map(key => restoreFromServer(key))
-    );
+    // Server restore happens at module load (synchronous, before React)
   }
 
   // --- Members ---
