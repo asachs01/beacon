@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
-import { getConfig } from '../config';
-import { setHaToken } from '../api/ha-rest';
+import { getConfig, patchConfig } from '../config';
+import { setHaToken, resetBaseUrl } from '../api/ha-rest';
 import { isAddOn, isIngress } from '../utils/ha-env';
 import { getSecureItem, StorageKeys } from '../api/secure-storage';
 
@@ -69,7 +69,16 @@ export function useHomeAssistant() {
 
       // Fall back to secure storage if config has no token (e.g. after onboarding reload)
       if (!token) {
-        token = (await getSecureItem(StorageKeys.HA_TOKEN)) ?? '';
+        const [storedToken, storedUrl] = await Promise.all([
+          getSecureItem(StorageKeys.HA_TOKEN),
+          getSecureItem(StorageKeys.HA_URL),
+        ]);
+        token = storedToken ?? '';
+        // Patch the runtime config with stored URL so resolveHaUrl and haFetch use it
+        if (storedUrl) {
+          patchConfig({ ha_url: storedUrl, ha_token: token });
+          resetBaseUrl(); // clear cached base URL so haFetch picks up the new URL
+        }
       }
 
       const url = resolveHaUrl();

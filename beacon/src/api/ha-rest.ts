@@ -57,6 +57,13 @@ export function setHaToken(token: string) {
 }
 
 /**
+ * Reset the cached base URL (call after patchConfig changes ha_url).
+ */
+export function resetBaseUrl() {
+  _baseUrl = null;
+}
+
+/**
  * Fetch from the HA REST API.
  * In add-on mode, requests go through the ingress proxy (no auth header needed).
  * In standalone mode, requests go directly to HA with Bearer token.
