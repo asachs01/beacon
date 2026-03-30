@@ -1027,6 +1027,7 @@ export function SettingsView({
           <div>
             <div className="settings-row-label">Kiosk Mode</div>
             <div className="settings-row-sublabel">Fullscreen with hidden sidebar, auto-cycling views. Tap top-left corner 5 times to exit.</div>
+            <div className="settings-row-sublabel" style={{ marginTop: 4, fontStyle: 'italic' }}>Note: iOS does not support fullscreen. Kiosk mode will hide the sidebar and auto-cycle views.</div>
           </div>
           <Toggle
             checked={settings.kioskMode}

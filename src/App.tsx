@@ -314,7 +314,7 @@ export function App() {
     setActiveView('settings');
   }, [updateSettings]);
 
-  useKioskMode({
+  const { showExitHint } = useKioskMode({
     enabled: settings.kioskMode,
     onChangeView: setActiveView,
     onExit: handleExitKiosk,
@@ -609,6 +609,13 @@ export function App() {
       {/* Demo indicator — only show outside of add-on ingress */}
       {!connected && !isHaManaged && (
         <div className="demo-badge">Demo Mode</div>
+      )}
+
+      {/* Kiosk exit hint overlay */}
+      {showExitHint && (
+        <div className="kiosk-exit-hint">
+          Tap top-left corner 5 times to exit kiosk mode
+        </div>
       )}
     </div>
   );

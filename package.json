@@ -6,7 +6,7 @@
   "description": "Family command center for wall-mounted displays — a Home Assistant add-on",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && sed -i '' \"s/__BUILD_TIME__/$(date +%s)/g\" dist/sw.js",
     "preview": "vite preview",
     "serve": "vite build && npx serve dist -l 3000",
     "cap:sync": "npm run build && npx cap sync",

@@ -26,6 +26,7 @@ import { OmniAdd } from './components/OmniAdd';
 import { Timer } from './components/Timer';
 import { WeatherView } from './components/WeatherView';
 import { useIngressDetect } from './hooks/useIngressDetect';
+import { useKioskMode } from './hooks/useKioskMode';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
@@ -307,6 +308,18 @@ export function App() {
     setShowLeaderboard(false);
   }, []);
 
+  // Kiosk mode — fullscreen, auto-cycle views, hidden cursor
+  const handleExitKiosk = useCallback(() => {
+    updateSettings({ kioskMode: false });
+    setActiveView('settings');
+  }, [updateSettings]);
+
+  const { showExitHint } = useKioskMode({
+    enabled: settings.kioskMode,
+    onChangeView: setActiveView,
+    onExit: handleExitKiosk,
+  });
+
   // Build a set of chore IDs completed today (for the dashboard checklist).
   // We use the first member for now; a member-picker could be added later.
   const firstMemberId = members.length > 0 ? members[0].id : '__none__';
@@ -404,12 +417,14 @@ export function App() {
 
   return (
     <div className={`beacon beacon--sidebar-${sidebarPos} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
-      {/* Sidebar */}
-      <Sidebar
-        activeView={activeView}
-        onChangeView={handleChangeView}
-        position={sidebarPos}
-      />
+      {/* Sidebar — hidden in kiosk mode */}
+      {!settings.kioskMode && (
+        <Sidebar
+          activeView={activeView}
+          onChangeView={handleChangeView}
+          position={sidebarPos}
+        />
+      )}
 
       {/* Main content area */}
       <div className="beacon-main">
@@ -594,6 +609,13 @@ export function App() {
       {/* Demo indicator — only show outside of add-on ingress */}
       {!connected && !isHaManaged && (
         <div className="demo-badge">Demo Mode</div>
+      )}
+
+      {/* Kiosk exit hint overlay */}
+      {showExitHint && (
+        <div className="kiosk-exit-hint">
+          Tap top-left corner 5 times to exit kiosk mode
+        </div>
       )}
     </div>
   );

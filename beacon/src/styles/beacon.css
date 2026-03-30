@@ -934,6 +934,31 @@ a:focus:not(:focus-visible) {
   z-index: 50;
 }
 
+/* ---- Kiosk exit hint overlay ---- */
+.kiosk-exit-hint {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 500;
+  z-index: 10000;
+  animation: kiosk-hint-fade 5s ease-in-out forwards;
+  pointer-events: none;
+}
+
+@keyframes kiosk-hint-fade {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* --- Modal --- */
 .modal-overlay {
   position: fixed;
