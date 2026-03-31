@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/asachs01/beacon/compare/v1.17.0...v1.17.1) (2026-03-31)
+
+
+### Bug Fixes
+
+* dashboard equal thirds layout, weather moved to clock column ([870c13d](https://github.com/asachs01/beacon/commit/870c13d0fd4d1b5bed6fca308431017300682203))
+
 # [1.17.0](https://github.com/asachs01/beacon/compare/v1.16.0...v1.17.0) (2026-03-31)
 
 
