@@ -74,33 +74,13 @@ export function DashboardView({
 
   return (
     <div className="dashboard">
-      {/* LEFT: Clock + Date + Greeting */}
+      {/* LEFT: Clock + Date + Greeting + Weather */}
       <section className="dashboard-left">
         <div className="dashboard-clock">{timeString}</div>
         <div className="dashboard-date">{dateString}</div>
         <div className="dashboard-greeting">
           {greeting}, {familyName || FAMILY_NAME}
         </div>
-      </section>
-
-      {/* CENTER: Today's Events */}
-      <section className="dashboard-center">
-        <h2 className="dashboard-section-title">Today</h2>
-        <div className="dashboard-events-scroll">
-          {todayEvents.length === 0 ? (
-            <div className="dashboard-empty">Nothing scheduled — your day is wide open</div>
-          ) : (
-            <div className="dashboard-events-list">
-              {todayEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* RIGHT: Weather + Tasks */}
-      <section className="dashboard-right">
         {weather && (
           <div
             className={`dashboard-weather ${onWeatherClick ? 'dashboard-weather--clickable' : ''}`}
@@ -122,9 +102,28 @@ export function DashboardView({
             </div>
           </div>
         )}
+        <CountdownWidget events={events} />
+      </section>
 
+      {/* CENTER: Today's Events */}
+      <section className="dashboard-center">
+        <h2 className="dashboard-section-title">Today</h2>
+        <div className="dashboard-events-scroll">
+          {todayEvents.length === 0 ? (
+            <div className="dashboard-empty">Nothing scheduled — your day is wide open</div>
+          ) : (
+            <div className="dashboard-events-list">
+              {todayEvents.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* RIGHT: Tasks + Grocery preview */}
+      <section className="dashboard-right">
         <h2 className="dashboard-section-title">Tasks</h2>
-        {/* Show uncompleted todo items only — completed tasks are hidden */}
         {(() => {
           const pending = todoItems.filter(t => t.status === 'needs_action');
           if (todoItems.length > 0) {
@@ -156,8 +155,6 @@ export function DashboardView({
             />
           );
         })()}
-
-        <CountdownWidget events={events} />
       </section>
     </div>
   );

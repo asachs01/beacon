@@ -2,10 +2,10 @@
    Beacon — Dashboard View (daily glanceable display)
    ============================================================ */
 
-/* --- Three-column layout --- */
+/* --- Three-column layout — equal thirds --- */
 .dashboard {
   display: grid;
-  grid-template-columns: 2fr 1.75fr 1.25fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 32px;
   height: 100%;
   padding: 40px 48px;
@@ -13,13 +13,14 @@
   align-items: start;
 }
 
-/* --- LEFT COLUMN: Clock + Date + Greeting --- */
+/* --- LEFT COLUMN: Clock + Date + Greeting + Weather --- */
 .dashboard-left {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   height: 100%;
   padding-top: 24px;
+  gap: 8px;
 }
 
 .dashboard-clock {
