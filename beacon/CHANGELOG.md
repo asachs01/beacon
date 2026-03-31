@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/asachs01/beacon/compare/v1.16.0...v1.17.0) (2026-03-31)
+
+
+### Features
+
+* add video featurette recording script with demo data anonymization ([02572b2](https://github.com/asachs01/beacon/commit/02572b2fd38a1375c8f1b4a1687426ab80059921))
+
 # [1.16.0](https://github.com/asachs01/beacon/compare/v1.15.0...v1.16.0) (2026-03-30)
 
 
