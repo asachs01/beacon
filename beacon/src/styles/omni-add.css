@@ -119,24 +119,35 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--color-blue-full, #3b82f6);
+  background: var(--accent, #3b82f6);
   color: white;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35), 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 200ms ease, box-shadow 200ms ease, background 200ms ease;
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
   z-index: 1;
 }
 
+/* Scale up FAB on large displays */
+@media (min-width: 1400px) {
+  .omni-add-fab {
+    width: 72px;
+    height: 72px;
+  }
+  .omni-add-fab-icon {
+    font-size: 2.2rem;
+  }
+}
+
 .omni-add-fab:hover {
-  background: #2563eb;
+  filter: brightness(1.1);
   transform: scale(1.08);
-  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
 }
 
 .omni-add-fab:active {
