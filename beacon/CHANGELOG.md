@@ -1,3 +1,10 @@
+## [1.17.2](https://github.com/asachs01/beacon/compare/v1.17.1...v1.17.2) (2026-03-31)
+
+
+### Bug Fixes
+
+* FAB uses theme accent color, scales up on large displays ([73b2350](https://github.com/asachs01/beacon/commit/73b2350a3bfd9bfdf1f4cd433e7655c34547f26a))
+
 ## [1.17.1](https://github.com/asachs01/beacon/compare/v1.17.0...v1.17.1) (2026-03-31)
 
 
