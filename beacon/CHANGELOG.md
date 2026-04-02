@@ -1,3 +1,21 @@
+# [1.19.0](https://github.com/asachs01/beacon/compare/v1.18.0...v1.19.0) (2026-04-02)
+
+
+### Bug Fixes
+
+* FAB chore button opens chores panel, screensaver respects settings ([e03492d](https://github.com/asachs01/beacon/commit/e03492d6f70d25993c372afea5007880903a3ebb))
+
+
+### Features
+
+* add meal plan sync script for AnyList data ([7a2f18b](https://github.com/asachs01/beacon/commit/7a2f18ba0c9b9a908e7a2fcdf964a1f831df3b23))
+* calendar-entity assignment for family members ([4b66c2e](https://github.com/asachs01/beacon/commit/4b66c2e8bfe52b71034e7ccf95192314225e8b29))
+* configurable dashboard layout presets ([92e1dc7](https://github.com/asachs01/beacon/commit/92e1dc737aff9baa4820d6faead148e83e518470))
+* MCP chore CRUD and family member tools ([b6d1706](https://github.com/asachs01/beacon/commit/b6d1706b952384aa87ddf6a4bd2232c29e700ef0))
+* meal plan integration with dashboard display and MCP tools ([2c591bb](https://github.com/asachs01/beacon/commit/2c591bb56f8bc1a4f7618be7015d4aee1803ce7b))
+* per-family-member dashboard with calendar columns ([e836365](https://github.com/asachs01/beacon/commit/e836365f0f27208b86d5da136f138f6c671226bc))
+* two-column calendar view with sidebar for tasks and events ([fad959f](https://github.com/asachs01/beacon/commit/fad959f3e257910a63320d16776d5299e3402378))
+
 # [1.18.0](https://github.com/asachs01/beacon/compare/v1.17.3...v1.18.0) (2026-04-02)
 
 
