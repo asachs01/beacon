@@ -1,3 +1,10 @@
+## [1.17.3](https://github.com/asachs01/beacon/compare/v1.17.2...v1.17.3) (2026-04-02)
+
+
+### Bug Fixes
+
+* FAB chore button opens panel + screensaver reads settings ([a847278](https://github.com/asachs01/beacon/commit/a8472780dc387553ce6ebc4fcbef8ba81d96622b))
+
 ## [1.17.2](https://github.com/asachs01/beacon/compare/v1.17.1...v1.17.2) (2026-03-31)
 
 
