@@ -5,15 +5,22 @@ const currentPath = Astro.url.pathname;
 
 const docs = await getCollection('docs');
 
+// Section display order and labels
+const SECTION_CONFIG: Record<string, { label: string; order: number }> = {
+  'getting-started': { label: 'Getting Started', order: 1 },
+  'features': { label: 'Features', order: 2 },
+  'customization': { label: 'Customization', order: 3 },
+  'reference': { label: 'Reference', order: 4 },
+};
+
 // Group docs by their section (first path segment)
 const sections = new Map<string, { label: string; href: string; order: number }[]>();
 for (const doc of docs) {
   const parts = doc.id.split('/');
-  const section = parts.length > 1 ? parts[0] : 'General';
-  const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1).replace(/-/g, ' ');
+  const sectionKey = parts.length > 1 ? parts[0] : 'general';
 
-  if (!sections.has(sectionLabel)) sections.set(sectionLabel, []);
-  sections.get(sectionLabel)!.push({
+  if (!sections.has(sectionKey)) sections.set(sectionKey, []);
+  sections.get(sectionKey)!.push({
     label: doc.data.title,
     href: `/docs/${doc.id}/`,
     order: doc.data.order ?? 0,
@@ -25,22 +32,37 @@ for (const [, items] of sections) {
   items.sort((a, b) => a.order - b.order);
 }
 
-const sidebarItems = Array.from(sections.entries()).map(([label, children]) => ({ label, children }));
+// Build ordered sidebar with section metadata
+const sidebarSections = Array.from(sections.entries())
+  .map(([key, children]) => ({
+    key,
+    label: SECTION_CONFIG[key]?.label ?? key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '),
+    order: SECTION_CONFIG[key]?.order ?? 99,
+    children,
+  }))
+  .sort((a, b) => a.order - b.order);
 
 function isActive(href?: string): boolean {
   if (!href) return false;
   return currentPath === href || currentPath === href.slice(0, -1);
 }
+
+function sectionHasActive(children: { href: string }[]): boolean {
+  return children.some(c => isActive(c.href));
+}
 ---
 
 <aside class="w-64 shrink-0 hidden lg:block">
   <nav class="sidebar-nav sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto py-6 pr-4">
-    {sidebarItems.map(section => (
-      <div class="mb-6">
-        <h3 class="font-semibold text-sm uppercase tracking-wider text-[var(--td-text-muted)] mb-2 px-3">
-          {section.label}
-        </h3>
-        <ul class="space-y-1">
+    {sidebarSections.map(section => (
+      <details class="sidebar-section mb-2" open={sectionHasActive(section.children) || section.order <= 2}>
+        <summary class="sidebar-section-toggle">
+          <svg class="sidebar-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 2 8 6 4 10" />
+          </svg>
+          <span>{section.label}</span>
+        </summary>
+        <ul class="sidebar-section-list">
           {section.children.map(item => (
             <li>
               <a
@@ -52,7 +74,54 @@ function isActive(href?: string): boolean {
             </li>
           ))}
         </ul>
-      </div>
+      </details>
     ))}
   </nav>
 </aside>
+
+<style>
+  .sidebar-section-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--td-text-muted);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    border-radius: 6px;
+    transition: color 150ms ease;
+  }
+
+  .sidebar-section-toggle:hover {
+    color: var(--td-text);
+  }
+
+  .sidebar-section-toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .sidebar-chevron {
+    flex-shrink: 0;
+    transition: transform 200ms ease;
+    color: var(--td-text-muted);
+    opacity: 0.6;
+  }
+
+  details[open] > .sidebar-section-toggle .sidebar-chevron {
+    transform: rotate(90deg);
+  }
+
+  .sidebar-section-list {
+    list-style: none;
+    padding: 2px 0 4px 18px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+</style>

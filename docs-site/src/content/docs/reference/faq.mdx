@@ -1,7 +1,7 @@
 ---
 title: "FAQ"
 description: "Answers to 20+ common questions about Beacon — calendar support, hardware, privacy, features, and troubleshooting."
-order: 16
+order: 3
 ---
 
 # Frequently Asked Questions
@@ -12,13 +12,13 @@ order: 16
 
 ### Does this work with Google Calendar?
 
-**Yes.** Beacon reads calendar data through Home Assistant's Google Calendar integration. Set up the integration once in HA, and Beacon automatically discovers your calendars. See the [Getting Started guide](/docs/getting-started/) for step-by-step instructions.
+**Yes.** Beacon reads calendar data through Home Assistant's Google Calendar integration. Set up the integration once in HA, and Beacon automatically discovers your calendars. See the [Getting Started guide](/docs/getting-started/installation/) for step-by-step instructions.
 
 Beacon also works with **any calendar source** Home Assistant supports, including CalDAV (Nextcloud, iCloud, Fastmail), ICS feeds, and the built-in Local Calendar.
 
 ### Can I create and edit events from the display?
 
-**Yes.** Beacon supports full CRUD operations on calendar events. Tap the + button or a time slot to create events. Tap an existing event to edit or delete it. You can even drag events to reschedule them. See [Calendar](/docs/calendar/).
+**Yes.** Beacon supports full CRUD operations on calendar events. Tap the + button or a time slot to create events. Tap an existing event to edit or delete it. You can even drag events to reschedule them. See [Calendar](/docs/features/calendar/).
 
 ### Does Beacon send my data anywhere?
 
@@ -45,7 +45,7 @@ Not currently. Beacon relies on Home Assistant for calendar data, weather, media
 
 The cheapest complete setup is a $35 Fire HD 8 with a $15 magnetic mount — under $50.
 
-See [Deployment](/docs/deployment/) for detailed hardware recommendations with prices.
+See [Deployment](/docs/getting-started/deployment/) for detailed hardware recommendations with prices.
 
 ### Does it work on a phone?
 
@@ -65,39 +65,39 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 ### Can I show photos like Skylight?
 
-**Yes.** Beacon has a built-in photo frame with slideshow, crossfade transitions, clock/date overlay, and music controls on top. Add photos to your HA media directory and configure the photo directory. See [Photos](/docs/photos/).
+**Yes.** Beacon has a built-in photo frame with slideshow, crossfade transitions, clock/date overlay, and music controls on top. Add photos to your HA media directory and configure the photo directory. See [Photos](/docs/features/photos/).
 
 ### Does it have a dark mode?
 
-**Yes.** Beacon ships with 7 themes, including 4 dark themes: Midnight, Dracula, Monokai, and (partially dark) Nord. There is also an "Auto" mode that switches between Skylight (light) and Midnight (dark) based on time of day. See [Themes](/docs/themes/).
+**Yes.** Beacon ships with 7 themes, including 4 dark themes: Midnight, Dracula, Monokai, and (partially dark) Nord. There is also an "Auto" mode that switches between Skylight (light) and Midnight (dark) based on time of day. See [Themes](/docs/customization/themes/).
 
 ### Can multiple family members use it?
 
-**Yes.** Add up to 8 family members with custom avatars, colors, and roles. Each member's chores and streaks are tracked independently. The leaderboard shows earnings per member. See [Family Members](/docs/family/).
+**Yes.** Add up to 8 family members with custom avatars, colors, and roles. Each member's chores and streaks are tracked independently. The leaderboard shows earnings per member. See [Family Members](/docs/features/family/).
 
 ### Can kids earn money for doing chores?
 
-**Yes.** Each chore can have a dollar value (e.g., $1.00). When a family member completes a chore, the value is tracked. The Leaderboard shows total earnings by week or month. See [Chores](/docs/chores/).
+**Yes.** Each chore can have a dollar value (e.g., $1.00). When a family member completes a chore, the value is tracked. The Leaderboard shows total earnings by week or month. See [Chores](/docs/features/chores/).
 
 ### Can I control music from the display?
 
-**Yes.** Beacon controls any media player entity in Home Assistant — Sonos, Google Home, Music Assistant, Chromecast, etc. You get play/pause, skip, volume, album art, and a progress bar. A "Now Playing" bar appears on all views when music is active. See [Music](/docs/music/).
+**Yes.** Beacon controls any media player entity in Home Assistant — Sonos, Google Home, Music Assistant, Chromecast, etc. You get play/pause, skip, volume, album art, and a progress bar. A "Now Playing" bar appears on all views when music is active. See [Music](/docs/features/music/).
 
 ### Can I set timers?
 
-**Yes.** Beacon has a built-in timer with countdown (1, 5, 10, 15, 30 minute presets) and stopwatch modes. The countdown plays an audio alert when finished. See [Timer](/docs/timer/).
+**Yes.** Beacon has a built-in timer with countdown (1, 5, 10, 15, 30 minute presets) and stopwatch modes. The countdown plays an audio alert when finished. See [Timer](/docs/features/timer/).
 
 ### Does it have a grocery list?
 
-**Yes.** Beacon integrates with Grocy and AnyList through Home Assistant. You can view your shopping list, add items, check them off, and see expiring product alerts. See [Grocery](/docs/grocery/).
+**Yes.** Beacon integrates with Grocy and AnyList through Home Assistant. You can view your shopping list, add items, check them off, and see expiring product alerts. See [Grocery](/docs/features/grocery/).
 
 ### Does it send notifications?
 
-**Yes.** Beacon sends browser push notifications and HA mobile app notifications 15 minutes before calendar events. See [Notifications](/docs/notifications/).
+**Yes.** Beacon sends browser push notifications and HA mobile app notifications 15 minutes before calendar events. See [Notifications](/docs/features/notifications/).
 
 ### Does it prevent screen burn-in?
 
-**Yes.** After 5 minutes of inactivity, the screen dims. After 10 minutes, a clock screensaver appears that repositions every 30 seconds to prevent burn-in. See [Screen Saver](/docs/screensaver/).
+**Yes.** After 5 minutes of inactivity, the screen dims. After 10 minutes, a clock screensaver appears that repositions every 30 seconds to prevent burn-in. See [Screen Saver](/docs/features/screensaver/).
 
 ---
 
@@ -105,15 +105,15 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 ### How do I change the theme?
 
-Click the palette icon at the bottom of the sidebar. A dropdown shows all 7 themes plus Auto mode. Click to apply immediately. See [Themes](/docs/themes/).
+Click the palette icon at the bottom of the sidebar. A dropdown shows all 7 themes plus Auto mode. Click to apply immediately. See [Themes](/docs/customization/themes/).
 
 ### How do I change the family name?
 
-Set the `family_name` option in the add-on configuration, or the `VITE_FAMILY_NAME` environment variable in development. See [Configuration](/docs/configuration/).
+Set the `family_name` option in the add-on configuration, or the `VITE_FAMILY_NAME` environment variable in development. See [Configuration](/docs/customization/configuration/).
 
 ### How do I change the weather entity?
 
-Set the `weather_entity` option to your HA weather entity ID (e.g., `weather.home`). Find your entity ID in **Settings > Devices & Services > Entities**. See [Configuration](/docs/configuration/).
+Set the `weather_entity` option to your HA weather entity ID (e.g., `weather.home`). Find your entity ID in **Settings > Devices & Services > Entities**. See [Configuration](/docs/customization/configuration/).
 
 ### How do I connect multiple calendars?
 
@@ -121,7 +121,7 @@ Add multiple calendar integrations in Home Assistant (Google Calendar, CalDAV, L
 
 ### How do I set up family members?
 
-Click the gear icon in the sidebar to open the Family Members modal. Click "+ Add Member" and fill in the name, avatar, color, role, and optional PIN. See [Family Members](/docs/family/).
+Click the gear icon in the sidebar to open the Family Members modal. Click "+ Add Member" and fill in the name, avatar, color, role, and optional PIN. See [Family Members](/docs/features/family/).
 
 ---
 
@@ -188,7 +188,7 @@ This means Beacon cannot connect to Home Assistant. Check:
 
 ## More questions?
 
-- [Getting Started](/docs/getting-started/) — installation walkthrough
-- [Configuration](/docs/configuration/) — all settings explained
-- [Contributing](/docs/contributing/) — help make Beacon better
-- [API Reference](/docs/api-reference/) — technical API details
+- [Getting Started](/docs/getting-started/installation/) — installation walkthrough
+- [Configuration](/docs/customization/configuration/) — all settings explained
+- [Contributing](/docs/reference/contributing/) — help make Beacon better
+- [API Reference](/docs/reference/api-reference/) — technical API details
