@@ -160,6 +160,7 @@ interface MemberForm {
   color: string;
   role: 'parent' | 'child';
   pin: string;
+  calendar_entity: string;
 }
 
 const EMPTY_FORM: MemberForm = {
@@ -168,6 +169,7 @@ const EMPTY_FORM: MemberForm = {
   color: MEMBER_COLORS[0],
   role: 'child',
   pin: '',
+  calendar_entity: '',
 };
 
 // ---------------------------------------------------------------------------
@@ -218,6 +220,7 @@ export function SettingsView({
       color: member.color,
       role: member.role,
       pin: member.pin ?? '',
+      calendar_entity: member.calendar_entity ?? '',
     });
     setEditingMember(member.id);
     setMemberFormMode('edit');
@@ -231,6 +234,7 @@ export function SettingsView({
       color: memberForm.color,
       role: memberForm.role,
       pin: memberForm.pin || undefined,
+      calendar_entity: memberForm.calendar_entity || undefined,
     };
     if (memberFormMode === 'edit' && editingMember) {
       onUpdateMember(editingMember, data);
@@ -673,6 +677,24 @@ export function SettingsView({
               inputMode="numeric"
               maxLength={6}
             />
+          </div>
+          <div className="settings-row">
+            <div>
+              <div className="settings-row-label">Calendar</div>
+              <div className="settings-row-sublabel">Link to their HA calendar</div>
+            </div>
+            <select
+              className="settings-select"
+              value={memberForm.calendar_entity}
+              onChange={(e) => setMemberForm((f) => ({ ...f, calendar_entity: e.target.value }))}
+            >
+              <option value="">None</option>
+              {calendars.map((cal) => (
+                <option key={cal.id} value={cal.id}>
+                  {cal.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div style={{ padding: '12px 20px 16px', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button type="button" className="settings-btn" onClick={handleCancelMemberForm}>
