@@ -429,7 +429,7 @@ export function App() {
             <OmniAdd
               onAddEvent={handleAddEvent}
               onAddGroceryItem={() => setActiveView('grocery')}
-              onAddChore={() => setActiveView('chores')}
+              onAddChore={() => handleChangeView('chores')}
               onNavigateTimer={() => setActiveView('timer')}
               sidebarPosition={sidebarPos}
             />
@@ -526,7 +526,7 @@ export function App() {
             <OmniAdd
               onAddEvent={handleAddEvent}
               onAddGroceryItem={() => setActiveView('grocery')}
-              onAddChore={() => setActiveView('chores')}
+              onAddChore={() => handleChangeView('chores')}
               onNavigateTimer={() => setActiveView('timer')}
               sidebarPosition={sidebarPos}
             />
@@ -587,7 +587,11 @@ export function App() {
       )}
 
       {/* Screen saver / dim mode */}
-      <ScreenSaver />
+      <ScreenSaver
+        enabled={settings.screenSaverEnabled}
+        dimTimeoutMin={settings.dimTimeout}
+        screenSaverTimeoutMin={settings.screenSaverTimeout}
+      />
 
       {/* Demo indicator — only show outside of add-on ingress */}
       {!connected && !isHaManaged && (

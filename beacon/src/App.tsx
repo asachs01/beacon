@@ -22,9 +22,7 @@ import { useMusic } from './hooks/useMusic';
 import { useNotifications } from './hooks/useNotifications';
 import { ScreenSaver } from './components/ScreenSaver';
 import { GroceryView } from './components/GroceryView';
-import { MealPlanView } from './components/MealPlanView';
 import { OmniAdd } from './components/OmniAdd';
-import { CalendarSidebar } from './components/CalendarSidebar';
 import { Timer } from './components/Timer';
 import { WeatherView } from './components/WeatherView';
 import { useIngressDetect } from './hooks/useIngressDetect';
@@ -32,7 +30,6 @@ import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
-import { useMealPlan } from './hooks/useMealPlan';
 import OnboardingView from './components/OnboardingView';
 import { CalendarEvent } from './types';
 import { getConfig, patchConfig } from './config';
@@ -107,7 +104,6 @@ export function App() {
   } = useChores();
 
   const dashboardTasks = useDashboardTasks(connected);
-  const mealPlan = useMealPlan();
 
   const {
     settings,
@@ -433,7 +429,7 @@ export function App() {
             <OmniAdd
               onAddEvent={handleAddEvent}
               onAddGroceryItem={() => setActiveView('grocery')}
-              onAddChore={() => { setShowChoresPanel(true); setShowLeaderboard(false); }}
+              onAddChore={() => handleChangeView('chores')}
               onNavigateTimer={() => setActiveView('timer')}
               sidebarPosition={sidebarPos}
             />
@@ -476,12 +472,6 @@ export function App() {
           </div>
         ) : activeView === 'weather' ? (
           <WeatherView />
-        ) : activeView === 'meal-plan' ? (
-          <MealPlanView
-            events={mealPlan.events}
-            getRecipe={mealPlan.getRecipe}
-            lastSynced={mealPlan.lastSynced}
-          />
         ) : activeView === 'photos' ? (
           <PhotoFrame
             musicPlayer={music.activePlayer}
@@ -521,26 +511,14 @@ export function App() {
               />
             </div>
 
-            {/* Two-column layout: calendar + sidebar on wide screens */}
-            <div className="calendar-layout">
-              {/* Calendar Body */}
-              <div className="beacon-body">
-                <WeekCalendar
-                  events={events}
-                  hiddenCalendars={hiddenCalendars}
-                  onEventClick={handleEventClick}
-                  onSlotClick={handleSlotClick}
-                  onEventReschedule={handleEventReschedule}
-                />
-              </div>
-
-              {/* Sidebar — visible on wide screens only */}
-              <CalendarSidebar
+            {/* Calendar Body */}
+            <div className="beacon-body">
+              <WeekCalendar
                 events={events}
                 hiddenCalendars={hiddenCalendars}
-                todoItems={dashboardTasks.items}
-                onToggleTodo={dashboardTasks.toggleItem}
-                onNavigate={(view) => setActiveView(view as SidebarView)}
+                onEventClick={handleEventClick}
+                onSlotClick={handleSlotClick}
+                onEventReschedule={handleEventReschedule}
               />
             </div>
 
@@ -548,7 +526,7 @@ export function App() {
             <OmniAdd
               onAddEvent={handleAddEvent}
               onAddGroceryItem={() => setActiveView('grocery')}
-              onAddChore={() => { setShowChoresPanel(true); setShowLeaderboard(false); }}
+              onAddChore={() => handleChangeView('chores')}
               onNavigateTimer={() => setActiveView('timer')}
               sidebarPosition={sidebarPos}
             />
@@ -611,9 +589,8 @@ export function App() {
       {/* Screen saver / dim mode */}
       <ScreenSaver
         enabled={settings.screenSaverEnabled}
-        dimTimeout={settings.dimTimeout}
-        screenSaverTimeout={settings.screenSaverTimeout}
-        showSeconds={settings.showSeconds}
+        dimTimeoutMin={settings.dimTimeout}
+        screenSaverTimeoutMin={settings.screenSaverTimeout}
       />
 
       {/* Demo indicator — only show outside of add-on ingress */}

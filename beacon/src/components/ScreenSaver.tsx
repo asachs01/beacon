@@ -7,24 +7,22 @@ type Phase = 'awake' | 'dim' | 'screensaver';
 
 interface ScreenSaverProps {
   enabled?: boolean;
-  dimTimeout?: number;          // minutes
-  screenSaverTimeout?: number;  // minutes
-  showSeconds?: boolean;
+  dimTimeoutMin?: number;
+  screenSaverTimeoutMin?: number;
 }
 
 export function ScreenSaver({
   enabled = true,
-  dimTimeout = 5,
-  screenSaverTimeout = 10,
-  showSeconds = false,
+  dimTimeoutMin = 5,
+  screenSaverTimeoutMin = 10,
 }: ScreenSaverProps) {
   const [phase, setPhase] = useState<Phase>('awake');
   const [now, setNow] = useState(new Date());
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const lastActivityRef = useRef(Date.now());
 
-  const dimMs = dimTimeout * 60 * 1000;
-  const screensaverMs = screenSaverTimeout * 60 * 1000;
+  const dimAfterMs = dimTimeoutMin * 60 * 1000;
+  const screenSaverAfterMs = screenSaverTimeoutMin * 60 * 1000;
 
   const wake = useCallback(() => {
     lastActivityRef.current = Date.now();
@@ -42,20 +40,23 @@ export function ScreenSaver({
 
   // Idle timer — check every 10 seconds
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      setPhase('awake');
+      return;
+    }
 
     const check = () => {
       const idle = Date.now() - lastActivityRef.current;
-      if (idle >= screensaverMs) {
+      if (idle >= screenSaverAfterMs) {
         setPhase('screensaver');
-      } else if (idle >= dimMs) {
+      } else if (idle >= dimAfterMs) {
         setPhase('dim');
       }
     };
 
     const interval = setInterval(check, 10_000);
     return () => clearInterval(interval);
-  }, [enabled, dimMs, screensaverMs]);
+  }, [enabled, dimAfterMs, screenSaverAfterMs]);
 
   // Clock tick for screensaver
   useEffect(() => {
@@ -86,15 +87,13 @@ export function ScreenSaver({
     return <div className="screensaver-dim" onClick={wake} />;
   }
 
-  const timeFormat = showSeconds ? 'h:mm:ss' : 'h:mm';
-
   return (
     <div className="screensaver-overlay" onClick={wake}>
       <div
         className="screensaver-clock"
         style={{ left: `${position.x}%`, top: `${position.y}%` }}
       >
-        <div className="screensaver-time">{format(now, timeFormat)}</div>
+        <div className="screensaver-time">{format(now, 'h:mm')}</div>
         <div className="screensaver-date">{format(now, 'EEEE, MMMM d')}</div>
       </div>
     </div>
