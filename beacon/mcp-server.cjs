@@ -341,6 +341,41 @@ const TOOLS = [
     description: 'List all family members (name, role, avatar, calendar).',
     inputSchema: { type: 'object', properties: {} },
   },
+  {
+    name: 'beacon_get_meal_plan',
+    description: 'Get meal plan entries from the Beacon data store. Returns meals for today by default, or a date range.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        date: { type: 'string', description: 'Date to fetch (YYYY-MM-DD, default: today)' },
+        days: { type: 'number', description: 'Number of days to include (default: 1)' },
+      },
+    },
+  },
+  {
+    name: 'beacon_set_meal_plan',
+    description: 'Write meal plan entries to the Beacon data store. Used by sync scripts to populate meal data from AnyList or other sources.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        entries: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              date: { type: 'string', description: 'YYYY-MM-DD' },
+              meal_type: { type: 'string', enum: ['Breakfast', 'Lunch', 'Dinner', 'Snack'] },
+              name: { type: 'string', description: 'Meal name' },
+              recipe_id: { type: 'string', description: 'Optional recipe ID' },
+            },
+            required: ['date', 'meal_type', 'name'],
+          },
+          description: 'Array of meal plan entries to store',
+        },
+      },
+      required: ['entries'],
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -675,6 +710,33 @@ async function handleTool(name, args) {
     case 'beacon_list_family_members': {
       const members = loadJson('beacon_family_members.json');
       return { members };
+    }
+
+    case 'beacon_get_meal_plan': {
+      const allEntries = loadJson('beacon_meal_plans.json');
+      const targetDate = args.date || new Date().toISOString().slice(0, 10);
+      const days = args.days || 1;
+
+      // Build date range
+      const dates = new Set();
+      for (let i = 0; i < days; i++) {
+        const d = new Date(targetDate);
+        d.setDate(d.getDate() + i);
+        dates.add(d.toISOString().slice(0, 10));
+      }
+
+      const filtered = allEntries.filter((e) => dates.has(e.date));
+      return { date: targetDate, days, entries: filtered };
+    }
+
+    case 'beacon_set_meal_plan': {
+      const { entries: newEntries } = args;
+      if (!Array.isArray(newEntries)) {
+        return { success: false, error: 'entries must be an array' };
+      }
+      // Replace all entries — caller is responsible for sending the full set
+      saveJson('beacon_meal_plans.json', newEntries);
+      return { success: true, count: newEntries.length };
     }
 
     default:

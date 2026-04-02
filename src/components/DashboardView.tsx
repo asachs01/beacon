@@ -6,6 +6,15 @@ import { weatherIcon, conditionLabel } from '../types/weather-icons';
 import { EventCard } from './EventCard';
 import { TaskChecklist } from './TaskChecklist';
 import { useFamilyEvents } from '../hooks/useFamilyEvents';
+import { useMealPlans } from '../hooks/useMealPlans';
+import { MealType } from '../types/meals';
+
+const MEAL_ICONS: Record<MealType, string> = {
+  Breakfast: '🌅',
+  Lunch: '☀️',
+  Dinner: '🌙',
+  Snack: '🍎',
+};
 
 export interface TodoItem {
   uid: string;
@@ -47,6 +56,7 @@ export function DashboardView({
   const dateString = format(now, 'EEEE, MMMM d');
 
   const { byMember, other } = useFamilyEvents(events, members);
+  const { todaysMenu } = useMealPlans();
 
   // Also compute flat today's events for the "other" / fallback view
   const todayEvents = useMemo(() => {
@@ -147,8 +157,24 @@ export function DashboardView({
         )}
       </main>
 
-      {/* ─── SIDEBAR: Tasks + Chores ─── */}
+      {/* ─── SIDEBAR: Menu + Tasks + Chores ─── */}
       <aside className="dash-sidebar">
+        {todaysMenu.meals.length > 0 && (
+          <section className="dash-sidebar-section">
+            <h3 className="dash-sidebar-heading">Menu</h3>
+            <ul className="dash-menu-list">
+              {todaysMenu.meals.map((meal, i) => (
+                <li key={i} className="dash-menu-item">
+                  <span className="dash-menu-icon">{MEAL_ICONS[meal.meal_type] || '🍽️'}</span>
+                  <div className="dash-menu-info">
+                    <span className="dash-menu-type">{meal.meal_type}</span>
+                    <span className="dash-menu-name">{meal.name}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <section className="dash-sidebar-section">
           <h3 className="dash-sidebar-heading">Tasks</h3>
           {(() => {
