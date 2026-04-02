@@ -1715,6 +1715,150 @@ a:focus:not(:focus-visible) {
 }
 
 /* ============================================================
+   Calendar Two-Column Layout (sidebar on wide screens)
+   ============================================================ */
+.calendar-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.calendar-layout .calendar-sidebar {
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  .calendar-layout {
+    grid-template-columns: 2fr 1fr;
+    gap: 0;
+  }
+
+  .calendar-layout .calendar-sidebar {
+    display: flex;
+  }
+}
+
+.calendar-sidebar {
+  flex-direction: column;
+  gap: 4px;
+  border-left: 1px solid var(--border);
+  background: var(--bg-surface);
+  padding: 20px 16px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.calendar-sidebar-section {
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.calendar-sidebar-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.calendar-sidebar-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.calendar-sidebar-title--link {
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.calendar-sidebar-title--link:hover {
+  color: var(--accent);
+}
+
+.calendar-sidebar-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calendar-sidebar-event {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  transition: background var(--transition);
+}
+
+.calendar-sidebar-event:hover {
+  background: var(--bg-hover);
+}
+
+.calendar-sidebar-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.calendar-sidebar-event-time {
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  min-width: 56px;
+}
+
+.calendar-sidebar-event-title {
+  color: var(--text-primary);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-sidebar-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.calendar-sidebar-empty--clickable {
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.calendar-sidebar-empty--clickable:hover {
+  color: var(--accent);
+}
+
+.calendar-sidebar-more {
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 4px 8px;
+  font-style: italic;
+}
+
+/* Task checklist inside sidebar — slightly tighter spacing */
+.calendar-sidebar .task-checklist {
+  gap: 4px;
+}
+
+.calendar-sidebar .task-checklist-item {
+  font-size: 13px;
+}
+
+/* ============================================================
    Accessibility: Reduced Motion
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {

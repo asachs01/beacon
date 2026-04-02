@@ -1,0 +1,83 @@
+{
+  "events": [
+    { "id": "bbfa4efff6cd4c3f84934b9f7ae67579", "date": "2026-03-24", "title": "Leftover Beef Stew", "label": "Dinner", "labelColor": "#E5352C" },
+    { "id": "9f8b4a04b8c54d978f89ec2f6e611ba5", "date": "2026-03-25", "title": "Pasta & chicken", "label": "Dinner", "labelColor": "#E5352C" },
+    { "id": "1eae8d2200f34d97ac48440a93736c6c", "date": "2026-03-27", "title": "Hummus bowls", "label": "Dinner", "labelColor": "#E5352C" },
+    { "id": "42e5dbc346454b20bc4167e1ebad06fd", "date": "2026-03-28", "title": "Dinner at Church", "label": "Dinner", "labelColor": "#E5352C" },
+    { "id": "5cfa236228354f16abb47a16f9676784", "date": "2026-03-29", "title": "Picnic Sandwiches or Pasta Salad" },
+    { "id": "bc113795bf6f4e6d9e85a24ed67b327d", "date": "2026-03-30", "title": "Chicken Tikka Simmer Sauce & Zucchini" },
+    { "id": "a0b12d445ca34955bf68696a8947063e", "date": "2026-03-31", "title": "BLT for dinner" },
+    { "id": "d76c2664834b4ab3b3410c78a7e9bf53", "date": "2026-04-01", "title": "Chicken Masala, mashed potatoes, green beans" },
+    { "id": "86b118a0655841f1b5fa5d1546894613", "date": "2026-04-02", "title": "Instant Pot Spaghetti", "label": "Dinner", "labelColor": "#E5352C", "recipeId": "Instant Pot Spaghetti" },
+    { "id": "f53d76315ad6494ea262dcf6e5f2bf9a", "date": "2026-04-03", "title": "Easy Crockpot Carnitas", "label": "Dinner", "labelColor": "#E5352C", "recipeId": "Easy Crockpot Carnitas" },
+    { "id": "6377380b3a6745ada85ae655dcb0cd6a", "date": "2026-04-10", "title": "Dinner Out (Cinderella & Bluegrass @ UTC)", "label": "Dinner", "labelColor": "#E5352C" }
+  ],
+  "recipes": {
+    "Instant Pot Spaghetti": {
+      "name": "Instant Pot Spaghetti",
+      "sourceName": "pinchofyum.com",
+      "sourceUrl": "https://pinchofyum.com/instant-pot-spaghetti",
+      "prepTime": 5,
+      "cookTime": 30,
+      "servings": "6 servings",
+      "notes": "My whole family loves this Instant Pot Spaghetti! Silky, flavorful, a delightfully clingy. Easy enough for my kids to make it too!",
+      "ingredients": [
+        "1 tablespoon olive oil",
+        "1 pound ground beef (I use 85/15)",
+        "1/2 teaspoon each garlic powder, onion powder, and Italian seasoning",
+        "1 clove garlic, minced (optional)",
+        "1 teaspoon kosher salt",
+        "1 (24 ounce) jar pasta sauce",
+        "1 3/4 cups water",
+        "1 teaspoon Better Than Bouillon (I use the chicken base)",
+        "8 ounces spaghetti, broken in half (1/2 pound)",
+        "4 tablespoons butter",
+        "Parmesan cheese",
+        "parsley or basil",
+        "red pepper flakes"
+      ],
+      "steps": [
+        "Turn the sauté function on in the Instant Pot. Add oil, ground meat, garlic powder, onion powder, Italian seasoning, garlic, and salt to the Instant Pot. It should sizzle. Sauté until the meat is browned and cooked through.",
+        "Add the jar of sauce, the water, Better than Bouillon, and the noodles. Make sure the noodles are tucked underneath the liquid.",
+        "Cover, seal, and cook on high pressure for 8 minutes.",
+        "Lay a towel over the vent to avoid splatters; release the steam right away to avoid overcooking the noodles.",
+        "When you open the cover, the noodles will be cooked and it will look very saucy / wet. Use tongs to stir it up and distribute the sauce; let everything rest for 10 minutes. This is important because the noodles will absorb the sauce and everything will cling together just right!",
+        "Stir the butter in until melted and a little creamy. Top with Parmesan, serve with house favorite garlic bread to dunk in the sauce, and get a simple green salad on the side. Oooh so good."
+      ]
+    },
+    "Easy Crockpot Carnitas": {
+      "name": "Easy Crockpot Carnitas",
+      "sourceName": "pinchofyum.com",
+      "sourceUrl": "https://pinchofyum.com/easy-crockpot-carnitas",
+      "prepTime": 10,
+      "cookTime": 480,
+      "servings": "10-12",
+      "notes": "These are the easiest crockpot carnitas and simple enough for anyone to make! Juicy, flavorful, and perfectly browned with a crispy crust.",
+      "ingredients": [
+        "4-5 lbs. pork shoulder",
+        "5 cloves garlic",
+        "1 tablespoon salt",
+        "1 teaspoon cumin",
+        "1 teaspoon chili powder",
+        "1 teaspoon black pepper",
+        "1 teaspoon oregano",
+        "1/4 teaspoon cinnamon",
+        "1/2 teaspoon cayenne pepper",
+        "1 tablespoon chipotle hot sauce (optional)",
+        "juice of 2 limes",
+        "1/2 cup orange juice",
+        "12 ounces beer (a standard lager works great for this!)",
+        "1/2 cup salsa (I like to use a less chunky one)"
+      ],
+      "steps": [
+        "Place the pork shoulder in the slow cooker. Roughly chop the garlic and place in the slow cooker (I actually kind of rubbed it onto the meat to get as much garlic flavor as possible, but you could just toss it in, too).",
+        "Sprinkle the meat with salt, cumin, chili powder, black pepper, oregano, cinnamon, and cayenne. Rub seasonings onto the pork.",
+        "Add lime juice, orange juice, beer, and salsa. Cover and cook on low for 8 hours.",
+        "Shred meat with two forks directly in the slow cooker (or take out, shred, and replace in sauce). It should fall apart easily.",
+        "Preheat broiler. Line a baking sheet with aluminum foil. Place the shredded meat on the cooking sheet and pour a few spoonfuls of sauce over the top. Broil for 5-10 minutes or until you get browned edges on the pork.",
+        "Serve on tortillas with fresh cilantro, avocado, and lime juice."
+      ]
+    }
+  },
+  "lastSynced": "2026-04-02T14:30:00.000Z"
+}
