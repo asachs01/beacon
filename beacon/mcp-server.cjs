@@ -285,6 +285,62 @@ const TOOLS = [
       required: ['action', 'chore_name', 'member_name'],
     },
   },
+  {
+    name: 'beacon_create_chore',
+    description: 'Create a new chore. Assign it to family members by name.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Chore name (e.g. "Make bed", "Feed the dog")' },
+        assigned_to: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Family member names to assign this chore to',
+        },
+        frequency: { type: 'string', enum: ['daily', 'weekly', 'once'], description: 'How often (default: daily)' },
+        value_cents: { type: 'number', description: 'Payout value in cents (default: 0)' },
+        icon: { type: 'string', description: 'Emoji icon (default: 🧹)' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'beacon_update_chore',
+    description: 'Update an existing chore by name or ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        chore_name: { type: 'string', description: 'Name (or ID) of the chore to update' },
+        name: { type: 'string', description: 'New name' },
+        assigned_to: { type: 'array', items: { type: 'string' }, description: 'New assigned member names' },
+        frequency: { type: 'string', enum: ['daily', 'weekly', 'once'] },
+        value_cents: { type: 'number' },
+        icon: { type: 'string' },
+      },
+      required: ['chore_name'],
+    },
+  },
+  {
+    name: 'beacon_delete_chore',
+    description: 'Delete a chore by name or ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        chore_name: { type: 'string', description: 'Name (or ID) of the chore to delete' },
+      },
+      required: ['chore_name'],
+    },
+  },
+  {
+    name: 'beacon_list_chores',
+    description: 'List all chores with their definitions and today\'s completion status.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'beacon_list_family_members',
+    description: 'List all family members (name, role, avatar, calendar).',
+    inputSchema: { type: 'object', properties: {} },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -495,6 +551,130 @@ async function handleTool(name, args) {
       }
 
       throw new Error(`Unknown action: ${action}`);
+    }
+
+    case 'beacon_create_chore': {
+      const chores = loadJson('beacon_chores.json');
+      const members = loadJson('beacon_family_members.json');
+
+      // Check for duplicate name
+      if (chores.some((c) => c.name.toLowerCase() === args.name.toLowerCase())) {
+        return { success: false, error: `Chore "${args.name}" already exists` };
+      }
+
+      // Resolve assigned member names to IDs
+      const assignedIds = [];
+      for (const memberName of (args.assigned_to || [])) {
+        const member = members.find(
+          (m) => m.name.toLowerCase() === memberName.toLowerCase()
+        );
+        if (!member) {
+          return {
+            success: false,
+            error: `Member "${memberName}" not found. Available: ${members.map((m) => m.name).join(', ') || '(none)'}`,
+          };
+        }
+        assignedIds.push(member.id);
+      }
+
+      const newChore = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        name: args.name,
+        assigned_to: assignedIds,
+        frequency: args.frequency || 'daily',
+        value_cents: args.value_cents || 0,
+        icon: args.icon || '🧹',
+      };
+
+      chores.push(newChore);
+      saveJson('beacon_chores.json', chores);
+      return { success: true, chore: newChore };
+    }
+
+    case 'beacon_update_chore': {
+      const chores = loadJson('beacon_chores.json');
+      const members = loadJson('beacon_family_members.json');
+      const idx = chores.findIndex(
+        (c) => c.name.toLowerCase() === args.chore_name.toLowerCase() || c.id === args.chore_name
+      );
+      if (idx === -1) {
+        return {
+          success: false,
+          error: `Chore "${args.chore_name}" not found. Available: ${chores.map((c) => c.name).join(', ') || '(none)'}`,
+        };
+      }
+
+      if (args.name) chores[idx].name = args.name;
+      if (args.frequency) chores[idx].frequency = args.frequency;
+      if (args.value_cents !== undefined) chores[idx].value_cents = args.value_cents;
+      if (args.icon) chores[idx].icon = args.icon;
+
+      if (args.assigned_to) {
+        const assignedIds = [];
+        for (const memberName of args.assigned_to) {
+          const member = members.find(
+            (m) => m.name.toLowerCase() === memberName.toLowerCase()
+          );
+          if (!member) {
+            return { success: false, error: `Member "${memberName}" not found` };
+          }
+          assignedIds.push(member.id);
+        }
+        chores[idx].assigned_to = assignedIds;
+      }
+
+      saveJson('beacon_chores.json', chores);
+      return { success: true, chore: chores[idx] };
+    }
+
+    case 'beacon_delete_chore': {
+      const chores = loadJson('beacon_chores.json');
+      const idx = chores.findIndex(
+        (c) => c.name.toLowerCase() === args.chore_name.toLowerCase() || c.id === args.chore_name
+      );
+      if (idx === -1) {
+        return {
+          success: false,
+          error: `Chore "${args.chore_name}" not found. Available: ${chores.map((c) => c.name).join(', ') || '(none)'}`,
+        };
+      }
+      const removed = chores.splice(idx, 1)[0];
+      saveJson('beacon_chores.json', chores);
+
+      // Also clean up completions for this chore
+      let completions = loadJson('beacon_completions.json');
+      completions = completions.filter((c) => c.chore_id !== removed.id);
+      saveJson('beacon_completions.json', completions);
+
+      return { success: true, message: `Deleted chore "${removed.name}"` };
+    }
+
+    case 'beacon_list_chores': {
+      const chores = loadJson('beacon_chores.json');
+      const members = loadJson('beacon_family_members.json');
+      const completions = loadJson('beacon_completions.json');
+
+      // Filter to today's completions
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayCompletions = completions.filter(
+        (c) => c.completed_at && c.completed_at.startsWith(todayStr)
+      );
+
+      const result = chores.map((chore) => ({
+        ...chore,
+        assigned_to_names: chore.assigned_to
+          .map((id) => members.find((m) => m.id === id)?.name || id)
+          ,
+        completed_today_by: todayCompletions
+          .filter((c) => c.chore_id === chore.id)
+          .map((c) => members.find((m) => m.id === c.member_id)?.name || c.member_id),
+      }));
+      return { chores: result };
+    }
+
+    case 'beacon_list_family_members': {
+      const members = loadJson('beacon_family_members.json');
+      return { members };
     }
 
     default:
