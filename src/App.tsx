@@ -422,10 +422,10 @@ export function App() {
               chores={chores}
               completedChoreIds={completedChoreIds}
               onToggleChore={handleToggleChore}
-              familyName={settings.familyName}
               todoItems={dashboardTasks.items}
               onToggleTodo={dashboardTasks.toggleItem}
               onWeatherClick={() => setActiveView('weather')}
+              members={members}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}

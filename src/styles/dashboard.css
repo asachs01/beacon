@@ -1,73 +1,196 @@
 /* ============================================================
-   Beacon — Dashboard View (daily glanceable display)
+   Beacon — Dashboard View (family command center)
    ============================================================ */
 
-/* --- Three-column layout — equal thirds --- */
+/* --- Main grid: topbar / main+sidebar --- */
 .dashboard {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 32px;
+  grid-template-columns: 1fr 300px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "topbar topbar"
+    "main   sidebar";
   height: 100%;
-  padding: 40px 48px;
+  padding: 24px 32px;
+  gap: 24px;
   overflow: hidden;
+}
+
+/* ─── TOP BAR ─── */
+.dash-topbar {
+  grid-area: topbar;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dash-topbar-left {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.dash-topbar-time {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent, var(--color-blue-full));
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+}
+
+[data-theme="dark"] .dash-topbar-time {
+  color: var(--text-primary);
+}
+
+.dash-topbar-date {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.dash-topbar-weather {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--bg-surface, #ffffff);
+  border-radius: var(--radius-md, 12px);
+  box-shadow: var(--shadow-sm);
+}
+
+.dash-topbar-weather--clickable {
+  cursor: pointer;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.dash-topbar-weather--clickable:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.dash-topbar-weather-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.dash-topbar-weather-temp {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dash-topbar-weather-cond {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ─── MAIN: Family calendar columns ─── */
+.dash-main {
+  grid-area: main;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.dash-family-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--member-count, 4), 1fr);
+  gap: 20px;
+  height: 100%;
   align-items: start;
 }
 
-/* --- LEFT COLUMN: Clock + Date + Greeting + Weather --- */
-.dashboard-left {
+.dash-member-col {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  height: 100%;
-  padding-top: 24px;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dash-member-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border-subtle);
+}
+
+.dash-member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border: 2px solid;
+  flex-shrink: 0;
+}
+
+.dash-member-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dash-member-events {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.dashboard-clock {
-  font-family: var(--font-display);
-  font-size: 96px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--text-primary);
-  letter-spacing: -2px;
-  font-variant-numeric: tabular-nums;
+.dash-member-empty {
+  font-size: 13px;
+  color: var(--text-light);
+  font-style: italic;
+  padding: 8px 0;
 }
 
-/* In light mode, give the clock the accent color like the mockup */
-[data-theme="light"] .dashboard-clock,
-:root .dashboard-clock {
-  color: var(--accent, var(--color-blue-full));
-}
-
-[data-theme="dark"] .dashboard-clock {
-  color: var(--text-primary);
-}
-
-.dashboard-date {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 400;
-  color: var(--text-secondary);
-  margin-top: 8px;
-}
-
-.dashboard-greeting {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--accent, #f59e0b);
-  margin-top: 16px;
-  line-height: 1.3;
-}
-
-/* --- CENTER COLUMN: Today's Events --- */
-.dashboard-center {
+/* Fallback for when no members have calendars assigned */
+.dash-events-fallback {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
 }
 
+/* ─── SIDEBAR ─── */
+.dash-sidebar {
+  grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  min-height: 0;
+  border-left: 1px solid var(--border-subtle);
+  padding-left: 24px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.dash-sidebar-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-sidebar-heading {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+/* ─── SHARED: Section title, events list, event cards ─── */
 .dashboard-section-title {
   font-family: var(--font-display);
   font-size: 18px;
@@ -88,18 +211,9 @@
   padding-right: 4px;
 }
 
-.dashboard-events-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-
-.dashboard-events-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.dashboard-events-scroll::-webkit-scrollbar-thumb {
-  background: var(--border, #e5e5e5);
-  border-radius: 2px;
-}
+.dashboard-events-scroll::-webkit-scrollbar { width: 4px; }
+.dashboard-events-scroll::-webkit-scrollbar-track { background: transparent; }
+.dashboard-events-scroll::-webkit-scrollbar-thumb { background: var(--border, #e5e5e5); border-radius: 2px; }
 
 .dashboard-events-list {
   display: flex;
@@ -151,72 +265,10 @@
   color: rgba(0, 0, 0, 0.5);
 }
 
-/* Event cards always use dark text on pastel backgrounds — regardless of theme */
-.event-card-calendar,
-.event-card-title,
-.event-card-time {
-  /* Force readable text on pastel backgrounds in any theme */
-}
-
-[data-theme="dark"] .event-card {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme="dark"] .event-card-calendar {
-  color: rgba(0, 0, 0, 0.5);
-}
-
-[data-theme="dark"] .event-card-title {
-  color: rgba(0, 0, 0, 0.85);
-}
-
-[data-theme="dark"] .event-card-time {
-  color: rgba(0, 0, 0, 0.5);
-}
-
-/* --- RIGHT COLUMN: Weather + Tasks --- */
-.dashboard-right {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-/* Weather widget */
-.dashboard-weather {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: var(--bg-surface, #ffffff);
-  border-radius: 12px;
-  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
-  margin-bottom: 24px;
-}
-
-.dashboard-weather-icon {
-  font-size: 36px;
-  line-height: 1;
-}
-
-.dashboard-weather-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.dashboard-weather-temp {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1;
-}
-
-.dashboard-weather-condition {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
+[data-theme="dark"] .event-card { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
+[data-theme="dark"] .event-card-calendar { color: rgba(0, 0, 0, 0.5); }
+[data-theme="dark"] .event-card-title { color: rgba(0, 0, 0, 0.85); }
+[data-theme="dark"] .event-card-time { color: rgba(0, 0, 0, 0.5); }
 
 /* --- Task Checklist --- */
 .task-checklist {
@@ -243,11 +295,8 @@
   background: var(--bg-hover, rgba(0, 0, 0, 0.04));
 }
 
-.task-checklist-item--done {
-  opacity: 0.5;
-}
+.task-checklist-item--done { opacity: 0.5; }
 
-/* Checkbox */
 .task-checkbox {
   width: 44px;
   height: 44px;
@@ -304,10 +353,7 @@
   color: var(--text-muted);
 }
 
-.task-checklist-icon {
-  font-size: 16px;
-  line-height: 1;
-}
+.task-checklist-icon { font-size: 16px; line-height: 1; }
 
 .task-checklist-empty {
   font-size: 16px;
@@ -323,120 +369,77 @@
   font-weight: 500;
 }
 
-/* --- Responsive: Tablet < 768px --- */
+/* ─── Responsive: Tablet < 768px ─── */
 @media (max-width: 768px) {
   .dashboard {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
-    gap: 20px;
-    padding: 20px;
-    height: auto;        /* override desktop height:100% so grid rows grow naturally */
-    min-height: 0;
+    grid-template-areas:
+      "topbar"
+      "main"
+      "sidebar";
+    gap: 16px;
+    padding: 16px;
+    height: auto;
     overflow-y: auto;
-    padding-bottom: 80px; /* clear now-playing + tab bar */
+    padding-bottom: 80px;
   }
 
-  .dashboard-left {
-    height: auto;
-    padding-top: 0;
-    order: 1;
+  .dash-topbar {
+    flex-wrap: wrap;
   }
 
-  .dashboard-center {
-    order: 2;
-    height: auto;
-    overflow: visible;
+  .dash-topbar-time { font-size: 36px; }
+  .dash-topbar-date { font-size: 16px; }
+
+  .dash-family-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  .dashboard-right {
-    order: 3;
-    height: auto;
+  .dash-member-header {
+    border-bottom-width: 1px;
   }
 
-  .dashboard-clock {
-    font-size: 56px;
+  .dash-sidebar {
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+    padding-left: 0;
+    padding-top: 16px;
   }
 
-  .dashboard-date {
-    font-size: 16px;
-  }
-
-  .dashboard-greeting {
-    font-size: 20px;
-  }
-
-  /* Limit events to prevent overflow — show 3-4 cards then scroll */
   .dashboard-events-scroll {
     max-height: 280px;
     overflow-y: auto;
   }
 
-  .dashboard-weather {
-    margin-bottom: 8px;
-    padding: 10px 14px;
-    gap: 8px;
-  }
+  .event-card { padding: 12px 14px; }
 
-  .dashboard-weather-icon {
-    font-size: 24px;
-  }
-
-  .dashboard-weather-temp {
-    font-size: 1.3rem;
-  }
-
-  .task-checklist-item {
-    min-height: 48px;
-  }
-
-  .event-card {
-    padding: 14px;
-  }
+  .task-checklist-item { min-height: 48px; }
 }
 
-/* --- Responsive: Phone < 480px --- */
+/* ─── Responsive: Phone < 480px ─── */
 @media (max-width: 480px) {
   .dashboard {
-    padding: 16px;
-    gap: 14px;
+    padding: 12px;
+    gap: 12px;
     padding-bottom: 80px;
   }
 
-  .dashboard-clock {
-    font-size: 44px;
-  }
-
-  .dashboard-date {
-    font-size: 14px;
-  }
-
-  .dashboard-greeting {
-    font-size: 16px;
-    margin-top: 4px;
-  }
+  .dash-topbar-time { font-size: 28px; }
+  .dash-topbar-date { font-size: 14px; }
+  .dash-topbar-weather { padding: 8px 12px; }
+  .dash-topbar-weather-icon { font-size: 20px; }
+  .dash-topbar-weather-temp { font-size: 18px; }
 
   .dashboard-section-title {
     font-size: 13px;
     margin-bottom: 10px;
   }
 
-  .dashboard-events-scroll {
-    max-height: 220px;
-  }
+  .dashboard-events-scroll { max-height: 220px; }
 
-  .event-card {
-    padding: 10px 12px;
-  }
-
-  .event-card-title {
-    font-size: 13px;
-  }
-
-  .event-card-time {
-    font-size: 12px;
-  }
-
-  .dashboard-weather-temp {
-    font-size: 24px;
-  }
+  .event-card { padding: 10px 12px; }
+  .event-card-title { font-size: 13px; }
+  .event-card-time { font-size: 12px; }
 }
