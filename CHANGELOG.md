@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/asachs01/beacon/compare/v1.17.3...v1.18.0) (2026-04-02)
+
+
+### Features
+
+* two-column calendar layout + meal plan view ([5eacf61](https://github.com/asachs01/beacon/commit/5eacf61cde61df28d3fec11b6b5cbcdcbfc21a9d))
+
 ## [1.17.3](https://github.com/asachs01/beacon/compare/v1.17.2...v1.17.3) (2026-04-02)
 
 
