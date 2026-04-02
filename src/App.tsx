@@ -23,6 +23,7 @@ import { useNotifications } from './hooks/useNotifications';
 import { ScreenSaver } from './components/ScreenSaver';
 import { GroceryView } from './components/GroceryView';
 import { OmniAdd } from './components/OmniAdd';
+import { CalendarSidebar } from './components/CalendarSidebar';
 import { Timer } from './components/Timer';
 import { WeatherView } from './components/WeatherView';
 import { useIngressDetect } from './hooks/useIngressDetect';
@@ -511,14 +512,24 @@ export function App() {
               />
             </div>
 
-            {/* Calendar Body */}
-            <div className="beacon-body">
-              <WeekCalendar
+            {/* Calendar Body — two-column on desktop */}
+            <div className="beacon-body beacon-body--two-col">
+              <div className="beacon-body-calendar">
+                <WeekCalendar
+                  events={events}
+                  hiddenCalendars={hiddenCalendars}
+                  onEventClick={handleEventClick}
+                  onSlotClick={handleSlotClick}
+                  onEventReschedule={handleEventReschedule}
+                />
+              </div>
+              <CalendarSidebar
                 events={events}
-                hiddenCalendars={hiddenCalendars}
-                onEventClick={handleEventClick}
-                onSlotClick={handleSlotClick}
-                onEventReschedule={handleEventReschedule}
+                chores={chores}
+                completedChoreIds={completedChoreIds}
+                onToggleChore={handleToggleChore}
+                todoItems={dashboardTasks.items}
+                onToggleTodo={dashboardTasks.toggleItem}
               />
             </div>
 
