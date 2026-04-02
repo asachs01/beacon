@@ -11,13 +11,12 @@ import {
   Settings,
   Timer as TimerIcon,
   CloudSun,
-  UtensilsCrossed,
   MoreHorizontal,
   X,
 } from 'lucide-react';
 import beaconIcon from '../assets/beacon-icon.svg';
 
-export type SidebarView = 'dashboard' | 'calendar' | 'chores' | 'grocery' | 'tasks' | 'leaderboard' | 'music' | 'photos' | 'timer' | 'weather' | 'meal-plan' | 'settings';
+export type SidebarView = 'dashboard' | 'calendar' | 'chores' | 'grocery' | 'tasks' | 'leaderboard' | 'music' | 'photos' | 'timer' | 'weather' | 'settings';
 
 interface SidebarProps {
   activeView: SidebarView;
@@ -45,7 +44,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'photos', icon: <Image size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Photos' },
   { id: 'timer', icon: <TimerIcon size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Timer' },
   { id: 'weather', icon: <CloudSun size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Weather' },
-  { id: 'meal-plan', icon: <UtensilsCrossed size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Meal Plan' },
 ];
 
 /** Items shown directly in the mobile bottom tab bar */
