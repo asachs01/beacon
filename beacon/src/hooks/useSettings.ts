@@ -39,6 +39,9 @@ export interface BeaconSettings {
   photoInterval: number;
   photoTransition: 'fade' | 'slide';
 
+  // Dashboard
+  dashboardLayout: 'default' | 'classic' | 'compact';
+
   // Display
   screenSaverEnabled: boolean;
   dimTimeout: number;       // minutes
@@ -92,6 +95,8 @@ function buildDefaults(): BeaconSettings {
     photoDirectory: config.photo_directory,
     photoInterval: config.photo_interval,
     photoTransition: 'fade',
+
+    dashboardLayout: 'default',
 
     screenSaverEnabled: true,
     dimTimeout: 5,

@@ -426,6 +426,7 @@ export function App() {
               onToggleTodo={dashboardTasks.toggleItem}
               onWeatherClick={() => setActiveView('weather')}
               members={members}
+              layout={settings.dashboardLayout}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}

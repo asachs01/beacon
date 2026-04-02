@@ -411,6 +411,51 @@ export function SettingsView({
           </select>
         </div>
       </div>
+
+      <h2 className="settings-section-title" style={{ marginTop: 32 }}>Dashboard Layout</h2>
+      <p className="settings-section-desc">Choose how your dashboard is organized.</p>
+      <div className="settings-group">
+        <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+          <div>
+            <div className="settings-row-label">Layout</div>
+            <div className="settings-row-sublabel">Pick a preset layout</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {([
+              { id: 'default', label: 'Family', desc: 'Per-member calendar columns' },
+              { id: 'classic', label: 'Classic', desc: 'Original 3-column view' },
+              { id: 'compact', label: 'Compact', desc: 'Single column, scrollable' },
+            ] as const).map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => onUpdateSettings({ dashboardLayout: preset.id })}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: settings.dashboardLayout === preset.id
+                    ? '2px solid var(--accent)'
+                    : '1px solid var(--border)',
+                  background: settings.dashboardLayout === preset.id
+                    ? 'var(--bg-today)'
+                    : 'var(--bg-surface)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  minWidth: 100,
+                  transition: 'all 150ms ease',
+                }}
+              >
+                <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                  {preset.label}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  {preset.desc}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
     </>
   );
 

@@ -32,6 +32,7 @@ interface DashboardViewProps {
   onToggleTodo?: (uid: string, currentStatus: string) => void;
   onWeatherClick?: () => void;
   members?: FamilyMember[];
+  layout?: 'default' | 'classic' | 'compact';
 }
 
 export function DashboardView({
@@ -44,6 +45,7 @@ export function DashboardView({
   onToggleTodo,
   onWeatherClick,
   members = [],
+  layout = 'default',
 }: DashboardViewProps) {
   const [now, setNow] = useState(new Date());
 
@@ -69,7 +71,7 @@ export function DashboardView({
   const hasMemberCalendars = members.some((m) => m.calendar_entity);
 
   return (
-    <div className="dashboard">
+    <div className={`dashboard dashboard--${layout}`}>
       {/* ─── TOP BAR: Time + Date + Weather ─── */}
       <header className="dash-topbar">
         <div className="dash-topbar-left">
