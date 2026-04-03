@@ -6,13 +6,78 @@ order: 1
 
 # AI and Voice Control
 
-Beacon supports three approaches for voice and AI control. Choose the one that fits your setup, or use them all together.
+Beacon supports four approaches for voice and AI control. Choose the one that fits your setup, or use them all together.
 
 | Approach | Best for | Requires LLM? |
 |----------|----------|----------------|
+| [Claude Code Plugin](#claude-code-plugin) | Claude Code users | Yes |
 | [Voice API](#voice-api-built-in) | Quick automations, custom UIs | No |
-| [MCP Server](#mcp-server-for-llm-agents) | Claude Code, LLM agents | Yes |
+| [MCP Server](#mcp-server-for-llm-agents) | Any LLM agent (Open Claw, etc.) | Yes |
 | [HA Custom Sentences](#ha-custom-sentences-for-ha-assist) | Home Assistant Assist | No |
+
+---
+
+## Claude Code Plugin
+
+The Beacon plugin for Claude Code gives you slash commands, domain knowledge (skills), and the MCP server in one package. Install it once and Claude understands how to manage your family dashboard.
+
+### Installation
+
+```bash
+/plugin add /path/to/beacon/claude-plugin
+```
+
+Then set your environment variables:
+
+```bash
+export BEACON_HA_TOKEN="your-ha-long-lived-access-token"
+export BEACON_HA_URL="http://homeassistant.local:8123"
+export BEACON_DATA_DIR="/path/to/beacon/data"
+```
+
+Generate a token in Home Assistant: **Profile > Security > Long-Lived Access Tokens > Create Token**.
+
+### Slash Commands
+
+| Command | Description |
+|---------|-------------|
+| `/create-chore` | Create a family chore with assignments, frequency, and payout |
+| `/family-schedule` | Per-person calendar breakdown for today |
+| `/whats-for-dinner` | Show today's meal plan |
+| `/chore-status` | Chore completion status and earnings for today |
+
+### Skills
+
+Skills are domain knowledge files that teach Claude how Beacon works. They activate automatically when you ask about related topics.
+
+| Skill | Triggers on |
+|-------|-------------|
+| **MCP Server** | Setup, connection, available tools |
+| **Chores** | Creating, assigning, completing, payouts, streaks |
+| **Calendar** | Events, schedules, calendar-to-person mapping |
+| **Meal Plans** | Viewing menus, AnyList sync, meal data |
+| **Dashboard** | Layout presets, widgets, per-member columns |
+
+### Example Usage
+
+```
+> /create-chore "Walk the dog" --assigned_to "Lennon, Elliott" --frequency daily --value 1.00 --icon 🐕
+
+> /family-schedule
+📅 Family Schedule — Wednesday, April 2
+👨 Aaron: 9:00 AM - Team standup, 2:00 PM - Dentist
+👩 Ashley: 10:00 AM - PTA meeting
+🧒 Lennon: (nothing today)
+🧒 Elliott: (nothing today)
+
+> /whats-for-dinner
+🌙 Dinner: Instant Pot Spaghetti
+
+> /chore-status
+✅ Make bed — Lennon, Elliott
+⬜ Walk the dog — pending (Lennon, Elliott)
+💰 Lennon: $1.50 today
+```
 
 ---
 
