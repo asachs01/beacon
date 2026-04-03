@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "beacon",
+  "description": "Claude Code plugin for Beacon — a family dashboard with calendar, chores, meal plans, grocery lists, music, and weather. Runs as a Home Assistant add-on.",
+  "version": "1.0.0",
+  "owner": {
+    "name": "Aaron Sachs"
+  },
+  "plugins": [
+    {
+      "name": "beacon",
+      "source": "./claude-plugin",
+      "description": "Beacon family dashboard — chores, calendar, meal plans, grocery lists, media, weather",
+      "version": "1.0.0",
+      "category": "smart-home",
+      "tags": ["beacon", "home-assistant", "family", "chores", "calendar", "meal-plans", "smart-home"]
+    }
+  ]
+}

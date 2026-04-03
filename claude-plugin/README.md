@@ -18,7 +18,7 @@ Control your [Beacon](https://github.com/asachs01/beacon) family dashboard from 
 
 1. Install the plugin:
    ```
-   /plugin add /path/to/beacon/claude-plugin
+   /plugin marketplace add asachs01/beacon
    ```
 
 2. Set environment variables (or create `.env` from `.env.example`):
