@@ -102,6 +102,28 @@ PINs are reserved for future features like parental controls and per-member auth
 
 ---
 
+## Calendar assignment
+
+Each family member can be linked to a Home Assistant calendar entity. This powers the per-member columns in the **Family** dashboard layout (see [Dashboard](/docs/features/dashboard/)).
+
+### Assigning a calendar
+
+1. Open **Settings > Family Members**
+2. Click the **pencil icon** on the member's card
+3. In the edit form, find the **Calendar** dropdown — it lists all calendar entities discovered from your Home Assistant instance
+4. Select the calendar that belongs to this member
+5. Click **Save Changes**
+
+Once assigned, the member's dashboard column will show only events from their linked calendar. Events from calendars that are not assigned to any member appear in the **"Other"** column.
+
+### Tips for calendar setup
+
+- **Google Calendar**: Each Google account connected to HA automatically creates calendar entities (e.g., `calendar.john_gmail_com`). Assign the appropriate one to each family member.
+- **Kids without accounts**: If a child doesn't have their own Google account, create a shared sub-calendar on a parent's account dedicated to that child's events, or use Home Assistant's **Local Calendar** integration to create a calendar entity for them.
+- **Multiple calendars per person**: Only one calendar entity can be assigned per member. If a person uses multiple calendars, consider merging them into one or picking the primary one.
+
+---
+
 ## Editing a family member
 
 1. Open the Family Members modal (gear icon in sidebar)

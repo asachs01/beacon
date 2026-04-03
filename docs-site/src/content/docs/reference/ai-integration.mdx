@@ -108,7 +108,7 @@ For **Claude Desktop** or other MCP clients, add to your config file:
 | `HA_URL` | `http://supervisor/core` | HA URL (change when running outside the add-on) |
 | `DATA_DIR` | `/data` | Beacon data directory (for chore files) |
 
-### All 10 tools
+### All 17 tools
 
 #### Lists
 
@@ -150,12 +150,29 @@ For volume, also pass `volume_level` (0.0 to 1.0).
 | Tool | Description | Required inputs |
 |------|-------------|-----------------|
 | `beacon_manage_chore` | Complete/uncomplete a chore | `action`, `chore_name`, `member_name` |
+| `beacon_create_chore` | Create a new chore | `name`; optional: `assigned_to` (array of member names), `frequency` (daily/weekly/once), `value_cents`, `icon` |
+| `beacon_update_chore` | Update an existing chore | `chore_name`; optional: `name`, `assigned_to`, `frequency`, `value_cents`, `icon` |
+| `beacon_delete_chore` | Delete a chore and its completions | `chore_name` |
+| `beacon_list_chores` | List all chores with today's completion status | (none) |
+
+#### Family
+
+| Tool | Description | Required inputs |
+|------|-------------|-----------------|
+| `beacon_list_family_members` | List all family members | (none) |
+
+#### Meal Plans
+
+| Tool | Description | Required inputs |
+|------|-------------|-----------------|
+| `beacon_get_meal_plan` | Get meal plan entries | `date` (optional), `days` (optional) |
+| `beacon_set_meal_plan` | Write meal plan data | `entries` (array of `{date, meal_type, name}`) |
 
 ### Example conversation
 
-> **You:** Add milk and eggs to our grocery list, then tell me what's on the calendar this week.
+> **You:** Create a daily chore called "Make bed" for Lennon and Elliott, worth 50 cents each.
 >
-> The LLM agent would call `beacon_add_list_item` twice (once for milk, once for eggs), then call `beacon_get_calendar` with `days_ahead: 7`, and summarize the results in natural language.
+> The LLM calls `beacon_list_family_members` to confirm names, then `beacon_create_chore` with name "Make bed", assigned_to ["Lennon", "Elliott"], frequency "daily", value_cents 50.
 
 ---
 
