@@ -1,3 +1,10 @@
+## [1.20.1](https://github.com/asachs01/beacon/compare/v1.20.0...v1.20.1) (2026-04-03)
+
+
+### Bug Fixes
+
+* use marketplace install for Beacon Claude plugin ([9b9f8b6](https://github.com/asachs01/beacon/commit/9b9f8b6aa5fa5e35efb96584a559f1146477ddf6))
+
 # [1.20.0](https://github.com/asachs01/beacon/compare/v1.19.0...v1.20.0) (2026-04-03)
 
 

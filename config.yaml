@@ -1,5 +1,5 @@
 name: Beacon
-version: "1.20.0"
+version: "1.20.1"
 slug: beacon
 description: "Family command center for wall-mounted displays"
 url: "https://github.com/asachs01/beacon"
