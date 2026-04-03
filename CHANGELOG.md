@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/asachs01/beacon/compare/v1.19.0...v1.20.0) (2026-04-03)
+
+
+### Features
+
+* add Claude Code plugin with skills and commands ([24cce9b](https://github.com/asachs01/beacon/commit/24cce9b860f47551c25504fc6011549ef3760fdf))
+
 # [1.19.0](https://github.com/asachs01/beacon/compare/v1.18.0...v1.19.0) (2026-04-02)
 
 
