@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "beacon": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/../beacon/mcp-server.cjs"],
+      "env": {
+        "SUPERVISOR_TOKEN": "${BEACON_HA_TOKEN}",
+        "HA_URL": "${BEACON_HA_URL}",
+        "DATA_DIR": "${BEACON_DATA_DIR}"
+      }
+    }
+  }
+}

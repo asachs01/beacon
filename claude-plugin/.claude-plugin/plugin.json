@@ -1,0 +1,11 @@
+{
+  "name": "beacon",
+  "version": "1.0.0",
+  "description": "Claude Code plugin for Beacon — family dashboard with calendar, chores, meal plans, grocery lists, music, and weather",
+  "author": {
+    "name": "Aaron Sachs"
+  },
+  "homepage": "https://github.com/asachs01/beacon",
+  "repository": "https://github.com/asachs01/beacon",
+  "license": "Apache-2.0"
+}
