@@ -1,3 +1,10 @@
+## [1.24.2](https://github.com/asachs01/beacon/compare/v1.24.1...v1.24.2) (2026-04-04)
+
+
+### Bug Fixes
+
+* add viewport-fit=cover for iOS safe area insets ([84ff7b3](https://github.com/asachs01/beacon/commit/84ff7b3a5047e907571c1d1ebacee1c4d4960b71))
+
 ## [1.24.1](https://github.com/asachs01/beacon/compare/v1.24.0...v1.24.1) (2026-04-04)
 
 
