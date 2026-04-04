@@ -478,6 +478,71 @@
   font-weight: 500;
 }
 
+/* Multi-completion counter button */
+.chore-multi {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.chore-multi-btn {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  min-width: 52px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill, 9999px);
+  border: 2px solid var(--accent);
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-display);
+  transition: background var(--transition), transform 0.15s;
+}
+
+.chore-multi-btn:active:not(:disabled) {
+  transform: scale(0.92);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.chore-multi-btn--maxed {
+  border-color: var(--color-green-full);
+  background: color-mix(in srgb, var(--color-green-full) 10%, transparent);
+  cursor: default;
+}
+
+.chore-multi-count {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.chore-multi-btn--maxed .chore-multi-count {
+  color: var(--color-green-full);
+}
+
+.chore-multi-max {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.chore-multi-undo {
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+
+.chore-multi-undo:hover {
+  color: var(--text-primary);
+}
+
 .chore-card-skip {
   position: absolute;
   right: -56px;
