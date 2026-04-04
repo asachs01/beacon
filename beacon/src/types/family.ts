@@ -13,6 +13,7 @@ export interface Chore {
   name: string;
   assigned_to: string[]; // member IDs
   frequency: 'daily' | 'weekly' | 'once';
+  max_completions?: number; // max times per frequency period (e.g., 3x/week)
   value_cents: number;
   icon?: string; // emoji
 }

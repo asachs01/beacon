@@ -19,6 +19,8 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
     completeChore,
     uncompleteChore,
     isChoreCompletedToday,
+    isChoreMaxedOut,
+    getCompletionCount,
     getStreakForMember,
     getChoresForMember,
     getMemberProgress,
@@ -29,6 +31,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
     name: '',
     value_cents: 100,
     frequency: 'daily' as Chore['frequency'],
+    max_completions: undefined as number | undefined,
     assigned_to: [] as string[],
     icon: '🧹',
   });
@@ -39,6 +42,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
       name: newChore.name.trim(),
       value_cents: newChore.value_cents,
       frequency: newChore.frequency,
+      max_completions: newChore.max_completions,
       assigned_to: newChore.assigned_to,
       icon: newChore.icon,
     });
@@ -46,6 +50,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
       name: '',
       value_cents: 100,
       frequency: 'daily',
+      max_completions: undefined,
       assigned_to: [],
       icon: '🧹',
     });
@@ -131,6 +136,8 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                     chore={chore}
                     member={member}
                     isCompleted={isChoreCompletedToday(chore.id, member.id)}
+                    completionCount={chore.max_completions ? getCompletionCount(chore, member.id) : undefined}
+                    isMaxedOut={isChoreMaxedOut(chore, member.id)}
                     onComplete={() => completeChore(chore.id, member.id)}
                     onUncomplete={() => uncompleteChore(chore.id, member.id)}
                   />
@@ -221,6 +228,28 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                     <option value="once">One-time</option>
                   </select>
                 </div>
+
+                {newChore.frequency !== 'once' && (
+                  <div className="form-field">
+                    <label className="form-label">
+                      Max per {newChore.frequency === 'daily' ? 'day' : 'week'}
+                    </label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={newChore.max_completions ?? ''}
+                      onChange={(e) =>
+                        setNewChore((f) => ({
+                          ...f,
+                          max_completions: e.target.value ? parseInt(e.target.value) : undefined,
+                        }))
+                      }
+                      placeholder="Unlimited"
+                      min="1"
+                      max="99"
+                    />
+                  </div>
+                )}
 
                 <div className="form-field">
                   <label className="form-label">Assign To</label>

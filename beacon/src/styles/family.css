@@ -472,6 +472,12 @@
   color: var(--color-green-full);
 }
 
+.chore-card-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 .chore-card-skip {
   position: absolute;
   right: -56px;

@@ -73,6 +73,50 @@ export function useChores() {
     [completionsToday]
   );
 
+  /** Count how many times a chore was completed by a member in the current frequency period. */
+  const getCompletionCount = useCallback(
+    (chore: Chore, memberId: string): number => {
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+
+      if (chore.frequency === 'daily') {
+        return completionsToday.filter(
+          (c) => c.chore_id === chore.id && c.member_id === memberId
+        ).length;
+      }
+
+      if (chore.frequency === 'weekly') {
+        // Start of week (Sunday)
+        const dayOfWeek = now.getDay();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - dayOfWeek);
+        const weekStartStr = weekStart.toISOString().slice(0, 10);
+        // We only have completionsToday loaded; for weekly we need all completions
+        // Use a simple approach: count from store sync
+        const allCompletions = store.getCompletionsSync();
+        return allCompletions.filter(
+          (c) =>
+            c.chore_id === chore.id &&
+            c.member_id === memberId &&
+            c.completed_at.slice(0, 10) >= weekStartStr &&
+            c.completed_at.slice(0, 10) <= todayStr
+        ).length;
+      }
+
+      return 0;
+    },
+    [completionsToday, store]
+  );
+
+  /** Check if a chore has reached its max completions for the current period. */
+  const isChoreMaxedOut = useCallback(
+    (chore: Chore, memberId: string): boolean => {
+      if (!chore.max_completions) return false;
+      return getCompletionCount(chore, memberId) >= chore.max_completions;
+    },
+    [getCompletionCount]
+  );
+
   const getStreakForMember = useCallback(
     (memberId: string): Streak => {
       return (
@@ -147,6 +191,8 @@ export function useChores() {
     getStreakForMember,
     getChoresForMember,
     getMemberProgress,
+    getCompletionCount,
+    isChoreMaxedOut,
     getEarningsForPeriod,
     refresh,
   };

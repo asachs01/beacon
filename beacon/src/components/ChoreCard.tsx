@@ -5,6 +5,8 @@ interface ChoreCardProps {
   chore: Chore;
   member: FamilyMember;
   isCompleted: boolean;
+  completionCount?: number;
+  isMaxedOut?: boolean;
   onComplete: () => void;
   onUncomplete: () => void;
 }
@@ -18,6 +20,8 @@ export function ChoreCard({
   chore,
   member,
   isCompleted,
+  completionCount,
+  isMaxedOut,
   onComplete,
   onUncomplete,
 }: ChoreCardProps) {
@@ -30,6 +34,7 @@ export function ChoreCard({
       onUncomplete();
       return;
     }
+    if (isMaxedOut) return;
     setAnimating(true);
     onComplete();
     setTimeout(() => setAnimating(false), 600);
@@ -74,6 +79,11 @@ export function ChoreCard({
           {chore.name}
         </span>
         {value && <span className="chore-card-value">{value}</span>}
+        {chore.max_completions && completionCount != null && (
+          <span className="chore-card-count">
+            {completionCount}/{chore.max_completions} per {chore.frequency === 'daily' ? 'day' : 'week'}
+          </span>
+        )}
       </div>
 
       <button
