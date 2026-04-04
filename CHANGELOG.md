@@ -1,3 +1,10 @@
+## [1.21.1](https://github.com/asachs01/beacon/compare/v1.21.0...v1.21.1) (2026-04-04)
+
+
+### Bug Fixes
+
+* mobile chore form scroll when keyboard is open ([ec34418](https://github.com/asachs01/beacon/commit/ec344189890dfb1976beef5a5f523137791897f3))
+
 # [1.21.0](https://github.com/asachs01/beacon/compare/v1.20.1...v1.21.0) (2026-04-04)
 
 
