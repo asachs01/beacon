@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/asachs01/beacon/compare/v1.20.1...v1.21.0) (2026-04-04)
+
+
+### Features
+
+* on-screen kiosk keyboard + Music Assistant search/browse/queue ([f1f2e60](https://github.com/asachs01/beacon/commit/f1f2e60cdda1ff32e7d0f7daab2a59c0802c98bb))
+
 ## [1.20.1](https://github.com/asachs01/beacon/compare/v1.20.0...v1.20.1) (2026-04-03)
 
 
