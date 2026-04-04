@@ -27,6 +27,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
   } = useChores();
 
   const [showAddForm, setShowAddForm] = useState(false);
+  const [valueDisplay, setValueDisplay] = useState('1.00');
   const [newChore, setNewChore] = useState({
     name: '',
     value_cents: 100,
@@ -54,6 +55,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
       assigned_to: [],
       icon: '🧹',
     });
+    setValueDisplay('1.00');
     setShowAddForm(false);
   };
 
@@ -199,17 +201,17 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                   <div className="chores-value-input">
                     <span className="chores-value-prefix">$</span>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       className="form-input"
-                      value={(newChore.value_cents / 100).toFixed(2)}
-                      onChange={(e) =>
-                        setNewChore((f) => ({
-                          ...f,
-                          value_cents: Math.round(parseFloat(e.target.value || '0') * 100),
-                        }))
-                      }
-                      step="0.25"
-                      min="0"
+                      value={valueDisplay}
+                      onChange={(e) => setValueDisplay(e.target.value)}
+                      onBlur={() => {
+                        const cents = Math.round(parseFloat(valueDisplay || '0') * 100);
+                        setNewChore((f) => ({ ...f, value_cents: cents }));
+                        setValueDisplay((cents / 100).toFixed(2));
+                      }}
+                      placeholder="0.00"
                     />
                   </div>
                 </div>
