@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/asachs01/beacon/compare/v1.23.0...v1.24.0) (2026-04-04)
+
+
+### Features
+
+* photo screensaver with Google Photos (HA) + Immich support ([8049c79](https://github.com/asachs01/beacon/commit/8049c79bea73e2a6af9ab82e70205f5135a35171))
+
 # [1.23.0](https://github.com/asachs01/beacon/compare/v1.22.0...v1.23.0) (2026-04-04)
 
 
