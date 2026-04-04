@@ -1,3 +1,10 @@
+## [1.24.4](https://github.com/asachs01/beacon/compare/v1.24.3...v1.24.4) (2026-04-04)
+
+
+### Bug Fixes
+
+* remove gap above mobile tab bar, use min-height for safe area ([c972bad](https://github.com/asachs01/beacon/commit/c972bad8c2b6297526be52b495ff0193b864d4d9))
+
 ## [1.24.3](https://github.com/asachs01/beacon/compare/v1.24.2...v1.24.3) (2026-04-04)
 
 
