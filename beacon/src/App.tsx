@@ -30,6 +30,7 @@ import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
+import { OnScreenKeyboard } from './components/OnScreenKeyboard';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView from './components/OnboardingView';
 import { CalendarEvent } from './types';
@@ -597,6 +598,9 @@ export function App() {
           onExpand={() => setActiveView('music')}
         />
       )}
+
+      {/* On-screen keyboard for kiosk/touch displays */}
+      <OnScreenKeyboard />
 
       {/* Screen saver / dim mode */}
       <ScreenSaver

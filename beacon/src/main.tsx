@@ -12,6 +12,7 @@ import './styles/widgets.css';
 import './styles/omni-add.css';
 import './styles/settings.css';
 import './styles/weather.css';
+import './styles/keyboard.css';
 import { initNativeBridge } from './native';
 import { applyStoredTheme } from './hooks/useTheme';
 
