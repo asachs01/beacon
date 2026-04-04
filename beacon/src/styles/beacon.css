@@ -1340,7 +1340,7 @@ a:focus:not(:focus-visible) {
     --time-axis-width: 44px;
     --hour-height: 56px;
     --sidebar-width: 0px;
-    --mobile-tab-bar-height: calc(72px + env(safe-area-inset-bottom, 0px));
+    --mobile-tab-bar-height: 72px;
   }
 
   /* --- Layout: remove sidebar column, add bottom padding for tab bar --- */
@@ -1376,14 +1376,14 @@ a:focus:not(:focus-visible) {
     bottom: 0;
     left: 0;
     right: 0;
-    height: var(--mobile-tab-bar-height);
+    min-height: var(--mobile-tab-bar-height);
     background: var(--bg-surface, #ffffff);
     border-top: 1px solid var(--border, #e5e5e5);
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
     z-index: 90;
     align-items: flex-start;
     justify-content: space-around;
-    padding: 8px 4px 0;
+    padding: 8px 4px;
     padding-bottom: env(safe-area-inset-bottom, 8px);
   }
 
