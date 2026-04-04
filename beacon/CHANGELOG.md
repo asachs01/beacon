@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/asachs01/beacon/compare/v1.24.5...v1.25.0) (2026-04-04)
+
+
+### Features
+
+* chore payout ledger with auto-generated parent chores ([ad8b38d](https://github.com/asachs01/beacon/commit/ad8b38d2705cd096de8ce191dac728163e7ac38d))
+
 ## [1.24.5](https://github.com/asachs01/beacon/compare/v1.24.4...v1.24.5) (2026-04-04)
 
 
