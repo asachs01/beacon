@@ -1,3 +1,10 @@
+## [1.24.5](https://github.com/asachs01/beacon/compare/v1.24.4...v1.24.5) (2026-04-04)
+
+
+### Bug Fixes
+
+* chore value input lets you type freely ([d0b4d09](https://github.com/asachs01/beacon/commit/d0b4d0927aec377c2d23887953479e872225dff4))
+
 ## [1.24.4](https://github.com/asachs01/beacon/compare/v1.24.3...v1.24.4) (2026-04-04)
 
 
