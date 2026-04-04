@@ -1383,7 +1383,7 @@ a:focus:not(:focus-visible) {
     z-index: 90;
     align-items: stretch;
     justify-content: space-around;
-    padding: 8px 4px 0;
+    padding: 8px 4px env(safe-area-inset-bottom, 8px);
     padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
   }
 
