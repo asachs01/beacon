@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/asachs01/beacon/compare/v1.21.1...v1.22.0) (2026-04-04)
+
+
+### Features
+
+* max completions per chore frequency period ([b94a69f](https://github.com/asachs01/beacon/commit/b94a69f21167c2a6cdf68bd94cffb0842a79656c))
+
 ## [1.21.1](https://github.com/asachs01/beacon/compare/v1.21.0...v1.21.1) (2026-04-04)
 
 
