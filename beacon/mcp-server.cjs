@@ -298,6 +298,7 @@ const TOOLS = [
           description: 'Family member names to assign this chore to',
         },
         frequency: { type: 'string', enum: ['daily', 'weekly', 'once'], description: 'How often (default: daily)' },
+        max_completions: { type: 'number', description: 'Max times per frequency period (e.g. 3 = can earn up to 3x/week). Omit or null for unlimited.' },
         value_cents: { type: 'number', description: 'Payout value in cents (default: 0)' },
         icon: { type: 'string', description: 'Emoji icon (default: 🧹)' },
       },
@@ -314,6 +315,7 @@ const TOOLS = [
         name: { type: 'string', description: 'New name' },
         assigned_to: { type: 'array', items: { type: 'string' }, description: 'New assigned member names' },
         frequency: { type: 'string', enum: ['daily', 'weekly', 'once'] },
+        max_completions: { type: 'number', description: 'Max times per frequency period. Set to 0 or null to remove limit.' },
         value_cents: { type: 'number' },
         icon: { type: 'string' },
       },
@@ -562,6 +564,30 @@ async function handleTool(name, args) {
       }
 
       if (action === 'complete') {
+        // Enforce max_completions per period
+        if (chore.max_completions) {
+          const now = new Date();
+          let periodStart;
+          if (chore.frequency === 'daily') {
+            periodStart = now.toISOString().slice(0, 10);
+          } else if (chore.frequency === 'weekly') {
+            const d = new Date(now);
+            d.setDate(d.getDate() - d.getDay());
+            periodStart = d.toISOString().slice(0, 10);
+          }
+          if (periodStart) {
+            const periodCount = completions.filter(
+              (c) => c.chore_id === chore.id && c.member_id === member.id && c.completed_at.slice(0, 10) >= periodStart
+            ).length;
+            if (periodCount >= chore.max_completions) {
+              return {
+                success: false,
+                error: `${member.name} has already completed "${chore.name}" ${periodCount}/${chore.max_completions} times this ${chore.frequency === 'daily' ? 'day' : 'week'}`,
+              };
+            }
+          }
+        }
+
         const completion = {
           chore_id: chore.id,
           member_id: member.id,
@@ -617,6 +643,7 @@ async function handleTool(name, args) {
         name: args.name,
         assigned_to: assignedIds,
         frequency: args.frequency || 'daily',
+        max_completions: args.max_completions || undefined,
         value_cents: args.value_cents || 0,
         icon: args.icon || '🧹',
       };
@@ -641,6 +668,9 @@ async function handleTool(name, args) {
 
       if (args.name) chores[idx].name = args.name;
       if (args.frequency) chores[idx].frequency = args.frequency;
+      if (args.max_completions !== undefined) {
+        chores[idx].max_completions = args.max_completions || undefined; // 0/null removes limit
+      }
       if (args.value_cents !== undefined) chores[idx].value_cents = args.value_cents;
       if (args.icon) chores[idx].icon = args.icon;
 
@@ -695,15 +725,36 @@ async function handleTool(name, args) {
         (c) => c.completed_at && c.completed_at.startsWith(todayStr)
       );
 
-      const result = chores.map((chore) => ({
-        ...chore,
-        assigned_to_names: chore.assigned_to
-          .map((id) => members.find((m) => m.id === id)?.name || id)
-          ,
-        completed_today_by: todayCompletions
-          .filter((c) => c.chore_id === chore.id)
-          .map((c) => members.find((m) => m.id === c.member_id)?.name || c.member_id),
-      }));
+      // Also compute period completions for chores with max_completions
+      const now = new Date();
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay());
+      const weekStartStr = weekStart.toISOString().slice(0, 10);
+
+      const result = chores.map((chore) => {
+        const entry = {
+          ...chore,
+          assigned_to_names: chore.assigned_to
+            .map((id) => members.find((m) => m.id === id)?.name || id),
+          completed_today_by: todayCompletions
+            .filter((c) => c.chore_id === chore.id)
+            .map((c) => members.find((m) => m.id === c.member_id)?.name || c.member_id),
+        };
+        // Add period completion counts when max_completions is set
+        if (chore.max_completions) {
+          const periodStart = chore.frequency === 'daily' ? todayStr : weekStartStr;
+          const periodCompletions = completions.filter(
+            (c) => c.chore_id === chore.id && c.completed_at.slice(0, 10) >= periodStart
+          );
+          entry.period_completions = {};
+          for (const memberId of chore.assigned_to) {
+            const name = members.find((m) => m.id === memberId)?.name || memberId;
+            const count = periodCompletions.filter((c) => c.member_id === memberId).length;
+            entry.period_completions[name] = `${count}/${chore.max_completions}`;
+          }
+        }
+        return entry;
+      });
       return { chores: result };
     }
 
