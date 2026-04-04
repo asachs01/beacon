@@ -1,3 +1,10 @@
+## [1.24.1](https://github.com/asachs01/beacon/compare/v1.24.0...v1.24.1) (2026-04-04)
+
+
+### Bug Fixes
+
+* add safe area padding to mobile tab bar for iPhone home indicator ([f3a24a3](https://github.com/asachs01/beacon/commit/f3a24a38cf4c0a82110732de0d60f208eefb0f87))
+
 # [1.24.0](https://github.com/asachs01/beacon/compare/v1.23.0...v1.24.0) (2026-04-04)
 
 
