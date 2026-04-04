@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/asachs01/beacon/compare/v1.22.0...v1.23.0) (2026-04-04)
+
+
+### Features
+
+* add max_completions support to MCP server ([a019187](https://github.com/asachs01/beacon/commit/a019187c8ec9f65d831266cf973e531a03ba0ea5))
+
 # [1.22.0](https://github.com/asachs01/beacon/compare/v1.21.1...v1.22.0) (2026-04-04)
 
 
