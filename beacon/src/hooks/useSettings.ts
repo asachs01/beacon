@@ -44,11 +44,17 @@ export interface BeaconSettings {
 
   // Display
   screenSaverEnabled: boolean;
+  screenSaverMode: 'clock' | 'photos' | 'both';
   dimTimeout: number;       // minutes
   screenSaverTimeout: number; // minutes
   alwaysOnDisplay: boolean;
   showSeconds: boolean;
   kioskMode: boolean;
+
+  // Photos / Screensaver sources
+  photoSource: 'google_photos' | 'immich' | 'local' | 'none';
+  immichUrl: string;
+  immichApiKey: string;
 
   // Chores
   choresEnabled: boolean;
@@ -99,11 +105,16 @@ function buildDefaults(): BeaconSettings {
     dashboardLayout: 'default',
 
     screenSaverEnabled: true,
+    screenSaverMode: 'clock',
     dimTimeout: 5,
     screenSaverTimeout: config.screen_saver_timeout,
     alwaysOnDisplay: false,
     showSeconds: false,
     kioskMode: false,
+
+    photoSource: 'none',
+    immichUrl: '',
+    immichApiKey: '',
 
     choresEnabled: true,
     choresResetTime: '00:00',

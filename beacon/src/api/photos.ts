@@ -98,7 +98,7 @@ async function fetchLocalPhotos(): Promise<Photo[]> {
 /**
  * Gets all photos from configured sources, shuffled.
  */
-export async function getPhotos(sources: Array<'local' | 'google_photos' | 'ha_media'> = ['ha_media', 'local']): Promise<Photo[]> {
+export async function getPhotos(sources: Array<'local' | 'google_photos' | 'ha_media' | 'immich'> = ['ha_media', 'local']): Promise<Photo[]> {
   const fetchers: Promise<Photo[]>[] = [];
 
   if (sources.includes('ha_media')) {

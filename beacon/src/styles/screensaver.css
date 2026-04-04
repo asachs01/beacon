@@ -63,6 +63,67 @@
   to { opacity: 1; }
 }
 
+/* ============================================================
+   Photo Slideshow in Screensaver
+   ============================================================ */
+
+/* Container for stacked photo layers */
+.screensaver-photo-container {
+  position: absolute;
+  inset: 0;
+}
+
+/* Each photo layer is full-screen, stacked with opacity transitions */
+.screensaver-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 1s ease;
+}
+
+.screensaver-photo--visible {
+  opacity: 1;
+}
+
+.screensaver-photo--hidden {
+  opacity: 0;
+}
+
+/* Clock overlay for "both" mode — small clock in bottom-right corner */
+.screensaver-clock-overlay {
+  position: absolute;
+  bottom: 32px;
+  right: 32px;
+  text-align: right;
+  padding: 16px 24px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  user-select: none;
+  z-index: 1;
+}
+
+.screensaver-clock-overlay-time {
+  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
+  font-size: 48px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.screensaver-clock-overlay-date {
+  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 6px;
+}
+
 /* Responsive: Tablet < 768px */
 @media (max-width: 768px) {
   .screensaver-time {
@@ -71,6 +132,20 @@
 
   .screensaver-date {
     font-size: 18px;
+  }
+
+  .screensaver-clock-overlay {
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 18px;
+  }
+
+  .screensaver-clock-overlay-time {
+    font-size: 36px;
+  }
+
+  .screensaver-clock-overlay-date {
+    font-size: 14px;
   }
 }
 
@@ -84,5 +159,20 @@
   .screensaver-date {
     font-size: 15px;
     margin-top: 8px;
+  }
+
+  .screensaver-clock-overlay {
+    bottom: 16px;
+    right: 16px;
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+
+  .screensaver-clock-overlay-time {
+    font-size: 28px;
+  }
+
+  .screensaver-clock-overlay-date {
+    font-size: 12px;
   }
 }

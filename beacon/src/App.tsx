@@ -607,6 +607,11 @@ export function App() {
         enabled={settings.screenSaverEnabled}
         dimTimeoutMin={settings.dimTimeout}
         screenSaverTimeoutMin={settings.screenSaverTimeout}
+        mode={settings.screenSaverMode}
+        photoSource={settings.photoSource}
+        immichUrl={settings.immichUrl}
+        immichApiKey={settings.immichApiKey}
+        photoInterval={settings.photoInterval}
       />
 
       {/* Demo indicator — only show outside of add-on ingress */}

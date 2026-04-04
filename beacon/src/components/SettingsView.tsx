@@ -1040,6 +1040,71 @@ export function SettingsView({
           <>
             <div className="settings-row">
               <div>
+                <div className="settings-row-label">Screensaver Mode</div>
+                <div className="settings-row-sublabel">What to display during screensaver</div>
+              </div>
+              <Segment
+                value={settings.screenSaverMode}
+                options={[
+                  { value: 'clock', label: 'Clock' },
+                  { value: 'photos', label: 'Photos' },
+                  { value: 'both', label: 'Both' },
+                ]}
+                onChange={(v) => onUpdateSettings({ screenSaverMode: v })}
+              />
+            </div>
+            {(settings.screenSaverMode === 'photos' || settings.screenSaverMode === 'both') && (
+              <>
+                <div className="settings-row">
+                  <div>
+                    <div className="settings-row-label">Photo Source</div>
+                    <div className="settings-row-sublabel">Where to load slideshow photos from</div>
+                  </div>
+                  <Segment
+                    value={settings.photoSource}
+                    options={[
+                      { value: 'none', label: 'None' },
+                      { value: 'google_photos', label: 'Google (HA)' },
+                      { value: 'immich', label: 'Immich' },
+                      { value: 'local', label: 'Local' },
+                    ]}
+                    onChange={(v) => onUpdateSettings({ photoSource: v })}
+                  />
+                </div>
+                {settings.photoSource === 'immich' && (
+                  <>
+                    <div className="settings-row">
+                      <div>
+                        <div className="settings-row-label">Immich URL</div>
+                        <div className="settings-row-sublabel">Base URL of your Immich server</div>
+                      </div>
+                      <input
+                        type="text"
+                        className="settings-input"
+                        placeholder="https://immich.example.com"
+                        value={settings.immichUrl}
+                        onChange={(e) => onUpdateSettings({ immichUrl: e.target.value })}
+                      />
+                    </div>
+                    <div className="settings-row">
+                      <div>
+                        <div className="settings-row-label">Immich API Key</div>
+                        <div className="settings-row-sublabel">API key for Immich access</div>
+                      </div>
+                      <input
+                        type="password"
+                        className="settings-input"
+                        placeholder="Enter API key"
+                        value={settings.immichApiKey}
+                        onChange={(e) => onUpdateSettings({ immichApiKey: e.target.value })}
+                      />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+            <div className="settings-row">
+              <div>
                 <div className="settings-row-label">Dim After</div>
                 <div className="settings-row-sublabel">Minutes of inactivity before dimming</div>
               </div>
