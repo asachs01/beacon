@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/asachs01/beacon/compare/v1.25.0...v1.26.0) (2026-04-04)
+
+
+### Features
+
+* multi-tap counter for repeatable chores ([48b15e0](https://github.com/asachs01/beacon/commit/48b15e0366364d88fcd8f215b56d880f04e94e9b))
+
 # [1.25.0](https://github.com/asachs01/beacon/compare/v1.24.5...v1.25.0) (2026-04-04)
 
 
