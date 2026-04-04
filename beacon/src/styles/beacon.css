@@ -1669,6 +1669,7 @@ a:focus:not(:focus-visible) {
     right: 0;
     width: 100%;
     max-height: 90vh;
+    max-height: 90dvh; /* dynamic viewport height — shrinks when iOS keyboard appears */
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     transform: translateY(100%);
   }

@@ -152,7 +152,10 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                 + Add Chore
               </button>
             ) : (
-              <div className="chores-add-form">
+              <div className="chores-add-form" onFocus={(e) => {
+                // Scroll focused input into view when mobile keyboard appears
+                setTimeout(() => (e.target as HTMLElement).scrollIntoView?.({ behavior: 'smooth', block: 'center' }), 300);
+              }}>
                 <h3 className="chores-add-title">New Chore</h3>
 
                 {/* Icon picker */}
