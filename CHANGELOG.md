@@ -1,3 +1,10 @@
+## [1.24.3](https://github.com/asachs01/beacon/compare/v1.24.2...v1.24.3) (2026-04-04)
+
+
+### Bug Fixes
+
+* grow mobile tab bar height to include safe area inset ([805e5c3](https://github.com/asachs01/beacon/commit/805e5c3c4064fdc9dd25751b0b0cf49776ee45c9))
+
 ## [1.24.2](https://github.com/asachs01/beacon/compare/v1.24.1...v1.24.2) (2026-04-04)
 
 
