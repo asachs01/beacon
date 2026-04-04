@@ -4,6 +4,7 @@ import {
   ChoreCompletion,
   Streak,
   Routine,
+  Payout,
 } from '../types/family';
 import { loadData, loadDataSync, saveData } from './beacon-store';
 
@@ -13,6 +14,7 @@ const STORAGE_KEYS = {
   completions: 'beacon_completions',
   streaks: 'beacon_streaks',
   routines: 'beacon_routines',
+  payouts: 'beacon_payouts',
 } as const;
 
 function generateId(): string {
@@ -226,5 +228,69 @@ export class FamilyStore {
     if (filtered.length === routines.length) return false;
     await saveData(STORAGE_KEYS.routines, filtered);
     return true;
+  }
+
+  // --- Payouts ---
+
+  async getPayouts(): Promise<Payout[]> {
+    return loadData<Payout[]>(STORAGE_KEYS.payouts, []);
+  }
+
+  getPayoutsSync(): Payout[] {
+    return loadDataSync<Payout[]>(STORAGE_KEYS.payouts, []);
+  }
+
+  async addPayout(payout: Omit<Payout, 'id'>): Promise<Payout> {
+    const payouts = await this.getPayouts();
+    const newPayout: Payout = { ...payout, id: generateId() };
+    payouts.push(newPayout);
+    await saveData(STORAGE_KEYS.payouts, payouts);
+    return newPayout;
+  }
+
+  async getBalance(memberId: string): Promise<number> {
+    const [completions, chores, payouts] = await Promise.all([
+      this.getCompletions(),
+      this.getChores(),
+      this.getPayouts(),
+    ]);
+
+    const choreMap = new Map(chores.map((c) => [c.id, c]));
+
+    // Sum earned from completed chores
+    const earned = completions
+      .filter((c) => c.member_id === memberId)
+      .reduce((sum, c) => {
+        const chore = choreMap.get(c.chore_id);
+        return sum + (chore?.value_cents ?? 0);
+      }, 0);
+
+    // Sum payouts already made
+    const paid = payouts
+      .filter((p) => p.member_id === memberId)
+      .reduce((sum, p) => sum + p.amount_cents, 0);
+
+    return earned - paid;
+  }
+
+  getBalanceSync(memberId: string): number {
+    const completions = this.getCompletionsSync();
+    const chores = this.getChoresSync();
+    const payouts = this.getPayoutsSync();
+
+    const choreMap = new Map(chores.map((c) => [c.id, c]));
+
+    const earned = completions
+      .filter((c) => c.member_id === memberId)
+      .reduce((sum, c) => {
+        const chore = choreMap.get(c.chore_id);
+        return sum + (chore?.value_cents ?? 0);
+      }, 0);
+
+    const paid = payouts
+      .filter((p) => p.member_id === memberId)
+      .reduce((sum, p) => sum + p.amount_cents, 0);
+
+    return earned - paid;
   }
 }

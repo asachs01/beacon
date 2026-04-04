@@ -16,6 +16,7 @@ export interface Chore {
   max_completions?: number; // max times per frequency period (e.g., 3x/week)
   value_cents: number;
   icon?: string; // emoji
+  payout_for?: string; // member ID this payout chore is for (auto-generated)
 }
 
 export interface ChoreCompletion {
@@ -45,6 +46,15 @@ export interface RoutineTask {
   name: string;
   order: number;
   completed: boolean;
+}
+
+export interface Payout {
+  id: string;
+  member_id: string;
+  amount_cents: number;
+  paid_by: string; // parent member ID who completed the payout
+  paid_at: string; // ISO date
+  chore_id?: string; // the auto-generated payout chore ID
 }
 
 /** Earnings for a member over a time period */

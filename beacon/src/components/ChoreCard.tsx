@@ -57,10 +57,11 @@ export function ChoreCard({
   };
 
   const value = formatCents(chore.value_cents);
+  const isPayout = !!chore.payout_for;
 
   return (
     <div
-      className={`chore-card ${isCompleted ? 'chore-card--done' : ''} ${swiped ? 'chore-card--swiped' : ''}`}
+      className={`chore-card ${isCompleted ? 'chore-card--done' : ''} ${swiped ? 'chore-card--swiped' : ''} ${isPayout ? 'chore-card--payout' : ''}`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

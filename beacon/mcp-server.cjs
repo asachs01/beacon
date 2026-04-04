@@ -163,6 +163,28 @@ function saveJson(filename, data) {
   fs.writeFileSync(fp, JSON.stringify(data, null, 2), 'utf8');
 }
 
+/** Calculate a member's balance: total earned from completed chores minus payouts. */
+function calculateBalance(memberId) {
+  const chores = loadJson('beacon_chores.json');
+  const completions = loadJson('beacon_completions.json');
+  const payouts = loadJson('beacon_payouts.json');
+
+  const choreMap = new Map(chores.map((c) => [c.id, c]));
+
+  const earned = completions
+    .filter((c) => c.member_id === memberId)
+    .reduce((sum, c) => {
+      const chore = choreMap.get(c.chore_id);
+      return sum + (chore ? chore.value_cents || 0 : 0);
+    }, 0);
+
+  const paid = payouts
+    .filter((p) => p.member_id === memberId)
+    .reduce((sum, p) => sum + p.amount_cents, 0);
+
+  return earned - paid;
+}
+
 // ---------------------------------------------------------------------------
 // Tool definitions
 // ---------------------------------------------------------------------------
@@ -335,8 +357,25 @@ const TOOLS = [
   },
   {
     name: 'beacon_list_chores',
-    description: 'List all chores with their definitions and today\'s completion status.',
+    description: 'List all chores with their definitions and today\'s completion status. Includes balance info per child member.',
     inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'beacon_get_balances',
+    description: 'Get each child family member\'s current chore earnings balance (earned minus payouts).',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'beacon_process_payout',
+    description: 'Process a payout for a specific child, zeroing their balance and creating a payout record.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        member_name: { type: 'string', description: 'Name of the child to pay out' },
+        parent_name: { type: 'string', description: 'Name of the parent processing the payout' },
+      },
+      required: ['member_name', 'parent_name'],
+    },
   },
   {
     name: 'beacon_list_family_members',
@@ -755,7 +794,67 @@ async function handleTool(name, args) {
         }
         return entry;
       });
-      return { chores: result };
+
+      // Add balance info for child members
+      const kidBalances = {};
+      for (const member of members) {
+        if (member.role === 'child') {
+          const bal = calculateBalance(member.id);
+          if (bal > 0) {
+            kidBalances[member.name] = { balance_cents: bal, balance_display: `$${(bal / 100).toFixed(2)}` };
+          }
+        }
+      }
+
+      return { chores: result, member_balances: kidBalances };
+    }
+
+    case 'beacon_get_balances': {
+      const members = loadJson('beacon_family_members.json');
+      const balances = {};
+      for (const member of members) {
+        if (member.role === 'child') {
+          const bal = calculateBalance(member.id);
+          balances[member.name] = { member_id: member.id, balance_cents: bal, balance_display: `$${(bal / 100).toFixed(2)}` };
+        }
+      }
+      return { balances };
+    }
+
+    case 'beacon_process_payout': {
+      const members = loadJson('beacon_family_members.json');
+
+      const child = members.find(
+        (m) => m.name.toLowerCase() === args.member_name.toLowerCase() && m.role === 'child'
+      );
+      if (!child) {
+        return { success: false, error: `Child "${args.member_name}" not found. Available: ${members.filter((m) => m.role === 'child').map((m) => m.name).join(', ') || '(none)'}` };
+      }
+
+      const parent = members.find(
+        (m) => m.name.toLowerCase() === args.parent_name.toLowerCase() && m.role === 'parent'
+      );
+      if (!parent) {
+        return { success: false, error: `Parent "${args.parent_name}" not found. Available: ${members.filter((m) => m.role === 'parent').map((m) => m.name).join(', ') || '(none)'}` };
+      }
+
+      const balance = calculateBalance(child.id);
+      if (balance <= 0) {
+        return { success: false, error: `${child.name} has no balance to pay out (balance: $${(balance / 100).toFixed(2)})` };
+      }
+
+      const payouts = loadJson('beacon_payouts.json');
+      const newPayout = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        member_id: child.id,
+        amount_cents: balance,
+        paid_by: parent.id,
+        paid_at: new Date().toISOString(),
+      };
+      payouts.push(newPayout);
+      saveJson('beacon_payouts.json', payouts);
+
+      return { success: true, message: `Paid ${child.name} $${(balance / 100).toFixed(2)}`, payout: newPayout };
     }
 
     case 'beacon_list_family_members': {

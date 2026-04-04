@@ -4,6 +4,7 @@ import { ChoreCard } from './ChoreCard';
 import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
+import { useSettings } from '../hooks/useSettings';
 
 interface ChoresPanelProps {
   open: boolean;
@@ -12,8 +13,13 @@ interface ChoresPanelProps {
 
 const CHORE_ICONS = ['🧹', '🍽️', '🐕', '🛏️', '📚', '🗑️', '👕', '🧺', '🪥', '🚿', '🧼', '💪'];
 
+function formatBalance(cents: number, symbol: string): string {
+  return `${symbol}${(cents / 100).toFixed(2)}`;
+}
+
 export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
   const { members } = useFamily();
+  const { settings } = useSettings();
   const {
     addChore,
     completeChore,
@@ -24,7 +30,9 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
     getStreakForMember,
     getChoresForMember,
     getMemberProgress,
-  } = useChores();
+    balances,
+    generatePayoutChores,
+  } = useChores(settings.payoutSchedule);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [valueDisplay, setValueDisplay] = useState('1.00');
@@ -127,6 +135,13 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
               </div>
             )}
 
+            {/* Balance for kids */}
+            {member.role === 'child' && balances[member.id] != null && balances[member.id] > 0 && (
+              <div className="chores-balance" style={{ color: member.color }}>
+                Balance: {formatBalance(balances[member.id], settings.currencySymbol)}
+              </div>
+            )}
+
             {/* Chore cards */}
             {memberChores.length === 0 ? (
               <div className="chores-member-empty">No chores assigned</div>
@@ -148,6 +163,18 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
             )}
           </div>
         ))}
+
+        {/* Generate Payouts button for parents */}
+        {hasParent && members.some((m) => m.role === 'child' && (balances[m.id] ?? 0) > 0) && (
+          <button
+            type="button"
+            className="btn btn--secondary chores-payout-btn"
+            onClick={() => generatePayoutChores()}
+            style={{ marginBottom: '0.5rem', width: '100%' }}
+          >
+            {'\u{1F4B0}'} Generate Payouts
+          </button>
+        )}
 
         {/* Add Chore */}
         {(hasParent || members.length > 0) && (

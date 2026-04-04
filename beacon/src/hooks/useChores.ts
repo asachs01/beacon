@@ -1,24 +1,41 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { FamilyStore } from '../api/family';
-import { Chore, ChoreCompletion, Streak, MemberEarnings } from '../types/family';
+import { Chore, ChoreCompletion, Streak, MemberEarnings, Payout } from '../types/family';
 
-export function useChores() {
+const PAYOUT_LAST_CHECK_KEY = 'beacon_payout_last_check';
+
+export function useChores(payoutSchedule?: 'weekly' | 'monthly') {
   const store = useMemo(() => new FamilyStore(), []);
   // Initialize with localStorage data immediately
   const [chores, setChores] = useState<Chore[]>(() => store.getChoresSync());
   const [completionsToday, setCompletionsToday] = useState<ChoreCompletion[]>([]);
   const [streaks, setStreaks] = useState<Streak[]>([]);
+  const [payouts, setPayouts] = useState<Payout[]>(() => store.getPayoutsSync());
+  const [balances, setBalances] = useState<Record<string, number>>({});
+
+  const refreshBalances = useCallback(async () => {
+    const members = store.getMembersSync();
+    const kids = members.filter((m) => m.role === 'child');
+    const bal: Record<string, number> = {};
+    for (const kid of kids) {
+      bal[kid.id] = await store.getBalance(kid.id);
+    }
+    setBalances(bal);
+  }, [store]);
 
   const refresh = useCallback(async () => {
-    const [c, ct, s] = await Promise.all([
+    const [c, ct, s, p] = await Promise.all([
       store.getChores(),
       store.getCompletionsToday(),
       store.getStreaks(),
+      store.getPayouts(),
     ]);
     setChores(c);
     setCompletionsToday(ct);
     setStreaks(s);
-  }, [store]);
+    setPayouts(p);
+    await refreshBalances();
+  }, [store, refreshBalances]);
 
   useEffect(() => {
     refresh();
@@ -48,12 +65,35 @@ export function useChores() {
     [store, refresh]
   );
 
-  const completeChore = useCallback(
-    async (choreId: string, memberId: string) => {
-      await store.completeChore(choreId, memberId);
+  const processPayout = useCallback(
+    async (memberId: string, parentId: string, choreId?: string) => {
+      const balance = await store.getBalance(memberId);
+      if (balance <= 0) return;
+      await store.addPayout({
+        member_id: memberId,
+        amount_cents: balance,
+        paid_by: parentId,
+        paid_at: new Date().toISOString(),
+        chore_id: choreId,
+      });
       await refresh();
     },
     [store, refresh]
+  );
+
+  const completeChore = useCallback(
+    async (choreId: string, memberId: string) => {
+      await store.completeChore(choreId, memberId);
+
+      // If this is a payout chore, process the payout
+      const chore = chores.find((c) => c.id === choreId);
+      if (chore?.payout_for) {
+        await processPayout(chore.payout_for, memberId, choreId);
+      }
+
+      await refresh();
+    },
+    [store, refresh, chores, processPayout]
   );
 
   const uncompleteChore = useCallback(
@@ -63,6 +103,64 @@ export function useChores() {
     },
     [store, refresh]
   );
+
+  const generatePayoutChores = useCallback(async () => {
+    const members = store.getMembersSync();
+    const kids = members.filter((m) => m.role === 'child');
+    const parents = members.filter((m) => m.role === 'parent');
+    if (parents.length === 0) return;
+
+    const parentIds = parents.map((p) => p.id);
+    const currentChores = await store.getChores();
+
+    for (const kid of kids) {
+      const balance = await store.getBalance(kid.id);
+      if (balance <= 0) continue;
+
+      // Check if a payout chore already exists for this kid that hasn't been completed
+      const existingPayout = currentChores.find(
+        (c) => c.payout_for === kid.id
+      );
+      if (existingPayout) continue;
+
+      const dollars = (balance / 100).toFixed(2);
+      await store.addChore({
+        name: `\u{1F4B0} Pay ${kid.name} $${dollars}`,
+        assigned_to: parentIds,
+        frequency: 'once',
+        value_cents: 0,
+        icon: '\u{1F4B0}',
+        payout_for: kid.id,
+      });
+    }
+
+    await refresh();
+  }, [store, refresh]);
+
+  // Payout schedule check on mount
+  useEffect(() => {
+    if (!payoutSchedule) return;
+
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const lastCheck = localStorage.getItem(PAYOUT_LAST_CHECK_KEY);
+    if (lastCheck === todayStr) return; // Already checked today
+
+    let shouldGenerate = false;
+
+    if (payoutSchedule === 'weekly') {
+      // Generate on Sunday (day 0)
+      shouldGenerate = now.getDay() === 0;
+    } else if (payoutSchedule === 'monthly') {
+      // Generate on the 1st
+      shouldGenerate = now.getDate() === 1;
+    }
+
+    if (shouldGenerate) {
+      localStorage.setItem(PAYOUT_LAST_CHECK_KEY, todayStr);
+      generatePayoutChores();
+    }
+  }, [payoutSchedule, generatePayoutChores]);
 
   const isChoreCompletedToday = useCallback(
     (choreId: string, memberId: string): boolean => {
@@ -182,6 +280,8 @@ export function useChores() {
     chores,
     completionsToday,
     streaks,
+    payouts,
+    balances,
     addChore,
     updateChore,
     removeChore,
@@ -194,6 +294,8 @@ export function useChores() {
     getCompletionCount,
     isChoreMaxedOut,
     getEarningsForPeriod,
+    processPayout,
+    generatePayoutChores,
     refresh,
   };
 }
