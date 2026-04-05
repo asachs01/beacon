@@ -965,54 +965,173 @@ async function handleMessage(msg) {
 }
 
 // ---------------------------------------------------------------------------
-// stdio transport
+// Transport selection: --http or MCP_TRANSPORT=http → Streamable HTTP
+//                      otherwise → stdio (default)
 // ---------------------------------------------------------------------------
 
-function send(obj) {
-  const json = JSON.stringify(obj);
-  process.stdout.write(json + '\n');
+const USE_HTTP = process.argv.includes('--http') || process.env.MCP_TRANSPORT === 'http';
+const MCP_PORT = parseInt(process.env.MCP_PORT || '3001', 10);
+const MCP_API_KEY = process.env.MCP_API_KEY || '';
+
+if (USE_HTTP) {
+  // ─── Streamable HTTP transport ───────────────────────────────────────────
+  //
+  // POST /mcp   — JSON-RPC request → JSON-RPC response
+  // GET  /mcp   — SSE stream (kept for backwards compat with older clients)
+  // GET  /health — simple health check
+  //
+  // Auth: Bearer token or X-API-Key header (if MCP_API_KEY is set)
+
+  /** Per-session SSE connections keyed by session ID */
+  const sseClients = new Map();
+
+  function checkAuth(req, res) {
+    if (!MCP_API_KEY) return true;
+    const auth = req.headers['authorization'] || '';
+    const apiKey = req.headers['x-api-key'] || '';
+    if (auth === `Bearer ${MCP_API_KEY}` || apiKey === MCP_API_KEY) return true;
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Unauthorized' }));
+    return false;
+  }
+
+  function collectBody(req) {
+    return new Promise((resolve, reject) => {
+      const chunks = [];
+      let size = 0;
+      req.on('data', (c) => {
+        size += c.length;
+        if (size > 1024 * 1024) { req.destroy(); reject(new Error('Too large')); return; }
+        chunks.push(c);
+      });
+      req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      req.on('error', reject);
+    });
+  }
+
+  const mcpHttpServer = http.createServer(async (req, res) => {
+    // CORS headers for browser-based clients
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    // Health check
+    if (req.url === '/health' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok', server: MCP_SERVER_INFO }));
+      return;
+    }
+
+    // MCP endpoint
+    if (req.url === '/mcp' || req.url === '/v1/mcp') {
+      if (!checkAuth(req, res)) return;
+
+      // GET → SSE stream (for clients that need server-sent events)
+      if (req.method === 'GET') {
+        const sessionId = Math.random().toString(36).slice(2);
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Session-Id': sessionId,
+        });
+        res.write(`data: ${JSON.stringify({ type: 'session', sessionId })}\n\n`);
+        sseClients.set(sessionId, res);
+        req.on('close', () => sseClients.delete(sessionId));
+        return;
+      }
+
+      // POST → JSON-RPC request/response
+      if (req.method === 'POST') {
+        try {
+          const body = await collectBody(req);
+          const msg = JSON.parse(body);
+          const response = await handleMessage(msg);
+
+          if (response) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(response));
+          } else {
+            // Notification — no response body
+            res.writeHead(202);
+            res.end();
+          }
+        } catch (err) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(makeError(null, -32700, `Parse error: ${err.message}`)));
+        }
+        return;
+      }
+    }
+
+    // 404
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Not found' }));
+  });
+
+  mcpHttpServer.listen(MCP_PORT, () => {
+    log(`Beacon MCP server (HTTP) listening on port ${MCP_PORT}`);
+    log(`Endpoints: POST /mcp, GET /mcp (SSE), GET /health`);
+    log(`HA URL: ${HA_URL}`);
+    log(`Token: ${SUPERVISOR_TOKEN ? 'configured' : 'NOT configured'}`);
+    log(`API Key: ${MCP_API_KEY ? 'required' : 'none (open)'}`);
+  });
+
+} else {
+  // ─── stdio transport (default) ───────────────────────────────────────────
+
+  function send(obj) {
+    const json = JSON.stringify(obj);
+    process.stdout.write(json + '\n');
+  }
+
+  const rl = readline.createInterface({ input: process.stdin, terminal: false });
+
+  let buffer = '';
+
+  rl.on('line', async (line) => {
+    buffer += line;
+
+    // Try to parse — MCP messages are one JSON object per line
+    let msg;
+    try {
+      msg = JSON.parse(buffer);
+      buffer = '';
+    } catch {
+      // Incomplete JSON — accumulate more lines
+      return;
+    }
+
+    try {
+      const response = await handleMessage(msg);
+      if (response) {
+        send(response);
+      }
+    } catch (err) {
+      log('Unhandled error:', err.message);
+      if (msg.id != null) {
+        send(makeError(msg.id, -32603, `Internal error: ${err.message}`));
+      }
+    }
+  });
+
+  rl.on('close', () => {
+    log('stdin closed, shutting down');
+    process.exit(0);
+  });
+
+  log('Beacon MCP server (stdio) started');
+  log(`HA URL: ${HA_URL}`);
+  log(`Token: ${SUPERVISOR_TOKEN ? 'configured' : 'NOT configured'}`);
 }
-
-const rl = readline.createInterface({ input: process.stdin, terminal: false });
-
-let buffer = '';
-
-rl.on('line', async (line) => {
-  buffer += line;
-
-  // Try to parse — MCP messages are one JSON object per line
-  let msg;
-  try {
-    msg = JSON.parse(buffer);
-    buffer = '';
-  } catch {
-    // Incomplete JSON — accumulate more lines
-    return;
-  }
-
-  try {
-    const response = await handleMessage(msg);
-    if (response) {
-      send(response);
-    }
-  } catch (err) {
-    log('Unhandled error:', err.message);
-    if (msg.id != null) {
-      send(makeError(msg.id, -32603, `Internal error: ${err.message}`));
-    }
-  }
-});
-
-rl.on('close', () => {
-  log('stdin closed, shutting down');
-  process.exit(0);
-});
 
 // Prevent unhandled rejections from crashing the server
 process.on('unhandledRejection', (err) => {
   log('Unhandled rejection:', err?.message || err);
 });
-
-log('Beacon MCP server started');
-log(`HA URL: ${HA_URL}`);
-log(`Token: ${SUPERVISOR_TOKEN ? 'configured' : 'NOT configured'}`);
