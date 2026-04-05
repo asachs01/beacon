@@ -205,7 +205,7 @@ export function ChoresView({ showAddForm: initialShowAdd = false }: ChoresViewPr
             className={`cv-filter-tab ${selectedMemberId === null ? 'cv-filter-tab--active' : ''}`}
             onClick={() => setSelectedMemberId(null)}
           >
-            <span className="cv-filter-tab-avatar">👨‍👩‍👧‍👦</span>
+            <span className="cv-filter-tab-avatar">👥</span>
             <span className="cv-filter-tab-label">All</span>
           </button>
           {members.map((m) => (
