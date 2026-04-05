@@ -1,3 +1,10 @@
+## [1.28.1](https://github.com/asachs01/beacon/compare/v1.28.0...v1.28.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* use simpler emoji for All tab (ZWJ sequences break on some renderers) ([2ef46bc](https://github.com/asachs01/beacon/commit/2ef46bca2ff38b725795f9d849e418ccc9282915))
+
 # [1.28.0](https://github.com/asachs01/beacon/compare/v1.27.0...v1.28.0) (2026-04-05)
 
 
