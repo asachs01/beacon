@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/asachs01/beacon/compare/v1.27.0...v1.28.0) (2026-04-05)
+
+
+### Features
+
+* dedicated full-page ChoresView replacing slide-out panel ([a05b444](https://github.com/asachs01/beacon/commit/a05b444bd86fd592dc78f49c526c1aa288b27c7c))
+
 # [1.27.0](https://github.com/asachs01/beacon/compare/v1.26.0...v1.27.0) (2026-04-05)
 
 
