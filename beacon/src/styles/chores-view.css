@@ -1,0 +1,344 @@
+/* ============================================================
+   ChoresView — Full-page chore experience
+   Kid-friendly, touch-first, mobile-first
+   ============================================================ */
+
+/* --- Page layout --- */
+.cv-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg-page);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.cv-page::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cv-page::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* --- Header --- */
+.cv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px 8px;
+  flex-shrink: 0;
+}
+
+.cv-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* --- Member filter tabs (horizontal scroll) --- */
+.cv-filter-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px 28px 12px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cv-filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.cv-filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-height: 48px;
+  min-width: 48px;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.cv-filter-tab:hover {
+  background: var(--bg-hover);
+}
+
+.cv-filter-tab--active {
+  background: var(--bg-surface);
+  border-color: var(--accent);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.cv-filter-tab-avatar {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.cv-filter-tab-label {
+  font-size: 0.85rem;
+}
+
+/* --- Content area --- */
+.cv-content {
+  flex: 1;
+  padding: 8px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* --- Member section card --- */
+.cv-member-section {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- Member header --- */
+.cv-member-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.cv-member-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  border: 3px solid;
+  flex-shrink: 0;
+}
+
+.cv-member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cv-member-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.cv-member-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* --- Balance display --- */
+.cv-balance {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+/* --- Progress bar --- */
+.cv-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cv-progress-bar {
+  flex: 1;
+  height: 10px;
+  background: var(--bg-page);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.cv-progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cv-progress-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* --- Chore list --- */
+.cv-chore-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* --- Completed section --- */
+.cv-completed-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.cv-completed-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+/* --- Empty states --- */
+.cv-empty {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  padding: 12px 0;
+}
+
+.cv-empty-page {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+/* --- Payout button --- */
+.cv-payout-btn {
+  width: 100%;
+  min-height: 52px;
+  font-size: 1rem;
+}
+
+/* --- Add chore button --- */
+.cv-add-btn {
+  width: 100%;
+  min-height: 52px;
+  font-size: 1rem;
+}
+
+/* --- Add chore form (inline) --- */
+.cv-add-form {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.cv-add-form-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 20px;
+}
+
+.cv-add-form .form-field {
+  margin-bottom: 14px;
+}
+
+/* ─── Responsive: Tablet (min 768px) ─── */
+@media (min-width: 768px) {
+  .cv-header {
+    padding: 28px 36px 10px;
+  }
+
+  .cv-filter-tabs {
+    padding: 8px 36px 14px;
+  }
+
+  .cv-content {
+    padding: 8px 36px 40px;
+    max-width: 800px;
+  }
+
+  .cv-member-avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 1.8rem;
+  }
+
+  .cv-member-name {
+    font-size: 1.35rem;
+  }
+
+  .cv-balance {
+    font-size: 1.15rem;
+  }
+}
+
+/* ─── Responsive: Desktop / Kiosk (min 1024px) ─── */
+@media (min-width: 1024px) {
+  .cv-content {
+    max-width: 900px;
+  }
+}
+
+/* ─── Responsive: Phone (max 480px) ─── */
+@media (max-width: 480px) {
+  .cv-header {
+    padding: 16px 16px 6px;
+  }
+
+  .cv-title {
+    font-size: 1.3rem;
+  }
+
+  .cv-filter-tabs {
+    padding: 6px 16px 10px;
+    gap: 6px;
+  }
+
+  .cv-filter-tab {
+    padding: 6px 12px;
+    min-height: 44px;
+    font-size: 0.8rem;
+  }
+
+  .cv-content {
+    padding: 6px 16px 24px;
+    gap: 16px;
+  }
+
+  .cv-member-section {
+    padding: 14px;
+  }
+
+  .cv-member-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 1.3rem;
+  }
+
+  .cv-member-name {
+    font-size: 1.05rem;
+  }
+
+  .cv-balance {
+    font-size: 0.95rem;
+  }
+}

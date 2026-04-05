@@ -13,6 +13,7 @@ import { FamilyFilter } from './components/FamilyFilter';
 import { SettingsView } from './components/SettingsView';
 import { useSettings } from './hooks/useSettings';
 import { ChoresPanel } from './components/ChoresPanel';
+import { ChoresView } from './components/ChoresView';
 import { Leaderboard } from './components/Leaderboard';
 import { Sidebar, SidebarView } from './components/Sidebar';
 import { MusicView } from './components/MusicView';
@@ -134,9 +135,10 @@ export function App() {
   // Event notifications (browser + HA mobile_app)
   useNotifications(events, client);
 
-  // Chores and leaderboard are slide-over panels (not full views)
+  // Leaderboard is a slide-over panel; chores panel kept for secondary use
   const [showChoresPanel, setShowChoresPanel] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showChoreAddForm, setShowChoreAddForm] = useState(false);
 
   // Fetch data when connected
   useEffect(() => {
@@ -285,10 +287,12 @@ export function App() {
 
   const handleChangeView = useCallback(
     (view: SidebarView) => {
-      // Chores and leaderboard open as overlays, don't change the main view
+      // Chores now renders as a full-page view
       if (view === 'chores') {
-        setShowChoresPanel(true);
+        setShowChoresPanel(false);
         setShowLeaderboard(false);
+        setShowChoreAddForm(false);
+        setActiveView('chores');
         return;
       }
       if (view === 'leaderboard') {
@@ -299,6 +303,7 @@ export function App() {
       // All other views: close any open panels and switch view
       setShowChoresPanel(false);
       setShowLeaderboard(false);
+      setShowChoreAddForm(false);
       setActiveView(view);
     },
     [],
@@ -432,11 +437,13 @@ export function App() {
             <OmniAdd
               onAddEvent={handleAddEvent}
               onAddGroceryItem={() => setActiveView('grocery')}
-              onAddChore={() => handleChangeView('chores')}
+              onAddChore={() => { setShowChoreAddForm(true); setActiveView('chores'); }}
               onNavigateTimer={() => setActiveView('timer')}
               sidebarPosition={sidebarPos}
             />
           </>
+        ) : activeView === 'chores' ? (
+          <ChoresView showAddForm={showChoreAddForm} />
         ) : activeView === 'music' ? (
           <MusicView
             activePlayer={music.activePlayer}
@@ -539,7 +546,7 @@ export function App() {
             <OmniAdd
               onAddEvent={handleAddEvent}
               onAddGroceryItem={() => setActiveView('grocery')}
-              onAddChore={() => handleChangeView('chores')}
+              onAddChore={() => { setShowChoreAddForm(true); setActiveView('chores'); }}
               onNavigateTimer={() => setActiveView('timer')}
               sidebarPosition={sidebarPos}
             />
