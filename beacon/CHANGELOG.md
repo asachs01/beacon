@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/asachs01/beacon/compare/v1.26.0...v1.27.0) (2026-04-05)
+
+
+### Features
+
+* add Streamable HTTP transport to MCP server ([373e37d](https://github.com/asachs01/beacon/commit/373e37dc61a32843481f3ad152e26ec1e830d59d))
+
 # [1.26.0](https://github.com/asachs01/beacon/compare/v1.25.0...v1.26.0) (2026-04-04)
 
 
