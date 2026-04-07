@@ -1,3 +1,10 @@
+## [1.28.2](https://github.com/asachs01/beacon/compare/v1.28.1...v1.28.2) (2026-04-07)
+
+
+### Bug Fixes
+
+* ChoresView uses available width on large screens ([8956e4a](https://github.com/asachs01/beacon/commit/8956e4ad6c73d1aca831408a59ab819a34e219bf))
+
 ## [1.28.1](https://github.com/asachs01/beacon/compare/v1.28.0...v1.28.1) (2026-04-05)
 
 
