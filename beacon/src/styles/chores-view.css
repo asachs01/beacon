@@ -273,7 +273,7 @@
 
   .cv-content {
     padding: 8px 36px 40px;
-    max-width: 800px;
+    max-width: 1100px;
   }
 
   .cv-member-avatar {
@@ -294,7 +294,28 @@
 /* ─── Responsive: Desktop / Kiosk (min 1024px) ─── */
 @media (min-width: 1024px) {
   .cv-content {
-    max-width: 900px;
+    max-width: 1400px;
+  }
+}
+
+/* ─── Wide kiosk / TV displays (min 1600px) ─── */
+/* Switch the "All" view to a multi-column grid so each kid gets their own
+   column instead of stacking with massive whitespace on either side. */
+@media (min-width: 1600px) {
+  .cv-content {
+    max-width: 1800px;
+  }
+
+  /* Multi-column grid only when showing all members (no single filter active) */
+  .cv-content--all {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    align-items: start;
+  }
+
+  .cv-content--all .cv-member-section {
+    margin: 0;
   }
 }
 

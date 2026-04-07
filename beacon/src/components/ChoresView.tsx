@@ -228,7 +228,7 @@ export function ChoresView({ showAddForm: initialShowAdd = false }: ChoresViewPr
       )}
 
       {/* Content */}
-      <div className="cv-content">
+      <div className={`cv-content ${selectedMemberId === null ? 'cv-content--all' : ''}`}>
         {members.length === 0 ? (
           <div className="cv-empty-page">
             Add family members first to assign chores.
