@@ -1,3 +1,10 @@
+# [1.29.0](https://github.com/asachs01/beacon/compare/v1.28.2...v1.29.0) (2026-06-18)
+
+
+### Features
+
+* week navigation, inline event details, and stacked dashboard ([919f5f5](https://github.com/asachs01/beacon/commit/919f5f5cb61188c8fe4503d756dbb09ecdb07145))
+
 ## [1.28.2](https://github.com/asachs01/beacon/compare/v1.28.1...v1.28.2) (2026-04-07)
 
 
