@@ -1,3 +1,22 @@
+# [1.30.0](https://github.com/asachs01/beacon/compare/v1.29.0...v1.30.0) (2026-07-05)
+
+
+### Bug Fixes
+
+* disable event notifications and permission prompt on kid displays ([d0206a1](https://github.com/asachs01/beacon/commit/d0206a16913070d2479cba967675893d620ad9ed))
+* kid display copy-url fallback for non-secure origins ([9f0b4a0](https://github.com/asachs01/beacon/commit/9f0b4a0a7a055ff324b2ce128a7d8cf72c371f83))
+
+
+### Features
+
+* add focus mode resolution module ([c6bb811](https://github.com/asachs01/beacon/commit/c6bb8118019bc49f6f37b0e472f1b8b36aaaed0a))
+* add FocusView kid display components ([64ecf96](https://github.com/asachs01/beacon/commit/64ecf966a0815bcd677c2967e71ef508f0b2b011))
+* add kid display picker to display settings ([de4cfa9](https://github.com/asachs01/beacon/commit/de4cfa9b16185f345a468bd7189c829bd8089556))
+* add routine editor to family settings ([d22db4b](https://github.com/asachs01/beacon/commit/d22db4bf4dfc1273871347488913cb3daac13813))
+* add routine task completion records to family store ([e23f636](https://github.com/asachs01/beacon/commit/e23f636f304cb27245a54052d16740d2bf7ee7f4))
+* add useRoutines hook ([d8cc28d](https://github.com/asachs01/beacon/commit/d8cc28d23a01724fe81ca91a1c1e7d14fe6c2ff1))
+* wire kid display focus shell into App ([7e56e95](https://github.com/asachs01/beacon/commit/7e56e95f63224095e5a4243d0e468fb1093a9603))
+
 # [1.29.0](https://github.com/asachs01/beacon/compare/v1.28.2...v1.29.0) (2026-06-18)
 
 
