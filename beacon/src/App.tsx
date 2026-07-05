@@ -135,7 +135,21 @@ export function App() {
   // Kid Display (focus) mode — URL param wins, then device-local storage
   const [focusMemberId, setFocusMemberId] = useState<string | null>(() => getFocusMemberId());
   const focusMember = focusMemberId ? members.find((m) => m.id === focusMemberId) : undefined;
-  const focusInvalid = !!focusMemberId && members.length > 0 && !focusMember;
+
+  // Escape hatch: if a display is assigned to a member but the family list
+  // stays empty (fresh device, stale assignment), stop waiting after 10s and
+  // fall through to the invalid-member banner instead of loading forever.
+  const [focusLoadTimedOut, setFocusLoadTimedOut] = useState(false);
+  useEffect(() => {
+    if (!focusMemberId || members.length > 0) {
+      setFocusLoadTimedOut(false);
+      return;
+    }
+    const t = setTimeout(() => setFocusLoadTimedOut(true), 10_000);
+    return () => clearTimeout(t);
+  }, [focusMemberId, members.length]);
+
+  const focusInvalid = !!focusMemberId && !focusMember && (members.length > 0 || focusLoadTimedOut);
 
   const handleExitFocus = useCallback(() => {
     clearFocusMode();
@@ -439,7 +453,7 @@ export function App() {
 
   // Focus member requested but members not loaded yet (fresh device cache):
   // hold on a lightweight loading screen instead of flashing the full app.
-  if (focusMemberId && members.length === 0) {
+  if (focusMemberId && members.length === 0 && !focusLoadTimedOut) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>

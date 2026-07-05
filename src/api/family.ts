@@ -131,6 +131,14 @@ export class FamilyStore {
 
   async completeChore(choreId: string, memberId: string, verifiedBy?: string): Promise<ChoreCompletion> {
     const completions = await this.getCompletions();
+    const today = new Date().toISOString().slice(0, 10);
+    const existing = completions.find(
+      (c) =>
+        c.chore_id === choreId &&
+        c.member_id === memberId &&
+        c.completed_at.slice(0, 10) === today
+    );
+    if (existing) return existing;
     const completion: ChoreCompletion = {
       chore_id: choreId,
       member_id: memberId,
