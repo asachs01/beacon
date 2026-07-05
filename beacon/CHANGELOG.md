@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/asachs01/beacon/compare/v1.30.2...v1.31.0) (2026-07-05)
+
+
+### Features
+
+* implement classic dashboard layout preset ([b1b1758](https://github.com/asachs01/beacon/commit/b1b17586a042ea76ce5199578fe857bb98841760))
+
 ## [1.30.2](https://github.com/asachs01/beacon/compare/v1.30.1...v1.30.2) (2026-07-05)
 
 
