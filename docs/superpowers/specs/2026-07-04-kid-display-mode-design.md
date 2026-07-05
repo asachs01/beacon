@@ -130,9 +130,14 @@ Each member row in the existing family-member management UI gains a
 - Unknown/deleted focus member → banner + normal app (see §1).
 - Member deleted while a display is in focus mode → member resolution fails on
   next data refresh; FocusView exits to the normal app.
-- Offline/HA-down: `beacon-store` already reads server-first with localStorage
-  cache; the display keeps rendering cached data. Completions queue in
-  localStorage and push in the background (existing behavior).
+- Offline/HA-down: `beacon-store` reads server-first with a localStorage
+  cache; the display keeps rendering cached data. Writes go to localStorage
+  immediately and are pushed to the server as a fire-and-forget PUT — there
+  is no retry queue. If the server PUT fails, a later successful server read
+  overwrites the local cache and the offline completion is lost. Concurrent
+  writes from multiple displays are last-write-wins within the short
+  read-modify-write window (mitigated by server-first reads before each
+  mutation; worst case is one lost checkmark).
 
 ## 6. Verification
 
