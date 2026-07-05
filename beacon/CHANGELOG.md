@@ -1,3 +1,129 @@
+# [1.29.0](https://github.com/asachs01/beacon/compare/v1.28.2...v1.29.0) (2026-06-18)
+
+
+### Features
+
+* week navigation, inline event details, and stacked dashboard ([919f5f5](https://github.com/asachs01/beacon/commit/919f5f5cb61188c8fe4503d756dbb09ecdb07145))
+
+## [1.28.2](https://github.com/asachs01/beacon/compare/v1.28.1...v1.28.2) (2026-04-07)
+
+
+### Bug Fixes
+
+* ChoresView uses available width on large screens ([8956e4a](https://github.com/asachs01/beacon/commit/8956e4ad6c73d1aca831408a59ab819a34e219bf))
+
+## [1.28.1](https://github.com/asachs01/beacon/compare/v1.28.0...v1.28.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* use simpler emoji for All tab (ZWJ sequences break on some renderers) ([2ef46bc](https://github.com/asachs01/beacon/commit/2ef46bca2ff38b725795f9d849e418ccc9282915))
+
+# [1.28.0](https://github.com/asachs01/beacon/compare/v1.27.0...v1.28.0) (2026-04-05)
+
+
+### Features
+
+* dedicated full-page ChoresView replacing slide-out panel ([a05b444](https://github.com/asachs01/beacon/commit/a05b444bd86fd592dc78f49c526c1aa288b27c7c))
+
+# [1.27.0](https://github.com/asachs01/beacon/compare/v1.26.0...v1.27.0) (2026-04-05)
+
+
+### Features
+
+* add Streamable HTTP transport to MCP server ([373e37d](https://github.com/asachs01/beacon/commit/373e37dc61a32843481f3ad152e26ec1e830d59d))
+
+# [1.26.0](https://github.com/asachs01/beacon/compare/v1.25.0...v1.26.0) (2026-04-04)
+
+
+### Features
+
+* multi-tap counter for repeatable chores ([48b15e0](https://github.com/asachs01/beacon/commit/48b15e0366364d88fcd8f215b56d880f04e94e9b))
+
+# [1.25.0](https://github.com/asachs01/beacon/compare/v1.24.5...v1.25.0) (2026-04-04)
+
+
+### Features
+
+* chore payout ledger with auto-generated parent chores ([ad8b38d](https://github.com/asachs01/beacon/commit/ad8b38d2705cd096de8ce191dac728163e7ac38d))
+
+## [1.24.5](https://github.com/asachs01/beacon/compare/v1.24.4...v1.24.5) (2026-04-04)
+
+
+### Bug Fixes
+
+* chore value input lets you type freely ([d0b4d09](https://github.com/asachs01/beacon/commit/d0b4d0927aec377c2d23887953479e872225dff4))
+
+## [1.24.4](https://github.com/asachs01/beacon/compare/v1.24.3...v1.24.4) (2026-04-04)
+
+
+### Bug Fixes
+
+* remove gap above mobile tab bar, use min-height for safe area ([c972bad](https://github.com/asachs01/beacon/commit/c972bad8c2b6297526be52b495ff0193b864d4d9))
+
+## [1.24.3](https://github.com/asachs01/beacon/compare/v1.24.2...v1.24.3) (2026-04-04)
+
+
+### Bug Fixes
+
+* grow mobile tab bar height to include safe area inset ([805e5c3](https://github.com/asachs01/beacon/commit/805e5c3c4064fdc9dd25751b0b0cf49776ee45c9))
+
+## [1.24.2](https://github.com/asachs01/beacon/compare/v1.24.1...v1.24.2) (2026-04-04)
+
+
+### Bug Fixes
+
+* add viewport-fit=cover for iOS safe area insets ([84ff7b3](https://github.com/asachs01/beacon/commit/84ff7b3a5047e907571c1d1ebacee1c4d4960b71))
+
+## [1.24.1](https://github.com/asachs01/beacon/compare/v1.24.0...v1.24.1) (2026-04-04)
+
+
+### Bug Fixes
+
+* add safe area padding to mobile tab bar for iPhone home indicator ([f3a24a3](https://github.com/asachs01/beacon/commit/f3a24a38cf4c0a82110732de0d60f208eefb0f87))
+
+# [1.24.0](https://github.com/asachs01/beacon/compare/v1.23.0...v1.24.0) (2026-04-04)
+
+
+### Features
+
+* photo screensaver with Google Photos (HA) + Immich support ([8049c79](https://github.com/asachs01/beacon/commit/8049c79bea73e2a6af9ab82e70205f5135a35171))
+
+# [1.23.0](https://github.com/asachs01/beacon/compare/v1.22.0...v1.23.0) (2026-04-04)
+
+
+### Features
+
+* add max_completions support to MCP server ([a019187](https://github.com/asachs01/beacon/commit/a019187c8ec9f65d831266cf973e531a03ba0ea5))
+
+# [1.22.0](https://github.com/asachs01/beacon/compare/v1.21.1...v1.22.0) (2026-04-04)
+
+
+### Features
+
+* max completions per chore frequency period ([b94a69f](https://github.com/asachs01/beacon/commit/b94a69f21167c2a6cdf68bd94cffb0842a79656c))
+
+## [1.21.1](https://github.com/asachs01/beacon/compare/v1.21.0...v1.21.1) (2026-04-04)
+
+
+### Bug Fixes
+
+* mobile chore form scroll when keyboard is open ([ec34418](https://github.com/asachs01/beacon/commit/ec344189890dfb1976beef5a5f523137791897f3))
+
+# [1.21.0](https://github.com/asachs01/beacon/compare/v1.20.1...v1.21.0) (2026-04-04)
+
+
+### Features
+
+* on-screen kiosk keyboard + Music Assistant search/browse/queue ([f1f2e60](https://github.com/asachs01/beacon/commit/f1f2e60cdda1ff32e7d0f7daab2a59c0802c98bb))
+
+## [1.20.1](https://github.com/asachs01/beacon/compare/v1.20.0...v1.20.1) (2026-04-03)
+
+
+### Bug Fixes
+
+* use marketplace install for Beacon Claude plugin ([9b9f8b6](https://github.com/asachs01/beacon/commit/9b9f8b6aa5fa5e35efb96584a559f1146477ddf6))
+
 # [1.20.0](https://github.com/asachs01/beacon/compare/v1.19.0...v1.20.0) (2026-04-03)
 
 

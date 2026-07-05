@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { startOfWeek, endOfWeek, addDays, format } from 'date-fns';
+import { startOfWeek, addDays, format } from 'date-fns';
 import { useHomeAssistant } from './hooks/useHomeAssistant';
 import { useCalendarEvents } from './hooks/useCalendarEvents';
 import { useFamily } from './hooks/useFamily';
@@ -147,6 +147,22 @@ export function App() {
     setFocusMemberId(memberId);
   }, []);
 
+  // Visible week shown by the calendar (drives event fetch window)
+  const [visibleWeekStart, setVisibleWeekStart] = useState<Date>(() =>
+    startOfWeek(new Date(), { weekStartsOn: 0 }),
+  );
+
+  // Helper: refetch events for a given week, with one extra day on either side
+  // so multi-day events that bleed in/out of the visible week still render.
+  const refetchEventsForWeek = useCallback(
+    async (weekStart: Date) => {
+      const rangeStart = addDays(weekStart, -1);
+      const rangeEnd = addDays(weekStart, 8);
+      await fetchEvents(rangeStart.toISOString(), rangeEnd.toISOString());
+    },
+    [fetchEvents],
+  );
+
   // Event notifications (browser + HA mobile_app)
   useNotifications(events, client, !focusMemberId);
 
@@ -154,28 +170,24 @@ export function App() {
   const [showChoresPanel, setShowChoresPanel] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
-  // Fetch data when connected
+  // Fetch data when connected, or when the user navigates to a different week.
   useEffect(() => {
     if (!connected) return;
 
     const loadData = async () => {
       await fetchCalendars();
-      const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-      const weekEnd = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
-      await fetchEvents(weekStart.toISOString(), weekEnd.toISOString());
+      await refetchEventsForWeek(visibleWeekStart);
     };
 
     loadData();
 
-    // Refresh every 5 minutes
+    // Refresh every 5 minutes for the currently-visible week
     const interval = setInterval(() => {
-      const ws = startOfWeek(new Date(), { weekStartsOn: 0 });
-      const we = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
-      fetchEvents(ws.toISOString(), we.toISOString());
+      refetchEventsForWeek(visibleWeekStart);
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [connected, fetchCalendars, fetchEvents]);
+  }, [connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart]);
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
     setHiddenCalendars(prev => {
@@ -236,29 +248,25 @@ export function App() {
 
       await createEvent(calendarId, eventData);
 
-      const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-      const weekEnd = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
-      await fetchEvents(weekStart.toISOString(), weekEnd.toISOString());
+      await refetchEventsForWeek(visibleWeekStart);
 
       handleCloseModal();
     } catch (err) {
       console.error('Failed to save event:', err);
     }
-  }, [createEvent, fetchEvents, handleCloseModal]);
+  }, [createEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
 
   const handleDeleteEvent = useCallback(async (calendarId: string, eventId: string) => {
     try {
       await deleteEvent(calendarId, eventId);
 
-      const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-      const weekEnd = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
-      await fetchEvents(weekStart.toISOString(), weekEnd.toISOString());
+      await refetchEventsForWeek(visibleWeekStart);
 
       handleCloseModal();
     } catch (err) {
       console.error('Failed to delete event:', err);
     }
-  }, [deleteEvent, fetchEvents, handleCloseModal]);
+  }, [deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
 
   const handleEventReschedule = useCallback(async (event: CalendarEvent, newDate: string, newHour: number) => {
     try {
@@ -284,13 +292,11 @@ export function App() {
         });
       }
 
-      const weekStart = startOfWeek(new Date(), { weekStartsOn: 0 });
-      const weekEnd = addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 1);
-      await fetchEvents(weekStart.toISOString(), weekEnd.toISOString());
+      await refetchEventsForWeek(visibleWeekStart);
     } catch (err) {
       console.error('Failed to reschedule event:', err);
     }
-  }, [updateEvent, fetchEvents]);
+  }, [updateEvent, refetchEventsForWeek, visibleWeekStart]);
 
   const handleAddEvent = useCallback(() => {
     setSelectedEvent(null);
@@ -569,6 +575,7 @@ export function App() {
                   onEventClick={handleEventClick}
                   onSlotClick={handleSlotClick}
                   onEventReschedule={handleEventReschedule}
+                  onVisibleWeekChange={setVisibleWeekStart}
                 />
               </div>
               <CalendarSidebar

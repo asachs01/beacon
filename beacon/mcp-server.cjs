@@ -163,6 +163,28 @@ function saveJson(filename, data) {
   fs.writeFileSync(fp, JSON.stringify(data, null, 2), 'utf8');
 }
 
+/** Calculate a member's balance: total earned from completed chores minus payouts. */
+function calculateBalance(memberId) {
+  const chores = loadJson('beacon_chores.json');
+  const completions = loadJson('beacon_completions.json');
+  const payouts = loadJson('beacon_payouts.json');
+
+  const choreMap = new Map(chores.map((c) => [c.id, c]));
+
+  const earned = completions
+    .filter((c) => c.member_id === memberId)
+    .reduce((sum, c) => {
+      const chore = choreMap.get(c.chore_id);
+      return sum + (chore ? chore.value_cents || 0 : 0);
+    }, 0);
+
+  const paid = payouts
+    .filter((p) => p.member_id === memberId)
+    .reduce((sum, p) => sum + p.amount_cents, 0);
+
+  return earned - paid;
+}
+
 // ---------------------------------------------------------------------------
 // Tool definitions
 // ---------------------------------------------------------------------------
@@ -298,6 +320,7 @@ const TOOLS = [
           description: 'Family member names to assign this chore to',
         },
         frequency: { type: 'string', enum: ['daily', 'weekly', 'once'], description: 'How often (default: daily)' },
+        max_completions: { type: 'number', description: 'Max times per frequency period (e.g. 3 = can earn up to 3x/week). Omit or null for unlimited.' },
         value_cents: { type: 'number', description: 'Payout value in cents (default: 0)' },
         icon: { type: 'string', description: 'Emoji icon (default: 🧹)' },
       },
@@ -314,6 +337,7 @@ const TOOLS = [
         name: { type: 'string', description: 'New name' },
         assigned_to: { type: 'array', items: { type: 'string' }, description: 'New assigned member names' },
         frequency: { type: 'string', enum: ['daily', 'weekly', 'once'] },
+        max_completions: { type: 'number', description: 'Max times per frequency period. Set to 0 or null to remove limit.' },
         value_cents: { type: 'number' },
         icon: { type: 'string' },
       },
@@ -333,8 +357,25 @@ const TOOLS = [
   },
   {
     name: 'beacon_list_chores',
-    description: 'List all chores with their definitions and today\'s completion status.',
+    description: 'List all chores with their definitions and today\'s completion status. Includes balance info per child member.',
     inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'beacon_get_balances',
+    description: 'Get each child family member\'s current chore earnings balance (earned minus payouts).',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'beacon_process_payout',
+    description: 'Process a payout for a specific child, zeroing their balance and creating a payout record.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        member_name: { type: 'string', description: 'Name of the child to pay out' },
+        parent_name: { type: 'string', description: 'Name of the parent processing the payout' },
+      },
+      required: ['member_name', 'parent_name'],
+    },
   },
   {
     name: 'beacon_list_family_members',
@@ -562,6 +603,30 @@ async function handleTool(name, args) {
       }
 
       if (action === 'complete') {
+        // Enforce max_completions per period
+        if (chore.max_completions) {
+          const now = new Date();
+          let periodStart;
+          if (chore.frequency === 'daily') {
+            periodStart = now.toISOString().slice(0, 10);
+          } else if (chore.frequency === 'weekly') {
+            const d = new Date(now);
+            d.setDate(d.getDate() - d.getDay());
+            periodStart = d.toISOString().slice(0, 10);
+          }
+          if (periodStart) {
+            const periodCount = completions.filter(
+              (c) => c.chore_id === chore.id && c.member_id === member.id && c.completed_at.slice(0, 10) >= periodStart
+            ).length;
+            if (periodCount >= chore.max_completions) {
+              return {
+                success: false,
+                error: `${member.name} has already completed "${chore.name}" ${periodCount}/${chore.max_completions} times this ${chore.frequency === 'daily' ? 'day' : 'week'}`,
+              };
+            }
+          }
+        }
+
         const completion = {
           chore_id: chore.id,
           member_id: member.id,
@@ -617,6 +682,7 @@ async function handleTool(name, args) {
         name: args.name,
         assigned_to: assignedIds,
         frequency: args.frequency || 'daily',
+        max_completions: args.max_completions || undefined,
         value_cents: args.value_cents || 0,
         icon: args.icon || '🧹',
       };
@@ -641,6 +707,9 @@ async function handleTool(name, args) {
 
       if (args.name) chores[idx].name = args.name;
       if (args.frequency) chores[idx].frequency = args.frequency;
+      if (args.max_completions !== undefined) {
+        chores[idx].max_completions = args.max_completions || undefined; // 0/null removes limit
+      }
       if (args.value_cents !== undefined) chores[idx].value_cents = args.value_cents;
       if (args.icon) chores[idx].icon = args.icon;
 
@@ -695,16 +764,97 @@ async function handleTool(name, args) {
         (c) => c.completed_at && c.completed_at.startsWith(todayStr)
       );
 
-      const result = chores.map((chore) => ({
-        ...chore,
-        assigned_to_names: chore.assigned_to
-          .map((id) => members.find((m) => m.id === id)?.name || id)
-          ,
-        completed_today_by: todayCompletions
-          .filter((c) => c.chore_id === chore.id)
-          .map((c) => members.find((m) => m.id === c.member_id)?.name || c.member_id),
-      }));
-      return { chores: result };
+      // Also compute period completions for chores with max_completions
+      const now = new Date();
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay());
+      const weekStartStr = weekStart.toISOString().slice(0, 10);
+
+      const result = chores.map((chore) => {
+        const entry = {
+          ...chore,
+          assigned_to_names: chore.assigned_to
+            .map((id) => members.find((m) => m.id === id)?.name || id),
+          completed_today_by: todayCompletions
+            .filter((c) => c.chore_id === chore.id)
+            .map((c) => members.find((m) => m.id === c.member_id)?.name || c.member_id),
+        };
+        // Add period completion counts when max_completions is set
+        if (chore.max_completions) {
+          const periodStart = chore.frequency === 'daily' ? todayStr : weekStartStr;
+          const periodCompletions = completions.filter(
+            (c) => c.chore_id === chore.id && c.completed_at.slice(0, 10) >= periodStart
+          );
+          entry.period_completions = {};
+          for (const memberId of chore.assigned_to) {
+            const name = members.find((m) => m.id === memberId)?.name || memberId;
+            const count = periodCompletions.filter((c) => c.member_id === memberId).length;
+            entry.period_completions[name] = `${count}/${chore.max_completions}`;
+          }
+        }
+        return entry;
+      });
+
+      // Add balance info for child members
+      const kidBalances = {};
+      for (const member of members) {
+        if (member.role === 'child') {
+          const bal = calculateBalance(member.id);
+          if (bal > 0) {
+            kidBalances[member.name] = { balance_cents: bal, balance_display: `$${(bal / 100).toFixed(2)}` };
+          }
+        }
+      }
+
+      return { chores: result, member_balances: kidBalances };
+    }
+
+    case 'beacon_get_balances': {
+      const members = loadJson('beacon_family_members.json');
+      const balances = {};
+      for (const member of members) {
+        if (member.role === 'child') {
+          const bal = calculateBalance(member.id);
+          balances[member.name] = { member_id: member.id, balance_cents: bal, balance_display: `$${(bal / 100).toFixed(2)}` };
+        }
+      }
+      return { balances };
+    }
+
+    case 'beacon_process_payout': {
+      const members = loadJson('beacon_family_members.json');
+
+      const child = members.find(
+        (m) => m.name.toLowerCase() === args.member_name.toLowerCase() && m.role === 'child'
+      );
+      if (!child) {
+        return { success: false, error: `Child "${args.member_name}" not found. Available: ${members.filter((m) => m.role === 'child').map((m) => m.name).join(', ') || '(none)'}` };
+      }
+
+      const parent = members.find(
+        (m) => m.name.toLowerCase() === args.parent_name.toLowerCase() && m.role === 'parent'
+      );
+      if (!parent) {
+        return { success: false, error: `Parent "${args.parent_name}" not found. Available: ${members.filter((m) => m.role === 'parent').map((m) => m.name).join(', ') || '(none)'}` };
+      }
+
+      const balance = calculateBalance(child.id);
+      if (balance <= 0) {
+        return { success: false, error: `${child.name} has no balance to pay out (balance: $${(balance / 100).toFixed(2)})` };
+      }
+
+      const payouts = loadJson('beacon_payouts.json');
+      const newPayout = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        member_id: child.id,
+        amount_cents: balance,
+        paid_by: parent.id,
+        paid_at: new Date().toISOString(),
+      };
+      payouts.push(newPayout);
+      saveJson('beacon_payouts.json', payouts);
+
+      return { success: true, message: `Paid ${child.name} $${(balance / 100).toFixed(2)}`, payout: newPayout };
     }
 
     case 'beacon_list_family_members': {
@@ -815,54 +965,173 @@ async function handleMessage(msg) {
 }
 
 // ---------------------------------------------------------------------------
-// stdio transport
+// Transport selection: --http or MCP_TRANSPORT=http → Streamable HTTP
+//                      otherwise → stdio (default)
 // ---------------------------------------------------------------------------
 
-function send(obj) {
-  const json = JSON.stringify(obj);
-  process.stdout.write(json + '\n');
+const USE_HTTP = process.argv.includes('--http') || process.env.MCP_TRANSPORT === 'http';
+const MCP_PORT = parseInt(process.env.MCP_PORT || '3001', 10);
+const MCP_API_KEY = process.env.MCP_API_KEY || '';
+
+if (USE_HTTP) {
+  // ─── Streamable HTTP transport ───────────────────────────────────────────
+  //
+  // POST /mcp   — JSON-RPC request → JSON-RPC response
+  // GET  /mcp   — SSE stream (kept for backwards compat with older clients)
+  // GET  /health — simple health check
+  //
+  // Auth: Bearer token or X-API-Key header (if MCP_API_KEY is set)
+
+  /** Per-session SSE connections keyed by session ID */
+  const sseClients = new Map();
+
+  function checkAuth(req, res) {
+    if (!MCP_API_KEY) return true;
+    const auth = req.headers['authorization'] || '';
+    const apiKey = req.headers['x-api-key'] || '';
+    if (auth === `Bearer ${MCP_API_KEY}` || apiKey === MCP_API_KEY) return true;
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Unauthorized' }));
+    return false;
+  }
+
+  function collectBody(req) {
+    return new Promise((resolve, reject) => {
+      const chunks = [];
+      let size = 0;
+      req.on('data', (c) => {
+        size += c.length;
+        if (size > 1024 * 1024) { req.destroy(); reject(new Error('Too large')); return; }
+        chunks.push(c);
+      });
+      req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      req.on('error', reject);
+    });
+  }
+
+  const mcpHttpServer = http.createServer(async (req, res) => {
+    // CORS headers for browser-based clients
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    // Health check
+    if (req.url === '/health' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok', server: MCP_SERVER_INFO }));
+      return;
+    }
+
+    // MCP endpoint
+    if (req.url === '/mcp' || req.url === '/v1/mcp') {
+      if (!checkAuth(req, res)) return;
+
+      // GET → SSE stream (for clients that need server-sent events)
+      if (req.method === 'GET') {
+        const sessionId = Math.random().toString(36).slice(2);
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Session-Id': sessionId,
+        });
+        res.write(`data: ${JSON.stringify({ type: 'session', sessionId })}\n\n`);
+        sseClients.set(sessionId, res);
+        req.on('close', () => sseClients.delete(sessionId));
+        return;
+      }
+
+      // POST → JSON-RPC request/response
+      if (req.method === 'POST') {
+        try {
+          const body = await collectBody(req);
+          const msg = JSON.parse(body);
+          const response = await handleMessage(msg);
+
+          if (response) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(response));
+          } else {
+            // Notification — no response body
+            res.writeHead(202);
+            res.end();
+          }
+        } catch (err) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(makeError(null, -32700, `Parse error: ${err.message}`)));
+        }
+        return;
+      }
+    }
+
+    // 404
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Not found' }));
+  });
+
+  mcpHttpServer.listen(MCP_PORT, () => {
+    log(`Beacon MCP server (HTTP) listening on port ${MCP_PORT}`);
+    log(`Endpoints: POST /mcp, GET /mcp (SSE), GET /health`);
+    log(`HA URL: ${HA_URL}`);
+    log(`Token: ${SUPERVISOR_TOKEN ? 'configured' : 'NOT configured'}`);
+    log(`API Key: ${MCP_API_KEY ? 'required' : 'none (open)'}`);
+  });
+
+} else {
+  // ─── stdio transport (default) ───────────────────────────────────────────
+
+  function send(obj) {
+    const json = JSON.stringify(obj);
+    process.stdout.write(json + '\n');
+  }
+
+  const rl = readline.createInterface({ input: process.stdin, terminal: false });
+
+  let buffer = '';
+
+  rl.on('line', async (line) => {
+    buffer += line;
+
+    // Try to parse — MCP messages are one JSON object per line
+    let msg;
+    try {
+      msg = JSON.parse(buffer);
+      buffer = '';
+    } catch {
+      // Incomplete JSON — accumulate more lines
+      return;
+    }
+
+    try {
+      const response = await handleMessage(msg);
+      if (response) {
+        send(response);
+      }
+    } catch (err) {
+      log('Unhandled error:', err.message);
+      if (msg.id != null) {
+        send(makeError(msg.id, -32603, `Internal error: ${err.message}`));
+      }
+    }
+  });
+
+  rl.on('close', () => {
+    log('stdin closed, shutting down');
+    process.exit(0);
+  });
+
+  log('Beacon MCP server (stdio) started');
+  log(`HA URL: ${HA_URL}`);
+  log(`Token: ${SUPERVISOR_TOKEN ? 'configured' : 'NOT configured'}`);
 }
-
-const rl = readline.createInterface({ input: process.stdin, terminal: false });
-
-let buffer = '';
-
-rl.on('line', async (line) => {
-  buffer += line;
-
-  // Try to parse — MCP messages are one JSON object per line
-  let msg;
-  try {
-    msg = JSON.parse(buffer);
-    buffer = '';
-  } catch {
-    // Incomplete JSON — accumulate more lines
-    return;
-  }
-
-  try {
-    const response = await handleMessage(msg);
-    if (response) {
-      send(response);
-    }
-  } catch (err) {
-    log('Unhandled error:', err.message);
-    if (msg.id != null) {
-      send(makeError(msg.id, -32603, `Internal error: ${err.message}`));
-    }
-  }
-});
-
-rl.on('close', () => {
-  log('stdin closed, shutting down');
-  process.exit(0);
-});
 
 // Prevent unhandled rejections from crashing the server
 process.on('unhandledRejection', (err) => {
   log('Unhandled rejection:', err?.message || err);
 });
-
-log('Beacon MCP server started');
-log(`HA URL: ${HA_URL}`);
-log(`Token: ${SUPERVISOR_TOKEN ? 'configured' : 'NOT configured'}`);

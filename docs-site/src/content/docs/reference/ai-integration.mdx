@@ -144,7 +144,11 @@ The API resolves list names and media players by fuzzy-matching against availabl
 
 The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server exposes Beacon's features as structured tools that LLM agents can call. This is the best approach for AI-powered automation where an LLM decides which actions to take.
 
-### Setup
+The server supports **two transports**:
+- **stdio** (default) — for Claude Code, Claude Desktop, and other MCP clients that spawn a subprocess
+- **Streamable HTTP** — for web-based clients like Open Claw, Copilot Studio, and any remote MCP consumer
+
+### Option 1: stdio transport (Claude Code, Claude Desktop)
 
 For **Claude Code**:
 
@@ -152,7 +156,7 @@ For **Claude Code**:
 claude mcp add beacon -- node /path/to/beacon/mcp-server.cjs
 ```
 
-For **Claude Desktop** or other MCP clients, add to your config file:
+For **Claude Desktop** or other local MCP clients, add to your config file:
 
 ```json
 {
@@ -169,13 +173,57 @@ For **Claude Desktop** or other MCP clients, add to your config file:
 }
 ```
 
+### Option 2: Streamable HTTP transport (Open Claw, Copilot Studio, remote clients)
+
+Start the server in HTTP mode:
+
+```bash
+MCP_TRANSPORT=http \
+MCP_PORT=3001 \
+MCP_API_KEY=your-secret-key \
+SUPERVISOR_TOKEN=your-ha-token \
+HA_URL=http://your-ha-instance:8123 \
+  node beacon/mcp-server.cjs
+```
+
+Or use the `--http` flag:
+
+```bash
+node beacon/mcp-server.cjs --http
+```
+
+The server exposes:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/mcp` | POST | JSON-RPC request → response |
+| `/mcp` | GET | SSE stream (for clients that need server-sent events) |
+| `/health` | GET | Health check (`{"status": "ok"}`) |
+
+**Authentication:** When `MCP_API_KEY` is set, all requests must include either:
+- `Authorization: Bearer <key>` header, or
+- `X-API-Key: <key>` header
+
+**For Open Claw / other HTTP MCP clients**, point them at:
+
+```
+http://your-beacon-host:3001/mcp
+```
+
+**For the Beacon HA add-on**, the MCP HTTP server can be exposed alongside the web UI. Set `MCP_TRANSPORT=http` in the add-on configuration to enable it on port 3001.
+
+### Environment variables
+
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SUPERVISOR_TOKEN` | — | **Required.** HA long-lived access token |
 | `HA_URL` | `http://supervisor/core` | HA URL (change when running outside the add-on) |
-| `DATA_DIR` | `/data` | Beacon data directory (for chore files) |
+| `DATA_DIR` | `/data` | Beacon data directory (for chore/payout files) |
+| `MCP_TRANSPORT` | `stdio` | Set to `http` for Streamable HTTP transport |
+| `MCP_PORT` | `3001` | HTTP server port (only in HTTP mode) |
+| `MCP_API_KEY` | — | API key for HTTP auth (optional; open if unset) |
 
-### All 17 tools
+### All 19 tools
 
 #### Lists
 
@@ -217,16 +265,18 @@ For volume, also pass `volume_level` (0.0 to 1.0).
 | Tool | Description | Required inputs |
 |------|-------------|-----------------|
 | `beacon_manage_chore` | Complete/uncomplete a chore | `action`, `chore_name`, `member_name` |
-| `beacon_create_chore` | Create a new chore | `name`; optional: `assigned_to` (array of member names), `frequency` (daily/weekly/once), `value_cents`, `icon` |
-| `beacon_update_chore` | Update an existing chore | `chore_name`; optional: `name`, `assigned_to`, `frequency`, `value_cents`, `icon` |
+| `beacon_create_chore` | Create a new chore | `name`; optional: `assigned_to` (array of member names), `frequency` (daily/weekly/once), `max_completions`, `value_cents`, `icon` |
+| `beacon_update_chore` | Update an existing chore | `chore_name`; optional: `name`, `assigned_to`, `frequency`, `max_completions`, `value_cents`, `icon` |
 | `beacon_delete_chore` | Delete a chore and its completions | `chore_name` |
-| `beacon_list_chores` | List all chores with today's completion status | (none) |
+| `beacon_list_chores` | List all chores with today's completion status and balances | (none) |
 
-#### Family
+#### Family & Payouts
 
 | Tool | Description | Required inputs |
 |------|-------------|-----------------|
 | `beacon_list_family_members` | List all family members | (none) |
+| `beacon_get_balances` | Get each child's current chore earnings balance | (none) |
+| `beacon_process_payout` | Zero a child's balance and log payout | `member_name`, `parent_name` |
 
 #### Meal Plans
 
