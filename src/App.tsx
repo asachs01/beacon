@@ -148,7 +148,7 @@ export function App() {
   }, []);
 
   // Event notifications (browser + HA mobile_app)
-  useNotifications(events, client);
+  useNotifications(events, client, !focusMemberId);
 
   // Chores and leaderboard are slide-over panels (not full views)
   const [showChoresPanel, setShowChoresPanel] = useState(false);
