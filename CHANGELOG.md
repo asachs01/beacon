@@ -1,3 +1,10 @@
+## [1.30.1](https://github.com/asachs01/beacon/compare/v1.30.0...v1.30.1) (2026-07-05)
+
+
+### Bug Fixes
+
+* same-day chore dedup and kid display loading escape hatch ([abe6af6](https://github.com/asachs01/beacon/commit/abe6af672563016838d997881fa046df859c12fc))
+
 # [1.30.0](https://github.com/asachs01/beacon/compare/v1.29.0...v1.30.0) (2026-07-05)
 
 
