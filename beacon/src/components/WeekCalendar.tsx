@@ -2,6 +2,7 @@ import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import {
   startOfWeek,
   addDays,
+  addWeeks,
   format,
   isSameDay,
   parseISO,
@@ -11,6 +12,7 @@ import {
 } from 'date-fns';
 import { CalendarEvent } from '../types';
 import { EventBlock } from './EventBlock';
+import { EventDetailsPopover } from './EventDetailsPopover';
 import { useWeatherForecast } from '../hooks/useWeatherForecast';
 import { weatherIcon } from '../types/weather-icons';
 
@@ -20,6 +22,7 @@ interface WeekCalendarProps {
   onEventClick: (event: CalendarEvent) => void;
   onSlotClick: (date: string, hour: number) => void;
   onEventReschedule?: (event: CalendarEvent, newDate: string, newHour: number) => void;
+  onVisibleWeekChange?: (weekStart: Date) => void;
 }
 
 const START_HOUR = 7;
@@ -63,21 +66,44 @@ interface MultiDaySpan {
   lane: number;
 }
 
-export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule }: WeekCalendarProps) {
+export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule, onVisibleWeekChange }: WeekCalendarProps) {
   const today = new Date();
-  const weekStart = startOfWeek(today, { weekStartsOn: 0 });
+  const todayWeekStart = startOfWeek(today, { weekStartsOn: 0 });
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const forecast = useWeatherForecast();
+
+  // Week navigation: offset in weeks from today's week (0 = current, +1 = next, -1 = prev)
+  const [weekOffset, setWeekOffset] = useState(0);
+  const weekStart = useMemo(
+    () => startOfWeek(addWeeks(today, weekOffset), { weekStartsOn: 0 }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [weekOffset],
+  );
+
+  // Notify parent so it can refetch events for the visible week if needed
+  useEffect(() => {
+    onVisibleWeekChange?.(weekStart);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekStart.toISOString()]);
 
   // Drag state
   const [dragEvent, setDragEvent] = useState<CalendarEvent | null>(null);
   const [dragGhost, setDragGhost] = useState<{ date: string; hour: number } | null>(null);
 
+  // Inline event-detail expansion
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [expandedAnchor, setExpandedAnchor] = useState<DOMRect | null>(null);
+
   // Mobile 3-day view: which group of days to show (0-based index into day groups)
-  const todayDayIndex = differenceInCalendarDays(today, weekStart);
+  const todayDayIndex = differenceInCalendarDays(today, todayWeekStart);
   const initialGroup = Math.min(Math.floor(todayDayIndex / MOBILE_DAYS), Math.floor(6 / MOBILE_DAYS));
   const [mobileGroupIndex, setMobileGroupIndex] = useState(initialGroup);
+
+  // When jumping to a different week, reset to the first mobile day-group
+  useEffect(() => {
+    if (weekOffset !== 0) setMobileGroupIndex(0);
+  }, [weekOffset]);
 
   // Swipe state
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -262,6 +288,49 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // --- Inline event-detail handlers ---
+  const handleEventBlockClick = useCallback(
+    (event: CalendarEvent, e?: React.MouseEvent<HTMLElement>) => {
+      if (expandedEventId === event.id) {
+        setExpandedEventId(null);
+        setExpandedAnchor(null);
+        return;
+      }
+      const rect = e?.currentTarget?.getBoundingClientRect();
+      setExpandedEventId(event.id);
+      setExpandedAnchor(rect ?? null);
+    },
+    [expandedEventId],
+  );
+
+  const closeExpanded = useCallback(() => {
+    setExpandedEventId(null);
+    setExpandedAnchor(null);
+  }, []);
+
+  // When events list changes (e.g. refetch on week change), clear expansion
+  useEffect(() => {
+    setExpandedEventId(null);
+    setExpandedAnchor(null);
+  }, [weekOffset]);
+
+  const expandedEvent = useMemo(
+    () => (expandedEventId ? events.find((ev) => ev.id === expandedEventId) ?? null : null),
+    [expandedEventId, events],
+  );
+
+  // Week label for header ("Week of Jun 8" or "Jun 8 – 14, 2026")
+  const weekLabel = useMemo(() => {
+    const end = addDays(weekStart, 6);
+    const sameMonth = format(weekStart, 'MMM') === format(end, 'MMM');
+    if (sameMonth) {
+      return `${format(weekStart, 'MMM d')} – ${format(end, 'd, yyyy')}`;
+    }
+    return `${format(weekStart, 'MMM d')} – ${format(end, 'MMM d, yyyy')}`;
+  }, [weekStart]);
+
+  const isCurrentWeek = weekOffset === 0;
+
   // Compute overlap layout for a list of events in one day column.
   // Returns a map of eventId → { column, totalColumns } for side-by-side rendering.
   function computeOverlapLayout(dayEvents: CalendarEvent[]): Map<string, { col: number; total: number }> {
@@ -404,6 +473,58 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Week navigation header */}
+      <div className="week-nav">
+        <div className="week-nav-controls">
+          <button
+            type="button"
+            className="week-nav-btn"
+            onClick={() => setWeekOffset((o) => o - 1)}
+            aria-label="Previous week"
+          >
+            &lsaquo;
+          </button>
+          <button
+            type="button"
+            className={`week-nav-today ${isCurrentWeek ? 'week-nav-today--active' : ''}`}
+            onClick={() => setWeekOffset(0)}
+            disabled={isCurrentWeek}
+            aria-label="Jump to current week"
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            className="week-nav-btn"
+            onClick={() => setWeekOffset((o) => o + 1)}
+            aria-label="Next week"
+          >
+            &rsaquo;
+          </button>
+        </div>
+        <div className="week-nav-label">{weekLabel}</div>
+        <div className="week-nav-jump">
+          <button
+            type="button"
+            className="week-nav-jump-btn"
+            onClick={() => setWeekOffset((o) => o - 4)}
+            aria-label="Back 4 weeks"
+            title="Back 4 weeks"
+          >
+            -4w
+          </button>
+          <button
+            type="button"
+            className="week-nav-jump-btn"
+            onClick={() => setWeekOffset((o) => o + 4)}
+            aria-label="Forward 4 weeks"
+            title="Forward 4 weeks"
+          >
+            +4w
+          </button>
+        </div>
+      </div>
+
       {/* Mobile day group navigation dots */}
       {isMobile && (
         <div className="week-mobile-nav">
@@ -497,21 +618,23 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                     return (
                       <button
                         key={`multiday-${mds.event.id}`}
-                        className="event-block event-block--multiday"
+                        className={`event-block event-block--multiday ${expandedEventId === mds.event.id ? 'event-block--expanded' : ''}`}
                         style={{
                           left: `calc(${(clampedStart / dayCount) * 100}% + 2px)`,
                           width: `calc(${(visibleSpan / dayCount) * 100}% - 4px)`,
                           top: `${mds.lane * 26 + 2}px`,
                         }}
-                        onClick={() => onEventClick(mds.event)}
+                        onClick={(e) => handleEventBlockClick(mds.event, e)}
                         type="button"
                         title={mds.event.title}
+                        data-event-id={mds.event.id}
                       >
                         <EventBlock
                           event={mds.event}
-                          onClick={onEventClick}
+                          onClick={handleEventBlockClick}
                           allDay
                           multiDay
+                          expanded={expandedEventId === mds.event.id}
                         />
                       </button>
                     );
@@ -536,8 +659,9 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                     <EventBlock
                       key={`${event.id}-${key}`}
                       event={event}
-                      onClick={onEventClick}
+                      onClick={handleEventBlockClick}
                       allDay
+                      expanded={expandedEventId === event.id}
                     />
                   ))}
                 </div>
@@ -605,9 +729,10 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                   <EventBlock
                     key={`${event.id}-${key}`}
                     event={event}
-                    onClick={onEventClick}
+                    onClick={handleEventBlockClick}
                     style={getEventStyle(event, overlapLayout.get(event.id))}
                     draggable
+                    expanded={expandedEventId === event.id}
                     onDragStart={(e) => handleDragStart(event, e)}
                     onDragEnd={handleDragEnd}
                   />
@@ -625,6 +750,20 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
           })}
         </div>
       </div>
+
+      {/* Inline event details popover */}
+      {expandedEvent && expandedAnchor && (
+        <EventDetailsPopover
+          event={expandedEvent}
+          anchor={expandedAnchor}
+          onClose={closeExpanded}
+          onEdit={() => {
+            const ev = expandedEvent;
+            closeExpanded();
+            onEventClick(ev);
+          }}
+        />
+      )}
     </div>
   );
 }

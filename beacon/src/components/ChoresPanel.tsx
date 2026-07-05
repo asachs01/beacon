@@ -4,7 +4,6 @@ import { ChoreCard } from './ChoreCard';
 import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
-import { useSettings } from '../hooks/useSettings';
 
 interface ChoresPanelProps {
   open: boolean;
@@ -13,34 +12,23 @@ interface ChoresPanelProps {
 
 const CHORE_ICONS = ['🧹', '🍽️', '🐕', '🛏️', '📚', '🗑️', '👕', '🧺', '🪥', '🚿', '🧼', '💪'];
 
-function formatBalance(cents: number, symbol: string): string {
-  return `${symbol}${(cents / 100).toFixed(2)}`;
-}
-
 export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
   const { members } = useFamily();
-  const { settings } = useSettings();
   const {
     addChore,
     completeChore,
     uncompleteChore,
     isChoreCompletedToday,
-    isChoreMaxedOut,
-    getCompletionCount,
     getStreakForMember,
     getChoresForMember,
     getMemberProgress,
-    balances,
-    generatePayoutChores,
-  } = useChores(settings.payoutSchedule);
+  } = useChores();
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [valueDisplay, setValueDisplay] = useState('1.00');
   const [newChore, setNewChore] = useState({
     name: '',
     value_cents: 100,
     frequency: 'daily' as Chore['frequency'],
-    max_completions: undefined as number | undefined,
     assigned_to: [] as string[],
     icon: '🧹',
   });
@@ -51,7 +39,6 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
       name: newChore.name.trim(),
       value_cents: newChore.value_cents,
       frequency: newChore.frequency,
-      max_completions: newChore.max_completions,
       assigned_to: newChore.assigned_to,
       icon: newChore.icon,
     });
@@ -59,11 +46,9 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
       name: '',
       value_cents: 100,
       frequency: 'daily',
-      max_completions: undefined,
       assigned_to: [],
       icon: '🧹',
     });
-    setValueDisplay('1.00');
     setShowAddForm(false);
   };
 
@@ -135,13 +120,6 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
               </div>
             )}
 
-            {/* Balance for kids */}
-            {member.role === 'child' && balances[member.id] != null && balances[member.id] > 0 && (
-              <div className="chores-balance" style={{ color: member.color }}>
-                Balance: {formatBalance(balances[member.id], settings.currencySymbol)}
-              </div>
-            )}
-
             {/* Chore cards */}
             {memberChores.length === 0 ? (
               <div className="chores-member-empty">No chores assigned</div>
@@ -153,8 +131,6 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                     chore={chore}
                     member={member}
                     isCompleted={isChoreCompletedToday(chore.id, member.id)}
-                    completionCount={chore.max_completions ? getCompletionCount(chore, member.id) : undefined}
-                    isMaxedOut={isChoreMaxedOut(chore, member.id)}
                     onComplete={() => completeChore(chore.id, member.id)}
                     onUncomplete={() => uncompleteChore(chore.id, member.id)}
                   />
@@ -163,18 +139,6 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
             )}
           </div>
         ))}
-
-        {/* Generate Payouts button for parents */}
-        {hasParent && members.some((m) => m.role === 'child' && (balances[m.id] ?? 0) > 0) && (
-          <button
-            type="button"
-            className="btn btn--secondary chores-payout-btn"
-            onClick={() => generatePayoutChores()}
-            style={{ marginBottom: '0.5rem', width: '100%' }}
-          >
-            {'\u{1F4B0}'} Generate Payouts
-          </button>
-        )}
 
         {/* Add Chore */}
         {(hasParent || members.length > 0) && (
@@ -188,10 +152,7 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                 + Add Chore
               </button>
             ) : (
-              <div className="chores-add-form" onFocus={(e) => {
-                // Scroll focused input into view when mobile keyboard appears
-                setTimeout(() => (e.target as HTMLElement).scrollIntoView?.({ behavior: 'smooth', block: 'center' }), 300);
-              }}>
+              <div className="chores-add-form">
                 <h3 className="chores-add-title">New Chore</h3>
 
                 {/* Icon picker */}
@@ -228,17 +189,17 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                   <div className="chores-value-input">
                     <span className="chores-value-prefix">$</span>
                     <input
-                      type="text"
-                      inputMode="decimal"
+                      type="number"
                       className="form-input"
-                      value={valueDisplay}
-                      onChange={(e) => setValueDisplay(e.target.value)}
-                      onBlur={() => {
-                        const cents = Math.round(parseFloat(valueDisplay || '0') * 100);
-                        setNewChore((f) => ({ ...f, value_cents: cents }));
-                        setValueDisplay((cents / 100).toFixed(2));
-                      }}
-                      placeholder="0.00"
+                      value={(newChore.value_cents / 100).toFixed(2)}
+                      onChange={(e) =>
+                        setNewChore((f) => ({
+                          ...f,
+                          value_cents: Math.round(parseFloat(e.target.value || '0') * 100),
+                        }))
+                      }
+                      step="0.25"
+                      min="0"
                     />
                   </div>
                 </div>
@@ -257,28 +218,6 @@ export function ChoresPanel({ open, onClose }: ChoresPanelProps) {
                     <option value="once">One-time</option>
                   </select>
                 </div>
-
-                {newChore.frequency !== 'once' && (
-                  <div className="form-field">
-                    <label className="form-label">
-                      Max per {newChore.frequency === 'daily' ? 'day' : 'week'}
-                    </label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      value={newChore.max_completions ?? ''}
-                      onChange={(e) =>
-                        setNewChore((f) => ({
-                          ...f,
-                          max_completions: e.target.value ? parseInt(e.target.value) : undefined,
-                        }))
-                      }
-                      placeholder="Unlimited"
-                      min="1"
-                      max="99"
-                    />
-                  </div>
-                )}
 
                 <div className="form-field">
                   <label className="form-label">Assign To</label>

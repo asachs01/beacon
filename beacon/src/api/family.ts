@@ -4,7 +4,7 @@ import {
   ChoreCompletion,
   Streak,
   Routine,
-  Payout,
+  RoutineTaskCompletion,
 } from '../types/family';
 import { loadData, loadDataSync, saveData } from './beacon-store';
 
@@ -14,7 +14,7 @@ const STORAGE_KEYS = {
   completions: 'beacon_completions',
   streaks: 'beacon_streaks',
   routines: 'beacon_routines',
-  payouts: 'beacon_payouts',
+  routine_completions: 'beacon_routine_completions',
 } as const;
 
 function generateId(): string {
@@ -214,6 +214,15 @@ export class FamilyStore {
     return routines.filter((r) => r.member_id === memberId);
   }
 
+  async updateRoutine(id: string, data: Partial<Omit<Routine, 'id'>>): Promise<Routine | null> {
+    const routines = await this.getRoutines();
+    const index = routines.findIndex((r) => r.id === id);
+    if (index === -1) return null;
+    routines[index] = { ...routines[index], ...data };
+    await saveData(STORAGE_KEYS.routines, routines);
+    return routines[index];
+  }
+
   async addRoutine(routine: Omit<Routine, 'id'>): Promise<Routine> {
     const routines = await this.getRoutines();
     const newRoutine: Routine = { ...routine, id: generateId() };
@@ -230,67 +239,51 @@ export class FamilyStore {
     return true;
   }
 
-  // --- Payouts ---
+  // --- Routine task completions ---
 
-  async getPayouts(): Promise<Payout[]> {
-    return loadData<Payout[]>(STORAGE_KEYS.payouts, []);
+  async getRoutineTaskCompletions(): Promise<RoutineTaskCompletion[]> {
+    return loadData<RoutineTaskCompletion[]>(STORAGE_KEYS.routine_completions, []);
   }
 
-  getPayoutsSync(): Payout[] {
-    return loadDataSync<Payout[]>(STORAGE_KEYS.payouts, []);
+  async getRoutineTaskCompletionsToday(): Promise<RoutineTaskCompletion[]> {
+    const today = new Date().toISOString().slice(0, 10);
+    const completions = await this.getRoutineTaskCompletions();
+    return completions.filter((c) => c.completed_at.slice(0, 10) === today);
   }
 
-  async addPayout(payout: Omit<Payout, 'id'>): Promise<Payout> {
-    const payouts = await this.getPayouts();
-    const newPayout: Payout = { ...payout, id: generateId() };
-    payouts.push(newPayout);
-    await saveData(STORAGE_KEYS.payouts, payouts);
-    return newPayout;
+  async completeRoutineTask(routineId: string, taskId: string, memberId: string): Promise<void> {
+    const completions = await this.getRoutineTaskCompletions();
+    const today = new Date().toISOString().slice(0, 10);
+    const exists = completions.some(
+      (c) =>
+        c.routine_id === routineId &&
+        c.task_id === taskId &&
+        c.member_id === memberId &&
+        c.completed_at.slice(0, 10) === today
+    );
+    if (exists) return;
+    completions.push({
+      routine_id: routineId,
+      task_id: taskId,
+      member_id: memberId,
+      completed_at: new Date().toISOString(),
+    });
+    await saveData(STORAGE_KEYS.routine_completions, completions);
   }
 
-  async getBalance(memberId: string): Promise<number> {
-    const [completions, chores, payouts] = await Promise.all([
-      this.getCompletions(),
-      this.getChores(),
-      this.getPayouts(),
-    ]);
-
-    const choreMap = new Map(chores.map((c) => [c.id, c]));
-
-    // Sum earned from completed chores
-    const earned = completions
-      .filter((c) => c.member_id === memberId)
-      .reduce((sum, c) => {
-        const chore = choreMap.get(c.chore_id);
-        return sum + (chore?.value_cents ?? 0);
-      }, 0);
-
-    // Sum payouts already made
-    const paid = payouts
-      .filter((p) => p.member_id === memberId)
-      .reduce((sum, p) => sum + p.amount_cents, 0);
-
-    return earned - paid;
-  }
-
-  getBalanceSync(memberId: string): number {
-    const completions = this.getCompletionsSync();
-    const chores = this.getChoresSync();
-    const payouts = this.getPayoutsSync();
-
-    const choreMap = new Map(chores.map((c) => [c.id, c]));
-
-    const earned = completions
-      .filter((c) => c.member_id === memberId)
-      .reduce((sum, c) => {
-        const chore = choreMap.get(c.chore_id);
-        return sum + (chore?.value_cents ?? 0);
-      }, 0);
-
-    const paid = payouts
-      .filter((p) => p.member_id === memberId)
-      .reduce((sum, p) => sum + p.amount_cents, 0);
-
-    return earned - paid;
+  async uncompleteRoutineTask(routineId: string, taskId: string, memberId: string): Promise<boolean> {
+    const completions = await this.getRoutineTaskCompletions();
+    const today = new Date().toISOString().slice(0, 10);
+    const index = completions.findIndex(
+      (c) =>
+        c.routine_id === routineId &&
+        c.task_id === taskId &&
+        c.member_id === memberId &&
+        c.completed_at.slice(0, 10) === today
+    );
+    if (index === -1) return false;
+    completions.splice(index, 1);
+    await saveData(STORAGE_KEYS.routine_completions, completions);
+    return true;
   }
 }

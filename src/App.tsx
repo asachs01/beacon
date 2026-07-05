@@ -32,6 +32,8 @@ import { useTheme } from './hooks/useTheme';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView from './components/OnboardingView';
+import { FocusView } from './components/focus/FocusView';
+import { getFocusMemberId, clearFocusMode, setDeviceFocusMember } from './focus';
 import { CalendarEvent } from './types';
 import { getConfig, patchConfig } from './config';
 
@@ -130,6 +132,21 @@ export function App() {
     (settings.defaultView as SidebarView) || 'dashboard'
   );
 
+  // Kid Display (focus) mode — URL param wins, then device-local storage
+  const [focusMemberId, setFocusMemberId] = useState<string | null>(() => getFocusMemberId());
+  const focusMember = focusMemberId ? members.find((m) => m.id === focusMemberId) : undefined;
+  const focusInvalid = !!focusMemberId && members.length > 0 && !focusMember;
+
+  const handleExitFocus = useCallback(() => {
+    clearFocusMode();
+    setFocusMemberId(null);
+  }, []);
+
+  const handleEnterFocusMode = useCallback((memberId: string) => {
+    setDeviceFocusMember(memberId);
+    setFocusMemberId(memberId);
+  }, []);
+
   // Visible week shown by the calendar (drives event fetch window)
   const [visibleWeekStart, setVisibleWeekStart] = useState<Date>(() =>
     startOfWeek(new Date(), { weekStartsOn: 0 }),
@@ -147,7 +164,7 @@ export function App() {
   );
 
   // Event notifications (browser + HA mobile_app)
-  useNotifications(events, client);
+  useNotifications(events, client, !focusMemberId);
 
   // Chores and leaderboard are slide-over panels (not full views)
   const [showChoresPanel, setShowChoresPanel] = useState(false);
@@ -409,8 +426,37 @@ export function App() {
     );
   }
 
+  // Kid Display mode: replace the entire shell (same pattern as onboarding)
+  if (focusMember) {
+    return (
+      <FocusView
+        memberId={focusMember.id}
+        settings={settings}
+        onExit={handleExitFocus}
+      />
+    );
+  }
+
+  // Focus member requested but members not loaded yet (fresh device cache):
+  // hold on a lightweight loading screen instead of flashing the full app.
+  if (focusMemberId && members.length === 0) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className={`beacon beacon--sidebar-${sidebarPos} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
+      {focusInvalid && (
+        <div className="focus-invalid-banner">
+          Kid display member not found — showing the full app.
+          <button type="button" className="settings-btn" onClick={handleExitFocus}>
+            Dismiss
+          </button>
+        </div>
+      )}
       {/* Sidebar */}
       <Sidebar
         activeView={activeView}
@@ -469,6 +515,7 @@ export function App() {
             connected={connected}
             haUrl={config.ha_url}
             calendars={calendars}
+            onEnterFocusMode={handleEnterFocusMode}
           />
         ) : activeView === 'grocery' ? (
           <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" />

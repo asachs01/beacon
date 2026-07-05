@@ -1,0 +1,259 @@
+/* Kid Display (focus mode) */
+
+.focus-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.focus-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  border-bottom: 3px solid var(--focus-accent, var(--accent));
+}
+
+.focus-member {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.focus-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--focus-accent, var(--accent));
+  font-size: 2rem;
+}
+
+.focus-greeting {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.focus-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.focus-clock {
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: right;
+  cursor: default;
+  padding: 0;
+  font: inherit;
+}
+
+.focus-time {
+  font-size: 2.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.focus-date {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.focus-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.focus-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.focus-card--preview {
+  opacity: 0.65;
+}
+
+.focus-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 8px;
+}
+
+.focus-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.focus-card-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-today, var(--bg-primary));
+  color: var(--text-muted);
+}
+
+.focus-card-count {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--focus-accent, var(--accent));
+}
+
+.focus-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 8px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.focus-check-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 14px 12px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 150ms ease;
+  min-height: 56px; /* kid-sized tap target */
+}
+
+.focus-check-row:not(:disabled):hover {
+  background: var(--bg-primary);
+}
+
+.focus-check-row:disabled {
+  cursor: default;
+}
+
+.focus-check-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--focus-accent, var(--accent));
+  color: #fff;
+  transition: all 150ms ease;
+}
+
+.focus-check-row--done .focus-check-box {
+  background: var(--focus-accent, var(--accent));
+}
+
+.focus-check-row--done .focus-check-label {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.focus-check-row--completing .focus-check-box {
+  transform: scale(1.2);
+}
+
+.focus-check-icon {
+  margin-right: 8px;
+}
+
+.focus-check-value {
+  margin-left: auto;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--focus-accent, var(--accent));
+}
+
+.focus-celebration {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.focus-celebration-emoji {
+  font-size: 4.5rem;
+}
+
+.focus-celebration-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.focus-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px;
+}
+
+.focus-exit-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.focus-exit-dialog {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 320px;
+  text-align: center;
+}
+
+.focus-exit-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* Invalid-member banner (rendered by App in the normal shell) */
+.focus-invalid-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  padding: 8px 16px;
+  background: #ef444422;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}

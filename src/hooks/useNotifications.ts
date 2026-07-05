@@ -13,16 +13,18 @@ const NOTIFY_BEFORE_MS = 15 * 60 * 1000; // 15 minutes
 export function useNotifications(
   events: CalendarEvent[],
   getClient: () => HomeAssistantClient | null,
+  enabled = true,
 ) {
   // Track which event IDs we've already notified about to avoid duplicates
   const notifiedRef = useRef<Set<string>>(new Set());
 
   // Request notification permission on mount
   useEffect(() => {
+    if (!enabled) return;
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
-  }, []);
+  }, [enabled]);
 
   const checkUpcoming = useCallback(() => {
     const now = Date.now();
@@ -69,12 +71,13 @@ export function useNotifications(
   }, [events, getClient]);
 
   useEffect(() => {
+    if (!enabled) return;
     // Check immediately on mount / event change
     checkUpcoming();
 
     const interval = setInterval(checkUpcoming, CHECK_INTERVAL);
     return () => clearInterval(interval);
-  }, [checkUpcoming]);
+  }, [checkUpcoming, enabled]);
 }
 
 /**

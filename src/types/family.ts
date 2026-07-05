@@ -43,7 +43,14 @@ export interface RoutineTask {
   id: string;
   name: string;
   order: number;
-  completed: boolean;
+}
+
+/** A member checking off one routine task on one day (mirrors ChoreCompletion) */
+export interface RoutineTaskCompletion {
+  routine_id: string;
+  task_id: string;
+  member_id: string;
+  completed_at: string; // ISO date string for serialization
 }
 
 /** Earnings for a member over a time period */

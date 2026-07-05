@@ -13,10 +13,8 @@ export interface Chore {
   name: string;
   assigned_to: string[]; // member IDs
   frequency: 'daily' | 'weekly' | 'once';
-  max_completions?: number; // max times per frequency period (e.g., 3x/week)
   value_cents: number;
   icon?: string; // emoji
-  payout_for?: string; // member ID this payout chore is for (auto-generated)
 }
 
 export interface ChoreCompletion {
@@ -45,16 +43,14 @@ export interface RoutineTask {
   id: string;
   name: string;
   order: number;
-  completed: boolean;
 }
 
-export interface Payout {
-  id: string;
+/** A member checking off one routine task on one day (mirrors ChoreCompletion) */
+export interface RoutineTaskCompletion {
+  routine_id: string;
+  task_id: string;
   member_id: string;
-  amount_cents: number;
-  paid_by: string; // parent member ID who completed the payout
-  paid_at: string; // ISO date
-  chore_id?: string; // the auto-generated payout chore ID
+  completed_at: string; // ISO date string for serialization
 }
 
 /** Earnings for a member over a time period */

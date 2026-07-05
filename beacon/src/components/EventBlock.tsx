@@ -3,16 +3,17 @@ import { CalendarEvent, getPastelColor, getFullColor } from '../types';
 
 interface EventBlockProps {
   event: CalendarEvent;
-  onClick: (event: CalendarEvent) => void;
+  onClick: (event: CalendarEvent, e?: React.MouseEvent<HTMLButtonElement>) => void;
   style?: React.CSSProperties;
   allDay?: boolean;
   multiDay?: boolean;
   draggable?: boolean;
+  expanded?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: (e: React.DragEvent) => void;
 }
 
-export function EventBlock({ event, onClick, style, allDay, multiDay, draggable, onDragStart, onDragEnd }: EventBlockProps) {
+export function EventBlock({ event, onClick, style, allDay, multiDay, draggable, expanded, onDragStart, onDragEnd }: EventBlockProps) {
   const pastel = getPastelColor(event.color);
   const full = getFullColor(event.color);
 
@@ -38,17 +39,18 @@ export function EventBlock({ event, onClick, style, allDay, multiDay, draggable,
 
   return (
     <button
-      className={`event-block ${allDay ? 'event-block--allday' : ''} ${draggable ? 'event-block--draggable' : ''}`}
+      className={`event-block ${allDay ? 'event-block--allday' : ''} ${draggable ? 'event-block--draggable' : ''} ${expanded ? 'event-block--expanded' : ''}`}
       style={{
         ...style,
         backgroundColor: pastel,
       }}
-      onClick={() => onClick(event)}
+      onClick={(e) => onClick(event, e)}
       type="button"
       title={`${event.title} (${timeLabel})`}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      data-event-id={event.id}
     >
       <div className="event-block-stripe" style={{ backgroundColor: full }} />
       <div className="event-block-content">
