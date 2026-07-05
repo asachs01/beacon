@@ -33,7 +33,7 @@ import { useLocalCalendar } from './hooks/useLocalCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView from './components/OnboardingView';
 import { FocusView } from './components/focus/FocusView';
-import { getFocusMemberId, clearFocusMode } from './focus';
+import { getFocusMemberId, clearFocusMode, setDeviceFocusMember } from './focus';
 import { CalendarEvent } from './types';
 import { getConfig, patchConfig } from './config';
 
@@ -140,6 +140,11 @@ export function App() {
   const handleExitFocus = useCallback(() => {
     clearFocusMode();
     setFocusMemberId(null);
+  }, []);
+
+  const handleEnterFocusMode = useCallback((memberId: string) => {
+    setDeviceFocusMember(memberId);
+    setFocusMemberId(memberId);
   }, []);
 
   // Event notifications (browser + HA mobile_app)
@@ -504,6 +509,7 @@ export function App() {
             connected={connected}
             haUrl={config.ha_url}
             calendars={calendars}
+            onEnterFocusMode={handleEnterFocusMode}
           />
         ) : activeView === 'grocery' ? (
           <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" />

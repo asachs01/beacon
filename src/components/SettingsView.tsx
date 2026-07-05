@@ -19,6 +19,7 @@ import { GroceryList } from '../types/grocery';
 import { themes } from '../styles/themes';
 import { FamilyMember, MEMBER_COLORS, AVATAR_CATEGORIES } from '../types/family';
 import type { BeaconSettings } from '../hooks/useSettings';
+import { buildFocusUrl } from '../focus';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -51,6 +52,8 @@ interface SettingsViewProps {
   haUrl: string;
   // Calendars
   calendars: Array<{ id: string; name: string }>;
+  // Kid Display
+  onEnterFocusMode: (memberId: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -190,6 +193,7 @@ export function SettingsView({
   connected,
   haUrl,
   calendars,
+  onEnterFocusMode,
 }: SettingsViewProps) {
   const { setTheme: applyTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
@@ -197,6 +201,8 @@ export function SettingsView({
   const [memberForm, setMemberForm] = useState<MemberForm>(EMPTY_FORM);
   const [memberFormMode, setMemberFormMode] = useState<'list' | 'add' | 'edit'>('list');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [kidDisplayMemberId, setKidDisplayMemberId] = useState('');
+  const [copiedFocusUrl, setCopiedFocusUrl] = useState(false);
 
   // ---- Fetch todo lists for grocery default dropdown ----
   const [todoLists, setTodoLists] = useState<GroceryList[]>([]);
@@ -1100,6 +1106,75 @@ export function SettingsView({
             onChange={(v) => onUpdateSettings({ kioskMode: v })}
           />
         </div>
+      </div>
+
+      <h2 className="settings-section-title" style={{ marginTop: 32 }}>Kid Display</h2>
+      <p className="settings-section-desc">
+        Lock a wall-mounted screen to one family member — shows only their routines and chores.
+      </p>
+      <div className="settings-group">
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">Family Member</div>
+            <div className="settings-row-sublabel">Who this display belongs to</div>
+          </div>
+          <select
+            className="settings-select"
+            value={kidDisplayMemberId}
+            onChange={(e) => {
+              setKidDisplayMemberId(e.target.value);
+              setCopiedFocusUrl(false);
+            }}
+          >
+            <option value="">Choose a member…</option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.avatar} {m.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {kidDisplayMemberId && (
+          <>
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">Use on This Device</div>
+                <div className="settings-row-sublabel">
+                  Locks this screen now. Exit later with 5 taps on the clock.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="settings-btn settings-btn--primary"
+                onClick={() => onEnterFocusMode(kidDisplayMemberId)}
+              >
+                Start
+              </button>
+            </div>
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">Display URL</div>
+                <div className="settings-row-sublabel">
+                  For kiosk browsers and wall panels — bookmark or set as home page.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="settings-btn"
+                onClick={() => {
+                  navigator.clipboard
+                    .writeText(buildFocusUrl(kidDisplayMemberId))
+                    .then(() => setCopiedFocusUrl(true))
+                    .catch(() => {
+                      window.prompt('Copy this URL:', buildFocusUrl(kidDisplayMemberId));
+                    });
+                }}
+              >
+                {copiedFocusUrl ? 'Copied!' : 'Copy URL'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
