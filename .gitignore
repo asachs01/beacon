@@ -20,3 +20,4 @@ android/local.properties
 
 # Video recording raw footage (too large for git)
 docs/video/raw/
+.superpowers/
