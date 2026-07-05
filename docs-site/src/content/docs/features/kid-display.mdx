@@ -1,0 +1,116 @@
+---
+title: "Kid Display Mode"
+description: "Lock a wall-mounted screen or tablet to a single family member's routines and chores — ideal for kids' rooms and kiosk setups."
+order: 11
+---
+
+# Kid Display Mode
+
+Kid Display Mode locks a screen or tablet to a single family member, showing only their routine for the current time of day and their assigned chores. It is built for wall-mounted tablets in kids' rooms, where you want a focused, distraction-free view instead of the full Beacon dashboard.
+
+---
+
+## What the display shows
+
+When a device is in Kid Display Mode, it shows:
+
+- The family member's **avatar and name** with a greeting
+- A **live clock and date**
+- The **routine for the current time of day** — morning (before 12:00), afternoon (12:00–17:00), or evening (after 17:00)
+- The member's **assigned chores**, including their reward values
+
+Tap targets are large, designed for kids to use directly. Tapping a task or chore checks it off; tapping it again undoes it.
+
+If no routine exists for the current time period, the next upcoming routine is shown read-only as a preview, labeled things like "Tonight" or "Tomorrow morning".
+
+When every routine task and chore for the day is complete, the display shows a celebration screen: "All done — great job!"
+
+---
+
+## Entering Kid Display Mode
+
+There are two ways to put a device into Kid Display Mode.
+
+### URL parameter
+
+Append `?display=<memberId>` to Beacon's URL. This is bookmarkable and is the best option for kiosk browsers (like Fully Kiosk Browser) or Home Assistant wallpanel apps, since it survives reboots and takes precedence over any device-level setting.
+
+### Settings > Display
+
+1. Open **Settings > Display**
+2. Under **Kid Display**, choose a family member
+3. Choose how to apply it:
+   - **Use on This Device** — persists the assignment for this browser/device via localStorage
+   - **Copy URL** — copies the bookmarkable `?display=<memberId>` URL for kiosk setups
+
+> **Note**: If both are present, the URL parameter takes precedence over the device-level (localStorage) assignment.
+
+---
+
+## Setting up routines
+
+Routines are created per family member, not from the Kid Display screen itself:
+
+1. Open **Settings > Family Members**
+2. Click the **checklist icon** on the member's card
+3. Create a routine with:
+   - A **name**
+   - A **time of day** — morning, afternoon, or evening
+   - An **ordered list of tasks** (add, remove, and reorder as needed)
+
+A family member can have multiple routines, including more than one for the same time-of-day period. Only the first routine for the current period is shown on the display.
+
+---
+
+## Completing tasks and chores
+
+Routine tasks and chores both use the same big tap-to-complete interaction:
+
+- Tap an incomplete item to check it off
+- Tap a completed item again to undo it
+
+Routine task completions **reset every day** automatically. Chore completions feed into the same streaks and leaderboard tracking used everywhere else in Beacon, recorded under that family member's ID — see [Chores](/docs/features/chores/) for how streaks and the leaderboard work.
+
+---
+
+## Exiting Kid Display Mode
+
+Kid Display Mode is intentionally hard to exit by accident:
+
+1. Tap the **clock** 5 times within 3 seconds
+2. Confirm the exit in the dialog that appears
+
+Exiting clears the device's Kid Display assignment and strips the `?display=` parameter from the URL, returning the device to the full Beacon app.
+
+---
+
+## Screen saver and notifications
+
+- The normal [Screen Saver](/docs/features/screensaver/) behavior (dim mode and the clock screensaver) still runs on kid displays according to your usual Display settings — this keeps burn-in protection active on always-on screens.
+- Kid displays do **not** fire event push notifications and do not prompt for notification permission. See [Notifications](/docs/features/notifications/) for how that works on the full dashboard.
+
+---
+
+## Using ingress URLs for kiosk setups
+
+If you copy a Kid Display URL while accessing Beacon through Home Assistant ingress, the kiosk device will need an authenticated HA session for that URL to keep working. For dedicated kiosk browsers, it's simpler to use a direct (non-ingress) Beacon URL instead of the ingress path.
+
+---
+
+## Troubleshooting
+
+### The display shows "member not found"
+
+This happens if the assigned family member was deleted, or the `memberId` in the URL is invalid. The full Beacon app loads with a dismissible banner. Re-assign the device to a valid member from **Settings > Display**, or update the bookmarked URL.
+
+### The wrong routine (or no routine) is showing
+
+Only the first routine matching the current time-of-day period (morning, afternoon, evening) is displayed. If a member has multiple routines in the same period, check their order in **Settings > Family Members** — the checklist icon on their card.
+
+### Chore completions aren't showing up on the leaderboard
+
+Chore completions from Kid Display Mode are recorded under the same member ID used everywhere else in Beacon, so they should appear on the [leaderboard](/docs/features/chores/) immediately. If they don't, verify the device is actually assigned to the expected member in **Settings > Display**.
+
+### The "day" seems to roll over at the wrong local time
+
+Completions are date-stamped in UTC, consistent with how chores are recorded elsewhere in Beacon. If your timezone is far from UTC, the day can roll over during your local evening rather than at midnight local time. This is a known limitation — routine and chore state for "today" is always based on the UTC date.
