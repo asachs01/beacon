@@ -3,6 +3,7 @@ import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
 import { MemberEarnings } from '../types/family';
+import { localDayKey } from '../api/date-keys';
 
 interface LeaderboardProps {
   open: boolean;
@@ -19,14 +20,14 @@ function getWeekRange(): [string, string] {
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
   end.setDate(start.getDate() + 7);
-  return [start.toISOString().slice(0, 10), end.toISOString().slice(0, 10)];
+  return [localDayKey(start), localDayKey(end)];
 }
 
 function getMonthRange(): [string, string] {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return [start.toISOString().slice(0, 10), end.toISOString().slice(0, 10)];
+  return [localDayKey(start), localDayKey(end)];
 }
 
 function formatCents(cents: number): string {

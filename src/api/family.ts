@@ -7,6 +7,7 @@ import {
   RoutineTaskCompletion,
 } from '../types/family';
 import { loadData, loadDataSync, saveData } from './beacon-store';
+import { localDayKey } from './date-keys';
 
 const STORAGE_KEYS = {
   members: 'beacon_family_members',
@@ -114,29 +115,29 @@ export class FamilyStore {
   }
 
   async getCompletionsToday(): Promise<ChoreCompletion[]> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDayKey();
     const completions = await this.getCompletions();
     return completions.filter(
-      (c) => c.completed_at.slice(0, 10) === today
+      (c) => localDayKey(c.completed_at) === today
     );
   }
 
   async getCompletionsForPeriod(startDate: string, endDate: string): Promise<ChoreCompletion[]> {
     const completions = await this.getCompletions();
     return completions.filter((c) => {
-      const date = c.completed_at.slice(0, 10);
+      const date = localDayKey(c.completed_at);
       return date >= startDate && date <= endDate;
     });
   }
 
   async completeChore(choreId: string, memberId: string, verifiedBy?: string): Promise<ChoreCompletion> {
     const completions = await this.getCompletions();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDayKey();
     const existing = completions.find(
       (c) =>
         c.chore_id === choreId &&
         c.member_id === memberId &&
-        c.completed_at.slice(0, 10) === today
+        localDayKey(c.completed_at) === today
     );
     if (existing) return existing;
     const completion: ChoreCompletion = {
@@ -156,12 +157,12 @@ export class FamilyStore {
 
   async uncompleteChore(choreId: string, memberId: string): Promise<boolean> {
     const completions = await this.getCompletions();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDayKey();
     const index = completions.findIndex(
       (c) =>
         c.chore_id === choreId &&
         c.member_id === memberId &&
-        c.completed_at.slice(0, 10) === today
+        localDayKey(c.completed_at) === today
     );
     if (index === -1) return false;
     completions.splice(index, 1);
@@ -183,8 +184,8 @@ export class FamilyStore {
 
   private async updateStreakForMember(memberId: string): Promise<void> {
     const streaks = await this.getStreaks();
-    const today = new Date().toISOString().slice(0, 10);
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const today = localDayKey();
+    const yesterday = localDayKey(Date.now() - 86400000);
 
     let streak = streaks.find((s) => s.member_id === memberId);
     if (!streak) {
@@ -192,7 +193,7 @@ export class FamilyStore {
       streaks.push(streak);
     }
 
-    const lastDate = streak.last_completed.slice(0, 10);
+    const lastDate = localDayKey(streak.last_completed);
 
     if (lastDate === today) {
       // Already counted today
@@ -254,20 +255,20 @@ export class FamilyStore {
   }
 
   async getRoutineTaskCompletionsToday(): Promise<RoutineTaskCompletion[]> {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDayKey();
     const completions = await this.getRoutineTaskCompletions();
-    return completions.filter((c) => c.completed_at.slice(0, 10) === today);
+    return completions.filter((c) => localDayKey(c.completed_at) === today);
   }
 
   async completeRoutineTask(routineId: string, taskId: string, memberId: string): Promise<void> {
     const completions = await this.getRoutineTaskCompletions();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDayKey();
     const exists = completions.some(
       (c) =>
         c.routine_id === routineId &&
         c.task_id === taskId &&
         c.member_id === memberId &&
-        c.completed_at.slice(0, 10) === today
+        localDayKey(c.completed_at) === today
     );
     if (exists) return;
     completions.push({
@@ -281,13 +282,13 @@ export class FamilyStore {
 
   async uncompleteRoutineTask(routineId: string, taskId: string, memberId: string): Promise<boolean> {
     const completions = await this.getRoutineTaskCompletions();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDayKey();
     const index = completions.findIndex(
       (c) =>
         c.routine_id === routineId &&
         c.task_id === taskId &&
         c.member_id === memberId &&
-        c.completed_at.slice(0, 10) === today
+        localDayKey(c.completed_at) === today
     );
     if (index === -1) return false;
     completions.splice(index, 1);
