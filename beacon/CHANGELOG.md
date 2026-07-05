@@ -1,3 +1,10 @@
+## [1.30.2](https://github.com/asachs01/beacon/compare/v1.30.1...v1.30.2) (2026-07-05)
+
+
+### Bug Fixes
+
+* bucket chore and routine completions by local day, not UTC ([3a8ff59](https://github.com/asachs01/beacon/commit/3a8ff593b599bec84be1870243e88e733ddfd00b))
+
 ## [1.30.1](https://github.com/asachs01/beacon/compare/v1.30.0...v1.30.1) (2026-07-05)
 
 
