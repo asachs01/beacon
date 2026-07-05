@@ -16,22 +16,60 @@
   overflow: hidden;
 }
 
-/* Classic layout: 3 equal columns (original Beacon look) */
+/* Classic layout: topbar + three agenda columns (Today | This Week | Tasks) */
 .dashboard--classic {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "topbar"
+    "classic";
+  padding: 32px 40px;
+  gap: 20px;
+}
+
+.dash-classic {
+  grid-area: classic;
+  display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr;
-  grid-template-areas: "main main sidebar";
-  padding: 40px 48px;
-  gap: 32px;
+  gap: 28px;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.dashboard--classic .dash-topbar {
-  display: none;
+.dash-classic-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 12px;
 }
 
-.dashboard--classic .dash-sidebar {
-  border-left: none;
-  padding-left: 0;
+.dash-classic-sidebar {
+  gap: 24px;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.dash-week-day {
+  margin-bottom: 14px;
+}
+
+.dash-week-day-label {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.dash-week-empty {
+  font-size: 13px;
+  color: var(--text-light);
+  font-style: italic;
+  padding-bottom: 4px;
 }
 
 /* Compact layout: single column, scrollable */
@@ -504,6 +542,21 @@
   .event-card { padding: 12px 14px; }
 
   .task-checklist-item { min-height: 48px; }
+
+  /* Classic layout collapses to a single scrolling column on small screens */
+  .dashboard--classic {
+    grid-template-rows: auto auto;
+    height: auto;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 80px;
+  }
+
+  .dash-classic {
+    grid-template-columns: 1fr;
+    overflow: visible;
+    gap: 20px;
+  }
 }
 
 /* ─── Responsive: Phone < 480px ─── */
