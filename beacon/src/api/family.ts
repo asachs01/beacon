@@ -4,6 +4,7 @@ import {
   ChoreCompletion,
   Streak,
   Routine,
+  RoutineTaskCompletion,
 } from '../types/family';
 import { loadData, loadDataSync, saveData } from './beacon-store';
 
@@ -13,6 +14,7 @@ const STORAGE_KEYS = {
   completions: 'beacon_completions',
   streaks: 'beacon_streaks',
   routines: 'beacon_routines',
+  routine_completions: 'beacon_routine_completions',
 } as const;
 
 function generateId(): string {
@@ -212,6 +214,15 @@ export class FamilyStore {
     return routines.filter((r) => r.member_id === memberId);
   }
 
+  async updateRoutine(id: string, data: Partial<Omit<Routine, 'id'>>): Promise<Routine | null> {
+    const routines = await this.getRoutines();
+    const index = routines.findIndex((r) => r.id === id);
+    if (index === -1) return null;
+    routines[index] = { ...routines[index], ...data };
+    await saveData(STORAGE_KEYS.routines, routines);
+    return routines[index];
+  }
+
   async addRoutine(routine: Omit<Routine, 'id'>): Promise<Routine> {
     const routines = await this.getRoutines();
     const newRoutine: Routine = { ...routine, id: generateId() };
@@ -225,6 +236,54 @@ export class FamilyStore {
     const filtered = routines.filter((r) => r.id !== id);
     if (filtered.length === routines.length) return false;
     await saveData(STORAGE_KEYS.routines, filtered);
+    return true;
+  }
+
+  // --- Routine task completions ---
+
+  async getRoutineTaskCompletions(): Promise<RoutineTaskCompletion[]> {
+    return loadData<RoutineTaskCompletion[]>(STORAGE_KEYS.routine_completions, []);
+  }
+
+  async getRoutineTaskCompletionsToday(): Promise<RoutineTaskCompletion[]> {
+    const today = new Date().toISOString().slice(0, 10);
+    const completions = await this.getRoutineTaskCompletions();
+    return completions.filter((c) => c.completed_at.slice(0, 10) === today);
+  }
+
+  async completeRoutineTask(routineId: string, taskId: string, memberId: string): Promise<void> {
+    const completions = await this.getRoutineTaskCompletions();
+    const today = new Date().toISOString().slice(0, 10);
+    const exists = completions.some(
+      (c) =>
+        c.routine_id === routineId &&
+        c.task_id === taskId &&
+        c.member_id === memberId &&
+        c.completed_at.slice(0, 10) === today
+    );
+    if (exists) return;
+    completions.push({
+      routine_id: routineId,
+      task_id: taskId,
+      member_id: memberId,
+      completed_at: new Date().toISOString(),
+    });
+    await saveData(STORAGE_KEYS.routine_completions, completions);
+  }
+
+  async uncompleteRoutineTask(routineId: string, taskId: string, memberId: string): Promise<boolean> {
+    const completions = await this.getRoutineTaskCompletions();
+    const today = new Date().toISOString().slice(0, 10);
+    const index = completions.findIndex(
+      (c) =>
+        c.routine_id === routineId &&
+        c.task_id === taskId &&
+        c.member_id === memberId &&
+        c.completed_at.slice(0, 10) === today
+    );
+    if (index === -1) return false;
+    completions.splice(index, 1);
+    await saveData(STORAGE_KEYS.routine_completions, completions);
     return true;
   }
 }
