@@ -1162,11 +1162,16 @@ export function SettingsView({
                 type="button"
                 className="settings-btn"
                 onClick={() => {
+                  const url = buildFocusUrl(kidDisplayMemberId);
+                  if (!navigator.clipboard) {
+                    window.prompt('Copy this URL:', url);
+                    return;
+                  }
                   navigator.clipboard
-                    .writeText(buildFocusUrl(kidDisplayMemberId))
+                    .writeText(url)
                     .then(() => setCopiedFocusUrl(true))
                     .catch(() => {
-                      window.prompt('Copy this URL:', buildFocusUrl(kidDisplayMemberId));
+                      window.prompt('Copy this URL:', url);
                     });
                 }}
               >
