@@ -17,9 +17,10 @@ import {
 import { AnyListClient } from '../api/anylist';
 import { GroceryList } from '../types/grocery';
 import { themes } from '../styles/themes';
-import { FamilyMember, MEMBER_COLORS, AVATAR_CATEGORIES } from '../types/family';
+import { FamilyMember, MEMBER_COLORS, AVATAR_CATEGORIES, Routine } from '../types/family';
 import type { BeaconSettings } from '../hooks/useSettings';
 import { buildFocusUrl } from '../focus';
+import { useRoutines } from '../hooks/useRoutines';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -203,6 +204,44 @@ export function SettingsView({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [kidDisplayMemberId, setKidDisplayMemberId] = useState('');
   const [copiedFocusUrl, setCopiedFocusUrl] = useState(false);
+
+  // ---- Routine editor state ----
+  const routinesApi = useRoutines();
+  const [routinesFor, setRoutinesFor] = useState<FamilyMember | null>(null);
+  const [routineForm, setRoutineForm] = useState<{
+    id: string | null;
+    name: string;
+    time_of_day: Routine['time_of_day'];
+    tasks: { id: string | null; name: string }[];
+  } | null>(null);
+  const [confirmDeleteRoutine, setConfirmDeleteRoutine] = useState<string | null>(null);
+
+  const genTaskId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  const handleSaveRoutine = useCallback(async () => {
+    if (!routineForm || !routinesFor) return;
+    const name = routineForm.name.trim();
+    const tasks = routineForm.tasks
+      .map((t) => ({ ...t, name: t.name.trim() }))
+      .filter((t) => t.name.length > 0)
+      .map((t, i) => ({ id: t.id ?? genTaskId(), name: t.name, order: i }));
+    if (!name || tasks.length === 0) return;
+    if (routineForm.id) {
+      await routinesApi.updateRoutine(routineForm.id, {
+        name,
+        time_of_day: routineForm.time_of_day,
+        tasks,
+      });
+    } else {
+      await routinesApi.addRoutine({
+        name,
+        member_id: routinesFor.id,
+        time_of_day: routineForm.time_of_day,
+        tasks,
+      });
+    }
+    setRoutineForm(null);
+  }, [routineForm, routinesFor, routinesApi]);
 
   // ---- Fetch todo lists for grocery default dropdown ----
   const [todoLists, setTodoLists] = useState<GroceryList[]>([]);
@@ -572,7 +611,225 @@ export function SettingsView({
   );
 
   // ==== FAMILY ====
-  const renderFamily = () => (
+  const renderFamily = () => {
+    if (routinesFor) {
+      const memberRoutines = routinesApi.routines.filter((r) => r.member_id === routinesFor.id);
+      return (
+        <>
+          <h2 className="settings-section-title">
+            {routinesFor.avatar} {routinesFor.name} — Routines
+          </h2>
+          <p className="settings-section-desc">
+            Morning and night checklists shown on their kid display.
+          </p>
+          <div className="settings-group">
+            <div style={{ padding: '12px 20px 4px' }}>
+              <button
+                type="button"
+                className="settings-btn"
+                onClick={() => {
+                  setRoutinesFor(null);
+                  setRoutineForm(null);
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 12 }}
+              >
+                <ChevronLeft size={16} /> Back
+              </button>
+            </div>
+            {routineForm === null ? (
+              <>
+                <div className="settings-fm-list">
+                  {memberRoutines.length === 0 && (
+                    <div className="settings-fm-empty">
+                      No routines yet. Add a morning or bedtime checklist.
+                    </div>
+                  )}
+                  {memberRoutines.map((routine) => (
+                    <div key={routine.id} className="settings-fm-card">
+                      <div className="settings-fm-info">
+                        <div className="settings-fm-name">{routine.name}</div>
+                        <div className="settings-fm-role">
+                          {routine.time_of_day} · {routine.tasks.length} task{routine.tasks.length === 1 ? '' : 's'}
+                        </div>
+                      </div>
+                      <div className="settings-fm-actions">
+                        <button
+                          type="button"
+                          className="settings-fm-btn"
+                          onClick={() =>
+                            setRoutineForm({
+                              id: routine.id,
+                              name: routine.name,
+                              time_of_day: routine.time_of_day,
+                              tasks: [...routine.tasks]
+                                .sort((a, b) => a.order - b.order)
+                                .map((t) => ({ id: t.id, name: t.name })),
+                            })
+                          }
+                          aria-label={`Edit ${routine.name}`}
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          className="settings-fm-btn settings-fm-btn--danger"
+                          onClick={() => {
+                            if (confirmDeleteRoutine === routine.id) {
+                              routinesApi.removeRoutine(routine.id);
+                              setConfirmDeleteRoutine(null);
+                            } else {
+                              setConfirmDeleteRoutine(routine.id);
+                              setTimeout(() => setConfirmDeleteRoutine(null), 3000);
+                            }
+                          }}
+                          aria-label={`Delete ${routine.name}`}
+                        >
+                          {confirmDeleteRoutine === routine.id ? (
+                            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#ef4444' }}>Sure?</span>
+                          ) : (
+                            <Trash2 size={16} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding: '8px 20px 16px' }}>
+                  <button
+                    type="button"
+                    className="settings-btn settings-btn--primary"
+                    onClick={() =>
+                      setRoutineForm({
+                        id: null,
+                        name: '',
+                        time_of_day: 'morning',
+                        tasks: [{ id: null, name: '' }],
+                      })
+                    }
+                  >
+                    + Add Routine
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="settings-row">
+                  <div className="settings-row-label">Name</div>
+                  <input
+                    type="text"
+                    className="settings-input"
+                    value={routineForm.name}
+                    onChange={(e) => setRoutineForm((f) => f && { ...f, name: e.target.value })}
+                    placeholder="Morning Routine"
+                    autoFocus
+                  />
+                </div>
+                <div className="settings-row">
+                  <div className="settings-row-label">Time of Day</div>
+                  <Segment
+                    value={routineForm.time_of_day}
+                    options={[
+                      { value: 'morning', label: 'Morning' },
+                      { value: 'afternoon', label: 'Afternoon' },
+                      { value: 'evening', label: 'Evening' },
+                    ]}
+                    onChange={(v) => setRoutineForm((f) => f && { ...f, time_of_day: v })}
+                  />
+                </div>
+                <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+                  <div className="settings-row-label" style={{ paddingTop: 4 }}>Tasks</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, maxWidth: 340 }}>
+                    {routineForm.tasks.map((task, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="settings-input"
+                          value={task.name}
+                          placeholder={`Task ${i + 1} (e.g. Brush teeth)`}
+                          onChange={(e) =>
+                            setRoutineForm((f) => {
+                              if (!f) return f;
+                              const tasks = [...f.tasks];
+                              tasks[i] = { ...tasks[i], name: e.target.value };
+                              return { ...f, tasks };
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="settings-fm-btn"
+                          disabled={i === 0}
+                          aria-label="Move up"
+                          onClick={() =>
+                            setRoutineForm((f) => {
+                              if (!f || i === 0) return f;
+                              const tasks = [...f.tasks];
+                              [tasks[i - 1], tasks[i]] = [tasks[i], tasks[i - 1]];
+                              return { ...f, tasks };
+                            })
+                          }
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          className="settings-fm-btn"
+                          disabled={i === routineForm.tasks.length - 1}
+                          aria-label="Move down"
+                          onClick={() =>
+                            setRoutineForm((f) => {
+                              if (!f || i === f.tasks.length - 1) return f;
+                              const tasks = [...f.tasks];
+                              [tasks[i], tasks[i + 1]] = [tasks[i + 1], tasks[i]];
+                              return { ...f, tasks };
+                            })
+                          }
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          className="settings-fm-btn settings-fm-btn--danger"
+                          aria-label="Remove task"
+                          onClick={() =>
+                            setRoutineForm((f) => {
+                              if (!f) return f;
+                              return { ...f, tasks: f.tasks.filter((_, j) => j !== i) };
+                            })
+                          }
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="settings-btn"
+                      style={{ alignSelf: 'flex-start' }}
+                      onClick={() =>
+                        setRoutineForm((f) => f && { ...f, tasks: [...f.tasks, { id: null, name: '' }] })
+                      }
+                    >
+                      + Add Task
+                    </button>
+                  </div>
+                </div>
+                <div style={{ padding: '12px 20px 16px', display: 'flex', gap: 8 }}>
+                  <button type="button" className="settings-btn settings-btn--primary" onClick={handleSaveRoutine}>
+                    Save Routine
+                  </button>
+                  <button type="button" className="settings-btn" onClick={() => setRoutineForm(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      );
+    }
+
+    return (
     <>
       <h2 className="settings-section-title">Family Members</h2>
       <p className="settings-section-desc">Manage who appears on your family display.</p>
@@ -601,6 +858,14 @@ export function SettingsView({
                   <div className="settings-fm-role">{member.role}</div>
                 </div>
                 <div className="settings-fm-actions">
+                  <button
+                    type="button"
+                    className="settings-fm-btn"
+                    onClick={() => setRoutinesFor(member)}
+                    aria-label={`Routines for ${member.name}`}
+                  >
+                    <ListChecks size={16} />
+                  </button>
                   <button
                     type="button"
                     className="settings-fm-btn"
@@ -763,7 +1028,8 @@ export function SettingsView({
         </div>
       )}
     </>
-  );
+    );
+  };
 
   // ==== CALENDAR ====
   const renderCalendar = () => (
