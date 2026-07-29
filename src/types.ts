@@ -59,13 +59,35 @@ const PASTEL_MAP: Record<string, string> = {
   '#14b8a6': '#99f6e4', // teal
 };
 
+const HEX_COLOR_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+function normalizeHex(hex: string): string {
+  if (hex.length === 4) {
+    const [, r, g, b] = hex;
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+  return hex;
+}
+
+/* Blends a hex color toward white to produce a pastel tint for custom (non-palette) colors */
+function blendWithWhite(hex: string, ratio: number): string {
+  const normalized = normalizeHex(hex);
+  const channel = (start: number) => parseInt(normalized.slice(start, start + 2), 16);
+  const mix = (value: number) => Math.round(value + (255 - value) * ratio).toString(16).padStart(2, '0');
+  return `#${mix(channel(1))}${mix(channel(3))}${mix(channel(5))}`;
+}
+
 export function getPastelColor(fullColor: string): string {
-  return PASTEL_MAP[fullColor] || '#e5e7eb';
+  if (PASTEL_MAP[fullColor]) return PASTEL_MAP[fullColor];
+  if (HEX_COLOR_RE.test(fullColor)) return blendWithWhite(fullColor, 0.75);
+  return '#e5e7eb';
 }
 
 export function getFullColor(fullColor: string): string {
   // If the color is already a known full color, return it
   if (PASTEL_MAP[fullColor]) return fullColor;
-  // Fallback
+  // Custom (non-palette) colors are used as-is
+  if (HEX_COLOR_RE.test(fullColor)) return fullColor;
+  // Fallback for missing/invalid colors
   return '#6b7280';
 }

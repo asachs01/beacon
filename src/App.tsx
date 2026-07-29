@@ -44,6 +44,14 @@ export function App() {
   const { client, connected } = useHomeAssistant();
   const { isIngress, compact } = useIngressDetect();
   const {
+    settings,
+    updateSettings,
+    resetSettings,
+    exportSettings,
+    importSettings,
+    clearLocalStorage,
+  } = useSettings();
+  const {
     calendars: haCalendars,
     events: haEvents,
     fetchCalendars,
@@ -55,14 +63,32 @@ export function App() {
 
   const localCal = useLocalCalendar();
 
-  // Merge HA + local calendars and events
+  // Merge HA + local calendars, applying any custom colors from Settings.
+  // Unfiltered — SettingsView needs the full list to let hidden calendars be re-enabled.
   const calendars = useMemo(
-    () => [localCal.calendar, ...haCalendars],
-    [localCal.calendar, haCalendars],
+    () => [localCal.calendar, ...haCalendars].map((cal) => ({
+      ...cal,
+      color: settings.calendarColors[cal.id] || cal.color,
+    })),
+    [localCal.calendar, haCalendars, settings.calendarColors],
   );
+
+  // Calendars with permanently-hidden ones removed, for pill filters / event creation.
+  const visibleCalendars = useMemo(
+    () => calendars.filter((cal) => !settings.permanentlyHiddenCalendars.includes(cal.id)),
+    [calendars, settings.permanentlyHiddenCalendars],
+  );
+
+  // Merged events, excluding permanently-hidden calendars and with custom colors applied.
   const events = useMemo(
-    () => [...localCal.events, ...haEvents].sort((a, b) => a.start.localeCompare(b.start)),
-    [localCal.events, haEvents],
+    () => [...localCal.events, ...haEvents]
+      .filter((ev) => !settings.permanentlyHiddenCalendars.includes(ev.calendarId))
+      .map((ev) => ({
+        ...ev,
+        color: settings.calendarColors[ev.calendarId] || ev.color,
+      }))
+      .sort((a, b) => a.start.localeCompare(b.start)),
+    [localCal.events, haEvents, settings.permanentlyHiddenCalendars, settings.calendarColors],
   );
 
   // Route create/update/delete to local or HA based on calendar ID
@@ -107,15 +133,6 @@ export function App() {
   } = useChores();
 
   const dashboardTasks = useDashboardTasks(connected);
-
-  const {
-    settings,
-    updateSettings,
-    resetSettings,
-    exportSettings,
-    importSettings,
-    clearLocalStorage,
-  } = useSettings();
 
   // Apply theme at App level so it stays active regardless of which view is shown
   const { setTheme } = useTheme();
@@ -574,7 +591,7 @@ export function App() {
             {/* Family filter pills — above the calendar */}
             <div className="filter-bar">
               <FamilyFilter
-                calendars={calendars}
+                calendars={visibleCalendars}
                 hiddenCalendars={hiddenCalendars}
                 onToggle={handleToggleCalendar}
               />
@@ -618,7 +635,7 @@ export function App() {
       {showModal && (
         <EventModal
           event={selectedEvent}
-          calendars={calendars}
+          calendars={visibleCalendars}
           onSave={handleSaveEvent}
           onDelete={handleDeleteEvent}
           onClose={handleCloseModal}
