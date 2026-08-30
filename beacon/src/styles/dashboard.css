@@ -567,6 +567,41 @@
   font-weight: 500;
 }
 
+.task-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.task-group { display: flex; flex-direction: column; gap: 4px; }
+
+.task-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 2px;
+}
+
+.task-group-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.task-group-name { font-size: 0.8rem; font-weight: 700; }
+
+.task-groups .task-checklist { flex: none; overflow-y: visible; }
+
 /* ─── Responsive: Tablet < 768px ─── */
 @media (max-width: 768px) {
   .dashboard {

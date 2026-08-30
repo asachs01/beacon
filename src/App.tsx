@@ -559,6 +559,7 @@ export function App() {
               onWeatherClick={() => setActiveView('weather')}
               onEventClick={handleEventClick}
               members={members}
+              taskmateUsers={dashboardTasks.users}
               layout={settings.dashboardLayout}
             />
             <OmniAdd
