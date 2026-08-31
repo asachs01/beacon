@@ -144,14 +144,10 @@ export function DashboardView({
       <section className="dash-sidebar-section">
         <h3 className="dash-sidebar-heading">Tasks</h3>
         {(() => {
-          const pending = todoItems.filter((t) => t.status === 'needs_action');
           if (todoItems.length > 0) {
-            if (pending.length === 0) {
-              return <div className="task-checklist-done">All done!</div>;
-            }
             return (
               <TaskGroups
-                items={pending}
+                items={todoItems}
                 users={taskmateUsers}
                 onToggleTodo={onToggleTodo}
               />
@@ -312,17 +308,25 @@ function TaskRow({
   item: TodoItem;
   onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
 }) {
+  const done = item.status === 'completed';
   return (
-    <li key={`${item.listId ?? 'local'}:${item.uid}`} className="task-checklist-item">
+    <li className={`task-checklist-item${done ? ' task-checklist-item--done' : ''}`}>
       <button
         type="button"
-        className="task-checkbox"
+        className={`task-checkbox${done ? ' task-checkbox--checked' : ''}`}
+        disabled={done}
         onClick={() => onToggleTodo?.(item.uid, item.status, item.listId)}
-        aria-label={`Complete ${item.summary}`}
+        aria-label={done ? `Completed ${item.summary}` : `Complete ${item.summary}`}
       >
-        <span className="task-checkbox-box" />
+        <span className="task-checkbox-box">
+          {done && (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
+        </span>
       </button>
-      <span className="task-checklist-label">{item.summary}</span>
+      <span className={`task-checklist-label${done ? ' task-checklist-label--done' : ''}`}>{item.summary}</span>
     </li>
   );
 }
@@ -343,10 +347,14 @@ function TaskGroups({
   users: TaskmateUser[];
   onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
 }) {
+  const sorted = [...items].sort(
+    (a, b) => (a.status === 'completed' ? 1 : 0) - (b.status === 'completed' ? 1 : 0),
+  );
+
   if (users.length === 0) {
     return (
       <ul className="task-checklist">
-        {items.map((item) => (
+        {sorted.map((item) => (
           <TaskRow key={`${item.listId ?? 'local'}:${item.uid}`} item={item} onToggleTodo={onToggleTodo} />
         ))}
       </ul>
@@ -358,7 +366,7 @@ function TaskGroups({
   );
   const shared: TaskGroup = { key: '__shared', label: 'Shared', items: [] };
 
-  for (const item of items) {
+  for (const item of sorted) {
     const bucket = item.userId ? groups.find((g) => g.key === item.userId) : undefined;
     (bucket ?? shared).items.push(item);
   }
@@ -385,7 +393,7 @@ function TaskGroups({
           </div>
           <ul className="task-checklist">
             {group.items.map((item) => (
-              <TaskRow item={item} onToggleTodo={onToggleTodo} />
+              <TaskRow key={`${item.listId ?? 'local'}:${item.uid}`} item={item} onToggleTodo={onToggleTodo} />
             ))}
           </ul>
         </div>

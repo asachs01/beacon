@@ -12,6 +12,7 @@ export interface LocalTask {
   status: 'needs_action' | 'completed';
   listId: string;
   createdAt: string;
+  completedAt?: string;
 }
 
 export interface LocalTaskList {
@@ -66,7 +67,9 @@ export function useLocalTasks() {
   const toggleTask = useCallback((taskId: string) => {
     setTasks(prev => prev.map(t =>
       t.id === taskId
-        ? { ...t, status: t.status === 'needs_action' ? 'completed' : 'needs_action' }
+        ? t.status === 'needs_action'
+          ? { ...t, status: 'completed', completedAt: new Date().toISOString() }
+          : { ...t, status: 'needs_action', completedAt: undefined }
         : t
     ));
   }, []);

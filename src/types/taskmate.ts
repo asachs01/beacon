@@ -3,3 +3,10 @@ export interface TaskmateUser {
   name: string;
   todoListId: string;
 }
+
+export interface TaskmateCompletion {
+  uid: string;
+  summary: string;
+  userId: string;
+  completedAt: string;
+}

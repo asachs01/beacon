@@ -13,7 +13,7 @@ export interface DashboardTodoItem {
 
 export function useDashboardTasks(connected: boolean) {
   const localTasks = useLocalTasks();
-  const { users, listByUser } = useTaskmate(connected);
+  const { users, listByUser, completions } = useTaskmate(connected);
   const [haItems, setHaItems] = useState<Omit<DashboardTodoItem, 'userId'>[]>([]);
 
   // Fetch HA todo items for task-type lists
@@ -65,18 +65,38 @@ export function useDashboardTasks(connected: boolean) {
   const items: DashboardTodoItem[] = useMemo(() => {
     const local: DashboardTodoItem[] = localTasks
       .getTasksForList('beacon-todo')
+      .filter(t => t.status === 'needs_action' || (t.completedAt ? isToday(t.completedAt) : false))
       .map(t => ({
         uid: t.id,
         summary: t.summary,
         status: t.status,
         listId: 'beacon-todo',
       }));
-    const fromHa: DashboardTodoItem[] = haItems.map(i => ({
-      ...i,
-      userId: listByUser[i.listId]?.childId,
+
+    const fromHa: DashboardTodoItem[] = [];
+    for (const i of haItems) {
+      const userId = listByUser[i.listId]?.childId;
+      if (i.status === 'needs_action' || userId != null) {
+        fromHa.push({ ...i, userId });
+      }
+    }
+
+    const done: DashboardTodoItem[] = completions.map(c => ({
+      uid: c.uid,
+      summary: c.summary,
+      status: 'completed' as const,
+      listId: '',
+      userId: c.userId,
     }));
-    return [...local, ...fromHa];
-  }, [localTasks, haItems, listByUser]);
+
+    const seen = new Set<string>();
+    return [...local, ...fromHa, ...done].filter(it => {
+      const key = `${it.userId ?? ''}:${it.uid}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [localTasks, haItems, listByUser, completions]);
 
   const toggleItem = useCallback(async (uid: string, currentStatus: string, listId?: string) => {
     // Check if it's a local item
@@ -117,4 +137,14 @@ const GROCERY_KEYWORDS = [
 function isGroceryEntity(name: string): boolean {
   const lower = name.toLowerCase();
   return GROCERY_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+function isToday(iso: string): boolean {
+  const d = new Date(iso);
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
 }
