@@ -456,10 +456,11 @@ function parseIntent(text) {
 function haRequest(method, apiPath, body) {
   return new Promise((resolve, reject) => {
     const bodyBuf = body ? Buffer.from(JSON.stringify(body), 'utf8') : null;
+    const url = new URL(`${HA_API_BASE}${apiPath}`);
     const options = {
-      hostname: 'supervisor',
-      port: 80,
-      path: `/core${apiPath}`,
+      hostname: url.hostname,
+      port: url.port || 80,
+      path: url.pathname + url.search,
       method,
       headers: {
         'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
