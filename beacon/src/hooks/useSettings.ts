@@ -41,6 +41,7 @@ export interface BeaconSettings {
 
   // Dashboard
   dashboardLayout: 'default' | 'classic' | 'compact';
+  advancedDashboard: boolean;
 
   // Display
   screenSaverEnabled: boolean;
@@ -97,6 +98,7 @@ function buildDefaults(): BeaconSettings {
     photoTransition: 'fade',
 
     dashboardLayout: 'default',
+    advancedDashboard: false,
 
     screenSaverEnabled: true,
     dimTimeout: 5,

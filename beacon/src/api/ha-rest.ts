@@ -128,6 +128,27 @@ export async function getEntityState(entityId: string): Promise<{
   }
 }
 
+/**
+ * Fetch every entity state from the HA REST API (used by HA entity picker
+ * UIs and generic entity/sensor cards).
+ */
+export async function getAllEntityStates(): Promise<Array<{
+  entity_id: string;
+  state: string;
+  attributes: Record<string, unknown>;
+}>> {
+  try {
+    const states = await haFetch('/api/states') as Array<{
+      entity_id: string;
+      state: string;
+      attributes: Record<string, unknown>;
+    }>;
+    return states ?? [];
+  } catch {
+    return [];
+  }
+}
+
 /** Whether HA API calls should work (add-on proxy or token configured) */
 export function hasToken(): boolean {
   return isAddOn() || !!getHaToken();

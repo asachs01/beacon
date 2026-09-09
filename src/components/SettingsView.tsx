@@ -613,6 +613,19 @@ export function SettingsView({
           />
         </div>
       </div>
+
+      <div className="settings-group">
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">Advanced Dashboard</div>
+            <div className="settings-row-sublabel">Enable customizable dashboard widgets and layouts</div>
+          </div>
+          <Toggle
+            checked={settings.advancedDashboard}
+            onChange={(v) => onUpdateSettings({ advancedDashboard: v })}
+          />
+        </div>
+      </div>
     </>
   );
 

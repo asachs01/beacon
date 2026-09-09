@@ -96,6 +96,16 @@
 
 /* Compact already stacks via the new default flex column */
 
+/* Wraps the topbar region's card(s) + view tabs so it's a single grid item
+   regardless of edit mode (the region editor has no grid-area of its own). */
+.dash-topbar-region {
+  grid-area: topbar;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
 /* ─── TOP BAR ─── */
 .dash-topbar {
   grid-area: topbar;
@@ -130,6 +140,12 @@
   font-size: 20px;
   font-weight: 400;
   color: var(--text-secondary);
+}
+
+.dash-topbar-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .dash-topbar-weather {
@@ -173,6 +189,11 @@
 .dash-main {
   grid-area: main;
   min-height: 0;
+}
+
+.dashboard--advanced .dash-main {
+  display: flex;
+  flex-direction: column;
 }
 
 .dash-family-grid {
@@ -351,6 +372,43 @@
   letter-spacing: 1px;
   margin-bottom: 16px;
   flex-shrink: 0;
+}
+
+.dash-day-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border, #e5e5e5);
+  background: var(--bg-elevated, transparent);
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dash-day-nav-btn:hover {
+  background: var(--bg-hover);
+}
+
+.dash-day-nav-today {
+  border: none;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.dash-day-nav-today:hover {
+  background: var(--border, #e5e5e5);
 }
 
 .dashboard-events-scroll {
@@ -691,3 +749,424 @@
   .event-card-title { font-size: 13px; }
   .event-card-time { font-size: 12px; }
 }
+
+/* ─── Dashboard edit mode (card add/remove/reorder) ─── */
+.dash-edit-toggle {
+  position: fixed;
+  top: 6px;
+  right: 8px;
+  z-index: 50;
+  padding: 4px 7px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #e5e5e5);
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.dash-edit-toggle:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.dash-region-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  position: relative;
+}
+
+.dash-card-edit-wrapper {
+  position: relative;
+  border: 1px dashed var(--border, #e5e5e5);
+  border-radius: var(--radius-md, 12px);
+  padding: 8px;
+}
+
+.dash-card-edit-wrapper--dragging {
+  opacity: 0.6;
+}
+
+.dash-card-edit-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.dash-card-edit-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border, #e5e5e5);
+  background: var(--bg-surface, #ffffff);
+  cursor: grab;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.dash-card-edit-remove {
+  color: var(--color-red-full, #d9534f);
+}
+
+.dash-card-edit-resize {
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
+.dash-card-add-float {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 10;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: 18px;
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.dash-card-add-float:hover {
+  background: var(--bg-hover);
+  box-shadow: var(--shadow-md);
+}
+
+/* The topbar's add control sits between its cards, while the sidebar's sits
+   away from the bottom-right resize handle on its final card. */
+.dash-region-editor--topbar .dash-card-add-float {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.dash-region-editor--sidebar .dash-card-add-float {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+/* Give the list-based regions the same placement context as the GridStack
+   board. Topbar guides divide its available width; sidebar guides mark
+   vertical card rows without altering layout. */
+.dash-region-editor--topbar {
+  background-image: linear-gradient(to right, var(--border-subtle) 1px, transparent 1px);
+  background-size: calc(100% / 12) 100%;
+}
+
+.dash-region-editor--sidebar {
+  background-image: linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+  background-size: 100% 48px;
+}
+
+.dash-region-editor--topbar .dash-card-edit-wrapper,
+.dash-region-editor--sidebar .dash-card-edit-wrapper {
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
+}
+
+.dash-card-picker-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.dash-card-picker-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: var(--radius-md, 12px);
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dash-card-picker-option:hover {
+  background: var(--bg-hover);
+}
+
+.dash-card-picker-icon {
+  font-size: 20px;
+}
+
+.dash-card-picker-entity-list {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dash-entity-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-entity-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.dash-entity-filters .form-input {
+  flex: 2 1 0;
+  min-width: 0;
+}
+
+.dash-entity-filters .form-select {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.dash-card-picker-entity-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+/* ─── HA generic entity cards ─── */
+.dash-ha-card-empty {
+  font-size: 13px;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.dash-ha-card-subtitle {
+  margin-top: -5px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.dash-ha-card-state {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dash-ha-card-unit {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.dash-ha-entities-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-ha-entities-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.dash-ha-entities-name {
+  color: var(--text-secondary);
+}
+
+.dash-ha-entities-state {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dash-ha-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: var(--radius-md, 12px);
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.dash-ha-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dash-ha-toggle-switch {
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--border, #e5e5e5);
+  position: relative;
+  transition: background var(--transition, 150ms ease);
+}
+
+.dash-ha-toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform var(--transition, 150ms ease);
+}
+
+.dash-ha-toggle--on .dash-ha-toggle-switch {
+  background: var(--accent);
+}
+
+.dash-ha-toggle--on .dash-ha-toggle-switch::after {
+  transform: translateX(16px);
+}
+
+/* ─── Card sizing (sidebar cards only — see renderSizedCard) ───
+   Uses min-height rather than flex-grow: the flex containers these cards
+   live in (.dash-sidebar, .dash-region-editor) size to content with no
+   extra space to distribute, so flex-grow had no visible effect. */
+.dash-card--sm {
+  min-height: 48px;
+}
+
+.dash-card--md {
+  min-height: 140px;
+}
+
+.dash-card--lg {
+  min-height: 240px;
+}
+
+/* ─── GridStack integration (default/compact layout's main region) ───
+   Classic layout's fixed 3-column main is unaffected — it still uses
+   DashboardRegionEditor's plain vertical list. */
+.dash-gridstack-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+/* The topbar grows as its GridStack canvas adds rows; the sidebar consumes
+   its full available height. */
+.dash-gridstack-wrapper--topbar {
+  flex: 0 0 auto;
+  min-height: 104px;
+}
+
+.dash-gridstack-wrapper--sidebar {
+  height: 100%;
+}
+
+.dash-gridstack-wrapper--topbar .grid-stack {
+  flex: 0 0 auto;
+  overflow-y: visible;
+}
+
+.grid-stack {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.grid-stack-item-content {
+  overflow: auto;
+}
+
+/* Reveal GridStack's 12-column placement grid and widget bounds while editing. */
+.grid-stack:not(.grid-stack-static) {
+  background-image:
+    linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+  /* GridStack positions the content inside each cell using these margin
+     variables. Start every guide at that same inset so it matches the
+     dashed content outline rather than the invisible outer cell. */
+  background-position: var(--gs-item-margin-left) var(--gs-item-margin-top);
+  background-size: var(--gs-column-width) 100%, 100% var(--gs-cell-height);
+}
+
+.grid-stack:not(.grid-stack-static) > .grid-stack-item > .grid-stack-item-content {
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
+}
+
+.dash-gridstack-item-inner {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.dash-card-edit-toolbar--overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  margin-bottom: 0;
+}
+
+/* ─── Dashboard view tabs (multiple named layouts, like Lovelace views) ─── */
+.dash-view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dash-view-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dash-view-tab-btn {
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border, #e5e5e5);
+  background: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dash-view-tab--active .dash-view-tab-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-surface, #fff);
+}
+
+.dash-view-tab-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border, #e5e5e5);
+  background: none;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.dash-view-tab-add {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px dashed var(--border, #e5e5e5);
+  background: none;
+  color: var(--text-muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+

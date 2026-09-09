@@ -11,17 +11,18 @@ export interface FamilyEventsMap {
 }
 
 /**
- * Groups today's calendar events by family member using their
+ * Groups a given day's calendar events by family member using their
  * calendar_entity field. Unmatched events go into `other`.
  */
 export function useFamilyEvents(
   events: CalendarEvent[],
   members: FamilyMember[],
+  referenceDate: Date = new Date(),
 ): FamilyEventsMap {
   return useMemo(() => {
-    const today = startOfDay(new Date());
+    const day = startOfDay(referenceDate);
     const todayEvents = events.filter((e) =>
-      isSameDay(startOfDay(parseISO(e.start)), today),
+      isSameDay(startOfDay(parseISO(e.start)), day),
     );
 
     // Build a calendarId → memberId lookup (primary + additional calendars)
@@ -58,5 +59,5 @@ export function useFamilyEvents(
     other.sort((a, b) => a.start.localeCompare(b.start));
 
     return { byMember, other };
-  }, [events, members]);
+  }, [events, members, referenceDate]);
 }

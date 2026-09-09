@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { startOfWeek, addDays, format } from 'date-fns';
+import { startOfWeek, startOfDay, addDays, format } from 'date-fns';
 import { useHomeAssistant } from './hooks/useHomeAssistant';
 import { useCalendarEvents, CalendarNotSupportedError } from './hooks/useCalendarEvents';
 import { useFamily } from './hooks/useFamily';
@@ -138,6 +138,11 @@ export function App() {
   useEffect(() => {
     setHiddenCalendars(new Set(settings.permanentlyHiddenCalendars));
   }, [settings.permanentlyHiddenCalendars]);
+
+  const visibleEvents = useMemo(
+    () => events.filter((event) => !hiddenCalendars.has(event.calendarId)),
+    [events, hiddenCalendars],
+  );
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
@@ -179,6 +184,9 @@ export function App() {
   const [visibleWeekStart, setVisibleWeekStart] = useState<Date>(() =>
     startOfWeek(new Date(), { weekStartsOn: 0 }),
   );
+
+  // Day currently selected on the Dashboard's day view
+  const [dashboardDate, setDashboardDate] = useState<Date>(() => startOfDay(new Date()));
 
   // Helper: refetch events for a given week, with one extra day on either side
   // so multi-day events that bleed in/out of the visible week still render.
@@ -387,10 +395,11 @@ export function App() {
 
   const handleAddEvent = useCallback(() => {
     setSelectedEvent(null);
-    setPrefillDate(null);
+    // Default new events to the day currently selected on the dashboard.
+    setPrefillDate(activeView === 'dashboard' ? format(dashboardDate, 'yyyy-MM-dd') : null);
     setPrefillTime(null);
     setShowModal(true);
-  }, []);
+  }, [activeView, dashboardDate]);
 
   const handleChangeView = useCallback(
     (view: SidebarView) => {
@@ -549,7 +558,7 @@ export function App() {
         {activeView === 'dashboard' ? (
           <>
             <DashboardView
-              events={events}
+              events={visibleEvents}
               weather={weather}
               chores={settings.choresEnabled ? chores : []}
               completedChoreIds={completedChoreIds}
@@ -561,6 +570,10 @@ export function App() {
               members={members}
               taskmateUsers={dashboardTasks.users}
               layout={settings.dashboardLayout}
+              advancedDashboard={settings.advancedDashboard}
+              timeFormat={settings.timeFormat}
+              selectedDate={dashboardDate}
+              onSelectedDateChange={setDashboardDate}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}
@@ -669,7 +682,7 @@ export function App() {
                 />
               </div>
               <CalendarSidebar
-                events={events}
+                events={visibleEvents}
                 chores={settings.choresEnabled ? chores : []}
                 completedChoreIds={completedChoreIds}
                 onToggleChore={handleToggleChore}
