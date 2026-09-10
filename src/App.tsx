@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { startOfWeek, startOfDay, addDays, format } from 'date-fns';
 import { useHomeAssistant } from './hooks/useHomeAssistant';
 import { useCalendarEvents, CalendarNotSupportedError } from './hooks/useCalendarEvents';
@@ -232,7 +232,22 @@ export function App() {
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart, settings.calendarColors, members]);
+  }, [connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart]);
+
+  // Re-fetch when calendar colors or family members change so colors update
+  // immediately, without recreating the 5-minute polling interval above.
+  const colorRefreshRef = useRef({ connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart });
+  colorRefreshRef.current = { connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart };
+  const didColorRefreshMount = useRef(false);
+  useEffect(() => {
+    if (!didColorRefreshMount.current) {
+      didColorRefreshMount.current = true;
+      return;
+    }
+    if (!colorRefreshRef.current.connected) return;
+    colorRefreshRef.current.fetchCalendars();
+    colorRefreshRef.current.refetchEventsForWeek(colorRefreshRef.current.visibleWeekStart);
+  }, [settings.calendarColors, members]);
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
     setHiddenCalendars(prev => {
