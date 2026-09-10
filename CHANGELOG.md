@@ -1,3 +1,28 @@
+# [1.34.0](https://github.com/asachs01/beacon/compare/v1.33.1...v1.34.0) (2026-09-10)
+
+
+### Features
+
+* add TaskMate multi-user task support with correct per-user completion state ([b743328](https://github.com/asachs01/beacon/commit/b743328d83011d22417cdba80e2bc7debef688e0)) — thanks [@peaches](https://github.com/peaches)
+* share one Home Assistant poller across dashboard cards and roll back failed toggles ([d87d35d](https://github.com/asachs01/beacon/commit/d87d35d511e4105373677fe58e8091cd5c700535)) — thanks [@MrMEEE](https://github.com/MrMEEE)
+
+
+### Bug Fixes
+
+* fix hidden calendars in dashboard and sidebar ([c473544](https://github.com/asachs01/beacon/commit/c47354427a32a912b16b2eb8c2d5a470717a8066)) — thanks [@barmorebd](https://github.com/barmorebd)
+* default HA_API_BASE to supervisor when not explicitly set ([b2549b8](https://github.com/asachs01/beacon/commit/b2549b8fb18608e5898ecf62dbf7fdc6e4e05449)) — thanks [@peaches](https://github.com/peaches)
+* improve calendar color selection ([2d79307](https://github.com/asachs01/beacon/commit/2d793071eb27c5a153c08ca7a7ba8b50c05bb63f)) — thanks [@peaches](https://github.com/peaches)
+
+
+### Documentation
+
+* correct dev server port in README (5173, not 3000) ([da44004](https://github.com/asachs01/beacon/commit/da44004de0184fe53087f7f9803ef70cd97e83cc)) — thanks [@webbrain-one](https://github.com/webbrain-one)
+
+
+### Contributors
+
+Thanks to our external contributors for this release: [@peaches](https://github.com/peaches) (Anh-Kiet Ngo), [@MrMEEE](https://github.com/MrMEEE) (Martin Juhl), [@barmorebd](https://github.com/barmorebd), [@webbrain-one](https://github.com/webbrain-one) (WebBrain).
+
 ## [1.33.1](https://github.com/asachs01/beacon/compare/v1.33.0...v1.33.1) (2026-08-12)
 
 
