@@ -34,7 +34,7 @@ import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView from './components/OnboardingView';
 import { FocusView } from './components/focus/FocusView';
 import { getFocusMemberId, clearFocusMode, setDeviceFocusMember } from './focus';
-import { CalendarEvent } from './types';
+import { CalendarEvent, resolveCalendarColor } from './types';
 import { getConfig, patchConfig } from './config';
 
 const config = getConfig();
@@ -74,14 +74,23 @@ export function App() {
 
   const localCal = useLocalCalendar();
 
+  // Resolve the local calendar's color the same way everywhere (user override or indigo default).
+  const localCalendarColor = resolveCalendarColor(localCal.calendar.id, 0, {
+    calendarColors: settings.calendarColors,
+    defaultColor: localCal.calendar.color,
+  });
+
   // Merge HA + local calendars and events
   const calendars = useMemo(
-    () => [localCal.calendar, ...haCalendars],
-    [localCal.calendar, haCalendars],
+    () => [{ ...localCal.calendar, color: localCalendarColor }, ...haCalendars],
+    [localCal.calendar, localCalendarColor, haCalendars],
   );
   const events = useMemo(
-    () => [...localCal.events, ...haEvents].sort((a, b) => a.start.localeCompare(b.start)),
-    [localCal.events, haEvents],
+    () => [
+      ...localCal.events.map((ev) => ({ ...ev, color: localCalendarColor })),
+      ...haEvents,
+    ].sort((a, b) => a.start.localeCompare(b.start)),
+    [localCal.events, localCalendarColor, haEvents],
   );
 
   // Route create/update/delete to local or HA based on calendar ID
@@ -223,7 +232,7 @@ export function App() {
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart]);
+  }, [connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart, settings.calendarColors, members]);
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
     setHiddenCalendars(prev => {

@@ -427,6 +427,74 @@
   box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--text-primary);
 }
 
+/* --- Per-calendar color editor --- */
+.settings-calendar-row {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-calendar-row:last-child {
+  border-bottom: none;
+}
+
+.settings-calendar-color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 0 0 1px var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+
+.settings-calendar-color-swatch:hover {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.settings-color-editor {
+  border-top: 1px dashed var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-surface) 55%, transparent);
+  padding: 12px 0 16px;
+}
+
+.settings-color-editor .settings-color-grid {
+  padding: 0 20px 12px;
+}
+
+.settings-color-editor-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 20px;
+  flex-wrap: wrap;
+}
+
+.settings-color-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.settings-color-custom input[type="color"] {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  background: none;
+}
+
+.settings-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* --- Button styles for settings --- */
 .settings-btn {
   padding: 8px 18px;

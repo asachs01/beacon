@@ -17,10 +17,16 @@ import {
 import { AnyListClient } from '../api/anylist';
 import { GroceryList } from '../types/grocery';
 import { themes } from '../styles/themes';
-import { FamilyMember, MEMBER_COLORS, AVATAR_CATEGORIES, Routine } from '../types/family';
+import {
+  FamilyMember,
+  MEMBER_COLORS,
+  AVATAR_CATEGORIES,
+  Routine,
+} from '../types/family';
 import type { BeaconSettings } from '../hooks/useSettings';
 import { buildFocusUrl } from '../focus';
 import { useRoutines } from '../hooks/useRoutines';
+import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -52,7 +58,7 @@ interface SettingsViewProps {
   connected: boolean;
   haUrl: string;
   // Calendars
-  calendars: Array<{ id: string; name: string }>;
+  calendars: Array<{ id: string; name: string; color?: string }>;
   // Kid Display
   onEnterFocusMode: (memberId: string) => void;
 }
@@ -206,6 +212,7 @@ export function SettingsView({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [kidDisplayMemberId, setKidDisplayMemberId] = useState('');
   const [copiedFocusUrl, setCopiedFocusUrl] = useState(false);
+  const [colorEditId, setColorEditId] = useState<string | null>(null);
 
   // ---- Routine editor state ----
   const routinesApi = useRoutines();
@@ -1128,45 +1135,99 @@ export function SettingsView({
             </div>
           </div>
         ) : (
-          calendars.map((cal) => {
+          calendars.map((cal, index) => {
             const isHidden = settings.permanentlyHiddenCalendars.includes(cal.id);
-            const color = settings.calendarColors[cal.id] || '';
+            const customColor = settings.calendarColors[cal.id] || '';
+            const resolvedColor = resolveCalendarColor(cal.id, index, {
+              calendarColors: settings.calendarColors,
+              members,
+              defaultColor: cal.color,
+            });
+            const open = colorEditId === cal.id;
+
+            const setColor = (value: string) => {
+              onUpdateSettings({
+                calendarColors: { ...settings.calendarColors, [cal.id]: value },
+              });
+            };
+            const resetColor = () => {
+              const next = { ...settings.calendarColors };
+              delete next[cal.id];
+              onUpdateSettings({ calendarColors: next });
+            };
+
             return (
-              <div key={cal.id} className="settings-row">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-                  <input
-                    type="color"
-                    value={color || '#3b82f6'}
-                    onChange={(e) => {
-                      onUpdateSettings({
-                        calendarColors: { ...settings.calendarColors, [cal.id]: e.target.value },
-                      });
-                    }}
+              <div key={cal.id} className="settings-calendar-row">
+                <div className="settings-row">
+                  <div
                     style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      border: '1px solid var(--border)',
-                      cursor: 'pointer',
-                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      flex: 1,
+                      minWidth: 0,
                     }}
-                    title="Calendar color"
-                  />
-                  <div>
-                    <div className="settings-row-label">{cal.name}</div>
-                    <div className="settings-row-sublabel">{cal.id}</div>
+                  >
+                    <button
+                      type="button"
+                      className="settings-calendar-color-swatch"
+                      style={{ backgroundColor: resolvedColor }}
+                      onClick={() => setColorEditId(open ? null : cal.id)}
+                      title="Edit calendar color"
+                      aria-label={`Edit color for ${cal.name}`}
+                      aria-expanded={open}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                      <div className="settings-row-label">{cal.name}</div>
+                      <div className="settings-row-sublabel">{cal.id}</div>
+                    </div>
                   </div>
+                  <Toggle
+                    checked={!isHidden}
+                    onChange={(visible) => {
+                      const hidden = settings.permanentlyHiddenCalendars.filter(
+                        (id) => id !== cal.id,
+                      );
+                      if (!visible) hidden.push(cal.id);
+                      onUpdateSettings({ permanentlyHiddenCalendars: hidden });
+                    }}
+                  />
                 </div>
-                <Toggle
-                  checked={!isHidden}
-                  onChange={(visible) => {
-                    const hidden = settings.permanentlyHiddenCalendars.filter(
-                      (id) => id !== cal.id,
-                    );
-                    if (!visible) hidden.push(cal.id);
-                    onUpdateSettings({ permanentlyHiddenCalendars: hidden });
-                  }}
-                />
+                {open && (
+                  <div className="settings-color-editor">
+                    <div className="settings-color-grid">
+                      {CALENDAR_COLOR_PRESETS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          className={`settings-color-circle ${customColor === preset ? 'settings-color-circle--selected' : ''}`}
+                          style={{ backgroundColor: preset }}
+                          onClick={() => setColor(preset)}
+                          aria-label={`Set ${cal.name} to ${preset}`}
+                        />
+                      ))}
+                    </div>
+                    <div className="settings-color-editor-custom">
+                      <label className="settings-color-custom">
+                        <input
+                          type="color"
+                          value={customColor || resolvedColor}
+                          onChange={(e) => setColor(e.target.value)}
+                          aria-label={`Choose a custom color for ${cal.name}`}
+                        />
+                        <span>Custom…</span>
+                      </label>
+                      <button
+                        type="button"
+                        className="settings-btn"
+                        onClick={resetColor}
+                        disabled={!customColor}
+                      >
+                        Reset to auto
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   CALENDAR_COLORS,
+  CALENDAR_COLOR_PRESETS,
   getCalendarColor,
   getPastelColor,
   getFullColor,
@@ -26,26 +27,36 @@ describe('CALENDAR_COLORS', () => {
 });
 
 describe('getCalendarColor', () => {
-  it('returns the color at the given index', () => {
-    expect(getCalendarColor(0)).toBe(CALENDAR_COLORS[0]);
-    expect(getCalendarColor(1)).toBe(CALENDAR_COLORS[1]);
+  it('keeps the original category colors for the first four calendars', () => {
+    expect([0, 1, 2, 3].map(getCalendarColor)).toEqual(Object.values(CALENDAR_COLORS));
   });
 
-  it('wraps around via modulo once index exceeds the category count', () => {
-    // 4 categories, so index 4 should wrap back to index 0's color
-    expect(getCalendarColor(4)).toBe(getCalendarColor(0));
-    expect(getCalendarColor(5)).toBe(getCalendarColor(1));
+  it('walks the full preset palette before wrapping (no early collisions)', () => {
+    const colors = CALENDAR_COLOR_PRESETS.map((c, i) => getCalendarColor(i));
+    expect(colors).toEqual(CALENDAR_COLOR_PRESETS);
   });
 
-  it('handles a 5th+ family member without throwing (documented open question from the design plan)', () => {
-    // The design ADR flagged "does 4 categories cover 5+ family members" as
-    // an open question. It doesn't crash — it wraps — but a household with
-    // 5 members WILL get two people sharing a calendar color. This test
-    // documents that current behavior explicitly, so a future fix to
-    // support more distinct colors doesn't silently change this contract
-    // without someone noticing.
-    const colorsForFiveMembers = [0, 1, 2, 3, 4].map(getCalendarColor);
-    expect(colorsForFiveMembers[4]).toBe(colorsForFiveMembers[0]);
+  it('wraps only past the preset count', () => {
+    const count = CALENDAR_COLOR_PRESETS.length;
+    expect(getCalendarColor(count)).toBe(getCalendarColor(0));
+    expect(getCalendarColor(count + 1)).toBe(getCalendarColor(1));
+  });
+});
+
+describe('CALENDAR_COLOR_PRESETS', () => {
+  it('offers more than the 4 category colors so many calendars stay distinct', () => {
+    expect(CALENDAR_COLOR_PRESETS.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('has no duplicate swatches', () => {
+    expect(new Set(CALENDAR_COLOR_PRESETS).size).toBe(CALENDAR_COLOR_PRESETS.length);
+  });
+
+  it('contains the four auto-assigned category colors', () => {
+    const categoryValues = Object.values(CALENDAR_COLORS);
+    for (const c of categoryValues) {
+      expect(CALENDAR_COLOR_PRESETS).toContain(c);
+    }
   });
 });
 
@@ -109,5 +120,20 @@ describe('resolveCalendarColor', () => {
 
   it('works with no options at all (plain positional fallback)', () => {
     expect(resolveCalendarColor('calendar.x', 2)).toBe(getCalendarColor(2));
+  });
+
+  it('falls back to defaultColor instead of the positional palette when provided', () => {
+    const color = resolveCalendarColor('beacon-local', 0, {
+      defaultColor: '#6366f1',
+    });
+    expect(color).toBe('#6366f1');
+  });
+
+  it('still lets a user override beat defaultColor', () => {
+    const color = resolveCalendarColor('beacon-local', 0, {
+      calendarColors: { 'beacon-local': '#ff6600' },
+      defaultColor: '#6366f1',
+    });
+    expect(color).toBe('#ff6600');
   });
 });
