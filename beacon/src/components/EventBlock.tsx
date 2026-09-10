@@ -46,7 +46,7 @@ export function EventBlock({ event, onClick, style, allDay, multiDay, draggable,
       }}
       onClick={(e) => onClick(event, e)}
       type="button"
-      title={`${event.title} (${timeLabel})`}
+      title={`${event.title}${event.location ? ` — ${event.location}` : ''} (${timeLabel})`}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
@@ -55,6 +55,9 @@ export function EventBlock({ event, onClick, style, allDay, multiDay, draggable,
       <div className="event-block-stripe" style={{ backgroundColor: full }} />
       <div className="event-block-content">
         <span className="event-block-title">{event.title}</span>
+        {event.location && (
+          <span className="event-block-location">{event.location}</span>
+        )}
         {!allDay && (
           <span className="event-block-time">{timeLabel}</span>
         )}

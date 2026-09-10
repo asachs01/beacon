@@ -28,6 +28,7 @@ export function EventCard({ event, onClick }: EventCardProps) {
     >
       <span className="event-card-calendar">{event.calendarName}</span>
       <span className="event-card-title">{event.title}</span>
+      {event.location && <span className="event-card-location">{event.location}</span>}
       <span className="event-card-time">{timeLabel}</span>
     </div>
   );

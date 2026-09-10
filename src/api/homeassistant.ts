@@ -206,6 +206,7 @@ export class HomeAssistantClient {
       start: string | { dateTime: string; date: string };
       end: string | { dateTime: string; date: string };
       description?: string;
+      location?: string;
       recurrence_id?: string;
     }>;
 
@@ -223,6 +224,7 @@ export class HomeAssistantClient {
         end: endStr,
         allDay,
         description: ev.description,
+        location: ev.location,
         calendarId,
         calendarName: calendarId,
         color: '', // will be set by consumer

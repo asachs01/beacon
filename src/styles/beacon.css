@@ -1073,6 +1073,16 @@ a:focus:not(:focus-visible) {
   line-height: 1.2;
 }
 
+.event-block-location {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
 /* All-day event blocks */
 .event-block--allday {
   position: relative;
@@ -1883,6 +1893,10 @@ a:focus:not(:focus-visible) {
   }
 
   .event-block-time {
+    display: none;
+  }
+
+  .event-block-location {
     display: none;
   }
 
