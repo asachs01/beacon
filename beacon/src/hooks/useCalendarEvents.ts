@@ -88,6 +88,7 @@ export function useCalendarEvents(
             start: string | { dateTime: string; date: string };
             end: string | { dateTime: string; date: string };
             description?: string;
+            location?: string;
             recurrence_id?: string;
           }>;
 
@@ -112,6 +113,7 @@ export function useCalendarEvents(
               end: endStr,
               allDay,
               description: ev.description,
+              location: ev.location,
               calendarId: cal.id,
               calendarName: cal.name,
               color: cal.color,

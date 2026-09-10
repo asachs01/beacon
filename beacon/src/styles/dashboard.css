@@ -478,10 +478,19 @@
   color: rgba(0, 0, 0, 0.5);
 }
 
+.event-card-location {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 [data-theme="dark"] .event-card { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
 [data-theme="dark"] .event-card-calendar { color: rgba(0, 0, 0, 0.5); }
 [data-theme="dark"] .event-card-title { color: rgba(0, 0, 0, 0.85); }
 [data-theme="dark"] .event-card-time { color: rgba(0, 0, 0, 0.5); }
+[data-theme="dark"] .event-card-location { color: rgba(0, 0, 0, 0.5); }
 
 /* --- Task Checklist --- */
 .task-checklist {

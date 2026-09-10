@@ -20,7 +20,7 @@ The calendar view shows 7 days starting from Sunday of the current week. The lay
 - **Current time indicator**: A colored horizontal line on today's column showing the current time
 - **Auto-scroll**: On load, the grid scrolls to show the current hour near the top
 
-Events are color-coded by calendar. Each calendar is assigned a color from the palette (blue, green, purple, orange, pink, teal) based on the order it was discovered.
+Events are color-coded by calendar. Each calendar is assigned a color from a 12-color preset palette based on the order it was discovered (the first four keep the classic category colors). Colors only cycle once you have more than 12 calendars, and every calendar can be re-colored individually in **Settings → Calendar**.
 
 ---
 
@@ -165,18 +165,24 @@ For a single all-day event, set the start and end date to the same day. For a mu
 
 ## Family member color coding
 
-Each calendar discovered by Beacon is assigned a color from the palette:
+Each calendar discovered by Beacon is assigned a color from the palette, in discovery order:
 
 | Position | Color | Hex |
 |----------|-------|-----|
-| 1st calendar | Blue | `#3b82f6` |
-| 2nd calendar | Green | `#22c55e` |
-| 3rd calendar | Purple | `#a855f7` |
-| 4th calendar | Orange | `#f97316` |
-| 5th calendar | Pink | `#ec4899` |
-| 6th calendar | Teal | `#14b8a6` |
+| 1st calendar | Sage | `#10b981` |
+| 2nd calendar | Lavender | `#8b5cf6` |
+| 3rd calendar | Coral | `#f97316` |
+| 4th calendar | Teal | `#14b8a6` |
+| 5th calendar | Blue | `#3b82f6` |
+| 6th calendar | Indigo | `#6366f1` |
+| 7th calendar | Red | `#ef4444` |
+| 8th calendar | Rose | `#f43f5e` |
+| 9th calendar | Pink | `#ec4899` |
+| 10th calendar | Purple | `#a855f7` |
+| 11th calendar | Yellow | `#eab308` |
+| 12th calendar | Green | `#22c55e` |
 
-Colors cycle if you have more than 6 calendars.
+The first four positions match Beacon's original category colors, so existing setups keep their colors. Colors cycle if you have more than 12 calendars. To change any calendar's color (including the built-in Beacon calendar), open **Settings → Calendar**, click the color dot, and pick a preset swatch or a custom color.
 
 Event blocks use a **pastel** version of the calendar color as the background and the **full** color as a left-side stripe, making events easy to distinguish at a glance.
 

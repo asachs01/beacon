@@ -7,6 +7,7 @@ export interface CalendarEvent {
   end: string;
   allDay: boolean;
   description?: string;
+  location?: string;
   calendarId: string;
   calendarName: string;
   color: string;
@@ -57,8 +58,25 @@ export const CALENDAR_COLORS: Record<number, string> = {
   3: '#14b8a6', // teal
 };
 
+/* Picker swatches, also the positional auto-assignment order (first four keep
+   the original category colors; extra hues stop early collisions). */
+export const CALENDAR_COLOR_PRESETS: string[] = [
+  '#10b981', // sage    (category)
+  '#8b5cf6', // lavender (category)
+  '#f97316', // coral   (category)
+  '#14b8a6', // teal    (category)
+  '#3b82f6', // blue
+  '#6366f1', // indigo
+  '#ef4444', // red
+  '#f43f5e', // rose
+  '#ec4899', // pink
+  '#a855f7', // purple
+  '#eab308', // yellow
+  '#22c55e', // green
+];
+
 export function getCalendarColor(index: number): string {
-  return CALENDAR_COLORS[index % Object.keys(CALENDAR_COLORS).length];
+  return CALENDAR_COLOR_PRESETS[index % CALENDAR_COLOR_PRESETS.length];
 }
 
 /**
@@ -73,14 +91,9 @@ export interface CalendarColorMember {
 }
 
 /**
- * Resolves the display color for a calendar entity, in priority order:
- *   1. User-customized color (Settings > Calendar color picker)
- *   2. The color of the family member this calendar is linked to
- *      (via calendar_entity or additional_calendar_entities)
- *   3. The positional palette fallback (getCalendarColor(index))
- *
- * This is the single source of truth for calendar/event color so the
- * Dashboard and Calendar (WeekCalendar) views never disagree.
+ * Picks a calendar's display color: user override > linked family member >
+ * defaultColor > positional preset. Single source of truth so every view
+ * (Dashboard, Calendar, Settings) agrees.
  */
 export function resolveCalendarColor(
   calendarId: string,
@@ -88,6 +101,7 @@ export function resolveCalendarColor(
   options?: {
     calendarColors?: Record<string, string>;
     members?: CalendarColorMember[];
+    defaultColor?: string;
   },
 ): string {
   const userColor = options?.calendarColors?.[calendarId];
@@ -101,7 +115,7 @@ export function resolveCalendarColor(
   );
   if (linkedMember?.color) return linkedMember.color;
 
-  return getCalendarColor(index);
+  return options?.defaultColor ?? getCalendarColor(index);
 }
 
 /* Maps a full-saturation calendar color to its pastel variant for event blocks */
