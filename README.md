@@ -1,3 +1,5 @@
+
+
 <p align="center">
   <img src="src/assets/beacon-logo-main.png" alt="Beacon" width="280" />
 </p>
@@ -69,7 +71,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser. Beacon works fully without Home Assistant — calendars, lists, and tasks are stored locally in the browser.
+Open [http://localhost:5173](http://localhost:5173) in your browser. Beacon works fully without Home Assistant — calendars, lists, and tasks are stored locally in the browser.
 
 ## Configuration
 
