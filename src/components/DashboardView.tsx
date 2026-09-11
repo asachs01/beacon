@@ -102,8 +102,9 @@ export function DashboardView({
   }, [events, selectedDate]);
 
   // Group the next 7 days of events for the Classic "This Week" column
+  // (starts tomorrow — today is covered by the Today column)
   const weekEvents = useMemo(() => {
-    const start = startOfDay(new Date());
+    const start = addDays(startOfDay(new Date()), 1);
     return Array.from({ length: 7 }, (_, i) => {
       const day = addDays(start, i);
       const dayEvents = events
