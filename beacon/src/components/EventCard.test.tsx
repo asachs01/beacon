@@ -61,4 +61,23 @@ describe('EventCard', () => {
     await user.click(card);
     expect(onClick).toHaveBeenCalledWith(event);
   });
+
+  it('grays out events that have already ended', () => {
+    const { container } = render(<EventCard event={makeEvent()} />);
+    expect(container.querySelector('.event-card')).toHaveClass('event-card--past');
+  });
+
+  it('keeps future-dated events un-grayed even when their clock time is early', () => {
+    const { container } = render(
+      <EventCard event={makeEvent({ start: '2999-01-01T08:00:00', end: '2999-01-01T09:00:00' })} />,
+    );
+    expect(container.querySelector('.event-card')).not.toHaveClass('event-card--past');
+  });
+
+  it('keeps future all-day events un-grayed (bare-date end parsed as a locale date)', () => {
+    const { container } = render(
+      <EventCard event={makeEvent({ allDay: true, start: '2999-01-01', end: '2999-01-02' })} />,
+    );
+    expect(container.querySelector('.event-card')).not.toHaveClass('event-card--past');
+  });
 });

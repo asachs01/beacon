@@ -16,6 +16,7 @@ interface EventBlockProps {
 export function EventBlock({ event, onClick, style, allDay, multiDay, draggable, expanded, onDragStart, onDragEnd }: EventBlockProps) {
   const pastel = getPastelColor(event.color);
   const full = getFullColor(event.color);
+  const isPast = parseISO(event.end).getTime() < Date.now();
 
   const timeLabel = event.allDay
     ? 'All day'
@@ -26,7 +27,7 @@ export function EventBlock({ event, onClick, style, allDay, multiDay, draggable,
   if (multiDay) {
     return (
       <div
-        className="event-block-inner event-block-inner--multiday"
+        className={`event-block-inner event-block-inner--multiday ${isPast ? 'event-block--past' : ''}`}
         style={{ backgroundColor: pastel }}
       >
         <div className="event-block-stripe" style={{ backgroundColor: full }} />
@@ -39,7 +40,7 @@ export function EventBlock({ event, onClick, style, allDay, multiDay, draggable,
 
   return (
     <button
-      className={`event-block ${allDay ? 'event-block--allday' : ''} ${draggable ? 'event-block--draggable' : ''} ${expanded ? 'event-block--expanded' : ''}`}
+      className={`event-block ${allDay ? 'event-block--allday' : ''} ${draggable ? 'event-block--draggable' : ''} ${expanded ? 'event-block--expanded' : ''} ${isPast ? 'event-block--past' : ''}`}
       style={{
         ...style,
         backgroundColor: pastel,

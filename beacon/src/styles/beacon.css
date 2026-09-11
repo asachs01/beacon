@@ -1042,6 +1042,12 @@ a:focus:not(:focus-visible) {
   transform: scale(0.99);
 }
 
+/* Events that have already ended are muted so upcoming ones stand out */
+.event-block--past {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+}
+
 .event-block-stripe {
   width: 3px;
   flex-shrink: 0;

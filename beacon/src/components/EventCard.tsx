@@ -9,6 +9,7 @@ interface EventCardProps {
 export function EventCard({ event, onClick }: EventCardProps) {
   const pastel = getPastelColor(event.color);
   const full = getFullColor(event.color);
+  const isPast = parseISO(event.end).getTime() < Date.now();
 
   const timeLabel = event.allDay
     ? 'All day'
@@ -16,7 +17,7 @@ export function EventCard({ event, onClick }: EventCardProps) {
 
   return (
     <div
-      className={`event-card ${onClick ? 'event-card--clickable' : ''}`}
+      className={`event-card ${onClick ? 'event-card--clickable' : ''} ${isPast ? 'event-card--past' : ''}`}
       style={{
         backgroundColor: pastel,
         borderLeft: `4px solid ${full}`,

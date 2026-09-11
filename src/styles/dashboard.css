@@ -457,6 +457,12 @@
   cursor: pointer;
 }
 
+/* Events that have already ended are muted so upcoming ones stand out */
+.event-card--past {
+  opacity: 0.6;
+  filter: grayscale(0.6);
+}
+
 .event-card-calendar {
   font-size: 11px;
   font-weight: 600;
