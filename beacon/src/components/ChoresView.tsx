@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
-import { Chore, FamilyMember, STAR_CURRENCY } from '../types/family';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Chore, FamilyMember, STAR_CURRENCY, formatChoreValue } from '../types/family';
 import { ChoreCard } from './ChoreCard';
 import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
@@ -17,10 +17,146 @@ const EMPTY_CHORE_FORM = {
   icon: '🧹',
 };
 
+interface UnassignedChoreCardProps {
+  chore: Chore;
+  members: FamilyMember[];
+  onClaim: (choreId: string, memberId: string) => void;
+  onComplete: (choreId: string, memberId: string) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  currencySymbol?: string;
+}
+
+function UnassignedChoreCard({
+  chore,
+  members,
+  onClaim,
+  onComplete,
+  onEdit,
+  onDelete,
+  currencySymbol = '$',
+}: UnassignedChoreCardProps) {
+  const [showMemberPicker, setShowMemberPicker] = useState(false);
+  const [pickerAction, setPickerAction] = useState<'claim' | 'complete'>('claim');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleMemberSelect = (memberId: string) => {
+    if (pickerAction === 'claim') {
+      onClaim(chore.id, memberId);
+    } else {
+      onComplete(chore.id, memberId);
+    }
+    setShowMemberPicker(false);
+  };
+
+  const handleDeleteClick = () => {
+    if (confirmDelete) {
+      onDelete();
+      setConfirmDelete(false);
+    } else {
+      setConfirmDelete(true);
+      setTimeout(() => setConfirmDelete(false), 3000);
+    }
+  };
+
+  const value = formatChoreValue(chore.value_cents, currencySymbol);
+
+  return (
+    <div className="unassigned-chore-card">
+      <div className="chore-card-body">
+        <span className="chore-card-name">
+          {chore.icon && <span className="chore-card-icon">{chore.icon}</span>}
+          {chore.name}
+        </span>
+        {value && <span className="chore-card-value">{value}</span>}
+      </div>
+
+      <div className="chore-card-actions">
+        <button
+          type="button"
+          className="btn btn--sm btn--secondary"
+          onClick={() => {
+            setPickerAction('claim');
+            setShowMemberPicker(true);
+          }}
+        >
+          Claim
+        </button>
+        <button
+          type="button"
+          className="btn btn--sm btn--primary"
+          onClick={() => {
+            setPickerAction('complete');
+            setShowMemberPicker(true);
+          }}
+        >
+          Complete
+        </button>
+        <button
+          type="button"
+          className="chore-card-action-btn"
+          onClick={onEdit}
+          aria-label={`Edit ${chore.name}`}
+        >
+          <Pencil size={15} />
+        </button>
+        <button
+          type="button"
+          className="chore-card-action-btn chore-card-action-btn--danger"
+          onClick={handleDeleteClick}
+          aria-label={`Delete ${chore.name}`}
+        >
+          {confirmDelete ? (
+            <span className="chore-card-action-confirm">Sure?</span>
+          ) : (
+            <Trash2 size={15} />
+          )}
+        </button>
+      </div>
+
+      {showMemberPicker && (
+        <div className="modal-overlay" onClick={() => setShowMemberPicker(false)}>
+          <div className="modal modal--sm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">
+                {pickerAction === 'claim' ? 'Who claims this?' : 'Who completed this?'}
+              </h2>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setShowMemberPicker(false)}
+              >
+                {'\u00D7'}
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="chores-assign-grid">
+                {members.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className="chores-assign-btn"
+                    onClick={() => handleMemberSelect(m.id)}
+                    style={{ borderColor: m.color, backgroundColor: m.color + '15' }}
+                  >
+                    <span>{m.avatar}</span>
+                    <span>{m.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ChoresView() {
   const { members } = useFamily();
   const { settings } = useSettings();
   const {
+    chores,
     addChore,
     updateChore,
     removeChore,
@@ -66,7 +202,7 @@ export function ChoresView() {
   };
 
   const handleSaveChore = () => {
-    if (!newChore.name.trim() || newChore.assigned_to.length === 0) return;
+    if (!newChore.name.trim()) return;
 
     if (isEditing) {
       updateChore(editingChoreId, {
@@ -112,6 +248,20 @@ export function ChoresView() {
     streak: getStreakForMember(member.id),
   }));
 
+  const unassignedChores = chores.filter((c) => c.assigned_to.length === 0);
+
+  const handleClaimChore = (choreId: string, memberId: string) => {
+    const chore = chores.find((c) => c.id === choreId);
+    if (!chore) return;
+    updateChore(choreId, {
+      assigned_to: [...chore.assigned_to, memberId],
+    });
+  };
+
+  const handleCompleteUnassigned = (choreId: string, memberId: string) => {
+    completeChore(choreId, memberId);
+  };
+
   return (
     <div className="chores-view">
       <header className="chores-view-header">
@@ -133,10 +283,31 @@ export function ChoresView() {
           Add family members first to assign chores.
         </div>
       ) : (
-        <div
-          className="chores-family-grid"
-          style={{ '--member-count': members.length } as React.CSSProperties}
-        >
+        <>
+          {unassignedChores.length > 0 && (
+            <section className="chores-unassigned-section">
+              <h2 className="chores-section-title">Open Chores</h2>
+              <div className="chores-unassigned-list">
+                {unassignedChores.map((chore) => (
+                  <UnassignedChoreCard
+                    key={chore.id}
+                    chore={chore}
+                    members={members}
+                    onClaim={handleClaimChore}
+                    onComplete={handleCompleteUnassigned}
+                    onEdit={() => handleStartEdit(chore)}
+                    onDelete={() => handleDeleteChore(chore.id)}
+                    currencySymbol={settings.currencySymbol}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          <div
+            className="chores-family-grid"
+            style={{ '--member-count': members.length } as React.CSSProperties}
+          >
           {memberChoreGroups.map(({ member, chores: memberChores, progress, streak }) => (
             <section key={member.id} className="chores-member-col">
               <div className="dash-member-header">
@@ -202,6 +373,7 @@ export function ChoresView() {
             </section>
           ))}
         </div>
+        </>
       )}
 
       {showForm && (
@@ -329,7 +501,7 @@ export function ChoresView() {
                   type="button"
                   className="btn btn--primary"
                   onClick={handleSaveChore}
-                  disabled={!newChore.name.trim() || newChore.assigned_to.length === 0}
+                  disabled={!newChore.name.trim()}
                 >
                   {isEditing ? 'Save Changes' : 'Add Chore'}
                 </button>

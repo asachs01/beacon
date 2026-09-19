@@ -952,6 +952,70 @@
   gap: 6px;
 }
 
+/* --- Unassigned Chores Section --- */
+.chores-unassigned-section {
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.chores-section-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.chores-unassigned-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.unassigned-chore-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-page);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition);
+  min-height: 56px;
+}
+
+.unassigned-chore-card:hover {
+  border-color: var(--color-blue-full);
+  background: var(--bg-hover);
+}
+
+.unassigned-chore-card .chore-card-body {
+  flex: 1;
+}
+
+.unassigned-chore-card .chore-card-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.btn--sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  min-height: 32px;
+}
+
+.modal--sm {
+  max-width: 400px;
+  width: 90%;
+}
+
+@media (max-width: 768px) {
+  .chores-unassigned-list {
+    grid-template-columns: 1fr;
+  }
+}
+
 .chores-family-grid {
   display: grid;
   grid-template-columns: repeat(var(--member-count, 1), minmax(200px, 1fr));
