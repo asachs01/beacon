@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/asachs01/beacon/compare/v1.34.2...v1.35.0) (2026-09-19)
+
+
+### Features
+
+* configurable grocery list IDs and sidebar shopping card ([#39](https://github.com/asachs01/beacon/issues/39)) ([872878c](https://github.com/asachs01/beacon/commit/872878c61c4cc36594db080d6cab18a3472ba8c3)), closes [#32](https://github.com/asachs01/beacon/issues/32) [#26](https://github.com/asachs01/beacon/issues/26)
+
 ## [1.34.2](https://github.com/asachs01/beacon/compare/v1.34.1...v1.34.2) (2026-09-19)
 
 
