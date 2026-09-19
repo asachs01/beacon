@@ -143,12 +143,29 @@ export function useSettings() {
   // Initialize with localStorage data immediately
   const [settings, setSettingsState] = useState<BeaconSettings>(loadSettingsSync);
 
+  /** Re-fetch settings from server. */
+  const refresh = useCallback(async () => {
+    const serverSettings = await loadSettingsAsync();
+    setSettingsState(serverSettings);
+  }, []);
+
   // Fetch from server on mount, update if server has newer data
   useEffect(() => {
-    loadSettingsAsync().then((serverSettings) => {
-      setSettingsState(serverSettings);
-    });
-  }, []);
+    refresh();
+  }, [refresh]);
+
+  // Re-fetch when the app becomes visible (mirror ha-entity-store pattern)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void refresh();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refresh]);
 
   // Persist whenever settings change
   useEffect(() => {
@@ -212,5 +229,6 @@ export function useSettings() {
     exportSettings,
     importSettings,
     clearLocalStorage,
+    refresh,
   };
 }

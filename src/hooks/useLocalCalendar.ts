@@ -23,10 +23,29 @@ export function useLocalCalendar() {
     loadDataSync<CalendarEvent[]>(EVENTS_KEY, [])
   );
 
+  /** Re-fetch events from server. */
+  const refresh = useCallback(async () => {
+    const serverEvents = await loadData<CalendarEvent[]>(EVENTS_KEY, []);
+    setEvents(serverEvents);
+  }, []);
+
   // Fetch from server on mount
   useEffect(() => {
-    loadData<CalendarEvent[]>(EVENTS_KEY, []).then(setEvents);
-  }, []);
+    refresh();
+  }, [refresh]);
+
+  // Re-fetch when the app becomes visible (mirror ha-entity-store pattern)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void refresh();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refresh]);
 
   // Persist on change
   useEffect(() => { saveData(EVENTS_KEY, events); }, [events]);
@@ -102,5 +121,6 @@ export function useLocalCalendar() {
     createEvent,
     updateEvent,
     deleteEvent,
+    refresh,
   };
 }

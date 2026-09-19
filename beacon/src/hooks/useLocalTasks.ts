@@ -38,11 +38,33 @@ export function useLocalTasks() {
     loadDataSync<LocalTask[]>(STORAGE_KEY, [])
   );
 
+  /** Re-fetch tasks and lists from server. */
+  const refresh = useCallback(async () => {
+    const [serverLists, serverTasks] = await Promise.all([
+      loadData<LocalTaskList[]>(LISTS_KEY, DEFAULT_LISTS),
+      loadData<LocalTask[]>(STORAGE_KEY, []),
+    ]);
+    setLists(serverLists);
+    setTasks(serverTasks);
+  }, []);
+
   // Fetch from server on mount
   useEffect(() => {
-    loadData<LocalTaskList[]>(LISTS_KEY, DEFAULT_LISTS).then(setLists);
-    loadData<LocalTask[]>(STORAGE_KEY, []).then(setTasks);
-  }, []);
+    refresh();
+  }, [refresh]);
+
+  // Re-fetch when the app becomes visible (mirror ha-entity-store pattern)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void refresh();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refresh]);
 
   // Persist on change
   useEffect(() => { saveData(LISTS_KEY, lists); }, [lists]);
@@ -101,5 +123,6 @@ export function useLocalTasks() {
     removeTask,
     addList,
     removeList,
+    refresh,
   };
 }
