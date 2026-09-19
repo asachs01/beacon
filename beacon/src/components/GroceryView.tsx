@@ -59,14 +59,16 @@ export function GroceryView({ defaultListId, mode = 'grocery' }: GroceryViewProp
     // Filter by mode: grocery lists vs task lists
     if (mode === 'grocery') {
       return merged.filter(l =>
-        l.id === 'beacon-shopping' || (l.source === 'ha' && isGroceryList(l.name))
+        l.id === 'beacon-shopping' ||
+        (defaultListId != null && defaultListId !== '' && l.id === defaultListId) ||
+        (l.source === 'ha' && isGroceryList(l.name))
       );
     }
     // tasks mode: local To-Do + all HA lists that aren't grocery
     return merged.filter(l =>
       l.id === 'beacon-todo' || (l.source === 'ha' && !isGroceryList(l.name))
     );
-  }, [haLists, localTasks.lists, mode]);
+  }, [haLists, localTasks.lists, mode, defaultListId]);
 
   const selectedList = allLists.find(l => l.id === selectedListId);
   const isLocal = selectedList?.source === 'local';
