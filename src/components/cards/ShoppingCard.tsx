@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { DashboardCardProps } from '../../types/dashboard-cards';
 import { AnyListClient } from '../../api/anylist';
 import { callHaService } from '../../api/ha-rest';
@@ -11,7 +11,7 @@ interface TodoItem {
 }
 
 /** Sidebar "Shopping" section — configurable HA todo entity for shopping lists. */
-export function ShoppingCard({ context, config }: DashboardCardProps) {
+export function ShoppingCard({ config }: DashboardCardProps) {
   const shoppingEntity = (config?.shoppingEntity as string) || '';
   const [items, setItems] = useState<TodoItem[]>([]);
   const [loading, setLoading] = useState(false);
