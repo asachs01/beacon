@@ -1,3 +1,12 @@
+## [1.34.1](https://github.com/asachs01/beacon/compare/v1.34.0...v1.34.1) (2026-09-19)
+
+
+### Bug Fixes
+
+* create recurring calendar events via HA WebSocket API ([ae02469](https://github.com/asachs01/beacon/commit/ae024697d75e41a473f368e6299351baea7e908d))
+* hide permanently disabled calendars from FamilyFilter pills ([5590af9](https://github.com/asachs01/beacon/commit/5590af9d8680feaa91b7353eba5781133ae05bc6))
+* honor default grocery list even without English keywords ([842ba5c](https://github.com/asachs01/beacon/commit/842ba5c0f5e9c0b13ffd7ef9c32d0e68cece6313))
+
 # [1.34.0](https://github.com/asachs01/beacon/compare/v1.33.1...v1.34.0) (2026-09-10)
 
 
