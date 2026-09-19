@@ -1,3 +1,10 @@
+## [1.34.2](https://github.com/asachs01/beacon/compare/v1.34.1...v1.34.2) (2026-09-19)
+
+
+### Bug Fixes
+
+* refresh shared settings when the app becomes visible ([fab908e](https://github.com/asachs01/beacon/commit/fab908e953399c19283b2e056f3883ff3e03aaee))
+
 ## [1.34.1](https://github.com/asachs01/beacon/compare/v1.34.0...v1.34.1) (2026-09-19)
 
 
