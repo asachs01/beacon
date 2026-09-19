@@ -34,6 +34,8 @@ export interface BeaconSettings {
   grocyEnabled: boolean;
   anylistEnabled: boolean;
   defaultGroceryList: string;
+  groceryListIds: string[];
+  shoppingEntity: string;
   musicDefaultPlayer: string;
   photoDirectory: string;
   photoInterval: number;
@@ -92,6 +94,8 @@ function buildDefaults(): BeaconSettings {
     grocyEnabled: false,
     anylistEnabled: false,
     defaultGroceryList: '',
+    groceryListIds: [],
+    shoppingEntity: '',
     musicDefaultPlayer: '',
     photoDirectory: config.photo_directory,
     photoInterval: config.photo_interval,

@@ -127,7 +127,7 @@ export function App() {
     uncompleteChore,
   } = useChores();
 
-  const dashboardTasks = useDashboardTasks(connected);
+  const dashboardTasks = useDashboardTasks(connected, settings.groceryListIds);
 
   // Apply theme at App level so it stays active regardless of which view is shown
   const { setTheme } = useTheme();
@@ -645,9 +645,9 @@ export function App() {
             onEnterFocusMode={handleEnterFocusMode}
           />
         ) : activeView === 'grocery' ? (
-          <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" />
+          <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" groceryListIds={settings.groceryListIds} />
         ) : activeView === 'tasks' ? (
-          <GroceryView mode="tasks" />
+          <GroceryView mode="tasks" groceryListIds={settings.groceryListIds} />
         ) : activeView === 'timer' ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
             <Timer />
