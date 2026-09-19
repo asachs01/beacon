@@ -1,3 +1,10 @@
+# [1.36.0](https://github.com/asachs01/beacon/compare/v1.35.0...v1.36.0) (2026-09-19)
+
+
+### Features
+
+* allow unassigned chores kids can claim ([9b301b9](https://github.com/asachs01/beacon/commit/9b301b9dcdd3d1c6278f92a387db940de5fa6a3f))
+
 # [1.35.0](https://github.com/asachs01/beacon/compare/v1.34.2...v1.35.0) (2026-09-19)
 
 
