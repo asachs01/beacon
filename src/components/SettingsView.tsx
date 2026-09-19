@@ -1355,6 +1355,56 @@ export function SettingsView({
 
       <div className="settings-group">
         <div className="settings-group-title">Grocery</div>
+        <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12 }}>
+          <div>
+            <div className="settings-row-label">Grocery Lists</div>
+            <div className="settings-row-sublabel">
+              Select which HA todo entities are grocery/shopping lists
+            </div>
+          </div>
+          {todoLists.length === 0 ? (
+            <div className="settings-row-sublabel">
+              No HA todo lists found. Connect Home Assistant to see lists.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {todoLists.map(list => {
+                const isChecked = settings.groceryListIds.includes(list.id);
+                return (
+                  <label
+                    key={list.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 12px',
+                      borderRadius: 6,
+                      border: '1px solid var(--border)',
+                      background: isChecked ? 'var(--bg-today)' : 'var(--bg-surface)',
+                      cursor: 'pointer',
+                      transition: 'all 150ms ease',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        const newIds = e.target.checked
+                          ? [...settings.groceryListIds, list.id]
+                          : settings.groceryListIds.filter(id => id !== list.id);
+                        onUpdateSettings({ groceryListIds: newIds });
+                      }}
+                      style={{ width: 16, height: 16 }}
+                    />
+                    <span style={{ flex: 1, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                      {list.name}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
         <div className="settings-row">
           <div>
             <div className="settings-row-label">Default Grocery List</div>
@@ -1366,6 +1416,22 @@ export function SettingsView({
             onChange={(e) => onUpdateSettings({ defaultGroceryList: e.target.value })}
           >
             <option value="">Auto (first available)</option>
+            {todoLists.map(list => (
+              <option key={list.id} value={list.id}>{list.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">Shopping Card Entity</div>
+            <div className="settings-row-sublabel">HA todo list for sidebar shopping card</div>
+          </div>
+          <select
+            className="settings-input"
+            value={settings.shoppingEntity}
+            onChange={(e) => onUpdateSettings({ shoppingEntity: e.target.value })}
+          >
+            <option value="">None</option>
             {todoLists.map(list => (
               <option key={list.id} value={list.id}>{list.name}</option>
             ))}

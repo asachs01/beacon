@@ -11,7 +11,7 @@ export interface DashboardTodoItem {
   userId?: string;
 }
 
-export function useDashboardTasks(connected: boolean) {
+export function useDashboardTasks(connected: boolean, groceryListIds: string[] = []) {
   const localTasks = useLocalTasks();
   const { users, listByUser, completions } = useTaskmate(connected);
   const [haItems, setHaItems] = useState<Omit<DashboardTodoItem, 'userId'>[]>([]);
@@ -25,11 +25,15 @@ export function useDashboardTasks(connected: boolean) {
         // Get the non-grocery HA todo entities
         const states = await haFetch('/api/states') as Array<{ entity_id: string; state: string; attributes: Record<string, unknown> }>;
 
-        const todoEntities = states.filter(s =>
-          s.entity_id.startsWith('todo.') &&
-          s.state !== 'unavailable' &&
-          !isGroceryEntity(s.attributes.friendly_name as string || s.entity_id)
-        );
+        const todoEntities = states.filter(s => {
+          if (!s.entity_id.startsWith('todo.') || s.state === 'unavailable') return false;
+          const name = s.attributes.friendly_name as string || s.entity_id;
+          // Use groceryListIds if configured, otherwise fall back to keyword classification
+          if (groceryListIds.length > 0) {
+            return !groceryListIds.includes(s.entity_id);
+          }
+          return !isGroceryEntity(name);
+        });
 
         // Fetch items from up to 3 task lists
         const items: Omit<DashboardTodoItem, 'userId'>[] = [];
@@ -60,7 +64,7 @@ export function useDashboardTasks(connected: boolean) {
     fetchTasks();
     const interval = setInterval(fetchTasks, 60_000);
     return () => clearInterval(interval);
-  }, [connected]);
+  }, [connected, groceryListIds]);
 
   const items: DashboardTodoItem[] = useMemo(() => {
     const local: DashboardTodoItem[] = localTasks

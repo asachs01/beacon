@@ -5,6 +5,7 @@ import { AgendaTodayCard } from './AgendaTodayCard';
 import { AgendaWeekCard } from './AgendaWeekCard';
 import { MenuCard } from './MenuCard';
 import { TasksCard } from './TasksCard';
+import { ShoppingCard } from './ShoppingCard';
 import { HaEntityCard } from './HaEntityCard';
 import { HaEntitiesListCard } from './HaEntitiesListCard';
 import { HaToggleCard } from './HaToggleCard';
@@ -70,6 +71,18 @@ export const cardRegistry: Record<string, CardDefinition> = {
     component: TasksCard,
     defaultConfig: {},
     defaultSize: 'sm',
+    allowedRegions: ['sidebar'],
+  },
+  shopping: {
+    type: 'shopping',
+    displayName: 'Shopping',
+    icon: '🛒',
+    component: ShoppingCard,
+    defaultConfig: { shoppingEntity: '' },
+    defaultSize: 'sm',
+    configFields: [
+      { type: 'entity', key: 'shoppingEntity', label: 'Shopping List Entity' },
+    ],
     allowedRegions: ['sidebar'],
   },
   'ha-entity': {
