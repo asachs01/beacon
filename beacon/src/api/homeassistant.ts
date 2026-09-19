@@ -4,9 +4,9 @@ type MessageHandler = (message: HAMessage) => void;
 
 /**
  * Convert the app's REST-shaped event fields (start_date_time, end_date_time,
- * start_date, end_date, summary, description) into the shape HA's WS-only
- * calendar/event/update command expects (dtstart, dtend, summary,
- * description — see homeassistant/components/calendar/const.py EVENT_START
+ * start_date, end_date, summary, description, location, rrule) into the shape
+ * HA's WS calendar event commands expect (dtstart, dtend, summary, description,
+ * location, rrule — see homeassistant/components/calendar/const.py EVENT_START
  * = "dtstart", EVENT_END = "dtend"). Only forwards fields that are present.
  */
 export function toWsEventPayload(event: {
@@ -16,10 +16,14 @@ export function toWsEventPayload(event: {
   start_date?: string;
   end_date?: string;
   description?: string;
+  location?: string;
+  rrule?: string;
 }): Record<string, string> {
   const payload: Record<string, string> = {};
   if (event.summary !== undefined) payload.summary = event.summary;
   if (event.description !== undefined) payload.description = event.description;
+  if (event.location !== undefined) payload.location = event.location;
+  if (event.rrule !== undefined) payload.rrule = event.rrule;
   const dtstart = event.start_date_time ?? event.start_date;
   const dtend = event.end_date_time ?? event.end_date;
   if (dtstart !== undefined) payload.dtstart = dtstart;
@@ -232,6 +236,12 @@ export class HomeAssistantClient {
     });
   }
 
+  /**
+   * Create a new calendar event. HA requires the calendar/event/create WS
+   * command (not calendar.create_event REST service) to support recurring
+   * events (rrule) — the service silently ignores/rejects rrule. This method
+   * uses the WS command with dtstart/dtend fields that match update/delete.
+   */
   async createEvent(calendarId: string, event: {
     summary: string;
     start_date_time?: string;
@@ -239,14 +249,13 @@ export class HomeAssistantClient {
     start_date?: string;
     end_date?: string;
     description?: string;
+    location?: string;
     rrule?: string;
   }): Promise<void> {
     await this.sendMessage({
-      type: 'call_service',
-      domain: 'calendar',
-      service: 'create_event',
-      target: { entity_id: calendarId },
-      service_data: event,
+      type: 'calendar/event/create',
+      entity_id: calendarId,
+      event: toWsEventPayload(event),
     });
   }
 

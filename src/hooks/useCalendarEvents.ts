@@ -4,15 +4,15 @@ import { haFetch, hasToken, callBeaconAction, BeaconActionError } from '../api/h
 import { HomeAssistantClient, toWsEventPayload } from '../api/homeassistant';
 
 /**
- * Re-thrown by updateEvent/deleteEvent when HA reports the calendar
- * doesn't support that operation (CalendarEntityFeature.UPDATE_EVENT /
- * DELETE_EVENT unset — common for many read-only or limited providers).
- * Callers can catch this specifically to offer a fallback (e.g. delete +
- * recreate for updates) instead of showing a raw error.
+ * Re-thrown by createEvent/updateEvent/deleteEvent when HA reports the calendar
+ * doesn't support that operation (CalendarEntityFeature.CREATE_EVENT /
+ * UPDATE_EVENT / DELETE_EVENT unset — common for many read-only or limited
+ * providers). Callers can catch this specifically to offer a fallback (e.g.
+ * delete + recreate for updates) instead of showing a raw error.
  */
 export class CalendarNotSupportedError extends Error {
-  constructor(op: 'update' | 'delete') {
-    super(`This calendar does not support event ${op === 'update' ? 'editing' : 'deletion'}.`);
+  constructor(op: 'create' | 'update' | 'delete') {
+    super(`This calendar does not support event ${op === 'create' ? 'creation' : op === 'update' ? 'editing' : 'deletion'}.`);
     this.name = 'CalendarNotSupportedError';
   }
 }
@@ -132,6 +132,22 @@ export function useCalendarEvents(
     }
   }, [connected, fetchCalendars]);
 
+  /**
+   * Create a new calendar event. HA requires the calendar/event/create WS
+   * command (not calendar.create_event REST service) to support recurring
+   * events (rrule) — the service silently ignores/rejects rrule. When a live
+   * HomeAssistantClient is available (standalone mode, direct browser WS
+   * connection), this calls its createEvent method directly. Otherwise
+   * (add-on/proxy mode, no browser-side token) it routes through the add-on
+   * server's /beacon-action/calendar-event bridge, which opens the WS
+   * connection server-side using SUPERVISOR_TOKEN.
+   *
+   * Many calendar providers don't support event creation at all
+   * (CalendarEntityFeature.CREATE_EVENT unset) — HA reports that as error
+   * code "not_supported", which is normalized here into
+   * CalendarNotSupportedError so callers can detect it and show a clear
+   * message instead of a raw error.
+   */
   const createEvent = useCallback(async (
     calendarId: string,
     event: {
@@ -141,14 +157,26 @@ export function useCalendarEvents(
       start_date?: string;
       end_date?: string;
       description?: string;
+      location?: string;
       rrule?: string;
     }
   ) => {
-    await haFetch(`/api/services/calendar/create_event`, {
-      method: 'POST',
-      body: JSON.stringify({ ...event, entity_id: calendarId }),
-    });
-  }, []);
+    try {
+      const client = getClient?.();
+      if (client?.isConnected) {
+        await client.createEvent(calendarId, event);
+      } else {
+        await callBeaconAction('/beacon-action/calendar-event', {
+          op: 'create',
+          entity_id: calendarId,
+          event: toWsEventPayload(event),
+        });
+      }
+    } catch (err) {
+      if (isNotSupported(err)) throw new CalendarNotSupportedError('create');
+      throw err;
+    }
+  }, [getClient]);
 
   /**
    * Update an existing event. HA moved this off the `calendar.update_event`

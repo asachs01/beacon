@@ -234,10 +234,11 @@ function haWsCommand(command, timeoutMs = 10000) {
 
 /**
  * POST /beacon-action/calendar-event
- * Body: { op: 'update'|'delete', entity_id, uid, event? }
- * Bridges calendar event update/delete to HA's WS-only commands
- * (calendar/event/update, calendar/event/delete) since those are no
- * longer exposed as REST-callable services in current HA core.
+ * Body: { op: 'create'|'update'|'delete', entity_id, uid?, event? }
+ * Bridges calendar event create/update/delete to HA's WS-only commands
+ * (calendar/event/create, calendar/event/update, calendar/event/delete)
+ * since those are no longer exposed as REST-callable services in current
+ * HA core.
  */
 function handleCalendarEventAction(req, res) {
   if (req.method !== 'POST') {
@@ -249,23 +250,30 @@ function handleCalendarEventAction(req, res) {
   collectBody(req).then(async (bodyBuf) => {
     try {
       const { op, entity_id, uid, event } = JSON.parse((bodyBuf || '{}').toString('utf8'));
-      if (!op || !entity_id || !uid) {
+      if (!op || !entity_id) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Missing op, entity_id, or uid' }));
+        res.end(JSON.stringify({ error: 'Missing op or entity_id' }));
         return;
       }
-      if (op !== 'update' && op !== 'delete') {
+      if (op !== 'create' && op !== 'update' && op !== 'delete') {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'op must be "update" or "delete"' }));
+        res.end(JSON.stringify({ error: 'op must be "create", "update", or "delete"' }));
         return;
       }
-      if (op === 'update' && (!event || typeof event !== 'object')) {
+      if ((op === 'update' || op === 'delete') && !uid) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Missing event payload for update' }));
+        res.end(JSON.stringify({ error: 'Missing uid for update/delete' }));
+        return;
+      }
+      if ((op === 'create' || op === 'update') && (!event || typeof event !== 'object')) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: `Missing event payload for ${op}` }));
         return;
       }
 
-      const command = op === 'update'
+      const command = op === 'create'
+        ? { type: 'calendar/event/create', entity_id, event }
+        : op === 'update'
         ? { type: 'calendar/event/update', entity_id, uid, event }
         : { type: 'calendar/event/delete', entity_id, uid };
 
@@ -273,8 +281,8 @@ function handleCalendarEventAction(req, res) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true, result }));
     } catch (err) {
-      // HA's ERR_NOT_SUPPORTED (calendar lacks update/delete support) is a
-      // distinct, expected case — surface it as 501 with the code intact
+      // HA's ERR_NOT_SUPPORTED (calendar lacks create/update/delete support)
+      // is a distinct, expected case — surface it as 501 with the code intact
       // so the UI can show "this calendar doesn't support X" instead of a
       // generic error.
       const status = err.code === 'not_supported' ? 501 : 502;
