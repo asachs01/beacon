@@ -1,3 +1,5 @@
+
+
 <p align="center">
   <img src="src/assets/beacon-logo-main.png" alt="Beacon" width="280" />
 </p>
@@ -25,6 +27,12 @@
 </p>
 
 ---
+
+## Skylight alternative — without the subscription
+
+Skylight is a polished wall calendar that charges for hardware **and** locks meal planning, photos, and other family features behind Calendar Plus (~$79/year). Beacon is the self-hosted answer: run it as a Home Assistant add-on (or standalone), keep data on your network, and use any tablet you already own.
+
+→ [Getting started](https://beacon-family-docs.netlify.app/docs/getting-started/welcome/) · [Beacon vs Skylight](https://beacon-family-docs.netlify.app/docs/getting-started/skylight-alternative/) · Install with the Home Assistant badge above
 
 ## Features
 
@@ -69,7 +77,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser. Beacon works fully without Home Assistant — calendars, lists, and tasks are stored locally in the browser.
+Open [http://localhost:5173](http://localhost:5173) in your browser. Beacon works fully without Home Assistant — calendars, lists, and tasks are stored locally in the browser.
 
 ## Configuration
 
