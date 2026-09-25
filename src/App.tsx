@@ -191,7 +191,7 @@ export function App() {
 
   // Visible week shown by the calendar (drives event fetch window)
   const [visibleWeekStart, setVisibleWeekStart] = useState<Date>(() =>
-    startOfWeek(new Date(), { weekStartsOn: 0 }),
+    startOfWeek(new Date(), { weekStartsOn: settings.weekStartsOn }),
   );
 
   // Day currently selected on the Dashboard's day view
@@ -703,6 +703,7 @@ export function App() {
                   onSlotClick={handleSlotClick}
                   onEventReschedule={handleEventReschedule}
                   onVisibleWeekChange={setVisibleWeekStart}
+                  weekStartsOn={settings.weekStartsOn}
                 />
               </div>
               <CalendarSidebar
