@@ -32,7 +32,7 @@ import { lazyNamed } from './utils/lazy-screen';
 import { useSelectedDay } from './hooks/useClock';
 import { getFocusMemberId, clearFocusMode, setDeviceFocusMember } from './focus';
 import { CalendarEvent, resolveCalendarColor } from './types';
-import { getConfig, patchConfig } from './config';
+import { getConfig } from './config';
 import { setHaKioskMode } from './utils/ha-kiosk';
 import { applyFontScale } from './utils/font-scale';
 import { formToPayload, movedPayload, occurrenceTarget, type EditScope, type EventPayload, type OccurrenceTarget } from './utils/calendar-edits';
@@ -508,10 +508,10 @@ export function App() {
     [completedChoreIds, completeChore, uncompleteChore, firstMemberId]
   );
 
-  // Handle onboarding completion
+  // Handle onboarding completion. After the reload, main.tsx puts the saved
+  // login into the config (applySavedLogin) before the HA client starts.
   const handleOnboardingComplete = useCallback(async (haUrl: string, haToken: string) => {
     await auth.saveManualToken(haUrl, haToken);
-    patchConfig({ ha_url: haUrl, ha_token: haToken });
     window.location.reload();
   }, [auth]);
 

@@ -6,6 +6,7 @@ import {
   removeSecureItem,
   StorageKeys,
 } from '../api/secure-storage';
+import { getConfig, patchConfig } from '../config';
 
 interface HaAuthState {
   /** Whether the user has completed onboarding */
@@ -46,6 +47,33 @@ function normalizeUrl(url: string): string {
   return url.replace(/\/+$/, '');
 }
 
+/** The login onboarding saved on this device. */
+async function readSavedLogin(): Promise<Omit<HaAuthState, 'loading'>> {
+  const [onboarded, haUrl, haToken] = await Promise.all([
+    getSecureItem(StorageKeys.ONBOARDED),
+    getSecureItem(StorageKeys.HA_URL),
+    getSecureItem(StorageKeys.HA_TOKEN),
+  ]);
+  return {
+    isOnboarded: onboarded === 'true' && !!haToken,
+    haUrl: haUrl ?? '',
+    haToken: haToken ?? '',
+  };
+}
+
+/**
+ * Puts the login saved by onboarding into the config, where the HA client
+ * and REST calls read it. Call before the app renders: onboarding reloads
+ * the page once it has saved the login. Skipped when the add-on or the
+ * build supplies the connection.
+ */
+export async function applySavedLogin(): Promise<void> {
+  if (window.__BEACON_CONFIG__ || getConfig().ha_token) return;
+  const { isOnboarded, haUrl, haToken } = await readSavedLogin();
+  if (!isOnboarded) return;
+  patchConfig(haUrl ? { ha_url: haUrl, ha_token: haToken } : { ha_token: haToken });
+}
+
 export function useHaAuth() {
   const [state, setState] = useState<HaAuthState>({
     isOnboarded: false,
@@ -60,22 +88,9 @@ export function useHaAuth() {
 
     async function loadCredentials() {
       try {
-        const [onboarded, haUrl, haToken] = await Promise.all([
-          getSecureItem(StorageKeys.ONBOARDED),
-          getSecureItem(StorageKeys.HA_URL),
-          getSecureItem(StorageKeys.HA_TOKEN),
-        ]);
-
+        const saved = await readSavedLogin();
         if (cancelled) return;
-
-        const isOnboarded = onboarded === 'true' && !!haToken;
-
-        setState({
-          isOnboarded,
-          haUrl: haUrl ?? '',
-          haToken: haToken ?? '',
-          loading: false,
-        });
+        setState({ ...saved, loading: false });
       } catch (err) {
         console.error('useHaAuth: failed to load stored credentials', err);
         if (!cancelled) {

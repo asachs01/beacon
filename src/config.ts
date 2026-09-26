@@ -56,11 +56,10 @@ export function getConfig(): BeaconConfig {
 }
 
 /**
- * Override the cached config with dynamic credentials (from onboarding/OAuth).
- * Call this after the user completes setup to inject the HA URL + token
- * without requiring a page reload.
+ * Override config values, e.g. with the Home Assistant login saved by
+ * onboarding (see applySavedLogin). Changes the cached object in place, so
+ * modules that read the config once when loaded (App) see the change too.
  */
 export function patchConfig(patch: Partial<BeaconConfig>): void {
-  const current = getConfig();
-  cached = { ...current, ...patch };
+  Object.assign(getConfig(), patch);
 }
