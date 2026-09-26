@@ -84,8 +84,11 @@ const store = {
   },
   add: async (name: string, item: Record<string, unknown>) => {
     await Promise.resolve();
-    const created = { ...item, id: (item.id as string) || `rec-${++db.nextId}` }; // server-assigned id
-    coll(name).push(created);
+    const id = (item.id as string) || `rec-${++db.nextId}`; // server-assigned id
+    const existingIndex = coll(name).findIndex((entry) => entry.id === id);
+    const created = existingIndex === -1 ? { ...item, id } : { ...coll(name)[existingIndex], ...item, id };
+    if (existingIndex === -1) coll(name).push(created);
+    else coll(name)[existingIndex] = created;
     return { ...created };
   },
   update: async (name: string, id: string, patch: object) => {
@@ -176,7 +179,11 @@ describe('chores sync (add-on)', () => {
     const { chore, sync, run, task } = await setup();
     task()[0].status = 'completed';
     await run();
-    expect(completions().some((c) => c.chore_id === chore.id && c.member_id === 'kai')).toBe(true);
+    expect(completions()).toContainEqual(expect.objectContaining({
+      id: `chore-${chore.id}:kai:2026-09-26`,
+      chore_id: chore.id,
+      member_id: 'kai',
+    }));
     expect(sync.status().lastChangeAt).not.toBeNull(); // open screens refresh
   });
 

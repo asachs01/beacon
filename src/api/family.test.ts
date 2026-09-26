@@ -60,4 +60,30 @@ describe('FamilyStore streaks', () => {
 
     expect(await store.getStreakForMember('kai')).toMatchObject({ current: 3 });
   });
+
+  it('stores one completion when the same chore is completed concurrently', async () => {
+    const chore = await store.addChore({
+      name: 'Put dishes away',
+      assigned_to: ['kai'],
+      frequency: 'daily',
+      value_cents: 100,
+    });
+
+    const [first, second] = await Promise.all([
+      store.completeChore(chore.id, 'kai'),
+      store.completeChore(chore.id, 'kai'),
+    ]);
+
+    expect(first.id).toBe(second.id);
+    expect(await store.getCompletions()).toHaveLength(1);
+  });
+
+  it('stores one routine task completion when requests race', async () => {
+    await Promise.all([
+      store.completeRoutineTask('bedtime', 'brush-teeth', 'kai'),
+      store.completeRoutineTask('bedtime', 'brush-teeth', 'kai'),
+    ]);
+
+    expect(await store.getRoutineTaskCompletions()).toHaveLength(1);
+  });
 });

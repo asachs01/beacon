@@ -48,6 +48,17 @@ describe('collection writes in add-on mode', () => {
     expect(failures).toEqual([]);
   });
 
+  it('keeps the offline cache unique when the server returns the same id twice', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ id: 'same-round', chore_id: 'c1' }))));
+
+    await addToCollection('beacon_completions', { id: 'same-round', chore_id: 'c1' });
+    await addToCollection('beacon_completions', { id: 'same-round', chore_id: 'c1' });
+
+    expect(JSON.parse(localStorage.getItem('beacon_completions')!)).toEqual([
+      { id: 'same-round', chore_id: 'c1' },
+    ]);
+  });
+
   it('asks the server for recent completions only', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify([{ id: 'new', completed_at: '2026-09-26T09:00:00.000Z' }])));
     vi.stubGlobal('fetch', fetchMock);

@@ -17,6 +17,10 @@ import { startOfDay, startOfToday, parseISO, subDays } from 'date-fns';
 import { localDayKey } from './date-keys';
 import { choreRoundStart, completesCurrentRound, weekStartsOnSetting } from './chore-rounds';
 
+function choreCompletionId(choreId: string, memberId: string, roundKey: string): string {
+  return `chore-${encodeURIComponent(choreId)}:${encodeURIComponent(memberId)}:${roundKey}`;
+}
+
 const STORAGE_KEYS = {
   members: 'beacon_family_members',
   chores: 'beacon_chores',
@@ -157,11 +161,22 @@ export class FamilyStore {
   }
 
   async completeChore(choreId: string, memberId: string, verifiedBy?: string): Promise<ChoreCompletion> {
-    const current = await this.getCurrentCompletions();
+    const chores = await this.getChores();
+    const current = await this.getCurrentCompletions(chores);
     const existing = current.find((c) => c.chore_id === choreId && c.member_id === memberId);
     if (existing) return existing;
 
+    // Two displays can both pass the check above before either save lands.
+    // A stable id lets the server's serialized add (and the local fallback)
+    // collapse those requests to one completion for this chore round.
+    const chore = chores.find((c) => c.id === choreId);
+    const frequency = chore?.frequency ?? 'daily';
+    const roundKey = frequency === 'once'
+      ? 'once'
+      : localDayKey(choreRoundStart(frequency, weekStartsOnSetting()));
+
     const completion = await addToCollection<ChoreCompletion>(STORAGE_KEYS.completions, {
+      id: choreCompletionId(choreId, memberId, roundKey),
       chore_id: choreId,
       member_id: memberId,
       completed_at: new Date().toISOString(),
@@ -276,6 +291,7 @@ export class FamilyStore {
     );
     if (exists) return;
     await addToCollection<RoutineTaskCompletion>(STORAGE_KEYS.routine_completions, {
+      id: `routine-${encodeURIComponent(routineId)}:${encodeURIComponent(taskId)}:${encodeURIComponent(memberId)}:${today}`,
       routine_id: routineId,
       task_id: taskId,
       member_id: memberId,
