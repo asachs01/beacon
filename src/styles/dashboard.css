@@ -639,6 +639,29 @@
   white-space: nowrap;
 }
 
+/* "Who did it?" under a chore assigned to no one; lined up with its name. */
+.task-checklist-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px 8px 60px;
+}
+
+.task-checklist-picker-prompt {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+
+.task-checklist-picker-btn {
+  min-height: 36px;
+  padding: 4px 10px 4px 4px;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .task-checklist-empty {
   font-size: 1rem;
   color: var(--text-muted);

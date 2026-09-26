@@ -5,7 +5,9 @@ import type { TaskmateUser } from '../../types/taskmate';
 
 /** Sidebar "Tasks" section — HA todo items (optionally grouped by TaskMate user), or chores checklist fallback. */
 export function TasksCard({ context }: DashboardCardProps) {
-  const { todoItems, onToggleTodo, taskmateUsers, filteredChores, completedChoreIds, onToggleChore, members } = context;
+  const {
+    todoItems, onToggleTodo, taskmateUsers, filteredChores, choreCompletions, onToggleChore, members, selectedMemberFilter,
+  } = context;
 
   return (
     <section className="dash-sidebar-section">
@@ -15,9 +17,10 @@ export function TasksCard({ context }: DashboardCardProps) {
       ) : (
         <TaskChecklist
           chores={filteredChores}
-          completedIds={completedChoreIds}
+          completions={choreCompletions}
           onToggle={onToggleChore}
           members={members}
+          onlyMemberId={selectedMemberFilter}
         />
       )}
     </section>

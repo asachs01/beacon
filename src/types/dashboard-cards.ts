@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import { CalendarEvent, WeatherData } from '../types';
-import { Chore, FamilyMember } from './family';
+import { Chore, ChoreCompletion, FamilyMember } from './family';
 import { DayMenu } from './meals';
 import type { TaskmateUser } from './taskmate';
 
@@ -82,8 +82,10 @@ export interface DashboardCardContext {
   onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
   taskmateUsers: TaskmateUser[];
   filteredChores: Chore[];
-  completedChoreIds: Set<string>;
-  onToggleChore: (choreId: string) => void;
+  /** Completions that count for each chore's current round, everyone's. */
+  choreCompletions: ChoreCompletion[];
+  /** Ticks or unticks a chore for one family member. */
+  onToggleChore: (choreId: string, memberId: string) => void;
 }
 
 export interface DashboardCardProps {
