@@ -1,3 +1,13 @@
+## [1.52.10](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.9...v1.52.10) (2026-09-26)
+
+
+### Bug Fixes
+
+* a display no longer undoes other displays' dashboard layout changes ([f84f1ac](https://github.com/f1f1f1f1f1f1/Family/commit/f84f1ace4431393cbe62272349b91438cbd69a40))
+* a photo interval of 0 or less no longer flickers through every photo ([38fbaf1](https://github.com/f1f1f1f1f1f1/Family/commit/38fbaf18226feefdb7d9d91c61acbb84edea9240))
+* remove the "Sign in with Home Assistant" option from onboarding ([0a73447](https://github.com/f1f1f1f1f1f1/Family/commit/0a73447fd3e5b3c2fdcd1d171949b8c97c330f2a))
+* standalone app connects with the login saved by onboarding ([216f5ab](https://github.com/f1f1f1f1f1f1/Family/commit/216f5ab29dffa5c4d6f0537fbe6ee9eb9d01cc9e))
+
 ## [1.52.9](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.8...v1.52.9) (2026-09-26)
 
 
