@@ -1,3 +1,11 @@
+## [1.52.11](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.10...v1.52.11) (2026-09-26)
+
+
+### Bug Fixes
+
+* earnings pay a chore once per round, even if it was stored twice ([66882ba](https://github.com/f1f1f1f1f1f1/Family/commit/66882ba4ed05b8fe9f648e261dda818bfca8f3d0))
+* native apps keep the Home Assistant login in secure storage ([f2f7a6b](https://github.com/f1f1f1f1f1f1/Family/commit/f2f7a6b66ec018b5f444c4906a8b385a1e9b0966))
+
 ## [1.52.10](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.9...v1.52.10) (2026-09-26)
 
 
