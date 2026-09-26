@@ -44,9 +44,10 @@ export function getConfig(): BeaconConfig {
     auto_dark_mode: runtime.auto_dark_mode ?? (import.meta.env.VITE_AUTO_DARK_MODE !== 'false'),
     weather_entity: runtime.weather_entity || import.meta.env.VITE_HA_WEATHER_ENTITY || 'weather.home',
     photo_directory: runtime.photo_directory || import.meta.env.VITE_PHOTO_DIRECTORY || '/media/beacon/photos',
-    photo_interval: runtime.photo_interval ?? (Number(import.meta.env.VITE_PHOTO_INTERVAL) || 30),
-    // The add-on schema allows any int; 0 or less would start the screen
-    // saver within seconds of every touch, so those get the default.
+    // The add-on schema allows any int; 0 or less would change photos every
+    // few milliseconds, or start the screen saver within seconds of every
+    // touch, so those get the default.
+    photo_interval: positiveOr(runtime.photo_interval ?? Number(import.meta.env.VITE_PHOTO_INTERVAL), 30),
     screen_saver_timeout: positiveOr(runtime.screen_saver_timeout ?? Number(import.meta.env.VITE_SCREEN_SAVER_TIMEOUT), 5),
     addon_slug: runtime.addon_slug || import.meta.env.VITE_ADDON_SLUG || '',
   };
@@ -55,11 +56,10 @@ export function getConfig(): BeaconConfig {
 }
 
 /**
- * Override the cached config with dynamic credentials (from onboarding/OAuth).
- * Call this after the user completes setup to inject the HA URL + token
- * without requiring a page reload.
+ * Override config values, e.g. with the Home Assistant login saved by
+ * onboarding (see applySavedLogin). Changes the cached object in place, so
+ * modules that read the config once when loaded (App) see the change too.
  */
 export function patchConfig(patch: Partial<BeaconConfig>): void {
-  const current = getConfig();
-  cached = { ...current, ...patch };
+  Object.assign(getConfig(), patch);
 }

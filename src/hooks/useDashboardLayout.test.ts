@@ -1,7 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import {
   dedupeRegions,
   migrate,
+  useDashboardLayout,
   widenRegions,
   StoredDashboardLayoutV1,
   StoredDashboardLayoutV2,
@@ -145,5 +147,129 @@ describe('migrate — persisted layouts survive the upgrade', () => {
     };
 
     expect(migrate(stored, 'default').views[0].regions.main).toHaveLength(1);
+  });
+});
+
+/*
+ * Two displays (two hooks) against a stand-in for the add-on server: the
+ * views collection, whose add merges into an item with the same id like
+ * collectionAdd in server.js, and the old one-document layout.
+ */
+describe('useDashboardLayout across displays', () => {
+  type Item = Record<string, unknown> & { id: string };
+  let server: { views: Item[]; legacy: unknown; writes: string[] };
+
+  beforeEach(() => {
+    window.__BEACON_CONFIG__ = {};
+    server = { views: [], legacy: null, writes: [] };
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit = {}) => {
+      const method = init.method ?? 'GET';
+      const path = String(url).split('?')[0];
+      if (method !== 'GET') server.writes.push(`${method} ${path}`);
+      let body: unknown = { ok: true };
+      if (path === '/beacon-data/beacon-dashboard-layout') {
+        if (method === 'GET') body = server.legacy;
+        else server.legacy = JSON.parse(init.body as string);
+      } else if (path.startsWith('/beacon-collection/beacon_dashboard_views')) {
+        const id = decodeURIComponent(path.split('/')[3] ?? '');
+        if (method === 'GET') body = server.views;
+        if (method === 'POST') {
+          const item = JSON.parse(init.body as string) as Item;
+          const i = server.views.findIndex((v) => v.id === item.id);
+          body = i === -1 ? item : { ...server.views[i], ...item };
+          if (i === -1) server.views.push(body as Item);
+          else server.views[i] = body as Item;
+        }
+        if (method === 'DELETE') {
+          const before = server.views.length;
+          server.views = server.views.filter((v) => v.id !== id);
+          body = { ok: server.views.length !== before };
+        }
+      } else {
+        throw new Error(`unexpected ${method} ${path}`);
+      }
+      const text = JSON.stringify(body);
+      return { ok: true, status: 200, json: async () => JSON.parse(text), text: async () => text };
+    }));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete window.__BEACON_CONFIG__;
+  });
+
+  async function openDisplay() {
+    const display = renderHook(() => useDashboardLayout('default'));
+    await act(async () => {});
+    return display.result;
+  }
+  const names = () => server.views.map((v) => v.name);
+
+  // The layout was saved whole: a display opened earlier put back its old
+  // copy the next time it saved anything, even a tab tap.
+  it('keeps a view another display added when this one changes tabs', async () => {
+    const hallway = await openDisplay();
+    const kitchen = await openDisplay();
+
+    act(() => kitchen.current.addView('Kitchen'));
+    await waitFor(() => expect(names()).toEqual(['Dashboard', 'Kitchen']));
+
+    act(() => hallway.current.setActiveViewId('default-view'));
+    await act(async () => {});
+    expect(names()).toEqual(['Dashboard', 'Kitchen']);
+  });
+
+  it("keeps another display's cards when this one renames the view", async () => {
+    const hallway = await openDisplay();
+    const kitchen = await openDisplay();
+    const clock = [card('clock-weather', { x: 0, y: 0, w: 24, h: 2 })];
+
+    act(() => kitchen.current.updateLayout(regions({ topbar: clock })));
+    await waitFor(() => expect(server.views[0]).toMatchObject({ customized: true }));
+
+    act(() => hallway.current.renameView('default-view', 'Home'));
+    await waitFor(() => expect(server.views[0]).toMatchObject({ name: 'Home' }));
+    expect(server.views[0]).toMatchObject({ customized: true, regions: regions({ topbar: clock }) });
+  });
+
+  it('shows the tab chosen on this display only, without saving it', async () => {
+    const hallway = await openDisplay();
+    act(() => hallway.current.addView('Kitchen'));
+    await waitFor(() => expect(names()).toEqual(['Dashboard', 'Kitchen']));
+    const writes = server.writes.length;
+
+    act(() => hallway.current.setActiveViewId('default-view'));
+    expect(server.writes).toHaveLength(writes);
+    expect((await openDisplay()).current.activeViewId).toBe('default-view'); // same device, reopened
+  });
+
+  it('carries over a layout saved as one document, storing it on the first edit', async () => {
+    const custom = regions({ main: [card('agenda-today', { x: 0, y: 0, w: 24, h: 8 })] });
+    server.legacy = {
+      version: 3,
+      customized: true,
+      activeViewId: 'default-view',
+      views: [
+        { id: 'default-view', name: 'Dashboard', regions: custom },
+        { id: 'view-1', name: 'Kitchen', regions: regions() },
+      ],
+    };
+    const display = await openDisplay();
+    expect(display.current.views.map((v) => v.name)).toEqual(['Dashboard', 'Kitchen']);
+    expect(display.current.layout).toEqual(custom);
+
+    act(() => display.current.renameView('view-1', 'Pantry'));
+    await waitFor(() => expect(names()).toEqual(['Dashboard', 'Pantry']));
+    expect(server.views[0]).toMatchObject({ customized: true, regions: custom });
+  });
+
+  it('follows the preset until the primary view is edited', async () => {
+    const display = await openDisplay();
+    act(() => display.current.addView('Kitchen'));
+    act(() => display.current.updateLayout(regions({ main: [card('agenda-week')] })));
+    act(() => display.current.setActiveViewId('default-view'));
+
+    expect(display.current.customized).toBe(false);
+    expect(display.current.layout.main.map((c) => c.id)).toEqual(['family-calendar']);
   });
 });

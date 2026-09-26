@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ArrowRight, Check, ExternalLink, Key, LogIn } from 'lucide-react';
+import { ArrowRight, Check, Key } from 'lucide-react';
 import beaconLogo from '../assets/beacon-app-icon.svg';
 
 // ---------------------------------------------------------------------------
@@ -8,7 +8,6 @@ import beaconLogo from '../assets/beacon-app-icon.svg';
 
 interface OnboardingViewProps {
   onComplete: (haUrl: string, haToken: string) => void;
-  onOAuthStart?: (haUrl: string) => void;
 }
 
 type Step = 1 | 2 | 3;
@@ -137,14 +136,12 @@ const styles = {
     lineHeight: 1.4,
   } as React.CSSProperties,
 
-  card: (selected: boolean): React.CSSProperties => ({
+  card: {
     padding: 20,
-    background: selected ? 'var(--bg-today)' : 'var(--bg-primary)',
-    border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
+    background: 'var(--bg-today)',
+    border: '1px solid var(--accent)',
     borderRadius: 'var(--radius-lg)',
-    cursor: 'pointer',
-    transition: 'all var(--transition)',
-  }),
+  } as React.CSSProperties,
 
   cardTitle: {
     display: 'flex',
@@ -173,36 +170,18 @@ const styles = {
     borderRadius: 'var(--radius-sm)',
   } as React.CSSProperties,
 
-  secondaryButton: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    width: '100%',
-    padding: '12px 24px',
-    background: 'transparent',
-    color: 'var(--accent)',
-    border: '1px solid var(--accent)',
-    borderRadius: 'var(--radius-md)',
-    fontFamily: 'var(--font-body)',
-    fontSize: '0.9rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all var(--transition)',
-  } as React.CSSProperties,
 } as const;
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingViewProps) {
+export default function OnboardingView({ onComplete }: OnboardingViewProps) {
   const [step, setStep] = useState<Step>(1);
   const [haUrl, setHaUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [connecting, setConnecting] = useState(false);
 
-  const [authMethod, setAuthMethod] = useState<'token' | 'oauth' | null>(null);
   const [token, setToken] = useState('');
   const [tokenError, setTokenError] = useState('');
 
@@ -317,96 +296,58 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
     </div>
   );
 
+  // Signing in through Home Assistant's login page isn't offered: HA only
+  // accepts an http(s) client id, and the app had no callback to finish it.
   const renderStep3 = () => (
     <div>
       <h1 style={{ ...styles.heading, textAlign: 'center' }}>Authentication</h1>
       <p style={{ ...styles.subtext, textAlign: 'center' }}>
-        Choose how to authenticate with Home Assistant.
+        Family signs in to Home Assistant with a long-lived access token.
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
-        {/* Token auth card */}
-        <div
-          style={styles.card(authMethod === 'token')}
-          onClick={() => setAuthMethod('token')}
-        >
-          <h3 style={styles.cardTitle}>
-            <Key size={18} color="var(--accent)" />
-            Long-lived Access Token
-          </h3>
-          <p style={styles.cardDesc}>
-            Use a token generated from your Home Assistant profile.
-          </p>
+      <div style={{ ...styles.card, marginBottom: 24 }}>
+        <h3 style={styles.cardTitle}>
+          <Key size={18} color="var(--accent)" />
+          Long-lived Access Token
+        </h3>
+        <p style={styles.cardDesc}>
+          Use a token generated from your Home Assistant profile.
+        </p>
 
-          {authMethod === 'token' && (
-            <div style={{ marginTop: 16 }}>
-              <input
-                type="password"
-                placeholder="Paste your token here"
-                value={token}
-                onChange={(e) => {
-                  setToken(e.target.value);
-                  if (tokenError) setTokenError('');
-                }}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  ...styles.input,
-                  ...(tokenError ? styles.inputError : {}),
-                }}
-              />
-              {tokenError && <p style={styles.errorText}>{tokenError}</p>}
-              <div style={styles.hint}>
-                <span style={{ fontWeight: 600 }}>How to create a token:</span>
-                <br />
-                Go to your HA Profile &rarr; Long-lived tokens &rarr; Create Token
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* OAuth card */}
-        <div
-          style={styles.card(authMethod === 'oauth')}
-          onClick={() => setAuthMethod('oauth')}
-        >
-          <h3 style={styles.cardTitle}>
-            <LogIn size={18} color="var(--accent)" />
-            Sign in with Home Assistant
-          </h3>
-          <p style={styles.cardDesc}>
-            Authenticate using your Home Assistant credentials via OAuth2.
-          </p>
-
-          {authMethod === 'oauth' && (
-            <div style={{ marginTop: 16 }}>
-              <button
-                style={styles.secondaryButton}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOAuthStart?.(haUrl);
-                }}
-              >
-                Open Home Assistant
-                <ExternalLink size={16} />
-              </button>
-            </div>
-          )}
+        <div style={{ marginTop: 16 }}>
+          <input
+            type="password"
+            placeholder="Paste your token here"
+            value={token}
+            onChange={(e) => {
+              setToken(e.target.value);
+              if (tokenError) setTokenError('');
+            }}
+            style={{
+              ...styles.input,
+              ...(tokenError ? styles.inputError : {}),
+            }}
+          />
+          {tokenError && <p style={styles.errorText}>{tokenError}</p>}
+          <div style={styles.hint}>
+            <span style={{ fontWeight: 600 }}>How to create a token:</span>
+            <br />
+            Go to your HA Profile &rarr; Long-lived tokens &rarr; Create Token
+          </div>
         </div>
       </div>
 
-      {authMethod === 'token' && (
-        <button
-          style={{
-            ...styles.primaryButton,
-            ...((!token.trim()) ? styles.primaryButtonDisabled : {}),
-          }}
-          disabled={!token.trim()}
-          onClick={handleComplete}
-        >
-          Complete Setup
-          <Check size={18} />
-        </button>
-      )}
+      <button
+        style={{
+          ...styles.primaryButton,
+          ...((!token.trim()) ? styles.primaryButtonDisabled : {}),
+        }}
+        disabled={!token.trim()}
+        onClick={handleComplete}
+      >
+        Complete Setup
+        <Check size={18} />
+      </button>
     </div>
   );
 

@@ -133,6 +133,17 @@ describe('usePhotos timers', () => {
     expect(result.current.currentIndex).toBe(1);
   });
 
+  it.each([0, -5])('waits the default 30 seconds when the interval is %i', async (seconds) => {
+    addPhotos(5);
+    const { result } = renderHook(() => usePhotos(undefined, seconds));
+    await settle();
+
+    await act(() => vi.advanceTimersByTimeAsync(29_000));
+    expect(result.current.currentIndex).toBe(0);
+    await act(() => vi.advanceTimersByTimeAsync(1_000));
+    expect(result.current.currentIndex).toBe(1);
+  });
+
   it('tries again a minute later when no photos came back', async () => {
     const { result } = renderHook(() => usePhotos());
     await settle();

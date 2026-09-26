@@ -131,9 +131,12 @@ export function usePhotos(
   useEffect(() => {
     if (!enabled || !isActive || entries.length < 2) return;
 
+    // setInterval runs a delay of 0 or less every few milliseconds, which
+    // flickers through the whole library (e.g. from imported settings).
+    const seconds = intervalSeconds > 0 ? intervalSeconds : DEFAULT_INTERVAL;
     const timer = setInterval(() => {
       setShow((prev) => ({ ...prev, index: (prev.index + 1) % prev.entries.length }));
-    }, intervalSeconds * 1000);
+    }, seconds * 1000);
 
     return () => clearInterval(timer);
   }, [enabled, isActive, entries.length, intervalSeconds]);
