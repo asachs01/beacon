@@ -1,3 +1,10 @@
+## [1.52.9](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.8...v1.52.9) (2026-09-26)
+
+
+### Bug Fixes
+
+* prevent duplicate family completions ([234bc85](https://github.com/f1f1f1f1f1f1/Family/commit/234bc859fcc6de95b2f29caeed67bde0f45a71c6))
+
 ## [1.52.8](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.7...v1.52.8) (2026-09-26)
 
 
