@@ -113,4 +113,27 @@ describe('useChores', () => {
       expect(await doneAfter('daily', new Date(2026, 8, 22, 10, 0))).toBe(false);
     });
   });
+
+  // Before 1.52.9 two displays ticking at once could store a chore twice,
+  // and earnings counted every record.
+  it('pays each round of a chore once, even if it was stored twice', async () => {
+    const at = (day: number, hour: number) => new Date(2026, 8, day, hour, 0).toISOString();
+    db.collections.set('beacon_chores', [
+      { id: 'd', name: 'Dishes', assigned_to: ['kai'], frequency: 'daily', value_cents: 100 } as { id: string },
+      { id: 'w', name: 'Mow', assigned_to: ['kai'], frequency: 'weekly', value_cents: 500 } as { id: string },
+    ]);
+    db.collections.set('beacon_completions', [
+      { id: 'r1', chore_id: 'd', member_id: 'kai', completed_at: at(21, 9) },
+      { id: 'r2', chore_id: 'd', member_id: 'kai', completed_at: at(21, 9) }, // the same tick twice
+      { id: 'r3', chore_id: 'd', member_id: 'kai', completed_at: at(22, 9) }, // the next day
+      { id: 'r4', chore_id: 'w', member_id: 'kai', completed_at: at(21, 18) },
+      { id: 'r5', chore_id: 'w', member_id: 'kai', completed_at: at(23, 18) }, // same week
+    ] as { id: string }[]);
+    const { result } = renderHook(() => useChores());
+    await waitFor(() => expect(result.current.chores).toHaveLength(2));
+
+    const earnings = await result.current.getEarningsForPeriod('2026-09-01', '2026-09-30');
+
+    expect(earnings).toEqual([{ member_id: 'kai', total_cents: 700, chore_count: 3 }]);
+  });
 });

@@ -1,6 +1,7 @@
 import { startOfDay, startOfWeek } from 'date-fns';
 import type { Chore, ChoreCompletion } from '../types/family';
 import { loadDataSync } from './beacon-store';
+import { localDayKey } from './date-keys';
 
 /**
  * A chore's current round: a daily chore is done for the day it's ticked, a
@@ -12,6 +13,14 @@ export function choreRoundStart(frequency: Chore['frequency'] | undefined, weekS
   if (frequency === 'once') return new Date(0);
   if (frequency === 'weekly') return startOfWeek(now, { weekStartsOn });
   return startOfDay(now);
+}
+
+/**
+ * Names the round `at` falls in: "once", or the day ("YYYY-MM-DD") the
+ * round starts. Part of a completion's id, as in the Google Tasks sync.
+ */
+export function choreRoundKey(frequency: Chore['frequency'] | undefined, weekStartsOn: 0 | 1, at = new Date()): string {
+  return frequency === 'once' ? 'once' : localDayKey(choreRoundStart(frequency, weekStartsOn, at));
 }
 
 /** Whether `completion` counts for `chore`'s current round. */

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { FamilyStore, notifyFamilyDataChanged, onFamilyDataChanged } from '../api/family';
+import { choreRoundKey, weekStartsOnSetting } from '../api/chore-rounds';
 import { saveThen } from '../utils/save-errors';
 import { byDay, useClock } from './useClock';
 import { Chore, ChoreCompletion, Streak, MemberEarnings } from '../types/family';
@@ -132,10 +133,17 @@ export function useChores(enabled = true) {
       const completions = await store.getCompletionsForPeriod(startDate, endDate);
       const choreMap = new Map(chores.map((c) => [c.id, c]));
       const earningsMap = new Map<string, MemberEarnings>();
+      const weekStartsOn = weekStartsOnSetting();
+      const paidRounds = new Set<string>();
 
       for (const comp of completions) {
         const chore = choreMap.get(comp.chore_id);
         if (!chore) continue;
+        // Before 1.52.9, two displays ticking a chore at once could store it
+        // twice. Each round of a chore is paid once.
+        const round = `${comp.chore_id}:${comp.member_id}:${choreRoundKey(chore.frequency, weekStartsOn, new Date(comp.completed_at))}`;
+        if (paidRounds.has(round)) continue;
+        paidRounds.add(round);
 
         const existing = earningsMap.get(comp.member_id) ?? {
           member_id: comp.member_id,
