@@ -15,7 +15,7 @@ import {
 } from './beacon-collection';
 import { startOfDay, startOfToday, parseISO, subDays } from 'date-fns';
 import { localDayKey } from './date-keys';
-import { choreRoundStart, completesCurrentRound, weekStartsOnSetting } from './chore-rounds';
+import { choreRoundKey, choreRoundStart, completesCurrentRound, weekStartsOnSetting } from './chore-rounds';
 
 function choreCompletionId(choreId: string, memberId: string, roundKey: string): string {
   return `chore-${encodeURIComponent(choreId)}:${encodeURIComponent(memberId)}:${roundKey}`;
@@ -170,10 +170,7 @@ export class FamilyStore {
     // A stable id lets the server's serialized add (and the local fallback)
     // collapse those requests to one completion for this chore round.
     const chore = chores.find((c) => c.id === choreId);
-    const frequency = chore?.frequency ?? 'daily';
-    const roundKey = frequency === 'once'
-      ? 'once'
-      : localDayKey(choreRoundStart(frequency, weekStartsOnSetting()));
+    const roundKey = choreRoundKey(chore?.frequency, weekStartsOnSetting());
 
     const completion = await addToCollection<ChoreCompletion>(STORAGE_KEYS.completions, {
       id: choreCompletionId(choreId, memberId, roundKey),
