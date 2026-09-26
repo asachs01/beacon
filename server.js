@@ -626,12 +626,15 @@ async function handleCollectionApi(req, res) {
       // ?since=<ISO time>: only items completed then or later. Completion
       // history grows every day and displays reload it on every change;
       // they need today's, or this month's for the leaderboard.
-      // &chore_ids=a,b: also those chores' items, whenever completed (a
-      // one-off chore stays done).
+      // &once_chores: also one-off chores' items, whenever completed (a
+      // one-off stays done). Looked up here rather than listed in the URL,
+      // which grew with every task imported from Google Tasks.
       const query = new URLSearchParams(req.url.split('?')[1] || '');
       const since = Date.parse(query.get('since') || '');
       if (!Number.isNaN(since)) {
-        const choreIds = new Set((query.get('chore_ids') || '').split(',').filter(Boolean));
+        const choreIds = new Set(query.has('once_chores')
+          ? (await readCollectionArrayStrict('beacon_chores')).filter((c) => c?.frequency === 'once').map((c) => c.id)
+          : []);
         items = items.filter((it) => (typeof it?.completed_at === 'string' && Date.parse(it.completed_at) >= since)
           || choreIds.has(it?.chore_id));
       }

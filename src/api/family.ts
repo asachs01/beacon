@@ -118,10 +118,10 @@ export class FamilyStore {
 
   /**
    * Chore completions; with `since`, only those from then on, plus any for
-   * `choreIds` (see getCollection).
+   * one-off chores (see getCollection).
    */
-  async getCompletions(since?: Date, choreIds?: string[]): Promise<ChoreCompletion[]> {
-    return getCollection<ChoreCompletion>(STORAGE_KEYS.completions, { since, choreIds });
+  async getCompletions(since?: Date, onceChoreIds?: string[]): Promise<ChoreCompletion[]> {
+    return getCollection<ChoreCompletion>(STORAGE_KEYS.completions, { since, onceChoreIds });
   }
 
   getCompletionsSync(): ChoreCompletion[] {

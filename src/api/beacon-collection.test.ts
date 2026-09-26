@@ -56,8 +56,9 @@ describe('collection writes in add-on mode', () => {
     expect(await getCollection('beacon_completions', { since })).toEqual([{ id: 'new', completed_at: '2026-09-26T09:00:00.000Z' }]);
     expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/beacon-collection/beacon_completions?since=2026-09-26T00%3A00%3A00.000Z'));
 
-    await getCollection('beacon_completions', { since, choreIds: ['once-1', 'once-2'] });
-    expect(fetchMock).toHaveBeenLastCalledWith(expect.stringContaining('&chore_ids=once-1,once-2'));
+    // One-off chores are looked up by the server: their ids don't go in the URL.
+    await getCollection('beacon_completions', { since, onceChoreIds: ['once-1', 'once-2'] });
+    expect(fetchMock).toHaveBeenLastCalledWith(expect.stringMatching(/&once_chores$/));
   });
 
   // Once every read asked for recent completions, this device's copy was

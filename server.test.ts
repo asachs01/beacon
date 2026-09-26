@@ -151,7 +151,8 @@ describe('add-on server', () => {
     const since = encodeURIComponent('2026-09-26T00:00:00.000Z');
     expect(await fetch(`${base}/beacon-collection/test_completions?since=${since}`).then((r) => r.json())).toEqual([recent]);
     // A one-off chore stays done: its completions come whatever their age.
-    expect(await fetch(`${base}/beacon-collection/test_completions?since=${since}&chore_ids=c1`).then((r) => r.json())).toHaveLength(2);
+    await fetch(`${base}/beacon-collection/beacon_chores`, { method: 'POST', body: JSON.stringify({ id: 'c1', name: 'Fix bike', frequency: 'once' }) });
+    expect(await fetch(`${base}/beacon-collection/test_completions?since=${since}&once_chores`).then((r) => r.json())).toHaveLength(2);
     expect(await fetch(`${base}/beacon-collection/test_completions`).then((r) => r.json())).toHaveLength(2);
   });
 

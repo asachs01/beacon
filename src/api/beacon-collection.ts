@@ -79,7 +79,7 @@ function cacheRecent<T>(name: string, fresh: T[], since: Date): void {
   writeLocal(name, [...older, ...fresh]);
 }
 
-/** Items with a `completed_at` at or after `since`, or for one of `choreIds`. */
+/** Items with a `completed_at` at or after `since`, or for one of `choreIds` (one-off chores). */
 function completedSince<T>(items: T[], since: Date, choreIds: string[] = []): T[] {
   return items.filter((it) => {
     const { completed_at: at, chore_id: choreId } = it as { completed_at?: unknown; chore_id?: unknown };
@@ -94,17 +94,18 @@ function completedSince<T>(items: T[], since: Date, choreIds: string[] = []): T[
  * getCollectionSync() has something to show on the next initial render.
  *
  * `since` (for completion collections): only items completed then or
- * later — and, with `choreIds`, any for those chores (one-off chores stay
- * done) — filtered by the server so the whole history isn't downloaded
+ * later — and, with `onceChoreIds`, any for one-off chores (they stay done;
+ * the server finds them itself, the ids only serve this device's copy) —
+ * filtered by the server so the whole history isn't downloaded
  * (see cacheRecent for this device's copy).
  */
-export async function getCollection<T>(name: string, options: { since?: Date; choreIds?: string[] } = {}): Promise<T[]> {
-  const { since, choreIds = [] } = options;
+export async function getCollection<T>(name: string, options: { since?: Date; onceChoreIds?: string[] } = {}): Promise<T[]> {
+  const { since, onceChoreIds = [] } = options;
   if (isAddOn()) {
     try {
       const base = getIngressBasePath();
       const query = since
-        ? `?since=${encodeURIComponent(since.toISOString())}${choreIds.length ? `&chore_ids=${choreIds.map(encodeURIComponent).join(',')}` : ''}`
+        ? `?since=${encodeURIComponent(since.toISOString())}${onceChoreIds.length ? '&once_chores' : ''}`
         : '';
       const res = await fetch(`${base}/beacon-collection/${name}${query}`);
       if (res.ok) {
@@ -120,7 +121,7 @@ export async function getCollection<T>(name: string, options: { since?: Date; ch
     }
   }
   const local = readLocal<T>(name);
-  return since ? completedSince(local, since, choreIds) : local;
+  return since ? completedSince(local, since, onceChoreIds) : local;
 }
 
 /** Synchronous, localStorage-only read for instant initial render. */
