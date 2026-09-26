@@ -296,6 +296,9 @@ export function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   // Not mounted (so not downloaded, and not fetching its data) until first opened.
   const [leaderboardOpened, setLeaderboardOpened] = useState(false);
+  // The Timer screen isn't mounted until first opened either, then stays,
+  // hidden behind other screens, so its timers keep counting and ring there.
+  const [timerOpened, setTimerOpened] = useState(activeView === 'timer');
 
   // Fetch data when connected, or when the user navigates to a different week.
   useEffect(() => {
@@ -476,6 +479,7 @@ export function App() {
       }
       // All other views: close any open panel and switch view
       setShowLeaderboard(false);
+      if (view === 'timer') setTimerOpened(true);
       setActiveView(view);
     },
     [],
@@ -628,7 +632,7 @@ export function App() {
               onAddEvent={handleAddEvent}
               onAddGroceryItem={() => setActiveView('grocery')}
               onAddChore={() => handleChangeView('chores')}
-              onNavigateTimer={() => setActiveView('timer')}
+              onNavigateTimer={() => handleChangeView('timer')}
               sidebarPosition={sidebarPos}
             />
           </>
@@ -682,11 +686,7 @@ export function App() {
         ) : activeView === 'tasks' ? (
           <GroceryView key="tasks" mode="tasks" groceryListIds={settings.groceryListIds} hideLocalList={settings.hideLocalTaskList} hiddenListIds={choreSyncListIds} />
         ) : activeView === 'timer' ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
-            <LazyBoundary>
-              <Timer />
-            </LazyBoundary>
-          </div>
+          null // shown below, and kept once opened
         ) : activeView === 'weather' ? (
           <LazyBoundary>
             <WeatherView />
@@ -761,10 +761,25 @@ export function App() {
               onAddEvent={handleAddEvent}
               onAddGroceryItem={() => setActiveView('grocery')}
               onAddChore={() => handleChangeView('chores')}
-              onNavigateTimer={() => setActiveView('timer')}
+              onNavigateTimer={() => handleChangeView('timer')}
               sidebarPosition={sidebarPos}
             />
           </>
+        )}
+        {timerOpened && (
+          <div
+            style={{
+              display: activeView === 'timer' ? 'flex' : 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              padding: 24,
+            }}
+          >
+            <LazyBoundary>
+              <Timer shown={activeView === 'timer'} onShow={() => handleChangeView('timer')} />
+            </LazyBoundary>
+          </div>
         )}
       </div>
 

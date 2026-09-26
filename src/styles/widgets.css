@@ -198,6 +198,52 @@
   50% { opacity: 0.7; }
 }
 
+/* A timer that's up while another screen shows. Above the screen saver
+   too: the alarm is sounding, so show what it's for. */
+.timer-ringing {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: min(92vw, 480px);
+  padding: 8px 8px 8px 16px;
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-error, #ef4444);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.timer-ringing-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timer-ringing-btn {
+  min-height: 40px;
+  padding: 6px 16px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-error, #ef4444);
+  font: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.timer-ringing-btn--secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
 .timer-card-name {
   flex: 1;
   min-width: 0;
