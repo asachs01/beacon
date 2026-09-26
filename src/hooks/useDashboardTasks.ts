@@ -51,21 +51,20 @@ export function useDashboardTasks(
           return !isGroceryListName(name);
         });
 
-        // Fetch items from up to 3 task lists
-        const items: Omit<DashboardTodoItem, 'userId'>[] = [];
-        for (const entity of todoEntities.slice(0, 3)) {
+        // Fetch items from up to 3 task lists, at the same time
+        const lists = await Promise.all(todoEntities.slice(0, 3).map(async (entity) => {
           try {
-            for (const item of (await getTodoItems(entity.entity_id)) ?? []) {
-              items.push({
-                uid: item.uid,
-                summary: item.summary,
-                status: item.status,
-                listId: entity.entity_id,
-              });
-            }
-          } catch { /* skip failed lists */ }
-        }
-        setHaItems(items);
+            return ((await getTodoItems(entity.entity_id)) ?? []).map(item => ({
+              uid: item.uid,
+              summary: item.summary,
+              status: item.status,
+              listId: entity.entity_id,
+            }));
+          } catch {
+            return []; // skip failed lists
+          }
+        }));
+        setHaItems(lists.flat());
       } catch (err) {
         console.warn('Failed to fetch dashboard tasks:', err);
       }
