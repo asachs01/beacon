@@ -1,5 +1,40 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { loadData, loadDataSync, saveData } from '../api/beacon-store';
+import { loadData, loadDataSync, loadServerData, saveData, saveDataNow } from '../api/beacon-store';
+import { isAddOn } from '../utils/ha-env';
+
+/**
+ * This display's current value of each key, shared by every hook using it.
+ * Each hook used to keep its own copy and save its whole copy: the Tasks
+ * screen and the dashboard each had one, so a task added on one was
+ * overwritten by the next change on the other.
+ */
+const shared = new Map<string, { value: unknown; listeners: Set<(value: unknown) => void> }>();
+/** Server saves in progress per key, one after another. */
+const saveQueues = new Map<string, Promise<void>>();
+const queuedSaves = new Map<string, number>();
+
+function entry(key: string, initial: () => unknown) {
+  let e = shared.get(key);
+  if (!e) {
+    e = { value: initial(), listeners: new Set() };
+    shared.set(key, e);
+  }
+  return e;
+}
+
+function publish(key: string, value: unknown) {
+  const e = shared.get(key);
+  if (!e) return;
+  e.value = value;
+  e.listeners.forEach((listener) => listener(value));
+}
+
+/** Test hook: forget every shared value. */
+export function resetStoredData(): void {
+  shared.clear();
+  saveQueues.clear();
+  queuedSaves.clear();
+}
 
 /**
  * State backed by a /beacon-data key (server copy is the source of truth
@@ -10,20 +45,32 @@ import { loadData, loadDataSync, saveData } from '../api/beacon-store';
  * when the app becomes visible again — are never written back. Saving on
  * every state change used to push a device's stale local cache to the
  * server the moment it opened, overwriting newer changes made elsewhere.
+ *
+ * In the add-on, a change is made again on the server's latest copy before
+ * saving, so one made meanwhile on another display is kept rather than
+ * overwritten by this display's older copy.
  */
 export function useStoredData<T>(key: string, fallback: T, normalize: (value: T) => T = (v) => v) {
   const fallbackRef = useRef(fallback);
   const normalizeRef = useRef(normalize);
   normalizeRef.current = normalize;
 
-  const [value, setValue] = useState<T>(() => normalize(loadDataSync(key, fallback)));
-  const valueRef = useRef(value);
+  const e = entry(key, () => normalize(loadDataSync(key, fallback)));
+  const [value, setValue] = useState<T>(e.value as T);
+
+  useEffect(() => {
+    const current = entry(key, () => normalizeRef.current(loadDataSync(key, fallbackRef.current)));
+    const listener = (v: unknown) => setValue(v as T);
+    current.listeners.add(listener);
+    setValue(current.value as T);
+    return () => {
+      current.listeners.delete(listener);
+    };
+  }, [key]);
 
   /** Re-fetch from the server, without saving. */
   const refresh = useCallback(async () => {
-    const loaded = normalizeRef.current(await loadData(key, fallbackRef.current));
-    valueRef.current = loaded;
-    setValue(loaded);
+    publish(key, normalizeRef.current(await loadData(key, fallbackRef.current)));
   }, [key]);
 
   useEffect(() => {
@@ -40,10 +87,32 @@ export function useStoredData<T>(key: string, fallback: T, normalize: (value: T)
    * persists the change itself (e.g. as a partial update).
    */
   const update = useCallback((updater: (prev: T) => T, save = true): T => {
-    const next = updater(valueRef.current);
-    valueRef.current = next;
-    setValue(next);
-    if (save) void saveData(key, next);
+    const current = entry(key, () => normalizeRef.current(loadDataSync(key, fallbackRef.current)));
+    const next = updater(current.value as T);
+    publish(key, next);
+    if (!save) return next;
+    if (!isAddOn()) {
+      void saveData(key, next);
+      return next;
+    }
+
+    queuedSaves.set(key, (queuedSaves.get(key) ?? 0) + 1);
+    const run = async () => {
+      try {
+        const server = await loadServerData<T>(key);
+        if (!server.ok) {
+          void saveData(key, entry(key, () => next).value);
+          return;
+        }
+        const merged = updater(normalizeRef.current(server.data ?? fallbackRef.current));
+        // Show it unless a later change is still waiting (it'll show then).
+        if (queuedSaves.get(key) === 1) publish(key, merged);
+        if (!(await saveDataNow(key, merged))) void saveData(key, merged);
+      } finally {
+        queuedSaves.set(key, (queuedSaves.get(key) ?? 1) - 1);
+      }
+    };
+    saveQueues.set(key, (saveQueues.get(key) ?? Promise.resolve()).then(run, run));
     return next;
   }, [key]);
 

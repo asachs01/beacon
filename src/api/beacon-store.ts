@@ -40,6 +40,44 @@ export async function loadData<T>(key: string, fallback: T): Promise<T> {
 }
 
 /**
+ * The server's copy only: `ok: false` if it couldn't be read (unlike
+ * loadData, which then falls back to this device's copy). `data` is null
+ * when nothing is stored yet. Caches what it reads, like loadData.
+ */
+export async function loadServerData<T>(key: string): Promise<{ ok: true; data: T | null } | { ok: false }> {
+  try {
+    const res = await fetch(`${getIngressBasePath()}/beacon-data/${key}`);
+    if (!res.ok) return { ok: false };
+    const data = (await res.json()) as T | null;
+    if (data !== null) writeLocalCache(key, JSON.stringify(data));
+    return { ok: true, data };
+  } catch {
+    return { ok: false };
+  }
+}
+
+/**
+ * Save and wait for the server to store it (true) — for a save that must
+ * land before the next one reads. keepalive lets it finish if the page
+ * closes, like sendBeacon, for bodies up to its 64 KB limit.
+ */
+export async function saveDataNow<T>(key: string, data: T): Promise<boolean> {
+  const json = JSON.stringify(data);
+  writeLocalCache(key, json);
+  try {
+    const res = await fetch(`${getIngressBasePath()}/beacon-data/${key}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: json,
+      keepalive: json.length < 60_000,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Read from localStorage only (synchronous, for initial render).
  * Used to provide instant data before the async server fetch completes.
  */
