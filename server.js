@@ -177,6 +177,11 @@ function proxyToHA(req, res) {
 
     proxyReq.on('error', (err) => {
       console.error('Proxy error:', err.message);
+      // Once the answer has started, a second writeHead would throw.
+      if (res.headersSent) {
+        res.destroy();
+        return;
+      }
       res.writeHead(502);
       res.end(JSON.stringify({ error: 'Failed to reach Home Assistant' }));
     });
@@ -565,12 +570,19 @@ function storageError(message) {
   return Object.assign(new Error(message), { status: 500 });
 }
 
-/** Add one item (the server assigns its id unless it has one). */
+/**
+ * Add one item (the server assigns its id unless it has one). An item with
+ * an id that's already there is merged into it rather than added twice:
+ * streaks are stored under their member id, and two first ticks at once
+ * (the app and the Google Tasks sync) each added a record.
+ */
 function collectionAdd(name, item) {
   return withCollectionLock(name, async () => {
     const items = await readCollectionArrayStrict(name);
-    const newItem = { ...item, id: item.id || generateItemId() };
-    items.push(newItem);
+    const idx = item.id ? items.findIndex((it) => it.id === item.id) : -1;
+    const newItem = idx >= 0 ? { ...items[idx], ...item } : { ...item, id: item.id || generateItemId() };
+    if (idx >= 0) items[idx] = newItem;
+    else items.push(newItem);
     await writeCollectionArray(name, items);
     return newItem;
   });
@@ -928,14 +940,15 @@ function haRequest(method, apiPath, body, timeoutMs) {
  */
 async function findOpenTodoItem(states, title) {
   const wanted = title.trim().toLowerCase();
-  for (const e of states) {
-    if (typeof e.entity_id !== 'string' || !e.entity_id.startsWith('todo.') || e.state === 'unavailable') continue;
-    const resp = await haRequest('POST', '/api/services/todo/get_items?return_response', { entity_id: e.entity_id, status: ['needs_action'] }, 10_000);
-    const items = resp.data?.service_response?.[e.entity_id]?.items ?? [];
+  const lists = states.filter((e) => typeof e.entity_id === 'string' && e.entity_id.startsWith('todo.') && e.state !== 'unavailable');
+  // All lists at once: one slow (Google-backed) list used to hold up the rest.
+  const found = await Promise.all(lists.map(async (e) => {
+    const resp = await haRequest('POST', '/api/services/todo/get_items?return_response', { entity_id: e.entity_id, status: ['needs_action'] }, 10_000).catch(() => null);
+    const items = resp?.data?.service_response?.[e.entity_id]?.items ?? [];
     const item = items.find((it) => typeof it.summary === 'string' && it.summary.trim().toLowerCase() === wanted);
-    if (item) return { entityId: e.entity_id, item: item.uid || item.summary };
-  }
-  return null;
+    return item ? { entityId: e.entity_id, item: item.uid || item.summary } : null;
+  }));
+  return found.find(Boolean) ?? null;
 }
 
 /**

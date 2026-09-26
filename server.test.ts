@@ -241,4 +241,13 @@ describe('add-on server', () => {
     expect(readFileSync(join(dir, 'data', 'test_broken.json'), 'utf8')).toBe('[{"id":"a"},');
     expect(readFileSync(join(dir, 'data', 'test_broken_settings.json'), 'utf8')).toBe('{"theme":');
   });
+
+  // Two first ticks at once (the app and the Google Tasks sync) each added
+  // a streak under the member's id, leaving two records with one id.
+  it('merges an added item into one with the same id', async () => {
+    const add = (body: object) => fetch(`${base}/beacon-collection/test_streaks`, { method: 'POST', body: JSON.stringify(body) });
+    await add({ id: 'kai', member_id: 'kai', current: 1 });
+    await add({ id: 'kai', member_id: 'kai', current: 2 });
+    expect(await fetch(`${base}/beacon-collection/test_streaks`).then((r) => r.json())).toEqual([{ id: 'kai', member_id: 'kai', current: 2 }]);
+  });
 });
