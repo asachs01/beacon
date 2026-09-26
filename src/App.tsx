@@ -515,10 +515,6 @@ export function App() {
     window.location.reload();
   }, [auth]);
 
-  const handleOAuthStart = useCallback((haUrl: string) => {
-    auth.startOAuth(haUrl);
-  }, [auth]);
-
   // Keyboard shortcuts for quick view switching
   useEffect(() => {
     const viewMap: Record<string, SidebarView> = {
@@ -571,10 +567,7 @@ export function App() {
   if (!isHaManaged && !auth.state.isOnboarded) {
     return (
       <LazyBoundary fallback={<LoadingScreen />}>
-        <OnboardingView
-          onComplete={handleOnboardingComplete}
-          onOAuthStart={handleOAuthStart}
-        />
+        <OnboardingView onComplete={handleOnboardingComplete} />
       </LazyBoundary>
     );
   }

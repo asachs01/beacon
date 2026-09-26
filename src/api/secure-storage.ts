@@ -7,7 +7,6 @@ import { Preferences } from '@capacitor/preferences';
 export const StorageKeys = {
   HA_URL: 'beacon_ha_url',
   HA_TOKEN: 'beacon_ha_token',
-  HA_REFRESH_TOKEN: 'beacon_ha_refresh_token',
   ONBOARDED: 'beacon_onboarded',
 } as const;
 
