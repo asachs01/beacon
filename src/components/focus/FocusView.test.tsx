@@ -30,7 +30,7 @@ vi.mock('../../hooks/useRoutines', () => ({
 vi.mock('../../hooks/useChores', () => ({
   useChores: () => ({
     chores: [],
-    completionsToday: [],
+    currentCompletions: [],
     completeChore: () => {},
     uncompleteChore: () => {},
     refresh: mocks.refreshChores,

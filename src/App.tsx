@@ -193,7 +193,7 @@ export function App() {
   const music = useMusic(client, connected, fullAppShown);
   const {
     chores,
-    completionsToday,
+    currentCompletions,
     completeChore,
     uncompleteChore,
   } = useChores(fullAppShown);
@@ -489,13 +489,13 @@ export function App() {
   const firstMemberId = members.length > 0 ? members[0].id : '__none__';
   const completedChoreIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const c of completionsToday) {
+    for (const c of currentCompletions) {
       if (c.member_id === firstMemberId) {
         ids.add(c.chore_id);
       }
     }
     return ids;
-  }, [completionsToday, firstMemberId]);
+  }, [currentCompletions, firstMemberId]);
 
   const handleToggleChore = useCallback(
     (choreId: string) => {

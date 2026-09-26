@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { spawn, type ChildProcess } from 'node:child_process';
-import { copyFileSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { connect, createServer } from 'node:net';
 import { createServer as createHttpServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
@@ -90,7 +90,6 @@ beforeAll(async () => {
       BEACON_DIST: join(dir, 'dist'),
       BEACON_DATA: join(dir, 'data'),
       HA_API_BASE_OVERRIDE: haBase,
-      SUPERVISOR_TOKEN: 'test-token', // the WebSocket proxy only runs with one
     },
   });
   server.stdout!.on('data', (chunk) => { output += chunk; });
@@ -151,6 +150,9 @@ describe('add-on server', () => {
 
     const since = encodeURIComponent('2026-09-26T00:00:00.000Z');
     expect(await fetch(`${base}/beacon-collection/test_completions?since=${since}`).then((r) => r.json())).toEqual([recent]);
+    // A one-off chore stays done: its completions come whatever their age.
+    await fetch(`${base}/beacon-collection/beacon_chores`, { method: 'POST', body: JSON.stringify({ id: 'c1', name: 'Fix bike', frequency: 'once' }) });
+    expect(await fetch(`${base}/beacon-collection/test_completions?since=${since}&once_chores`).then((r) => r.json())).toHaveLength(2);
     expect(await fetch(`${base}/beacon-collection/test_completions`).then((r) => r.json())).toHaveLength(2);
   });
 
@@ -200,9 +202,18 @@ describe('add-on server', () => {
     });
   });
 
-  // HA answering the WebSocket upgrade with a plain HTTP error (a 502 while
-  // it restarts) left the browser's socket hanging, never answered.
-  it('passes on an HTTP answer to a WebSocket upgrade instead of hanging', async () => {
+  // Nothing uses a WebSocket to the add-on; the proxy that answered these
+  // could hang, or crash the add-on when a client reset mid-upgrade.
+  it('refuses WebSocket upgrades, and survives a client resetting one', async () => {
+    await new Promise<void>((resolve) => {
+      const socket = connect(Number(new URL(base).port), '127.0.0.1', () => {
+        socket.write('GET /api/websocket HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n');
+        socket.resetAndDestroy();
+        setTimeout(resolve, 200);
+      });
+      socket.on('error', () => {});
+    });
+
     const answer = await new Promise<string>((resolve) => {
       const socket = connect(Number(new URL(base).port), '127.0.0.1', () => {
         socket.write('GET /api/websocket HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n'
@@ -214,5 +225,29 @@ describe('add-on server', () => {
       setTimeout(() => { socket.destroy(); resolve(data || 'no answer'); }, 2000);
     });
     expect(answer.split('\r\n')[0]).toBe('HTTP/1.1 404 Not Found');
+  });
+
+  // A failed read counted as "no data yet", so the next write replaced the
+  // whole file: one new chore wiped every other, one setting every other.
+  it("doesn't write over a stored file it can't read", async () => {
+    mkdirSync(join(dir, 'data'), { recursive: true });
+    writeFileSync(join(dir, 'data', 'test_broken.json'), '[{"id":"a"},');
+    writeFileSync(join(dir, 'data', 'test_broken_settings.json'), '{"theme":');
+
+    const add = await fetch(`${base}/beacon-collection/test_broken`, { method: 'POST', body: '{"name":"new"}' });
+    const merge = await fetch(`${base}/beacon-data/test_broken_settings?merge`, { method: 'PUT', body: '{"theme":"dark"}' });
+
+    expect([add.status, merge.status]).toEqual([500, 500]);
+    expect(readFileSync(join(dir, 'data', 'test_broken.json'), 'utf8')).toBe('[{"id":"a"},');
+    expect(readFileSync(join(dir, 'data', 'test_broken_settings.json'), 'utf8')).toBe('{"theme":');
+  });
+
+  // Two first ticks at once (the app and the Google Tasks sync) each added
+  // a streak under the member's id, leaving two records with one id.
+  it('merges an added item into one with the same id', async () => {
+    const add = (body: object) => fetch(`${base}/beacon-collection/test_streaks`, { method: 'POST', body: JSON.stringify(body) });
+    await add({ id: 'kai', member_id: 'kai', current: 1 });
+    await add({ id: 'kai', member_id: 'kai', current: 2 });
+    expect(await fetch(`${base}/beacon-collection/test_streaks`).then((r) => r.json())).toEqual([{ id: 'kai', member_id: 'kai', current: 2 }]);
   });
 });

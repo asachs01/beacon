@@ -77,11 +77,11 @@ export function FocusView({ memberId, settings, onExit }: FocusViewProps) {
   );
   const completedChoreIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const c of choresApi.completionsToday) {
+    for (const c of choresApi.currentCompletions) {
       if (c.member_id === memberId) ids.add(c.chore_id);
     }
     return ids;
-  }, [choresApi.completionsToday, memberId]);
+  }, [choresApi.currentCompletions, memberId]);
 
   const pick = pickRoutine(routinesApi.routines, now);
 

@@ -80,6 +80,8 @@ export class HomeAssistantClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectDelay = 1000;
   private maxReconnectDelay = 30000;
+  /** Set by disconnect(): a disposed client stays disconnected. */
+  private disposed = false;
   private onConnectionChange?: (connected: boolean) => void;
 
   constructor(url: string, token: string) {
@@ -94,24 +96,28 @@ export class HomeAssistantClient {
     this.onConnectionChange = handler;
   }
 
+  /**
+   * Opens the connection; resolves once authenticated. Rejects if the
+   * token is refused or the connection closes first (it used to wait
+   * forever then, so reconnects never backed off while HA was down).
+   */
   connect(): Promise<void> {
+    this.disposed = false;
     return new Promise((resolve, reject) => {
+      let ws: WebSocket;
       try {
-        this.ws = new WebSocket(this.url);
+        ws = new WebSocket(this.url);
       } catch (err) {
         reject(err);
         return;
       }
+      this.ws = ws;
 
-      this.ws.onopen = () => {
-        this.reconnectDelay = 1000;
-      };
-
-      this.ws.onmessage = (event) => {
+      ws.onmessage = (event) => {
         const msg = JSON.parse(event.data) as HAMessage;
 
         if (msg.type === 'auth_required') {
-          this.ws?.send(JSON.stringify({
+          ws.send(JSON.stringify({
             type: 'auth',
             access_token: this.token,
           }));
@@ -120,12 +126,17 @@ export class HomeAssistantClient {
 
         if (msg.type === 'auth_ok') {
           this.authenticated = true;
+          this.reconnectDelay = 1000;
           this.onConnectionChange?.(true);
           resolve();
           return;
         }
 
         if (msg.type === 'auth_invalid') {
+          // A token HA refuses won't work next time either: don't retry
+          // (retrying forever can get the display banned by HA's login
+          // attempt limit).
+          this.disposed = true;
           reject(new Error('Invalid Home Assistant token'));
           return;
         }
@@ -154,26 +165,36 @@ export class HomeAssistantClient {
         }
       };
 
-      this.ws.onclose = () => {
+      ws.onclose = () => {
+        if (this.ws === ws) this.ws = null;
         this.authenticated = false;
+        reject(new Error('Connection to Home Assistant closed')); // no-op once connected
+        this.failPending(new Error('Connection to Home Assistant lost'));
         this.onConnectionChange?.(false);
         this.scheduleReconnect();
       };
 
-      this.ws.onerror = () => {
+      ws.onerror = () => {
         // onclose will fire after this
       };
     });
   }
 
+  /** Tries again after reconnectDelay, which doubles each time until a connection succeeds. */
   private scheduleReconnect() {
-    if (this.reconnectTimer) return;
+    if (this.reconnectTimer || this.disposed) return;
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
-      this.connect().catch(() => {
-        this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
-      });
+      this.connect().catch(() => { /* its close schedules the next try */ });
     }, this.reconnectDelay);
+    this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
+  }
+
+  /** Requests waiting for an answer that won't come get an error instead of hanging. */
+  private failPending(err: Error) {
+    const pending = [...this.pendingRequests.values()];
+    this.pendingRequests.clear();
+    for (const request of pending) request.reject(err);
   }
 
   private sendMessage(msg: Omit<HAMessage, 'id'>): Promise<unknown> {
@@ -295,17 +316,24 @@ export class HomeAssistantClient {
     return id;
   }
 
+  /**
+   * Closes the connection for good. The socket's handlers are detached
+   * first: its close used to schedule a reconnect, so a client disposed of
+   * (e.g. on unmount) came back and stayed connected.
+   */
   disconnect() {
+    this.disposed = true;
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
     if (this.ws) {
+      this.ws.onopen = this.ws.onmessage = this.ws.onclose = this.ws.onerror = null;
       this.ws.close();
       this.ws = null;
     }
     this.authenticated = false;
-    this.pendingRequests.clear();
+    this.failPending(new Error('Disconnected from Home Assistant'));
     this.subscriptions.clear();
   }
 
@@ -335,8 +363,16 @@ export class HomeAssistantClient {
     return this.subscribeEvents('state_changed', handler);
   }
 
+  /**
+   * Ends a subscription at Home Assistant too: only dropping the handler
+   * here left HA sending every state change for it for the life of the
+   * connection, one more stream each time the music screen's data reloaded.
+   */
   unsubscribe(subscriptionId: number): void {
     this.subscriptions.delete(subscriptionId);
+    if (this.ws && this.authenticated) {
+      this.sendMessage({ type: 'unsubscribe_events', subscription: subscriptionId }).catch(() => { /* connection gone: nothing to end */ });
+    }
   }
 
   get isConnected(): boolean {

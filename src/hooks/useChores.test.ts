@@ -39,7 +39,7 @@ describe('useChores', () => {
 
     await act(async () => { await choresScreen.result.current.completeChore('c1', 'kai'); });
 
-    await waitFor(() => expect(dashboard.result.current.isChoreCompletedToday('c1', 'kai')).toBe(true));
+    await waitFor(() => expect(dashboard.result.current.isChoreDone('c1', 'kai')).toBe(true));
   });
 
   it('while paused (Kid Display up), ignores changes, then catches up when resumed', async () => {
@@ -52,10 +52,10 @@ describe('useChores', () => {
     await waitFor(() => expect(kidDisplay.result.current.chores).toHaveLength(1));
 
     await act(async () => { await kidDisplay.result.current.completeChore('c2', 'kai'); });
-    expect(app.result.current.isChoreCompletedToday('c2', 'kai')).toBe(false);
+    expect(app.result.current.isChoreDone('c2', 'kai')).toBe(false);
 
     app.rerender({ enabled: true });
-    await waitFor(() => expect(app.result.current.isChoreCompletedToday('c2', 'kai')).toBe(true));
+    await waitFor(() => expect(app.result.current.isChoreDone('c2', 'kai')).toBe(true));
   });
 
   // Only the Kid Display reloaded at midnight: the dashboard and Chores
@@ -70,10 +70,47 @@ describe('useChores', () => {
     const { result } = renderHook(() => useChores());
     await waitFor(() => expect(result.current.chores).toHaveLength(1));
     await act(async () => { await result.current.completeChore('c2', 'kai'); });
-    expect(result.current.isChoreCompletedToday('c2', 'kai')).toBe(true);
+    expect(result.current.isChoreDone('c2', 'kai')).toBe(true);
 
     await act(async () => { await vi.advanceTimersByTimeAsync(3 * 60 * 1000); }); // 00:01
-    await waitFor(() => expect(result.current.isChoreCompletedToday('c2', 'kai')).toBe(false));
+    await waitFor(() => expect(result.current.isChoreDone('c2', 'kai')).toBe(false));
     vi.useRealTimers();
+  });
+
+  // Every chore counted as daily: weekly and one-off chores came undone
+  // each night.
+  describe('frequencies', () => {
+    const doneAfter = async (frequency: string, laterDay: Date) => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.setSystemTime(new Date(2026, 8, 21, 10, 0)); // Monday 21 Sep
+      const id = `f-${frequency}`;
+      db.collections.set('beacon_chores', [{ id, name: frequency, assigned_to: ['kai'], frequency, value_cents: 0 } as { id: string }]);
+      db.collections.set('beacon_completions', []);
+      const { result, unmount } = renderHook(() => useChores());
+      await waitFor(() => expect(result.current.chores).toHaveLength(1));
+      await act(async () => { await result.current.completeChore(id, 'kai'); });
+      await act(async () => { await result.current.completeChore(id, 'kai'); }); // no second completion
+      expect(db.collections.get('beacon_completions')).toHaveLength(1);
+
+      vi.setSystemTime(laterDay);
+      await act(async () => { await result.current.refresh(); });
+      const done = result.current.isChoreDone(id, 'kai');
+      unmount();
+      vi.useRealTimers();
+      return done;
+    };
+
+    it('keeps a weekly chore done until the week ends', async () => {
+      expect(await doneAfter('weekly', new Date(2026, 8, 26, 10, 0))).toBe(true); // Saturday
+      expect(await doneAfter('weekly', new Date(2026, 8, 27, 10, 0))).toBe(false); // Sunday: a new week
+    });
+
+    it('keeps a one-off chore done', async () => {
+      expect(await doneAfter('once', new Date(2026, 10, 30, 10, 0))).toBe(true);
+    });
+
+    it('clears a daily chore the next day', async () => {
+      expect(await doneAfter('daily', new Date(2026, 8, 22, 10, 0))).toBe(false);
+    });
   });
 });

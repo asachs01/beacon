@@ -83,9 +83,9 @@ export function useMusic(
           });
         });
 
-        if (!cancelled) {
-          subscriptionRef.current = subId;
-        }
+        // Cleaned up while subscribing: end it now, or it would never end.
+        if (cancelled) client.unsubscribe(subId);
+        else subscriptionRef.current = subId;
       }
     }
 

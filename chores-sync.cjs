@@ -68,6 +68,19 @@ function previousDayKey(key) {
   return new Date(Date.UTC(y, m - 1, d - 1)).toISOString().slice(0, 10);
 }
 
+/** The first day ("YYYY-MM-DD") of the week holding `key`; weeks start on Sunday (0) or Monday (1). */
+function weekStartKey(key, weekStartsOn) {
+  const [y, m, d] = key.split('-').map(Number);
+  const back = (new Date(Date.UTC(y, m - 1, d)).getUTCDay() - weekStartsOn + 7) % 7;
+  return new Date(Date.UTC(y, m - 1, d - back)).toISOString().slice(0, 10);
+}
+
+/** A chore's name from its Google task title: the title minus the chore's icon prefix. */
+function choreNameFromTitle(title, chore) {
+  const prefix = chore.icon ? `${chore.icon} ` : '';
+  return prefix && title.startsWith(prefix) ? title.slice(prefix.length) : title;
+}
+
 /**
  * Links are looked up by the chore and member they belong to. Their `id` is
  * assigned by the server when the record is added, so it can't be used as
@@ -241,31 +254,42 @@ function createChoresSync({
       store.list(COLLECTIONS.chores),
       store.list(COLLECTIONS.completions),
     ]);
-    const completionsToday = completions.filter((c) => dayKey(c.completed_at) === today);
-    note(`time zone: ${timeZone || 'server default'}, today=${today}`);
+    // A chore's current round, as in the app (src/api/chore-rounds.ts): a
+    // daily chore is done for the day, a weekly one for the week, a one-off
+    // for good. (Every chore counted as daily, so finished one-off tasks
+    // were un-ticked in Google the next day.)
+    const weekStart = weekStartKey(today, settings.weekStartsOn === 1 ? 1 : 0);
+    const inCurrentRound = (completion, chore) => {
+      if (chore.frequency === 'once') return true;
+      const day = dayKey(completion.completed_at);
+      return chore.frequency === 'weekly' ? day >= weekStart : day === today;
+    };
+    const choreById = new Map(chores.map((c) => [c.id, c]));
+    const currentCompletions = completions.filter((c) => choreById.has(c.chore_id) && inCurrentRound(c, choreById.get(c.chore_id)));
+    note(`time zone: ${timeZone || 'server default'}, today=${today}, week from ${weekStart}`);
     note(`lists: ${activeMembers.map((m) => `${m.name} -> ${listByMember[m.id]}`).join(', ')}`);
-    note(`chores=${chores.length} links=${links.length} completionsToday=${completionsToday.length}`);
+    note(`chores=${chores.length} links=${links.length} currentCompletions=${currentCompletions.length}`);
 
     // --- Family-side writes, matching FamilyStore in src/api/family.ts ---
 
     // These re-read the completions rather than use the copy read at the
     // start of the pass: a tick made in Family while the pass runs must be
     // seen, or the chore would be completed (and paid) twice.
-    const completeChore = async (choreId, memberId) => {
+    const completeChore = async (chore, memberId) => {
       const all = await store.list(COLLECTIONS.completions);
-      const done = all.some((c) => c.chore_id === choreId && c.member_id === memberId && dayKey(c.completed_at) === today);
+      const done = all.some((c) => c.chore_id === chore.id && c.member_id === memberId && inCurrentRound(c, chore));
       if (done) return;
       await store.add(COLLECTIONS.completions, {
-        chore_id: choreId,
+        chore_id: chore.id,
         member_id: memberId,
         completed_at: now().toISOString(),
       });
       await advanceStreak(memberId);
     };
 
-    const uncompleteChore = async (choreId, memberId) => {
+    const uncompleteChore = async (chore, memberId) => {
       const all = await store.list(COLLECTIONS.completions);
-      const match = all.find((c) => c.chore_id === choreId && c.member_id === memberId && dayKey(c.completed_at) === today);
+      const match = all.find((c) => c.chore_id === chore.id && c.member_id === memberId && inCurrentRound(c, chore));
       if (match?.id) await store.remove(COLLECTIONS.completions, match.id);
     };
 
@@ -295,12 +319,11 @@ function createChoresSync({
     // answers from that cache — so without the refresh, a task checked off
     // in the Google Tasks app stays "needs_action" here for up to 30 min.
 
+    // Every list at once: they're independent, and a refresh can take
+    // seconds each (up to a minute when Google is slow).
     const itemsByEntity = new Map();
-    const readLists = new Set();
-    for (const member of activeMembers) {
-      const entityId = listByMember[member.id];
-      if (readLists.has(entityId)) continue;
-      readLists.add(entityId);
+    const entityIds = [...new Set(activeMembers.map((m) => listByMember[m.id]))];
+    await Promise.all(entityIds.map(async (entityId) => {
       await refreshList(entityId, warn);
       try {
         const items = await fetchTodoItems(entityId);
@@ -310,19 +333,29 @@ function createChoresSync({
         // Unreadable list: leave it out entirely, so nothing below
         // mistakes its tasks for deleted ones this pass.
         warn(`${entityId}: couldn't read the list, skipped it this pass (${errorMessage(err)})`);
-        problem(`Couldn't read ${member.name}'s list`);
+        for (const m of activeMembers.filter((am) => listByMember[am.id] === entityId)) problem(`Couldn't read ${m.name}'s list`);
       }
-    }
+    }));
 
     // Remove routine tasks created before routines stopped syncing, and
-    // drop them from this pass's item lists so they aren't imported.
+    // drop them from this pass's item lists so they aren't imported. As
+    // with chore links, a link goes only once its task is gone: dropped
+    // after a failed delete, the task came back as a new chore.
     for (const link of legacyRoutineLinks) {
       const entityId = listByMember[link.member_id];
       if (entityId) {
-        change(`removing old routine task ${link.uid} from ${entityId}`);
-        await callService('todo', 'remove_item', { entity_id: entityId, item: link.uid }, { reason: `chores-sync: legacy routine link ${link.id}` }).catch(() => {});
         const items = itemsByEntity.get(entityId);
-        if (items) itemsByEntity.set(entityId, items.filter((it) => it.uid !== link.uid));
+        if (!items) continue; // list unreadable: next pass
+        itemsByEntity.set(entityId, items.filter((it) => it.uid !== link.uid));
+        if (items.some((it) => it.uid === link.uid)) {
+          change(`removing old routine task ${link.uid} from ${entityId}`);
+          try {
+            await callService('todo', 'remove_item', { entity_id: entityId, item: link.uid }, { reason: `chores-sync: legacy routine link ${link.id}` });
+          } catch (err) {
+            warn(`couldn't remove old routine task ${link.uid}, will try again: ${errorMessage(err)}`);
+            continue;
+          }
+        }
       }
       await store.remove(COLLECTIONS.legacyRoutineLinks, link.id);
     }
@@ -432,7 +465,7 @@ function createChoresSync({
         });
         known.add(item.uid);
         change(`imported new Google task "${item.summary}" (${item.status}) as a chore for ${memberName(member.id)}`);
-        if (item.status === 'completed') await completeChore(newChore.id, member.id);
+        if (item.status === 'completed') await completeChore(newChore, member.id);
         choresChanged = true;
       }
     }
@@ -506,77 +539,118 @@ function createChoresSync({
         const key = `${chore.id}:${memberId}`;
         desiredChoreKeys.add(key);
 
-        const beaconStatus = completionsToday.some((c) => c.chore_id === chore.id && c.member_id === memberId)
-          ? 'completed'
-          : 'needs_action';
-        const link = linksByKey.get(key);
-        const items = itemsByEntity.get(entityId);
-        const label = `"${chore.name}" for ${memberName(memberId)}`;
-        if (!items) continue; // list unreadable this pass
-        const itemsByUid = new Map(items.filter((it) => it.uid).map((it) => [it.uid, it]));
-
-        if (!link) {
-          const known = knownUids(entityId);
-          let match = findUnlinkedTask(items, known, chore, memberId);
-          const relinked = !!match;
-          if (!match) {
-            await callService('todo', 'add_item', { entity_id: entityId, item: formatChoreTitle(chore) });
-            const fresh = await fetchTodoItems(entityId).catch(() => null);
-            if (fresh) {
-              itemsByEntity.set(entityId, fresh);
-              match = findUnlinkedTask(fresh, known, chore, memberId);
-            }
-          }
-          if (match?.uid) {
-            // Baseline 'needs_action', not the task's current status: a
-            // re-found task may have been ticked in Google meanwhile, and
-            // recording that as already agreed would make the next pass
-            // push Family's "not done" over it. From this baseline a tick
-            // on either side counts as a change, and done wins.
-            await store.add(COLLECTIONS.links, {
-              chore_id: chore.id, member_id: memberId, uid: match.uid, entity_id: entityId, last_synced_status: 'needs_action',
-            });
-            known.add(match.uid);
-            change(`${label}: ${relinked ? 're-linked existing' : 'created'} Google task ${match.uid} (google=${match.status} family=${beaconStatus})`);
-          } else {
-            warn(`${label}: created Google task but couldn't find it afterwards`);
-          }
-          continue;
+        // One pair HA rejects (a Google error, a read-only list) no longer
+        // stops the pass: it used to fail at the same pair every minute,
+        // and no chore after it ever synced.
+        try {
+          await syncPair(chore, memberId, entityId, key);
+        } catch (err) {
+          warn(`"${chore.name}" for ${memberName(memberId)}: ${errorMessage(err)}; will try again next pass`);
         }
-
-        // Other Family-created tasks for this same chore are duplicates left
-        // by earlier builds. Only removed while the linked task exists, so
-        // the last copy is never deleted.
-        if (itemsByUid.has(link.uid)) {
-          const marker = legacyChoreMarker(chore.id, memberId);
-          const dups = items.filter((it) => it.uid && it.uid !== link.uid && it.description?.includes(marker));
-          for (const dup of dups) {
-            change(`${label}: deleting duplicate Google task ${dup.uid}`);
-            await callService('todo', 'remove_item', { entity_id: entityId, item: dup.uid }, { reason: `chores-sync: duplicate task for ${key}` }).catch(() => {});
-          }
-        }
-
-        const linkedTask = itemsByUid.get(link.uid);
-        if (linkedTask?.description?.includes(LEGACY_MARKER_PREFIX)) {
-          change(`${label}: removing legacy tag from task notes`);
-          await callService('todo', 'update_item', {
-            entity_id: entityId, item: link.uid, description: stripLegacyMarker(linkedTask.description),
-          }).catch((err) => warn(`${label}: couldn't clean notes: ${errorMessage(err)}`));
-        }
-
-        const googleStatus = linkedTask?.status ?? 'missing';
-        const { changed, action, quiet } = await reconcileLink(
-          entityId, link, beaconStatus, itemsByUid,
-          async (status) => {
-            if (status === 'completed') await completeChore(chore.id, memberId);
-            else await uncompleteChore(chore.id, memberId);
-          },
-        );
-        const line = `${label}: family=${beaconStatus} google=${googleStatus} lastAgreed=${link.last_synced_status} -> ${action}`;
-        if (action === 'in sync' || quiet) note(line);
-        else change(line);
-        if (changed) choresChanged = true;
       }
+    }
+
+    async function syncPair(chore, memberId, entityId, key) {
+      const beaconStatus = currentCompletions.some((c) => c.chore_id === chore.id && c.member_id === memberId)
+        ? 'completed'
+        : 'needs_action';
+      const link = linksByKey.get(key);
+      const items = itemsByEntity.get(entityId);
+      const label = `"${chore.name}" for ${memberName(memberId)}`;
+      if (!items) return; // list unreadable this pass
+      const itemsByUid = new Map(items.filter((it) => it.uid).map((it) => [it.uid, it]));
+
+      if (!link) {
+        const known = knownUids(entityId);
+        let match = findUnlinkedTask(items, known, chore, memberId);
+        const relinked = !!match;
+        if (!match) {
+          await callService('todo', 'add_item', { entity_id: entityId, item: formatChoreTitle(chore) });
+          const fresh = await fetchTodoItems(entityId).catch(() => null);
+          if (fresh) {
+            itemsByEntity.set(entityId, fresh);
+            match = findUnlinkedTask(fresh, known, chore, memberId);
+          }
+        }
+        if (match?.uid) {
+          // Baseline 'needs_action', not the task's current status: a
+          // re-found task may have been ticked in Google meanwhile, and
+          // recording that as already agreed would make the next pass
+          // push Family's "not done" over it. From this baseline a tick
+          // on either side counts as a change, and done wins.
+          await store.add(COLLECTIONS.links, {
+            chore_id: chore.id, member_id: memberId, uid: match.uid, entity_id: entityId,
+            last_synced_status: 'needs_action', last_synced_title: match.summary,
+          });
+          known.add(match.uid);
+          change(`${label}: ${relinked ? 're-linked existing' : 'created'} Google task ${match.uid} (google=${match.status} family=${beaconStatus})`);
+        } else {
+          warn(`${label}: created Google task but couldn't find it afterwards`);
+        }
+        return;
+      }
+
+      // Other Family-created tasks for this same chore are duplicates left
+      // by earlier builds. Only removed while the linked task exists, so
+      // the last copy is never deleted.
+      if (itemsByUid.has(link.uid)) {
+        const marker = legacyChoreMarker(chore.id, memberId);
+        const dups = items.filter((it) => it.uid && it.uid !== link.uid && it.description?.includes(marker));
+        for (const dup of dups) {
+          change(`${label}: deleting duplicate Google task ${dup.uid}`);
+          await callService('todo', 'remove_item', { entity_id: entityId, item: dup.uid }, { reason: `chores-sync: duplicate task for ${key}` }).catch(() => {});
+        }
+      }
+
+      const linkedTask = itemsByUid.get(link.uid);
+      if (linkedTask?.description?.includes(LEGACY_MARKER_PREFIX)) {
+        change(`${label}: removing legacy tag from task notes`);
+        await callService('todo', 'update_item', {
+          entity_id: entityId, item: link.uid, description: stripLegacyMarker(linkedTask.description),
+        }).catch((err) => warn(`${label}: couldn't clean notes: ${errorMessage(err)}`));
+      }
+
+      const googleStatus = linkedTask?.status ?? 'missing';
+      const { changed, action, quiet } = await reconcileLink(
+        entityId, link, beaconStatus, itemsByUid,
+        async (status) => {
+          if (status === 'completed') await completeChore(chore, memberId);
+          else await uncompleteChore(chore, memberId);
+        },
+      );
+      const line = `${label}: family=${beaconStatus} google=${googleStatus} lastAgreed=${link.last_synced_status} -> ${action}`;
+      if (action === 'in sync' || quiet) note(line);
+      else change(line);
+      if (changed) choresChanged = true;
+
+      if (linkedTask && !link.deleted_in_google) await syncTitle(chore, link, linkedTask, entityId, label);
+    }
+
+    /**
+     * Titles, like statuses, against the last one both sides agreed on:
+     * renaming a chore in Family renames its Google task, and renaming the
+     * task renames the chore. Family wins if both changed. (Only the status
+     * used to sync, so a renamed chore kept its old title in Google.)
+     */
+    async function syncTitle(chore, link, task, entityId, label) {
+      const familyTitle = formatChoreTitle(chore);
+      const agreed = link.last_synced_title;
+      const googleChanged = agreed !== undefined && task.summary !== agreed;
+      const familyChanged = agreed === undefined ? task.summary !== familyTitle : familyTitle !== agreed;
+      if (!familyChanged && googleChanged) {
+        const name = choreNameFromTitle(task.summary, chore);
+        await store.update(COLLECTIONS.chores, chore.id, { name });
+        chore.name = name; // this chore's other members' tasks follow this pass
+        change(`${label}: renamed in Google Tasks to "${task.summary}", renamed the chore`);
+        choresChanged = true;
+        await store.update(COLLECTIONS.links, link.id, { last_synced_title: task.summary });
+        return;
+      }
+      if (familyChanged && task.summary !== familyTitle) {
+        await callService('todo', 'update_item', { entity_id: entityId, item: link.uid, rename: familyTitle });
+        change(`${label}: renamed the Google task to "${familyTitle}"`);
+      }
+      if (agreed !== familyTitle) await store.update(COLLECTIONS.links, link.id, { last_synced_title: familyTitle });
     }
 
     for (const link of linksByKey.values()) {

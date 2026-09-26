@@ -188,7 +188,7 @@ export function ChoresView() {
     removeChore,
     completeChore,
     uncompleteChore,
-    isChoreCompletedToday,
+    isChoreDone,
     getStreakForMember,
     getChoresForMember,
     getMemberProgress,
@@ -340,7 +340,7 @@ export function ChoresView() {
                 key={`${chore.id}-${member.id}`}
                 chore={chore}
                 member={member}
-                isCompleted={isChoreCompletedToday(chore.id, member.id)}
+                isCompleted={isChoreDone(chore.id, member.id)}
                 onComplete={() => completeChore(chore.id, member.id)}
                 onUncomplete={() => uncompleteChore(chore.id, member.id)}
                 onEdit={() => handleStartEdit(chore)}

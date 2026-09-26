@@ -12,22 +12,20 @@ export function useChores(enabled = true) {
   const store = useMemo(() => new FamilyStore(), []);
   // Initialize with localStorage data immediately
   const [chores, setChores] = useState<Chore[]>(() => store.getChoresSync());
-  const [completionsToday, setCompletionsToday] = useState<ChoreCompletion[]>([]);
+  /** Completions that count for each chore's current round (see chore-rounds.ts). */
+  const [currentCompletions, setCurrentCompletions] = useState<ChoreCompletion[]>([]);
   const [streaks, setStreaks] = useState<Streak[]>([]);
 
   const refresh = useCallback(async () => {
-    const [c, ct, s] = await Promise.all([
-      store.getChores(),
-      store.getCompletionsToday(),
-      store.getStreaks(),
-    ]);
+    const [c, s] = await Promise.all([store.getChores(), store.getStreaks()]);
+    const current = await store.getCurrentCompletions(c);
     setChores(c);
-    setCompletionsToday(ct);
+    setCurrentCompletions(current);
     setStreaks(s);
   }, [store]);
 
-  // Today's ticks are worked out as data loads, so it loads again when the
-  // day changes; otherwise yesterday's ticks stayed up after midnight.
+  // What counts as done is worked out as data loads, so it loads again when
+  // the day changes; otherwise yesterday's ticks stayed up after midnight.
   const today = useClock(byDay);
   useEffect(() => {
     if (!enabled) return;
@@ -85,13 +83,14 @@ export function useChores(enabled = true) {
     [store, refresh]
   );
 
-  const isChoreCompletedToday = useCallback(
+  /** Done in its current round: today, this week, or ever (one-offs). */
+  const isChoreDone = useCallback(
     (choreId: string, memberId: string): boolean => {
-      return completionsToday.some(
+      return currentCompletions.some(
         (c) => c.chore_id === choreId && c.member_id === memberId
       );
     },
-    [completionsToday]
+    [currentCompletions]
   );
 
   const getStreakForMember = useCallback(
@@ -119,13 +118,13 @@ export function useChores(enabled = true) {
     (memberId: string): { completed: number; total: number } => {
       const memberChores = chores.filter((c) => c.assigned_to.includes(memberId));
       const completed = memberChores.filter((c) =>
-        completionsToday.some(
+        currentCompletions.some(
           (comp) => comp.chore_id === c.id && comp.member_id === memberId
         )
       ).length;
       return { completed, total: memberChores.length };
     },
-    [chores, completionsToday]
+    [chores, currentCompletions]
   );
 
   const getEarningsForPeriod = useCallback(
@@ -157,14 +156,14 @@ export function useChores(enabled = true) {
 
   return {
     chores,
-    completionsToday,
+    currentCompletions,
     streaks,
     addChore,
     updateChore,
     removeChore,
     completeChore,
     uncompleteChore,
-    isChoreCompletedToday,
+    isChoreDone,
     getStreakForMember,
     getChoresForMember,
     getMemberProgress,

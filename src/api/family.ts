@@ -15,6 +15,7 @@ import {
 } from './beacon-collection';
 import { startOfDay, startOfToday, parseISO, subDays } from 'date-fns';
 import { localDayKey } from './date-keys';
+import { choreRoundStart, completesCurrentRound, weekStartsOnSetting } from './chore-rounds';
 
 const STORAGE_KEYS = {
   members: 'beacon_family_members',
@@ -115,21 +116,36 @@ export class FamilyStore {
 
   // --- Completions ---
 
-  /** Chore completions; with `since`, only those from then on (see getCollection). */
-  async getCompletions(since?: Date): Promise<ChoreCompletion[]> {
-    return getCollection<ChoreCompletion>(STORAGE_KEYS.completions, { since });
+  /**
+   * Chore completions; with `since`, only those from then on, plus any for
+   * one-off chores (see getCollection).
+   */
+  async getCompletions(since?: Date, onceChoreIds?: string[]): Promise<ChoreCompletion[]> {
+    return getCollection<ChoreCompletion>(STORAGE_KEYS.completions, { since, onceChoreIds });
   }
 
   getCompletionsSync(): ChoreCompletion[] {
     return getCollectionSync<ChoreCompletion>(STORAGE_KEYS.completions);
   }
 
-  async getCompletionsToday(): Promise<ChoreCompletion[]> {
-    const today = localDayKey();
-    const completions = await this.getCompletions(startOfToday());
-    return completions.filter(
-      (c) => localDayKey(c.completed_at) === today
-    );
+  /**
+   * Completions that count for each chore's current round (see
+   * chore-rounds.ts): today's for daily chores, this week's for weekly
+   * ones, any for one-offs. Pass `chores` when already loaded.
+   */
+  async getCurrentCompletions(chores?: Chore[]): Promise<ChoreCompletion[]> {
+    const all = chores ?? await this.getChores();
+    const weekStartsOn = weekStartsOnSetting();
+    const now = new Date();
+    const byId = new Map(all.map((c) => [c.id, c]));
+    // The earliest round start of a daily or weekly chore is the week's;
+    // one-offs are asked for by id, whenever they were done.
+    const onceIds = all.filter((c) => c.frequency === 'once').map((c) => c.id);
+    const completions = await this.getCompletions(choreRoundStart('weekly', weekStartsOn, now), onceIds);
+    return completions.filter((c) => {
+      const chore = byId.get(c.chore_id);
+      return !!chore && completesCurrentRound(c, chore, weekStartsOn, now);
+    });
   }
 
   async getCompletionsForPeriod(startDate: string, endDate: string): Promise<ChoreCompletion[]> {
@@ -141,14 +157,8 @@ export class FamilyStore {
   }
 
   async completeChore(choreId: string, memberId: string, verifiedBy?: string): Promise<ChoreCompletion> {
-    const today = localDayKey();
-    const completions = await this.getCompletions(startOfToday());
-    const existing = completions.find(
-      (c) =>
-        c.chore_id === choreId &&
-        c.member_id === memberId &&
-        localDayKey(c.completed_at) === today
-    );
+    const current = await this.getCurrentCompletions();
+    const existing = current.find((c) => c.chore_id === choreId && c.member_id === memberId);
     if (existing) return existing;
 
     const completion = await addToCollection<ChoreCompletion>(STORAGE_KEYS.completions, {
@@ -165,14 +175,8 @@ export class FamilyStore {
   }
 
   async uncompleteChore(choreId: string, memberId: string): Promise<boolean> {
-    const today = localDayKey();
-    const completions = await this.getCompletions(startOfToday());
-    const match = completions.find(
-      (c) =>
-        c.chore_id === choreId &&
-        c.member_id === memberId &&
-        localDayKey(c.completed_at) === today
-    );
+    const current = await this.getCurrentCompletions();
+    const match = current.find((c) => c.chore_id === choreId && c.member_id === memberId);
     if (!match?.id) return false;
     return removeFromCollection(STORAGE_KEYS.completions, match.id);
   }

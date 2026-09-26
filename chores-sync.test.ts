@@ -26,6 +26,7 @@ const ha = {
   calls: 0,
   broken: new Set<string>(), // lists whose get_items fails
   failRemove: false, // remove_item fails (Google error)
+  failUpdateFor: new Set<string>(), // task uids whose update_item fails
   nextUid: 0,
 };
 
@@ -45,8 +46,10 @@ async function callService(domain: string, service: string, data: Record<string,
       items.push({ uid: `task-${++ha.nextUid}`, summary: data.item as string, status: 'needs_action', description: data.description as string });
       return null;
     case 'update_item': {
+      if (ha.failUpdateFor.has(data.item as string)) throw new Error('update_item failed (HTTP 500)');
       const it = find(data.item);
       if (!it) throw new Error('item_not_found');
+      if (data.rename) it.summary = data.rename as string;
       if (data.status) it.status = data.status as Status;
       if ('description' in data) it.description = (data.description as string | null) ?? undefined;
       return null;
@@ -118,8 +121,8 @@ function makeSync(overrides: Record<string, unknown> = {}) {
 
 // Family-side changes, as the app makes them through the collection API.
 const chores = () => coll('beacon_chores');
-const addChore = (name: string, assigned_to = ['kai']) =>
-  store.add('beacon_chores', { name, assigned_to, frequency: 'daily', value_cents: 0 });
+const addChore = (name: string, assigned_to = ['kai'], frequency = 'daily') =>
+  store.add('beacon_chores', { name, assigned_to, frequency, value_cents: 0 });
 const complete = (choreId: string, memberId = 'kai', at = clock) =>
   store.add('beacon_completions', { chore_id: choreId, member_id: memberId, completed_at: at.toISOString() });
 const completions = () => coll('beacon_completions');
@@ -139,6 +142,7 @@ beforeEach(() => {
   ha.calls = 0;
   ha.broken.clear();
   ha.failRemove = false;
+  ha.failUpdateFor.clear();
   db.collections.clear();
   db.unreadable.clear();
   coll('beacon_family_members').push({ id: 'kai', name: 'Kai', avatar: '', color: '#000', role: 'child' });
@@ -292,6 +296,88 @@ describe('chores sync (add-on)', () => {
     await complete(chore.id);
     await run();
     expect(task()[0].status).toBe('completed');
+  });
+
+  // One task HA wouldn't update failed the whole pass, every minute, and no
+  // chore after it synced again.
+  it('keeps syncing the other chores when one task fails', async () => {
+    const vacuum = await addChore('Vacuum');
+    const dishes = await addChore('Dishes');
+    const sync = makeSync();
+    await sync.runNow();
+    const task = (name: string) => ha.lists.get('todo.kai')!.find((t) => t.summary === name)!;
+    ha.failUpdateFor.add(task('Vacuum').uid);
+    await complete(vacuum.id);
+    await complete(dishes.id);
+    await sync.runNow();
+    expect(task('Dishes').status).toBe('completed');
+  });
+
+  // Every chore counted as daily: the day after, the sync un-ticked weekly
+  // chores and finished one-off tasks in Google.
+  it('leaves weekly chores ticked for the week and one-offs for good', async () => {
+    const weekly = await addChore('Mow lawn', ['kai'], 'weekly');
+    const once = await addChore('Fix bike', ['kai'], 'once');
+    const daily = await addChore('Feed cat');
+    const sync = makeSync();
+    await sync.runNow();
+    for (const c of [weekly, once, daily]) await complete(c.id); // Saturday 26 Sep
+    await sync.runNow();
+
+    const status = (name: string) => ha.lists.get('todo.kai')!.find((t) => t.summary === name)!.status;
+    settings = { ...settings, weekStartsOn: 1 };
+    clock = new Date('2026-09-27T10:00:00Z'); // Sunday: same week (from Monday)
+    await sync.runNow();
+    expect([status('Mow lawn'), status('Fix bike'), status('Feed cat')]).toEqual(['completed', 'completed', 'needs_action']);
+
+    clock = new Date('2026-09-28T10:00:00Z'); // Monday: a new week
+    await sync.runNow();
+    expect([status('Mow lawn'), status('Fix bike')]).toEqual(['needs_action', 'completed']);
+  });
+
+  describe('titles', () => {
+    // Only the status synced, so a renamed chore kept its old title.
+    it('renames the Google task when the chore is renamed in Family', async () => {
+      const { chore, run, task } = await setup();
+      await store.update('beacon_chores', chore.id, { name: 'Vacuum upstairs' });
+      await run();
+      expect(task()[0].summary).toBe('Vacuum upstairs');
+    });
+
+    it('renames the chore when the task is renamed in Google', async () => {
+      const { run, task } = await setup();
+      task()[0].summary = 'Vacuum the car';
+      await run();
+      expect(chores()[0].name).toBe('Vacuum the car');
+      await run();
+      expect(task()[0].summary).toBe('Vacuum the car');
+    });
+
+    it('keeps the Family title when both were renamed', async () => {
+      const { chore, run, task } = await setup();
+      task()[0].summary = 'Hoover';
+      await store.update('beacon_chores', chore.id, { name: 'Vacuum the hall' });
+      await run();
+      expect([chores()[0].name, task()[0].summary]).toEqual(['Vacuum the hall', 'Vacuum the hall']);
+    });
+  });
+
+  // The link to an old routine task was dropped even when deleting the task
+  // failed, and the task then came back as a new chore.
+  it("keeps an old routine task's link until the task is deleted", async () => {
+    const { run } = await setup();
+    ha.lists.get('todo.kai')!.push({ uid: 'routine-1', summary: 'Brush teeth', status: 'needs_action' });
+    coll('beacon_routine_sync_links').push({ id: 'rl-1', member_id: 'kai', uid: 'routine-1' });
+
+    ha.failRemove = true;
+    await run();
+    expect(coll('beacon_routine_sync_links')).toHaveLength(1);
+    expect(chores().map((c) => c.name)).toEqual(['Vacuum']); // not imported
+
+    ha.failRemove = false;
+    await run();
+    expect(coll('beacon_routine_sync_links')).toHaveLength(0);
+    expect(ha.lists.get('todo.kai')!.map((t) => t.summary)).toEqual(['Vacuum']);
   });
 
   it('cleans up duplicate link records from earlier builds', async () => {
