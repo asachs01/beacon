@@ -140,7 +140,7 @@ export function getCollectionSync<T>(name: string): T[] {
  */
 export async function addToCollection<T extends HasId>(
   name: string,
-  item: Omit<T, 'id'>,
+  item: Omit<T, 'id'> & Partial<Pick<T, 'id'>>,
 ): Promise<T> {
   if (isAddOn()) {
     try {
@@ -153,7 +153,9 @@ export async function addToCollection<T extends HasId>(
       if (res.ok) {
         const created = (await res.json()) as T;
         const cached = readLocal<T>(name);
-        cached.push(created);
+        const existingIndex = cached.findIndex((it) => it.id === created.id);
+        if (existingIndex === -1) cached.push(created);
+        else cached[existingIndex] = { ...cached[existingIndex], ...created };
         writeLocal(name, cached);
         return created;
       }
@@ -164,7 +166,9 @@ export async function addToCollection<T extends HasId>(
   }
   const items = readLocal<T>(name);
   const created = { ...item, id: (item as HasId).id || generateId() } as T;
-  items.push(created);
+  const existingIndex = items.findIndex((it) => it.id === created.id);
+  if (existingIndex === -1) items.push(created);
+  else items[existingIndex] = { ...items[existingIndex], ...created };
   writeLocal(name, items);
   return created;
 }

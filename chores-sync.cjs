@@ -91,6 +91,16 @@ function choreLinkKey(link) {
   return `${link.chore_id}:${link.member_id}`;
 }
 
+/** Matches FamilyStore's stable completion id for the current chore round. */
+function choreCompletionId(chore, memberId, today, weekStart) {
+  const roundKey = chore.frequency === 'once'
+    ? 'once'
+    : chore.frequency === 'weekly'
+      ? weekStart
+      : today;
+  return `chore-${encodeURIComponent(chore.id)}:${encodeURIComponent(memberId)}:${roundKey}`;
+}
+
 function formatChoreTitle(chore) {
   const icon = chore.icon ? `${chore.icon} ` : '';
   return `${icon}${chore.name}`;
@@ -280,6 +290,7 @@ function createChoresSync({
       const done = all.some((c) => c.chore_id === chore.id && c.member_id === memberId && inCurrentRound(c, chore));
       if (done) return;
       await store.add(COLLECTIONS.completions, {
+        id: choreCompletionId(chore, memberId, today, weekStart),
         chore_id: chore.id,
         member_id: memberId,
         completed_at: now().toISOString(),

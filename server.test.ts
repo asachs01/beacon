@@ -138,6 +138,20 @@ describe('add-on server', () => {
     expect(items).toEqual([created]);
   });
 
+  it('collapses concurrent collection adds that use the same id', async () => {
+    const collection = 'test_idempotent_completions';
+    const add = () => fetch(`${base}/beacon-collection/${collection}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'same-round', chore_id: 'c1', member_id: 'kai' }),
+    });
+    const responses = await Promise.all([add(), add()]);
+    expect(responses.every((response) => response.ok)).toBe(true);
+
+    const items = await fetch(`${base}/beacon-collection/${collection}`).then((r) => r.json());
+    expect(items).toEqual([{ id: 'same-round', chore_id: 'c1', member_id: 'kai' }]);
+  });
+
   // Displays reloaded the whole completion history on every change.
   it('returns only items completed since a given time', async () => {
     const add = (completed_at: string) => fetch(`${base}/beacon-collection/test_completions`, {
