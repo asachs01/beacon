@@ -21,4 +21,14 @@ describe('getConfig', () => {
   it('keeps a positive screen saver timeout', async () => {
     expect((await loadConfig({ screen_saver_timeout: 20 })).screen_saver_timeout).toBe(20);
   });
+
+  // run.sh keeps a negative value; the slideshow then changed photos every
+  // few milliseconds.
+  it.each([0, -5])('uses the default photo interval for %i', async (seconds) => {
+    expect((await loadConfig({ photo_interval: seconds })).photo_interval).toBe(30);
+  });
+
+  it('keeps a positive photo interval', async () => {
+    expect((await loadConfig({ photo_interval: 45 })).photo_interval).toBe(45);
+  });
 });
