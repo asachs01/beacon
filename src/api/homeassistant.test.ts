@@ -76,4 +76,25 @@ describe('HomeAssistantClient', () => {
     expect(attemptsAt).toEqual([1000, 3000, 7000, 15000]);
     client.disconnect();
   });
+
+  // A refused token was retried forever, which can get the display banned
+  // by Home Assistant's login attempt limit.
+  it("doesn't retry a token Home Assistant refuses", async () => {
+    const client = new HomeAssistantClient('http://ha.local:8123', 'revoked');
+    const done = client.connect().catch((err: Error) => err.message);
+    latest().receive({ type: 'auth_required' });
+    latest().receive({ type: 'auth_invalid' });
+    latest().drop();
+    expect(await done).toBe('Invalid Home Assistant token');
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(FakeSocket.all).toHaveLength(1);
+  });
+
+  // Ending a subscription only dropped the handler here; HA kept sending.
+  it('ends a subscription at Home Assistant', async () => {
+    const client = await connected();
+    const id = await client.subscribeStateChanges(() => {});
+    client.unsubscribe(id);
+    expect(latest().sent.at(-1)).toMatchObject({ type: 'unsubscribe_events', subscription: id });
+  });
 });

@@ -133,6 +133,10 @@ export class HomeAssistantClient {
         }
 
         if (msg.type === 'auth_invalid') {
+          // A token HA refuses won't work next time either: don't retry
+          // (retrying forever can get the display banned by HA's login
+          // attempt limit).
+          this.disposed = true;
           reject(new Error('Invalid Home Assistant token'));
           return;
         }
@@ -359,8 +363,16 @@ export class HomeAssistantClient {
     return this.subscribeEvents('state_changed', handler);
   }
 
+  /**
+   * Ends a subscription at Home Assistant too: only dropping the handler
+   * here left HA sending every state change for it for the life of the
+   * connection, one more stream each time the music screen's data reloaded.
+   */
   unsubscribe(subscriptionId: number): void {
     this.subscriptions.delete(subscriptionId);
+    if (this.ws && this.authenticated) {
+      this.sendMessage({ type: 'unsubscribe_events', subscription: subscriptionId }).catch(() => { /* connection gone: nothing to end */ });
+    }
   }
 
   get isConnected(): boolean {
