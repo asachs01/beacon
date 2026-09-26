@@ -52,7 +52,14 @@ HA_BROWSER_TOKEN=""
 
 # Generate runtime-config.js using node for proper JSON escaping (prevents injection)
 CONFIG_JS="/app/dist/runtime-config.js"
-node -e "
+# The options go before `node` so they're in its environment. (They used to
+# follow the script, where node only sees them as arguments: every add-on
+# option was ignored and runtime-config.js always had the defaults.)
+HA_URL="${HA_URL}" HA_BROWSER_TOKEN="${HA_BROWSER_TOKEN}" FAMILY_NAME="${FAMILY_NAME}" \
+  THEME="${THEME}" AUTO_DARK_MODE="${AUTO_DARK_MODE}" WEATHER_ENTITY="${WEATHER_ENTITY}" \
+  PHOTO_DIRECTORY="${PHOTO_DIRECTORY}" PHOTO_INTERVAL="${PHOTO_INTERVAL}" \
+  SCREEN_SAVER_TIMEOUT="${SCREEN_SAVER_TIMEOUT}" ADDON_SLUG="${ADDON_SLUG}" \
+  node -e "
   const config = {
     ha_url: process.env.HA_URL || '',
     ha_token: process.env.HA_BROWSER_TOKEN || '',
@@ -69,10 +76,7 @@ node -e "
     '${CONFIG_JS}',
     'window.__BEACON_CONFIG__ = ' + JSON.stringify(config) + ';'
   );
-" HA_URL="${HA_URL}" HA_BROWSER_TOKEN="${HA_BROWSER_TOKEN}" FAMILY_NAME="${FAMILY_NAME}" \
-  THEME="${THEME}" AUTO_DARK_MODE="${AUTO_DARK_MODE}" WEATHER_ENTITY="${WEATHER_ENTITY}" \
-  PHOTO_DIRECTORY="${PHOTO_DIRECTORY}" PHOTO_INTERVAL="${PHOTO_INTERVAL}" \
-  SCREEN_SAVER_TIMEOUT="${SCREEN_SAVER_TIMEOUT}" ADDON_SLUG="${ADDON_SLUG}"
+"
 
 # Inject the runtime-config script tag into index.html if not already present
 INDEX_HTML="/app/dist/index.html"
