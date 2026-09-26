@@ -338,14 +338,24 @@ function createChoresSync({
     }));
 
     // Remove routine tasks created before routines stopped syncing, and
-    // drop them from this pass's item lists so they aren't imported.
+    // drop them from this pass's item lists so they aren't imported. As
+    // with chore links, a link goes only once its task is gone: dropped
+    // after a failed delete, the task came back as a new chore.
     for (const link of legacyRoutineLinks) {
       const entityId = listByMember[link.member_id];
       if (entityId) {
-        change(`removing old routine task ${link.uid} from ${entityId}`);
-        await callService('todo', 'remove_item', { entity_id: entityId, item: link.uid }, { reason: `chores-sync: legacy routine link ${link.id}` }).catch(() => {});
         const items = itemsByEntity.get(entityId);
-        if (items) itemsByEntity.set(entityId, items.filter((it) => it.uid !== link.uid));
+        if (!items) continue; // list unreadable: next pass
+        itemsByEntity.set(entityId, items.filter((it) => it.uid !== link.uid));
+        if (items.some((it) => it.uid === link.uid)) {
+          change(`removing old routine task ${link.uid} from ${entityId}`);
+          try {
+            await callService('todo', 'remove_item', { entity_id: entityId, item: link.uid }, { reason: `chores-sync: legacy routine link ${link.id}` });
+          } catch (err) {
+            warn(`couldn't remove old routine task ${link.uid}, will try again: ${errorMessage(err)}`);
+            continue;
+          }
+        }
       }
       await store.remove(COLLECTIONS.legacyRoutineLinks, link.id);
     }

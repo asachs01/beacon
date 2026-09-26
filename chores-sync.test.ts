@@ -362,6 +362,24 @@ describe('chores sync (add-on)', () => {
     });
   });
 
+  // The link to an old routine task was dropped even when deleting the task
+  // failed, and the task then came back as a new chore.
+  it("keeps an old routine task's link until the task is deleted", async () => {
+    const { run } = await setup();
+    ha.lists.get('todo.kai')!.push({ uid: 'routine-1', summary: 'Brush teeth', status: 'needs_action' });
+    coll('beacon_routine_sync_links').push({ id: 'rl-1', member_id: 'kai', uid: 'routine-1' });
+
+    ha.failRemove = true;
+    await run();
+    expect(coll('beacon_routine_sync_links')).toHaveLength(1);
+    expect(chores().map((c) => c.name)).toEqual(['Vacuum']); // not imported
+
+    ha.failRemove = false;
+    await run();
+    expect(coll('beacon_routine_sync_links')).toHaveLength(0);
+    expect(ha.lists.get('todo.kai')!.map((t) => t.summary)).toEqual(['Vacuum']);
+  });
+
   it('cleans up duplicate link records from earlier builds', async () => {
     const { run, task } = await setup();
     const links = coll(LINKS);
