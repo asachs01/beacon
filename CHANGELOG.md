@@ -1,3 +1,25 @@
+## [1.52.8](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.7...v1.52.8) (2026-09-26)
+
+
+### Bug Fixes
+
+* add-on options reach the page ([ec2d1ed](https://github.com/f1f1f1f1f1f1/Family/commit/ec2d1ed2b4b2ebb5e447a2c66efd7663ab29b46c))
+* add-on server: one record per id, no crash on a cut-off HA answer ([5d854dd](https://github.com/f1f1f1f1f1f1/Family/commit/5d854ddb718431431f67c29cf82017c01f28cd2e))
+* completions request no longer grows with every one-off chore ([e57a62f](https://github.com/f1f1f1f1f1f1/Family/commit/e57a62ff4759c0d693095a84b290f1c90960e0bb))
+* drop the unused WebSocket proxy that could crash the add-on ([cf23bbc](https://github.com/f1f1f1f1f1f1/Family/commit/cf23bbc7367201e43046d7b91ff8abd2d33d328c))
+* Google Tasks sync keeps an old routine's link until its task is deleted ([011a9bd](https://github.com/f1f1f1f1f1f1/Family/commit/011a9bd3d132446039404363b703a19f7f18e35b))
+* Google Tasks sync: chore frequencies, renames, and one failure no longer stops a pass ([fe0e0b1](https://github.com/f1f1f1f1f1f1/Family/commit/fe0e0b195a645a0250a01d89346aa3c01927fb49))
+* never write over a stored file that couldn't be read ([5abf1a2](https://github.com/f1f1f1f1f1f1/Family/commit/5abf1a2eebe328ab4b696950a76ecd9e77e6abf2))
+* saved lists and settings keep changes made on other screens and displays ([f2dabb5](https://github.com/f1f1f1f1f1f1/Family/commit/f2dabb53ac59a04bd44d561dbc25872a9ee00212))
+* standalone mode: end HA subscriptions and stop retrying a refused token ([1d66bb8](https://github.com/f1f1f1f1f1f1/Family/commit/1d66bb85c1cea8e1b81411169813043eeadc0187))
+* standalone mode: stop a closed HA connection reconnecting, and fail stuck requests ([faa06fd](https://github.com/f1f1f1f1f1f1/Family/commit/faa06fdb7e03cb3bf86e81c6677ced46037742e8))
+* weekly and one-off chores stay done ([5a89fc5](https://github.com/f1f1f1f1f1f1/Family/commit/5a89fc56fd0bea2b0dfc2295a37899fd7dab4448))
+
+
+### Performance Improvements
+
+* dashboard loads its task lists at the same time ([15c9843](https://github.com/f1f1f1f1f1f1/Family/commit/15c9843b934b570ce9fdcd5b0c59dc57224575d2))
+
 ## [1.52.7](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.6...v1.52.7) (2026-09-26)
 
 
