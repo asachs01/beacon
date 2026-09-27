@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { addDays, startOfWeek } from 'date-fns';
 import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
@@ -13,15 +14,14 @@ interface LeaderboardProps {
 
 type Period = 'week' | 'month';
 
-function getWeekRange(): [string, string] {
-  const now = new Date();
-  const day = now.getDay();
-  const start = new Date(now);
-  start.setDate(now.getDate() - day);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 7);
-  return [localDayKey(start), localDayKey(end)];
+/**
+ * This week's first and last day, the week starting on the day set in
+ * Settings, as weekly chores' do. It always started on Sunday (and ran on
+ * into the next Sunday).
+ */
+function getWeekRange(weekStartsOn: 0 | 1): [string, string] {
+  const start = startOfWeek(new Date(), { weekStartsOn });
+  return [localDayKey(start), localDayKey(addDays(start, 6))];
 }
 
 function getMonthRange(): [string, string] {
@@ -37,10 +37,11 @@ export function Leaderboard({ open, onClose }: LeaderboardProps) {
   const { members } = useFamily();
   const { settings } = useSettings();
   const { getEarningsForPeriod, getStreakForMember } = useChores();
-  const [period, setPeriod] = useState<Period>('week');
+  // Opens on the period chores are paid for (Settings > Chores > Payout Schedule).
+  const [period, setPeriod] = useState<Period>(() => (settings.payoutSchedule === 'monthly' ? 'month' : 'week'));
   const [earnings, setEarnings] = useState<MemberEarnings[]>([]);
 
-  const [start, end] = period === 'week' ? getWeekRange() : getMonthRange();
+  const [start, end] = period === 'week' ? getWeekRange(settings.weekStartsOn) : getMonthRange();
 
   useEffect(() => {
     getEarningsForPeriod(start, end).then(setEarnings);
