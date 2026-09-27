@@ -73,7 +73,7 @@ all of node_modules, or GridStack/dnd-kit end up in the startup download.
 After an add-on update a running display asks for old file names and
 server.js answers with index.html; `lazyNamed` reloads the page once.
 Their stylesheets are imported by the screens themselves (settings.css,
-music.css, photos.css, weather.css, focus.css), not main.tsx, so they
+music.css, photos.css, weather.css, timer.css, focus.css), not main.tsx, so they
 download with the screen. Rules something on the startup path needs stay
 in a startup stylesheet (e.g. settings-buttons.css, now-playing.css).
 

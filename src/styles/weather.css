@@ -1,14 +1,57 @@
 /* ============================================================
-   Beacon — Weather View
+   Beacon — Weather screen
+
+   In the same style as the Music screen: the theme's own colours with a
+   faint wash of colour (here, the weather's: amber when sunny, blue when
+   raining...), rounded tiles made from see-through versions of the text
+   colour, and iOS Weather's layout: a big temperature, an hourly strip and
+   a week of days with temperature bars. Two columns on landscape screens,
+   one on portrait ones.
    ============================================================ */
 
 .weather-view {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
+  --wx-fg: var(--text-primary, #1a1a1a);
+  --wx-fg-2: var(--text-secondary, #6b7280);
+  --wx-track: color-mix(in srgb, var(--wx-fg) 14%, transparent);
+  --wx-soft: color-mix(in srgb, var(--wx-fg) 6%, transparent);
+  --wx-pad: clamp(16px, 3vw, 40px);
+  position: relative;
+  isolation: isolate;
   height: 100%;
-  padding: 40px 48px;
+  overflow: hidden;
+  color: var(--wx-fg);
+  background: var(--bg-primary, #faf9f6);
+}
+
+/* Browsers without color-mix() (older Silk on Echo Show) */
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .weather-view {
+    --wx-track: rgba(128, 128, 128, 0.28);
+    --wx-soft: rgba(128, 128, 128, 0.12);
+  }
+}
+
+/* The weather's colour, faintly, behind everything. The page scrolls in
+   .weather-scroll, over it, so it stays put on portrait screens.
+   Offsets rather than `inset` for older Chromium (Silk on Echo Show). */
+.weather-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image:
+    radial-gradient(circle at 20% 0%, var(--wx-tint), transparent 60%),
+    radial-gradient(circle at 100% 100%, var(--wx-tint), transparent 55%);
+}
+
+.weather-scroll {
+  height: 100%;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .weather-loading,
@@ -17,387 +60,363 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  color: var(--text-muted);
-  font-size: 1rem;
   gap: 16px;
+  height: 100%;
+  color: var(--wx-fg-2);
+  font-size: 1.05rem;
 }
 
 .weather-retry-btn {
-  background: var(--accent);
-  color: #fff;
+  min-height: 44px;
+  padding: 8px 24px;
   border: none;
-  border-radius: 8px;
-  padding: 8px 20px;
-  font-size: 0.875rem;
+  border-radius: 999px;
+  background: var(--accent, #3b82f6);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
   cursor: pointer;
 }
 
-/* --- Current Conditions --- */
-.weather-current {
-  position: relative;
-  background: var(--bg-secondary);
-  border-radius: 16px;
-  padding: 32px;
+.weather-layout {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--wx-pad);
+  box-sizing: border-box;
 }
 
-.weather-current-main {
+.weather-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* --- Tiles --- */
+.weather-tile {
+  border-radius: 22px;
+  background: var(--wx-soft);
+}
+
+.weather-tile-label {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 6px;
+  margin: 0;
+  color: var(--wx-fg-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.weather-current-icon {
-  font-size: 80px;
-  line-height: 1;
+.weather-tile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.weather-current-temp-block {
+/* --- Current conditions --- */
+.weather-hero {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  padding: clamp(12px, 3vh, 32px) 16px clamp(8px, 2vh, 20px);
+  text-align: center;
+}
+
+.weather-hero-icon {
+  font-size: clamp(48px, 9vmin, 88px);
+  line-height: 1;
 }
 
 .weather-current-temp {
+  margin-top: 4px;
+  /* iOS Weather's big, thin temperature; the degree sign hangs off the
+     right so the number itself is centred */
+  padding-left: 0.28em;
   font-family: var(--font-display);
-  font-size: 64px;
-  font-weight: 700;
+  font-size: clamp(5rem, 3rem + 10vmin, 9rem);
+  font-weight: 200;
   line-height: 1;
-  color: var(--text-primary);
-  letter-spacing: -1px;
+  letter-spacing: -0.04em;
 }
 
 .weather-current-condition {
-  font-size: 1.25rem;
-  color: var(--text-secondary);
-  font-weight: 400;
+  margin-top: 6px;
+  font-size: clamp(1.15rem, 1rem + 0.8vmin, 1.6rem);
+  font-weight: 500;
+}
+
+.weather-hero-range {
+  margin-top: 4px;
+  color: var(--wx-fg-2);
+  font-size: clamp(1rem, 0.9rem + 0.5vmin, 1.25rem);
+  font-weight: 500;
+  white-space: pre;
+}
+
+.weather-refresh-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--wx-soft);
+  color: var(--wx-fg-2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.weather-refresh-btn:active {
+  transform: scale(0.92);
+}
+
+.weather-spin {
+  animation: weather-spin 1s linear infinite;
+}
+
+@keyframes weather-spin {
+  to { transform: rotate(360deg); }
 }
 
 .weather-current-details {
-  display: flex;
-  gap: 32px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
 .weather-detail {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.weather-detail-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  font-weight: 500;
+  gap: 8px;
+  padding: 14px 16px;
 }
 
 .weather-detail-value {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.weather-refresh-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  transition: background 0.15s, color 0.15s;
-}
-
-.weather-refresh-btn:hover {
-  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
-  color: var(--text-primary);
-}
-
-/* --- Forecast --- */
-.weather-forecast {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.weather-forecast-title {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.weather-forecast-scroll {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Hide scrollbar but keep functionality */
-.weather-forecast-scroll::-webkit-scrollbar {
-  height: 4px;
-}
-
-.weather-forecast-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.weather-forecast-scroll::-webkit-scrollbar-thumb {
-  background: var(--text-muted);
-  border-radius: 2px;
-  opacity: 0.3;
-}
-
-.weather-forecast-card {
-  flex: 0 0 auto;
-  width: 120px;
-  background: var(--bg-secondary);
-  border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  transition: background 0.15s, border-color 0.15s;
-  cursor: pointer;
-  font-family: inherit;
-  color: inherit;
-}
-
-.weather-forecast-card:hover {
-  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
-}
-
-.weather-forecast-card--selected {
-  border-color: var(--accent);
-  background: var(--bg-tertiary, rgba(255, 255, 255, 0.08));
-}
-
-.weather-forecast-day {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.weather-forecast-date {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.weather-forecast-icon {
-  font-size: 36px;
-  line-height: 1;
-}
-
-.weather-forecast-temps {
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
-}
-
-.weather-forecast-high {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.weather-forecast-low {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.weather-forecast-precip {
-  font-size: 0.6875rem;
-  color: var(--accent);
+  font-size: clamp(1.4rem, 1.1rem + 1vmin, 2rem);
   font-weight: 500;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
-.weather-forecast-chevron {
-  color: var(--text-muted);
-  transition: transform 0.2s;
+.weather-detail-value small {
+  color: var(--wx-fg-2);
+  font-size: 0.55em;
+  font-weight: 600;
 }
 
-.weather-forecast-chevron--open {
-  transform: rotate(180deg);
-}
-
-/* --- Hourly Forecast --- */
+/* --- Hourly --- */
 .weather-hourly {
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  animation: weather-hourly-in 0.2s ease-out;
-}
-
-@keyframes weather-hourly-in {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.weather-hourly-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.weather-hourly-title {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
+  gap: 12px;
+  padding: 14px 16px 10px;
 }
 
 .weather-hourly-close {
-  background: none;
-  border: 1px solid var(--text-muted);
-  border-radius: 6px;
-  color: var(--text-muted);
-  font-size: 0.75rem;
+  min-height: 32px;
   padding: 4px 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--wx-track);
+  color: var(--wx-fg);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.weather-hourly-close:hover {
-  color: var(--text-primary);
-  border-color: var(--text-primary);
 }
 
 .weather-hourly-loading,
 .weather-hourly-empty {
-  color: var(--text-muted);
-  font-size: 0.875rem;
+  padding: 18px 0;
+  color: var(--wx-fg-2);
+  font-size: 0.95rem;
   text-align: center;
-  padding: 12px 0;
 }
 
 .weather-hourly-scroll {
   display: flex;
-  gap: 10px;
+  gap: 4px;
+  margin: 0 -8px;
+  padding: 0 8px 6px;
   overflow-x: auto;
-  padding-bottom: 6px;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
 .weather-hourly-scroll::-webkit-scrollbar {
-  height: 4px;
-}
-
-.weather-hourly-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.weather-hourly-scroll::-webkit-scrollbar-thumb {
-  background: var(--text-muted);
-  border-radius: 2px;
-  opacity: 0.3;
+  display: none;
 }
 
 .weather-hourly-card {
-  flex: 0 0 auto;
-  width: 80px;
-  background: var(--bg-primary, rgba(0, 0, 0, 0.15));
-  border-radius: 10px;
-  padding: 12px 8px;
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  min-width: 58px;
+  padding: 4px 2px;
 }
 
 .weather-hourly-time {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-secondary);
   white-space: nowrap;
 }
 
 .weather-hourly-icon {
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1;
 }
 
 .weather-hourly-temp {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 1.15rem;
+  font-weight: 500;
 }
 
 .weather-hourly-precip {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.6875rem;
-  color: var(--accent);
-  font-weight: 500;
+  margin-top: -4px;
+  color: var(--accent, #3b82f6);
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
-.weather-hourly-wind {
+/* --- 7-day forecast --- */
+.weather-forecast {
   display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.6875rem;
-  color: var(--text-muted);
-  font-weight: 500;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 8px 8px;
 }
 
-/* --- Responsive --- */
-@media (max-width: 768px) {
-  .weather-view {
-    padding: 20px 16px;
-    gap: 24px;
-  }
+.weather-forecast-title {
+  padding: 0 8px 6px;
+}
 
-  .weather-current {
-    padding: 24px 20px;
-  }
+.weather-days {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
-  .weather-current-icon {
-    font-size: 56px;
-  }
+.weather-days li + li {
+  border-top: 1px solid var(--wx-track);
+}
 
-  .weather-current-temp {
-    font-size: 48px;
-  }
+.weather-forecast-card {
+  display: grid;
+  grid-template-columns: 3.4em 2em 2.6em 2.4em 1fr 2.4em;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.05rem;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
 
-  .weather-current-condition {
-    font-size: 1rem;
-  }
+.weather-forecast-card:active,
+.weather-forecast-card--selected {
+  background: var(--wx-soft);
+}
 
-  .weather-current-details {
+.weather-forecast-card--selected .weather-forecast-day {
+  color: var(--accent, #3b82f6);
+}
+
+.weather-forecast-day {
+  font-weight: 600;
+}
+
+.weather-forecast-icon {
+  font-size: 24px;
+  line-height: 1;
+  text-align: center;
+}
+
+.weather-forecast-precip {
+  color: var(--accent, #3b82f6);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.weather-forecast-low {
+  color: var(--wx-fg-2);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.weather-forecast-high {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The day's range within the week's, as a bar from cool to warm */
+.weather-range {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--wx-track);
+}
+
+.weather-range-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #a3e635, #f59e0b);
+}
+
+.weather-refresh-btn:focus-visible,
+.weather-hourly-close:focus-visible,
+.weather-forecast-card:focus-visible,
+.weather-retry-btn:focus-visible {
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* --- Landscape: current conditions beside the forecasts --- */
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+  .weather-layout {
+    display: grid;
+    grid-template-columns: minmax(300px, 2fr) 3fr;
+    align-items: start;
+    /* Centred top to bottom when it's shorter than the screen */
+    align-content: center;
+    min-height: 100%;
     gap: 20px;
   }
 
-  .weather-detail-value {
-    font-size: 1rem;
+  .weather-col {
+    gap: 20px;
   }
+}
 
+/* --- Phones --- */
+@media (max-width: 480px) {
   .weather-forecast-card {
-    width: 100px;
-    padding: 12px;
-  }
-
-  .weather-hourly {
-    padding: 16px 12px;
-  }
-
-  .weather-hourly-card {
-    width: 72px;
-    padding: 10px 6px;
+    grid-template-columns: 3em 1.8em 2.4em 2.2em 1fr 2.2em;
+    gap: 6px;
+    font-size: 1rem;
   }
 }

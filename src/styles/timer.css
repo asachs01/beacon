@@ -1,0 +1,584 @@
+/* ============================================================
+   Beacon — Timer screen
+
+   In the same style as the Music screen: the theme's own colours with a
+   faint wash of the accent colour, rounded tiles made from see-through
+   versions of the text colour, and iOS-style round buttons. Timers and
+   the new-timer panel sit side by side on landscape screens and stack on
+   portrait ones.
+   ============================================================ */
+
+.timer {
+  --timer-fg: var(--text-primary, #1a1a1a);
+  --timer-fg-2: var(--text-secondary, #6b7280);
+  --timer-track: color-mix(in srgb, var(--timer-fg) 14%, transparent);
+  --timer-soft: color-mix(in srgb, var(--timer-fg) 6%, transparent);
+  --timer-go: var(--color-success, #22c55e);
+  --timer-stop: var(--color-error, #ef4444);
+  --timer-go-soft: color-mix(in srgb, var(--timer-go) 18%, transparent);
+  --timer-stop-soft: color-mix(in srgb, var(--timer-stop) 18%, transparent);
+  --timer-pad: clamp(16px, 3vw, 40px);
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--timer-fg);
+  background: var(--bg-primary, #faf9f6);
+}
+
+/* Browsers without color-mix() (older Silk on Echo Show) */
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .timer {
+    --timer-track: rgba(128, 128, 128, 0.28);
+    --timer-soft: rgba(128, 128, 128, 0.12);
+    --timer-go-soft: rgba(34, 197, 94, 0.2);
+    --timer-stop-soft: rgba(239, 68, 68, 0.2);
+  }
+}
+
+/* The page scrolls in here, over the tint, which stays put */
+.timer-scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(16px, 3vh, 28px);
+  height: 100%;
+  padding: var(--timer-pad);
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* A faint wash of the accent colour, as the Music screen has of the artwork */
+.timer-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image:
+    radial-gradient(circle at 15% 10%, var(--accent, #3b82f6), transparent 55%),
+    radial-gradient(circle at 90% 90%, var(--accent, #3b82f6), transparent 50%);
+}
+
+.timer-tile {
+  border-radius: 22px;
+  background: var(--timer-soft);
+}
+
+/* --- Segmented control --- */
+.timer-modes {
+  display: flex;
+  flex-shrink: 0;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--timer-track);
+}
+
+.timer-mode-btn {
+  min-width: 128px;
+  min-height: 40px;
+  padding: 6px 20px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--timer-fg);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+.timer-mode-btn--active {
+  background: var(--bg-surface, #fff);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.timer-body {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 3vh, 24px);
+  width: 100%;
+  max-width: 1200px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* --- New timer --- */
+.timer-add-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.timer-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.timer-preset {
+  min-height: 64px;
+  border: none;
+  border-radius: 18px;
+  background: var(--timer-soft);
+  color: var(--timer-fg);
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.timer-preset:active {
+  transform: scale(0.95);
+}
+
+.timer-preset--active {
+  background: var(--accent, #3b82f6);
+  color: #fff;
+}
+
+.timer-name-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 16px;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 14px;
+  background: var(--timer-soft);
+  color: var(--timer-fg);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.timer-name-input::placeholder {
+  color: var(--timer-fg-2);
+}
+
+.timer-name-input:focus {
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: 0;
+}
+
+.timer-sound-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.timer-sound-icon {
+  color: var(--timer-fg-2);
+  margin-right: 2px;
+}
+
+.timer-sound-btn {
+  min-height: 36px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--timer-soft);
+  color: var(--timer-fg-2);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.timer-sound-btn--active {
+  background: var(--timer-track);
+  color: var(--timer-fg);
+}
+
+.timer-start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+  border: none;
+  border-radius: 999px;
+  background: var(--timer-go-soft);
+  color: var(--timer-go);
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 150ms ease;
+}
+
+.timer-start-btn:active {
+  transform: scale(0.97);
+}
+
+/* --- Running timers --- */
+.timer-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  align-content: start;
+  gap: 16px;
+}
+
+.timer-list-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 28px 24px;
+  border-radius: 22px;
+  border: 2px dashed var(--timer-track);
+  color: var(--timer-fg-2);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.timer-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 22px;
+  background: var(--timer-soft);
+}
+
+.timer-card--finished {
+  background: var(--timer-stop-soft);
+  animation: timer-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  50% { transform: scale(1.02); }
+}
+
+.timer-ring {
+  position: relative;
+  width: min(100%, 180px);
+  aspect-ratio: 1;
+}
+
+.timer-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-ring circle {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.timer-ring-track {
+  stroke: var(--timer-track);
+}
+
+.timer-ring-fill {
+  stroke: var(--accent, #3b82f6);
+  transition: stroke-dashoffset 250ms linear;
+}
+
+.timer-card--paused .timer-ring-fill {
+  stroke: var(--timer-fg-2);
+}
+
+.timer-card--finished .timer-ring-fill {
+  stroke: var(--timer-stop);
+}
+
+.timer-ring-text {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 18%;
+  text-align: center;
+}
+
+.timer-card-time {
+  font-size: clamp(1.6rem, 1.2rem + 1.2vmin, 2.2rem);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-display--finished {
+  color: var(--timer-stop);
+  font-weight: 500;
+}
+
+.timer-card-name {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--timer-fg-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timer-card-controls {
+  display: flex;
+  gap: 16px;
+}
+
+/* --- Round buttons --- */
+.timer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--timer-track);
+  color: var(--timer-fg);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 150ms ease, opacity 150ms ease;
+}
+
+.timer-btn:active {
+  transform: scale(0.92);
+}
+
+.timer-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.timer-btn--sm {
+  width: 48px;
+  height: 48px;
+}
+
+.timer-btn--play {
+  background: var(--timer-go-soft);
+  color: var(--timer-go);
+}
+
+.timer-btn--pause {
+  background: var(--timer-stop-soft);
+  color: var(--timer-stop);
+}
+
+.timer-btn--dismiss {
+  background: var(--timer-stop);
+  color: #fff;
+}
+
+.timer-mode-btn:focus-visible,
+.timer-preset:focus-visible,
+.timer-sound-btn:focus-visible,
+.timer-start-btn:focus-visible,
+.timer-btn:focus-visible {
+  outline: 2px solid var(--accent, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* --- Stopwatch --- */
+.timer-body--stopwatch {
+  align-items: center;
+}
+
+.timer-stopwatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 5vh, 48px);
+  flex: 1;
+  width: 100%;
+}
+
+.timer-display {
+  font-size: clamp(4rem, 2rem + 12vmin, 10rem);
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-controls {
+  display: flex;
+  justify-content: space-between;
+  width: min(100%, 420px);
+}
+
+.timer-laps {
+  width: 100%;
+  max-width: 520px;
+  max-height: 40vh;
+  margin: 0;
+  padding: 6px 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.timer-lap {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 20px;
+  padding: 12px 0;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-lap + .timer-lap {
+  border-top: 1px solid var(--timer-track);
+}
+
+.timer-lap-label {
+  color: var(--timer-fg-2);
+}
+
+.timer-lap-time {
+  font-weight: 600;
+}
+
+.timer-lap-total {
+  color: var(--timer-fg-2);
+}
+
+/* --- Landscape: the new-timer panel beside the timers, laps beside the stopwatch --- */
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) {
+  .timer-body--timers {
+    display: grid;
+    grid-template-columns: minmax(320px, 400px) 1fr;
+    align-items: start;
+  }
+
+  .timer-body--stopwatch {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .timer-laps {
+    flex: 0 0 min(40%, 420px);
+    align-self: center;
+    max-height: 100%;
+  }
+}
+
+/* --- Phones --- */
+@media (max-width: 480px) {
+  .timer-mode-btn {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .timer-modes {
+    width: 100%;
+  }
+
+  .timer-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .timer-card {
+    padding: 14px 10px;
+  }
+
+  .timer-btn {
+    width: 76px;
+    height: 76px;
+  }
+
+  .timer-btn--sm {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* --- Short landscape screens (Echo Show 5, 960×480) --- */
+@media (max-height: 560px) {
+  .timer-add-section {
+    gap: 12px;
+  }
+
+  .timer-preset {
+    min-height: 48px;
+  }
+
+  .timer-start-btn {
+    min-height: 48px;
+  }
+
+  .timer-ring {
+    width: min(100%, 140px);
+  }
+}
+
+/* Unused by the app today; kept small for embedding */
+.timer--compact .timer-scroll {
+  padding: 12px;
+  gap: 8px;
+}
+
+/* A timer that's up while another screen shows. Above the screen saver
+   too: the alarm is sounding, so show what it's for. */
+.timer-ringing {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: min(92vw, 480px);
+  padding: 8px 8px 8px 16px;
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-error, #ef4444);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.timer-ringing-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timer-ringing-btn {
+  min-height: 40px;
+  padding: 6px 16px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-error, #ef4444);
+  font: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.timer-ringing-btn--secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
