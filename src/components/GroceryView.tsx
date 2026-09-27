@@ -140,23 +140,33 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
     }
   }, [allLists, selectedListId, defaultListId]);
 
-  // Load HA items via todo.get_items
+  // The HA list showing, for loads that finish after another was picked.
+  const showingListRef = useRef(haListId);
+  showingListRef.current = haListId;
+
+  // Load HA items via todo.get_items. Only the showing list's items are
+  // shown: a slow load (a refresh, or the reload after a tick) for the list
+  // left behind used to land after the new list's, showing its items under
+  // the new list's name, where ticking one failed. A failed load leaves the
+  // items as they were.
   const loadHaItems = useCallback(async (entityId: string) => {
     if (!entityId) return;
     setLoading(true);
 
     try {
-      setHaItems((await getTodoItems(entityId)) ?? []);
+      const items = (await getTodoItems(entityId)) ?? [];
+      if (entityId === showingListRef.current) setHaItems(items);
     } catch (err) {
       console.warn('GroceryView: Failed to load items', err);
-      setHaItems([]);
     } finally {
-      setLoading(false);
+      if (entityId === showingListRef.current) setLoading(false);
     }
   }, []);
 
-  // Reload when selected list changes (HA lists only)
+  // Reload when selected list changes (HA lists only), dropping the last
+  // list's items at once rather than showing them until the new ones load.
   useEffect(() => {
+    setHaItems([]);
     if (!haListId) {
       setLoading(false);
       return;

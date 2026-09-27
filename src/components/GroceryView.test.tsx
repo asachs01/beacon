@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { GroceryView } from './GroceryView';
-import { getTodoItems } from '../api/ha-services';
+import { getTodoItems, type HaTodoItem } from '../api/ha-services';
+import { fetchAllStates } from '../api/ha-rest';
 
 vi.mock('../api/ha-rest', () => ({
   hasToken: () => true,
@@ -50,5 +51,37 @@ describe('GroceryView', () => {
     render(<GroceryView mode="tasks" defaultListId="todo.chores" hideLocalList />);
     expect(await screen.findByText('Take out trash')).toBeInTheDocument();
     expect(getTodoItems).toHaveBeenCalledWith('todo.chores');
+  });
+});
+
+describe('GroceryView, switching lists', () => {
+  const listsBefore = vi.mocked(fetchAllStates).getMockImplementation();
+  const itemsBefore = vi.mocked(getTodoItems).getMockImplementation();
+  afterEach(() => {
+    vi.mocked(fetchAllStates).mockImplementation(listsBefore!);
+    vi.mocked(getTodoItems).mockImplementation(itemsBefore!);
+  });
+
+  // A slow load for the list left behind used to land after the new
+  // list's, showing its items under the new list's name.
+  it("never shows a list's items under another list", async () => {
+    vi.mocked(fetchAllStates).mockImplementation(async () => [
+      { entity_id: 'todo.chores', state: '1', attributes: { friendly_name: 'Chores' } },
+      { entity_id: 'todo.errands', state: '1', attributes: { friendly_name: 'Errands' } },
+    ]);
+    let finishChores!: (items: HaTodoItem[]) => void;
+    vi.mocked(getTodoItems).mockImplementation((id) => (id === 'todo.chores'
+      ? new Promise((resolve) => { finishChores = resolve; })
+      : Promise.resolve([{ uid: 'e1', summary: 'Post office', status: 'needs_action' }])));
+
+    render(<GroceryView mode="tasks" defaultListId="todo.chores" hideLocalList />);
+    await waitFor(() => expect(getTodoItems).toHaveBeenCalledWith('todo.chores'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'todo.errands' } });
+    expect(await screen.findByText('Post office')).toBeInTheDocument();
+
+    await act(async () => finishChores([{ uid: 'c1', summary: 'Take out trash', status: 'needs_action' }]));
+
+    expect(screen.queryByText('Take out trash')).not.toBeInTheDocument();
+    expect(screen.getByText('Post office')).toBeInTheDocument();
   });
 });
