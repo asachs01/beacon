@@ -1,3 +1,11 @@
+# [1.59.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.58.1...v1.59.0) (2026-09-27)
+
+
+### Features
+
+* frosted floating music bar in Photos; no header on the Calendar ([0214399](https://github.com/f1f1f1f1f1f1/Family/commit/02143995cde0ad138b7c33ca8b5dab09561ac0e5))
+* remove the Family Name setting and the calendar pills ([1b70be0](https://github.com/f1f1f1f1f1f1/Family/commit/1b70be0483226acd96b988af44538bfc805a0aaa))
+
 ## [1.58.1](https://github.com/f1f1f1f1f1f1/Family/compare/v1.58.0...v1.58.1) (2026-09-27)
 
 
