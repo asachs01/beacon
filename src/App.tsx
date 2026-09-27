@@ -196,6 +196,7 @@ export function App() {
     currentCompletions,
     completeChore,
     uncompleteChore,
+    isChoreDone,
   } = useChores(fullAppShown);
 
   // Keeps running on the Kid Display: the sync itself runs in the add-on,
@@ -295,6 +296,9 @@ export function App() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   // Not mounted (so not downloaded, and not fetching its data) until first opened.
   const [leaderboardOpened, setLeaderboardOpened] = useState(false);
+  // The Timer screen isn't mounted until first opened either, then stays,
+  // hidden behind other screens, so its timers keep counting and ring there.
+  const [timerOpened, setTimerOpened] = useState(activeView === 'timer');
 
   // Fetch data when connected, or when the user navigates to a different week.
   useEffect(() => {
@@ -475,6 +479,7 @@ export function App() {
       }
       // All other views: close any open panel and switch view
       setShowLeaderboard(false);
+      if (view === 'timer') setTimerOpened(true);
       setActiveView(view);
     },
     [],
@@ -484,28 +489,18 @@ export function App() {
     setShowLeaderboard(false);
   }, []);
 
-  // Build a set of chore IDs completed today (for the dashboard checklist).
-  // We use the first member for now; a member-picker could be added later.
-  const firstMemberId = members.length > 0 ? members[0].id : '__none__';
-  const completedChoreIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const c of currentCompletions) {
-      if (c.member_id === firstMemberId) {
-        ids.add(c.chore_id);
-      }
-    }
-    return ids;
-  }, [currentCompletions, firstMemberId]);
-
+  // The dashboard's and Calendar screen's chore checklists tick a chore for
+  // one person. (Every tick used to go to the first family member, whoever
+  // the chore was for: they got its pay and streak.)
   const handleToggleChore = useCallback(
-    (choreId: string) => {
-      if (completedChoreIds.has(choreId)) {
-        uncompleteChore(choreId, firstMemberId);
+    (choreId: string, memberId: string) => {
+      if (isChoreDone(choreId, memberId)) {
+        uncompleteChore(choreId, memberId);
       } else {
-        completeChore(choreId, firstMemberId);
+        completeChore(choreId, memberId);
       }
     },
-    [completedChoreIds, completeChore, uncompleteChore, firstMemberId]
+    [isChoreDone, completeChore, uncompleteChore]
   );
 
   // Handle onboarding completion. After the reload, main.tsx puts the saved
@@ -616,7 +611,7 @@ export function App() {
               events={visibleEvents}
               weather={weather}
               chores={settings.choresEnabled ? chores : []}
-              completedChoreIds={completedChoreIds}
+              choreCompletions={currentCompletions}
               onToggleChore={handleToggleChore}
               todoItems={dashboardTasks.items}
               onToggleTodo={dashboardTasks.toggleItem}
@@ -637,7 +632,7 @@ export function App() {
               onAddEvent={handleAddEvent}
               onAddGroceryItem={() => setActiveView('grocery')}
               onAddChore={() => handleChangeView('chores')}
-              onNavigateTimer={() => setActiveView('timer')}
+              onNavigateTimer={() => handleChangeView('timer')}
               sidebarPosition={sidebarPos}
             />
           </>
@@ -691,11 +686,7 @@ export function App() {
         ) : activeView === 'tasks' ? (
           <GroceryView key="tasks" mode="tasks" groceryListIds={settings.groceryListIds} hideLocalList={settings.hideLocalTaskList} hiddenListIds={choreSyncListIds} />
         ) : activeView === 'timer' ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
-            <LazyBoundary>
-              <Timer />
-            </LazyBoundary>
-          </div>
+          null // shown below, and kept once opened
         ) : activeView === 'weather' ? (
           <LazyBoundary>
             <WeatherView />
@@ -757,7 +748,7 @@ export function App() {
               <CalendarSidebar
                 events={visibleEvents}
                 chores={settings.choresEnabled ? chores : []}
-                completedChoreIds={completedChoreIds}
+                choreCompletions={currentCompletions}
                 onToggleChore={handleToggleChore}
                 todoItems={dashboardTasks.items}
                 onToggleTodo={dashboardTasks.toggleItem}
@@ -770,10 +761,25 @@ export function App() {
               onAddEvent={handleAddEvent}
               onAddGroceryItem={() => setActiveView('grocery')}
               onAddChore={() => handleChangeView('chores')}
-              onNavigateTimer={() => setActiveView('timer')}
+              onNavigateTimer={() => handleChangeView('timer')}
               sidebarPosition={sidebarPos}
             />
           </>
+        )}
+        {timerOpened && (
+          <div
+            style={{
+              display: activeView === 'timer' ? 'flex' : 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              padding: 24,
+            }}
+          >
+            <LazyBoundary>
+              <Timer shown={activeView === 'timer'} onShow={() => handleChangeView('timer')} />
+            </LazyBoundary>
+          </div>
         )}
       </div>
 

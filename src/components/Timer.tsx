@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Flag, X, Plus, Volume2, BellOff } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Play, Pause, RotateCcw, Flag, X, Plus, Volume2, BellOff, BellRing } from 'lucide-react';
 
 const PRESETS = [
   { label: '1m', seconds: 60 },
@@ -119,6 +120,14 @@ function playSoundOnce(sound: SoundName): AudioContext | null {
 
 interface TimerProps {
   compact?: boolean;
+  /**
+   * Whether the Timer screen is showing. App keeps it mounted once opened,
+   * so timers keep counting and ring on other screens, where a timer that's
+   * up shows a notice to stop it. (Leaving the screen used to end them all.)
+   */
+  shown?: boolean;
+  /** Opens the Timer screen, from that notice. */
+  onShow?: () => void;
 }
 
 interface TimerInstance {
@@ -145,7 +154,7 @@ function formatTime(totalMs: number): string {
 
 let nextTimerId = 1;
 
-export function Timer({ compact = false }: TimerProps) {
+export function Timer({ compact = false, shown = true, onShow }: TimerProps) {
   const [mode, setMode] = useState<TimerMode>('timers');
   const [sound, setSound] = useState<SoundName>(getStoredSound);
 
@@ -153,15 +162,10 @@ export function Timer({ compact = false }: TimerProps) {
   const [timers, setTimers] = useState<TimerInstance[]>([]);
   const [newName, setNewName] = useState('');
   const [selectedPreset, setSelectedPreset] = useState(300); // 5m default
-  const timersRef = useRef<TimerInstance[]>([]);
-  const rafRef = useRef<number>(0);
   const beeped = useRef<Set<string>>(new Set());
 
   // Track looping beep intervals per timer id
   const loopIntervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
-
-  // Keep ref in sync
-  timersRef.current = timers;
 
   // Persist sound choice
   const changeSound = useCallback((s: SoundName) => {
@@ -204,43 +208,39 @@ export function Timer({ compact = false }: TimerProps) {
   const [laps, setLaps] = useState<number[]>([]);
   const swStartRef = useRef<number>(0);
   const swBaseRef = useRef<number>(0);
-  const swRafRef = useRef<number>(0);
 
   // We need a ref for sound so the tick callback always sees the latest value
   const soundRef = useRef(sound);
   soundRef.current = sound;
 
-  // Single RAF loop for all countdown timers
-  const tickTimers = useCallback(() => {
-    const now = performance.now();
-
-    setTimers((prev) => {
-      const next = prev.map((t) => {
-        if (!t.running || t.finished) return t;
-        const currentElapsed = t.pausedElapsed + (now - t.startedAt);
-        if (currentElapsed >= t.totalMs) {
-          if (!beeped.current.has(t.id)) {
-            beeped.current.add(t.id);
-            startBeepLoop(t.id, soundRef.current);
-          }
-          return { ...t, running: false, finished: true, pausedElapsed: t.totalMs };
-        }
-        return t;
-      });
-      return next;
-    });
-
-    rafRef.current = requestAnimationFrame(tickTimers);
-  }, [startBeepLoop]);
-
-  // Start/stop the RAF loop based on whether any timer is running
+  // One clock for every countdown, four times a second: it rings the timers
+  // that are up, and redraws the countdowns while the screen shows. (It
+  // redrew on every animation frame, which it would now also do behind
+  // other screens.)
+  const [, setNow] = useState(0);
   useEffect(() => {
-    const hasRunning = timers.some((t) => t.running && !t.finished);
-    if (hasRunning) {
-      rafRef.current = requestAnimationFrame(tickTimers);
-    }
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [timers, tickTimers]);
+    if (!timers.some((t) => t.running && !t.finished)) return;
+    const tick = () => {
+      const now = performance.now();
+      const due = timers.filter((t) => t.running && !t.finished && t.pausedElapsed + (now - t.startedAt) >= t.totalMs);
+      if (due.length === 0) {
+        if (shown) setNow(now);
+        return;
+      }
+      for (const t of due) {
+        if (!beeped.current.has(t.id)) {
+          beeped.current.add(t.id);
+          startBeepLoop(t.id, soundRef.current);
+        }
+      }
+      const dueIds = new Set(due.map((t) => t.id));
+      setTimers((prev) => prev.map((t) => (
+        dueIds.has(t.id) ? { ...t, running: false, finished: true, pausedElapsed: t.totalMs } : t
+      )));
+    };
+    const interval = setInterval(tick, 250);
+    return () => clearInterval(interval);
+  }, [timers, shown, startBeepLoop]);
 
   // Compute remaining time for display
   function getRemaining(t: TimerInstance): number {
@@ -304,35 +304,39 @@ export function Timer({ compact = false }: TimerProps) {
   }, [stopBeepLoop]);
 
   // --- Stopwatch logic ---
-  const swTick = useCallback(() => {
-    const now = performance.now();
-    setSwElapsed(swBaseRef.current + (now - swStartRef.current));
-    swRafRef.current = requestAnimationFrame(swTick);
-  }, []);
+  /** Time on the running stopwatch: what ran before this start, plus since. */
+  const swReading = useCallback(() => swBaseRef.current + (performance.now() - swStartRef.current), []);
 
+  // Redrawn while the screen shows; pause and lap read the time themselves.
   useEffect(() => {
-    if (swRunning) {
-      swStartRef.current = performance.now();
-      swRafRef.current = requestAnimationFrame(swTick);
-    }
-    return () => cancelAnimationFrame(swRafRef.current);
-  }, [swRunning, swTick]);
+    if (!swRunning || !shown) return;
+    const redraw = () => setSwElapsed(swReading());
+    redraw();
+    const interval = setInterval(redraw, 250);
+    return () => clearInterval(interval);
+  }, [swRunning, shown, swReading]);
 
-  const swStart = useCallback(() => setSwRunning(true), []);
+  const swStart = useCallback(() => {
+    swStartRef.current = performance.now();
+    setSwRunning(true);
+  }, []);
   const swPause = useCallback(() => {
-    swBaseRef.current = swElapsed;
+    swBaseRef.current = swReading();
+    setSwElapsed(swBaseRef.current);
     setSwRunning(false);
-  }, [swElapsed]);
+  }, [swReading]);
   const swReset = useCallback(() => {
-    cancelAnimationFrame(swRafRef.current);
     setSwRunning(false);
     setSwElapsed(0);
     setLaps([]);
     swBaseRef.current = 0;
   }, []);
   const swLap = useCallback(() => {
-    if (swRunning) setLaps((prev) => [...prev, swElapsed]);
-  }, [swRunning, swElapsed]);
+    if (swRunning) setLaps((prev) => [...prev, swReading()]);
+  }, [swRunning, swReading]);
+
+  /** Timers that are up and sounding until dismissed. */
+  const ringing = timers.filter((t) => t.finished);
 
   return (
     <div className={`timer ${compact ? 'timer--compact' : ''}`}>
@@ -532,6 +536,29 @@ export function Timer({ compact = false }: TimerProps) {
             </div>
           )}
         </>
+      )}
+
+      {/* On another screen (this one is hidden): the timer that's ringing */}
+      {!shown && ringing.length > 0 && createPortal(
+        <div className="timer-ringing" role="alert">
+          <BellRing size={20} aria-hidden="true" />
+          <span className="timer-ringing-text">
+            {ringing.length === 1 ? `${ringing[0].name} is done` : `${ringing.length} timers are done`}
+          </span>
+          <button
+            type="button"
+            className="timer-ringing-btn"
+            onClick={() => ringing.forEach((t) => dismissTimer(t.id))}
+          >
+            Stop
+          </button>
+          {onShow && (
+            <button type="button" className="timer-ringing-btn timer-ringing-btn--secondary" onClick={onShow}>
+              Show
+            </button>
+          )}
+        </div>,
+        document.body,
       )}
     </div>
   );

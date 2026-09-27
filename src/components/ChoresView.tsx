@@ -43,6 +43,48 @@ const EMPTY_CHORE_FORM = {
   icon: '🧹',
 };
 
+/** Whole stars, or money to the cent; a negative or unreadable value is 0. */
+function parseChoreValue(text: string, stars: boolean): number {
+  const value = parseFloat(text);
+  if (!Number.isFinite(value) || value < 0) return 0;
+  return stars ? Math.round(value) * 100 : Math.round(value * 100);
+}
+
+/**
+ * The chore's value as typed, tidied up (2.5 → 2.50) once the field is left.
+ * It used to be reformatted on every keystroke, which pushed what was typed
+ * past the decimals: typing 2.50 into the cleared field saved $0.01, and the
+ * field couldn't be emptied.
+ */
+function ChoreValueInput({ valueCents, currencySymbol, onChange }: {
+  valueCents: number;
+  currencySymbol: string;
+  onChange: (valueCents: number) => void;
+}) {
+  const stars = currencySymbol === STAR_CURRENCY;
+  const format = (cents: number) => (stars ? String(Math.round(cents / 100)) : (cents / 100).toFixed(2));
+  const [text, setText] = useState(() => format(valueCents));
+
+  return (
+    <div className="chores-value-input">
+      <span className="chores-value-prefix">{currencySymbol}</span>
+      <input
+        id="chore-value"
+        type="number"
+        className="form-input"
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          onChange(parseChoreValue(e.target.value, stars));
+        }}
+        onBlur={() => setText(format(valueCents))}
+        step={stars ? '1' : '0.25'}
+        min="0"
+      />
+    </div>
+  );
+}
+
 interface UnassignedChoreCardProps {
   chore: Chore;
   members: FamilyMember[];
@@ -485,32 +527,12 @@ export function ChoresView() {
               </div>
 
               <div className="form-field">
-                <label className="form-label">Value</label>
-                <div className="chores-value-input">
-                  <span className="chores-value-prefix">
-                    {settings.currencySymbol === STAR_CURRENCY ? STAR_CURRENCY : '$'}
-                  </span>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={
-                      settings.currencySymbol === STAR_CURRENCY
-                        ? Math.round(newChore.value_cents / 100).toString()
-                        : (newChore.value_cents / 100).toFixed(2)
-                    }
-                    onChange={(e) =>
-                      setNewChore((f) => ({
-                        ...f,
-                        value_cents:
-                          settings.currencySymbol === STAR_CURRENCY
-                            ? Math.round(parseFloat(e.target.value || '0')) * 100
-                            : Math.round(parseFloat(e.target.value || '0') * 100),
-                      }))
-                    }
-                    step={settings.currencySymbol === STAR_CURRENCY ? '1' : '0.25'}
-                    min="0"
-                  />
-                </div>
+                <label className="form-label" htmlFor="chore-value">Value</label>
+                <ChoreValueInput
+                  valueCents={newChore.value_cents}
+                  currencySymbol={settings.currencySymbol || '$'}
+                  onChange={(value_cents) => setNewChore((f) => ({ ...f, value_cents }))}
+                />
               </div>
 
               <div className="form-field">

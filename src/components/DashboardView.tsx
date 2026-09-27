@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { isSameDay, startOfDay, addDays } from 'date-fns';
 import { CalendarEvent, WeatherData } from '../types';
 import { eventOccursOnDay } from '../utils/event-dates';
-import { Chore, FamilyMember } from '../types/family';
+import { Chore, ChoreCompletion, FamilyMember } from '../types/family';
 import { useFamilyEvents } from '../hooks/useFamilyEvents';
 import { useMealPlans } from '../hooks/useMealPlans';
 import { useClock, byDay } from '../hooks/useClock';
@@ -23,8 +23,9 @@ interface DashboardViewProps {
   events: CalendarEvent[];
   weather: WeatherData | null;
   chores: Chore[];
-  completedChoreIds: Set<string>;
-  onToggleChore: (choreId: string) => void;
+  /** Completions that count for each chore's current round, everyone's. */
+  choreCompletions: ChoreCompletion[];
+  onToggleChore: (choreId: string, memberId: string) => void;
   todoItems?: TodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
   onWeatherClick?: () => void;
@@ -44,7 +45,7 @@ export function DashboardView({
   events,
   weather,
   chores,
-  completedChoreIds,
+  choreCompletions,
   onToggleChore,
   todoItems = [],
   onToggleTodo,
@@ -123,7 +124,7 @@ export function DashboardView({
     onToggleTodo,
     taskmateUsers,
     filteredChores,
-    completedChoreIds,
+    choreCompletions,
     onToggleChore,
   };
 

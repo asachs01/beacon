@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { CalendarEvent } from '../types';
-import { Chore, FamilyMember } from '../types/family';
+import { Chore, ChoreCompletion, FamilyMember } from '../types/family';
 import { TaskChecklist } from './TaskChecklist';
 import { DashboardTodoItem } from '../hooks/useDashboardTasks';
 import { eventOccursOnDay } from '../utils/event-dates';
@@ -9,8 +9,9 @@ import { eventOccursOnDay } from '../utils/event-dates';
 interface CalendarSidebarProps {
   events: CalendarEvent[];
   chores: Chore[];
-  completedChoreIds: Set<string>;
-  onToggleChore: (choreId: string) => void;
+  /** Completions that count for each chore's current round, everyone's. */
+  choreCompletions: ChoreCompletion[];
+  onToggleChore: (choreId: string, memberId: string) => void;
   todoItems: DashboardTodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string) => void;
   members?: FamilyMember[];
@@ -19,7 +20,7 @@ interface CalendarSidebarProps {
 export function CalendarSidebar({
   events,
   chores,
-  completedChoreIds,
+  choreCompletions,
   onToggleChore,
   todoItems,
   onToggleTodo,
@@ -87,7 +88,7 @@ export function CalendarSidebar({
         ) : chores.length > 0 ? (
           <TaskChecklist
             chores={chores}
-            completedIds={completedChoreIds}
+            completions={choreCompletions}
             onToggle={onToggleChore}
             members={members}
           />
