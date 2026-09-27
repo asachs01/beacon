@@ -650,6 +650,7 @@ export function App() {
               onPrevious={music.previous}
               onSetVolume={music.setVolume}
               onSeek={music.seek}
+              onStepVolume={music.stepVolume}
               onSetShuffle={music.setShuffle}
               onSetRepeat={music.setRepeat}
               onSelectPlayer={music.selectPlayer}

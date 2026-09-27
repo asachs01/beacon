@@ -12,6 +12,9 @@ import {
   next as apiNext,
   previous as apiPrevious,
   setVolume as apiSetVolume,
+  setMuted as apiSetMuted,
+  volumeUp as apiVolumeUp,
+  volumeDown as apiVolumeDown,
   seek as apiSeek,
   setShuffle as apiSetShuffle,
   setRepeat as apiSetRepeat,
@@ -33,6 +36,8 @@ interface UseMusicReturn {
   previous: (entityId?: string) => Promise<void>;
   setVolume: (level: number, entityId?: string) => Promise<void>;
   seek: (position: number, entityId?: string) => Promise<void>;
+  /** A step up (+1) or down (-1), for players that can't set a level */
+  stepVolume: (direction: 1 | -1, entityId?: string) => Promise<void>;
   setShuffle: (shuffle: boolean, entityId?: string) => Promise<void>;
   setRepeat: (repeat: MediaRepeat, entityId?: string) => Promise<void>;
   selectedPlayerId: string | null;
@@ -178,11 +183,28 @@ export function useMusic(
   const pause = useCallback((entityId?: string) => control(entityId, apiPause, at('paused')), [control]);
   const next = useCallback((entityId?: string) => control(entityId, apiNext), [control]);
   const previous = useCallback((entityId?: string) => control(entityId, apiPrevious), [control]);
+  // A muted player shows no volume, and setting one leaves most players
+  // muted, so the slider fell back to nothing: moving it unmutes too, as on
+  // iOS.
+  const playersRef = useRef(players);
+  playersRef.current = players;
   const setVolume = useCallback(
     (level: number, entityId?: string) => control(
       entityId,
-      (client, id) => apiSetVolume(client, id, level),
+      async (client, id) => {
+        await apiSetVolume(client, id, level);
+        if (playersRef.current.find((p) => p.entity_id === id)?.is_volume_muted) {
+          await apiSetMuted(client, id, false);
+        }
+      },
       () => ({ volume_level: level, is_volume_muted: false }),
+    ),
+    [control],
+  );
+  const stepVolume = useCallback(
+    (direction: 1 | -1, entityId?: string) => control(
+      entityId,
+      direction > 0 ? apiVolumeUp : apiVolumeDown,
     ),
     [control],
   );
@@ -224,6 +246,7 @@ export function useMusic(
     previous,
     setVolume,
     seek,
+    stepVolume,
     setShuffle,
     setRepeat,
     selectedPlayerId,

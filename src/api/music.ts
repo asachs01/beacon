@@ -36,6 +36,9 @@ export function parseMediaPlayer(entity: {
 /** HA's MediaPlayerEntityFeature bits for the controls that aren't always there. */
 export const MediaFeature = {
   SEEK: 2,
+  VOLUME_SET: 4,
+  /** Volume up/down only, as on an Apple TV (its remote's volume buttons) */
+  VOLUME_STEP: 1024,
   SHUFFLE_SET: 32768,
   REPEAT_SET: 262144,
 } as const;
@@ -174,6 +177,15 @@ export const previous = (client: HomeAssistantClient | null, entityId: string) =
 
 export const setVolume = (client: HomeAssistantClient | null, entityId: string, level: number) =>
   callMedia(client, 'volume_set', entityId, { volume_level: Math.max(0, Math.min(1, level)) });
+
+export const volumeUp = (client: HomeAssistantClient | null, entityId: string) =>
+  callMedia(client, 'volume_up', entityId);
+
+export const volumeDown = (client: HomeAssistantClient | null, entityId: string) =>
+  callMedia(client, 'volume_down', entityId);
+
+export const setMuted = (client: HomeAssistantClient | null, entityId: string, muted: boolean) =>
+  callMedia(client, 'volume_mute', entityId, { is_volume_muted: muted });
 
 export const seek = (client: HomeAssistantClient | null, entityId: string, position: number) =>
   callMedia(client, 'media_seek', entityId, { seek_position: Math.max(0, position) });

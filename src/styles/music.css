@@ -315,6 +315,56 @@
   gap: 12px;
 }
 
+/* A player whose volume can't be set from here */
+.music-volume--disabled {
+  opacity: 0.4;
+}
+
+.music-volume--disabled .music-slider {
+  cursor: default;
+}
+
+/* Volume down / up, for players that can't set a level (Apple TV) */
+.music-volume--steps {
+  justify-content: space-between;
+}
+
+.music-volume-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--music-soft);
+  color: var(--music-fg);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 150ms ease;
+}
+
+.music-volume-step svg {
+  width: 22px;
+  height: 22px;
+}
+
+.music-volume-step:active {
+  transform: scale(0.9);
+}
+
+.music-volume-step:focus-visible {
+  outline: 2px solid var(--music-fg-2);
+  outline-offset: 2px;
+}
+
+.music-volume-step-label {
+  color: var(--music-fg-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .music-volume-icon {
   width: 18px;
   height: 18px;

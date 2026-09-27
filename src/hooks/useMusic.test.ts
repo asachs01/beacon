@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import type { MediaPlayer } from '../types/music';
 import { useMusic } from './useMusic';
-import { getMediaPlayers, refreshMediaPlayers, pause, seek, setRepeat } from '../api/music';
+import { getMediaPlayers, refreshMediaPlayers, pause, seek, setRepeat, setVolume, setMuted } from '../api/music';
 
 /** Stable, as App's is: a new function each render reloads the players. */
 const noClient = () => null;
@@ -19,6 +19,9 @@ vi.mock('../api/music', async (importActual) => ({
   next: vi.fn(async () => {}),
   previous: vi.fn(async () => {}),
   setVolume: vi.fn(async () => {}),
+  setMuted: vi.fn(async () => {}),
+  volumeUp: vi.fn(async () => {}),
+  volumeDown: vi.fn(async () => {}),
   seek: vi.fn(async () => {}),
   setShuffle: vi.fn(async () => {}),
   setRepeat: vi.fn(async () => {}),
@@ -83,5 +86,24 @@ describe('useMusic', () => {
     await act(async () => { await result.current.setRepeat('all', 'media_player.living_room'); });
     expect(setRepeat).toHaveBeenCalledWith(null, 'media_player.living_room', 'all');
     expect(result.current.players[0]?.repeat).toBe('all');
+  });
+
+  // Setting a volume leaves most players muted, and a muted one shows none.
+  it('unmutes a muted player when its volume is set', async () => {
+    vi.mocked(getMediaPlayers).mockResolvedValueOnce([
+      player('media_player.living_room', 'playing', { volume_level: 0.3, is_volume_muted: true }),
+      player('media_player.kitchen', 'playing', { volume_level: 0.3, is_volume_muted: false }),
+    ]);
+    const { result } = renderHook(() => useMusic(noClient, true, true));
+    await waitFor(() => expect(result.current.players).toHaveLength(2));
+
+    await act(async () => { await result.current.setVolume(0.6, 'media_player.living_room'); });
+    expect(setVolume).toHaveBeenCalledWith(null, 'media_player.living_room', 0.6);
+    expect(setMuted).toHaveBeenCalledWith(null, 'media_player.living_room', false);
+    expect(result.current.players[0]).toMatchObject({ volume_level: 0.6, is_volume_muted: false });
+
+    vi.mocked(setMuted).mockClear();
+    await act(async () => { await result.current.setVolume(0.5, 'media_player.kitchen'); });
+    expect(setMuted).not.toHaveBeenCalled();
   });
 });

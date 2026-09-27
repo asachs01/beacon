@@ -40,7 +40,8 @@ const ALLOWED_SERVICES = new Map(Object.entries({
   media_player: [
     'media_play', 'media_pause', 'media_play_pause', 'toggle',
     'media_next_track', 'media_previous_track', 'volume_set',
-    'media_seek', 'shuffle_set', 'repeat_set',
+    'media_seek', 'shuffle_set', 'repeat_set', 'volume_mute',
+    'volume_up', 'volume_down',
   ],
   // HA Toggle card (src/components/cards/HaToggleCard.tsx)
   ...Object.fromEntries(TOGGLE_DOMAINS.map((domain) => [domain, ['toggle']])),
