@@ -1,3 +1,10 @@
+# [1.56.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.55.0...v1.56.0) (2026-09-27)
+
+
+### Features
+
+* frosted glass panels on the Music, Weather and Timer screens ([3bbb81b](https://github.com/f1f1f1f1f1f1/Family/commit/3bbb81b39b3f7e2eb22b9434d6f1f474877a7676))
+
 # [1.55.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.54.0...v1.55.0) (2026-09-27)
 
 
