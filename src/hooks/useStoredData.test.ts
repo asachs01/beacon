@@ -6,7 +6,21 @@ const server = vi.hoisted(() => ({
   saves: [] as { key: string; value: unknown }[],
   patches: [] as { key: string; patch: unknown }[],
   addOn: false,
+  /** Loads wait for this while set (a slow network). */
+  gate: null as Promise<void> | null,
+  loads: 0,
 }));
+
+/** Stand-in for data-changes.ts: changedElsewhere(key) is the poller spotting a change. */
+const watchers = vi.hoisted(() => new Map<string, Set<() => void>>());
+vi.mock('../api/data-changes', () => ({
+  onDataChanged: (key: string, listener: () => void) => {
+    if (!watchers.has(key)) watchers.set(key, new Set());
+    watchers.get(key)!.add(listener);
+    return () => watchers.get(key)?.delete(listener);
+  },
+}));
+const changedElsewhere = (key: string) => watchers.get(key)?.forEach((listener) => listener());
 
 vi.mock('../utils/ha-env', () => ({ isAddOn: () => server.addOn }));
 
@@ -15,7 +29,12 @@ vi.mock('../api/beacon-store', () => ({
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : fallback;
   },
-  loadData: async (key: string, fallback: unknown) => (server.data.has(key) ? server.data.get(key) : fallback),
+  loadData: async (key: string, fallback: unknown) => {
+    server.loads++;
+    const gate = server.gate;
+    if (gate) await gate;
+    return server.data.has(key) ? server.data.get(key) : fallback;
+  },
   saveData: async (key: string, value: unknown) => {
     server.saves.push({ key, value });
     server.data.set(key, value);
@@ -41,6 +60,9 @@ beforeEach(() => {
   server.data.clear();
   server.saves = [];
   server.patches = [];
+  server.gate = null;
+  server.loads = 0;
+  watchers.clear();
 });
 
 describe('useStoredData', () => {
@@ -90,6 +112,51 @@ describe('useStoredData, two copies and two displays', () => {
     act(() => { result.current[1]((prev) => [...prev, 'b']); });
     await waitFor(() => expect(server.data.get('tasks')).toEqual(['a', 'from another display', 'b']));
     expect(result.current[0]).toEqual(['a', 'from another display', 'b']);
+  });
+});
+
+describe('useStoredData, changes made elsewhere', () => {
+  // Settings, lists and the built-in calendar were loaded again only when
+  // the page was shown again, which a wall display never is.
+  it('shows a change made on another display', async () => {
+    server.data.set('tasks', ['a']);
+    const { result } = renderHook(() => useStoredData<string[]>('tasks', []));
+    await waitFor(() => expect(result.current[0]).toEqual(['a']));
+
+    server.data.set('tasks', ['a', 'from another display']);
+    act(() => changedElsewhere('tasks'));
+
+    await waitFor(() => expect(result.current[0]).toEqual(['a', 'from another display']));
+    expect(server.saves).toEqual([]);
+  });
+
+  it("doesn't let a reload that started before this display's change undo it", async () => {
+    server.data.set('settings', { theme: 'dark' });
+    const { result } = renderHook(() => useStoredData<Record<string, string>>('settings', {}));
+    await waitFor(() => expect(result.current[0]).toEqual({ theme: 'dark' }));
+
+    let finishLoading!: () => void;
+    server.gate = new Promise<void>((resolve) => { finishLoading = resolve; });
+    act(() => changedElsewhere('settings'));
+    // Saved by the caller (like updateSettings); the server has the old value until it lands.
+    act(() => { result.current[1]((prev) => ({ ...prev, clock: '24h' }), false); });
+    await act(async () => { finishLoading(); await server.gate; });
+
+    expect(result.current[0]).toEqual({ theme: 'dark', clock: '24h' });
+  });
+
+  it('shares one load among the hooks showing a key', async () => {
+    server.data.set('tasks', ['a']);
+    const tasksScreen = renderHook(() => useStoredData<string[]>('tasks', []));
+    const dashboard = renderHook(() => useStoredData<string[]>('tasks', []));
+    await waitFor(() => expect(dashboard.result.current[0]).toEqual(['a']));
+    const loadsOnOpening = server.loads;
+
+    server.data.set('tasks', ['a', 'b']);
+    act(() => changedElsewhere('tasks'));
+
+    await waitFor(() => expect(tasksScreen.result.current[0]).toEqual(['a', 'b']));
+    expect(server.loads - loadsOnOpening).toBe(1);
   });
 });
 

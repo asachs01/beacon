@@ -256,6 +256,36 @@ describe('add-on server', () => {
     expect(readFileSync(join(dir, 'data', 'test_broken_settings.json'), 'utf8')).toBe('{"theme":');
   });
 
+  // Displays ask for these counts to notice changes made on another display.
+  it('counts the writes to each stored file', async () => {
+    const changes = () => fetch(`${base}/beacon-action/changes`).then((r) => r.json());
+    const before = await changes();
+
+    await fetch(`${base}/beacon-collection/test_counted`, { method: 'POST', body: '{"name":"a"}' });
+    await fetch(`${base}/beacon-collection/test_counted`);
+    await fetch(`${base}/beacon-data/test_counted_settings?merge`, { method: 'PUT', body: '{"theme":"dark"}' });
+    await fetch(`${base}/beacon-data/test_counted_settings`, { method: 'PUT', body: '{"theme":"light"}' });
+
+    const after = await changes();
+    expect(after.boot).toBe(before.boot);
+    expect(after.counts.test_counted).toBe((before.counts.test_counted ?? 0) + 1);
+    expect(after.counts.test_counted_settings).toBe((before.counts.test_counted_settings ?? 0) + 2);
+  });
+
+  it("doesn't count a write that didn't happen", async () => {
+    mkdirSync(join(dir, 'data'), { recursive: true });
+    writeFileSync(join(dir, 'data', 'test_uncounted.json'), '[{"id":"a"},');
+    const changes = () => fetch(`${base}/beacon-action/changes`).then((r) => r.json());
+    const before = await changes();
+
+    await fetch(`${base}/beacon-collection/test_uncounted`, { method: 'POST', body: '{"name":"new"}' });
+    await fetch(`${base}/beacon-collection/test_other/missing`, { method: 'PUT', body: '{"name":"x"}' });
+
+    const after = await changes();
+    expect(after.counts.test_uncounted).toBe(before.counts.test_uncounted);
+    expect(after.counts.test_other).toBe(before.counts.test_other);
+  });
+
   // Two first ticks at once (the app and the Google Tasks sync) each added
   // a streak under the member's id, leaving two records with one id.
   it('merges an added item into one with the same id', async () => {

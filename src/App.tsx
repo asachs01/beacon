@@ -37,6 +37,8 @@ import { setHaKioskMode } from './utils/ha-kiosk';
 import { applyFontScale } from './utils/font-scale';
 import { formToPayload, movedPayload, occurrenceTarget, type EditScope, type EventPayload, type OccurrenceTarget } from './utils/calendar-edits';
 import { SaveFailedNotice } from './components/SaveFailedNotice';
+import { onDataChanged, watchDataChanges } from './api/data-changes';
+import { FAMILY_COLLECTIONS, notifyFamilyDataChanged } from './api/family';
 
 const config = getConfig();
 
@@ -206,6 +208,19 @@ export function App() {
     runSync: runChoresSync,
     available: choresSyncAvailable,
   } = useChoresSync(settings.choresSyncEnabled);
+
+  // What another display (or the Google Tasks sync) changes shows here
+  // within seconds: chores, completions, members and routines are loaded
+  // again by every screen showing them, and settings, lists and the
+  // built-in calendar watch their own keys (useStoredData).
+  useEffect(() => {
+    const stopWatching = watchDataChanges();
+    const stopFamily = onDataChanged(FAMILY_COLLECTIONS, () => notifyFamilyDataChanged());
+    return () => {
+      stopFamily();
+      stopWatching();
+    };
+  }, []);
 
   // Lists mirrored as chores by the Google Tasks sync already show on the
   // Chores screen, so keep them out of the Tasks screen and dashboard.

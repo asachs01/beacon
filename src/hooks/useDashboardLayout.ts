@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { loadData, loadDataSync } from '../api/beacon-store';
 import { addToCollection, getCollection, getCollectionSync, removeFromCollection } from '../api/beacon-collection';
+import { onDataChanged } from '../api/data-changes';
+import { unlessUnchanged } from '../utils/same-data';
 import { DashboardCard, DashboardLayoutView, DashboardRegionLayout, GridPosition } from '../types/dashboard-cards';
 
 /** The whole layout as one document: now only read, to carry it over to VIEWS_COLLECTION. */
@@ -218,11 +220,18 @@ export function useDashboardLayout(preset: DashboardPreset) {
 
   useEffect(() => {
     let cancelled = false;
-    loadViews(preset).then((loaded) => {
-      if (!cancelled && loaded) setViews(loaded);
+    const load = () => loadViews(preset).then((loaded) => {
+      if (!cancelled && loaded) setViews((current) => unlessUnchanged(current, loaded));
     });
-    return () => { cancelled = true; };
-    // Only re-fetch on mount — preset changes are handled below without a reload.
+    void load();
+    // Changed on another display (see data-changes.ts): loaded again once
+    // this display's own saves are done.
+    const stopWatching = onDataChanged(VIEWS_COLLECTION, () => { void saving.current.then(load); });
+    return () => {
+      cancelled = true;
+      stopWatching();
+    };
+    // Loaded on mount and when changed elsewhere — preset changes are handled below without a reload.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only load; preset is just the fallback for a missing saved layout
   }, []);
 
