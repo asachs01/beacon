@@ -1,3 +1,10 @@
+# [1.54.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.53.1...v1.54.0) (2026-09-27)
+
+
+### Features
+
+* music screen in the theme's colours, with a light artwork tint ([94925b2](https://github.com/f1f1f1f1f1f1/Family/commit/94925b228dfad22c0473c1ad6e537e885b0ecc28))
+
 ## [1.53.1](https://github.com/f1f1f1f1f1f1/Family/compare/v1.53.0...v1.53.1) (2026-09-27)
 
 
