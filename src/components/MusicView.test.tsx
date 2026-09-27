@@ -158,6 +158,18 @@ describe('MusicView', () => {
     expect(screen.queryByRole('button', { name: /^Repeat/ })).not.toBeInTheDocument();
   });
 
+  it('drops the blurred background when the artwork can’t be fetched', () => {
+    const { container } = render(
+      <MusicView players={[{ ...livingRoom, entity_picture: 'https://example.test/art.jpg' }]} selectedPlayerId={null} {...handlers()} />,
+    );
+    expect(container.querySelector('.music-backdrop')).toHaveStyle({ backgroundImage: 'url("https://example.test/art.jpg")' });
+
+    fireEvent.error(screen.getByRole('img', { name: 'Afterglow' }));
+
+    expect(container.querySelector('.music-backdrop')).toHaveClass('music-backdrop--plain');
+    expect(screen.getByRole('img', { name: 'Afterglow' })).toHaveClass('music-art--placeholder');
+  });
+
   it('says when there are no speakers', () => {
     render(<MusicView players={[]} selectedPlayerId={null} {...handlers()} />);
     expect(screen.getByRole('heading', { name: 'No speakers' })).toBeInTheDocument();

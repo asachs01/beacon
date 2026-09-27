@@ -32,6 +32,9 @@ describe('isServiceAllowed', () => {
     ['media_player', 'media_play_pause'],
     ['media_player', 'toggle'],
     ['media_player', 'media_next_track'],
+    ['media_player', 'media_seek'],
+    ['media_player', 'shuffle_set'],
+    ['media_player', 'repeat_set'],
     ['media_player', 'media_previous_track'],
     ['media_player', 'volume_set'],
     ['light', 'toggle'],
@@ -229,5 +232,17 @@ describe('describeRequester', () => {
 
   it('keeps log lines to one line', () => {
     expect(describeRequester({ 'user-agent': 'a\nb' })).toBe('user="unknown user" device="a\\nb"');
+  });
+});
+
+// Seeking, shuffle and repeat were added to the Music screen without being
+// allowed here, so on the add-on they were refused with 403.
+describe('the Music screen’s services', () => {
+  it('are all allowed', async () => {
+    const { readFileSync } = await import('node:fs');
+    const source = readFileSync(new URL('./api/music.ts', import.meta.url), 'utf8');
+    const services = [...source.matchAll(/callMedia\(client, '([a-z_]+)'/g)].map((m) => m[1]);
+    expect(services.length).toBeGreaterThan(8);
+    for (const service of services) expect([service, isServiceAllowed('media_player', service)]).toEqual([service, true]);
   });
 });
