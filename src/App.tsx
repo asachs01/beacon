@@ -331,6 +331,9 @@ export function App() {
 
   // Re-fetch when calendar colors or family members change so colors update
   // immediately, without recreating the 5-minute polling interval above.
+  // Colors by content: every settings reload (now whenever any setting
+  // changes on any display) brings a new colors object.
+  const calendarColorsKey = JSON.stringify(settings.calendarColors);
   const colorRefreshRef = useRef({ connected, fullAppShown, fetchCalendars, refetchEventsForWeek, visibleWeekStart });
   colorRefreshRef.current = { connected, fullAppShown, fetchCalendars, refetchEventsForWeek, visibleWeekStart };
   const didColorRefreshMount = useRef(false);
@@ -343,7 +346,7 @@ export function App() {
     if (!colorRefreshRef.current.connected || !colorRefreshRef.current.fullAppShown) return;
     colorRefreshRef.current.fetchCalendars();
     colorRefreshRef.current.refetchEventsForWeek(colorRefreshRef.current.visibleWeekStart);
-  }, [settings.calendarColors, members]);
+  }, [calendarColorsKey, members]);
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
     setHiddenCalendars(prev => {
