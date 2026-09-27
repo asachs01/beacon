@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { refreshEntities, resetHaEntityStore, subscribeEntities } from './ha-entity-store';
 import { getAllEntityStates, getEntityState } from './ha-rest';
+import { setDisplayAsleep } from '../utils/display-sleep';
 
 vi.mock('./ha-rest', () => ({
   getEntityState: vi.fn(),
@@ -30,6 +31,7 @@ beforeEach(() => {
 
 afterEach(() => {
   resetHaEntityStore();
+  setDisplayAsleep(false);
   vi.useRealTimers();
 });
 
@@ -108,5 +110,21 @@ describe('ha-entity-store — one poller for every card', () => {
     await refreshEntities(['light.kitchen']);
 
     expect(listener).toHaveBeenLastCalledWith({ 'light.kitchen': entityState('light.kitchen') });
+  });
+
+  // A wall display spends most of the day under the screen saver, where the
+  // poller used to go on downloading states every 5 seconds.
+  it('pauses while the screen saver is up, and catches up when it goes', async () => {
+    subscribeEntities(['light.kitchen'], vi.fn());
+    await flush();
+
+    setDisplayAsleep(true);
+    mockGetEntityState.mockClear();
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(mockGetEntityState).not.toHaveBeenCalled();
+
+    setDisplayAsleep(false);
+    await flush();
+    expect(mockGetEntityState).toHaveBeenCalledTimes(1);
   });
 });
