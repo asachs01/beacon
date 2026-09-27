@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Play, Pause, RotateCcw, Flag, X, Plus, Volume2, BellOff, BellRing } from 'lucide-react';
 import '../styles/timer.css';
+import '../styles/glass.css';
 
 const PRESETS = [
   { label: '1m', seconds: 60 },

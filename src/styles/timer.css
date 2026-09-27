@@ -61,9 +61,10 @@
   left: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.12;
+  opacity: 0.2;
   background-image:
     radial-gradient(circle at 15% 10%, var(--accent, #3b82f6), transparent 55%),
+    radial-gradient(circle at 65% 40%, var(--accent, #3b82f6), transparent 35%),
     radial-gradient(circle at 90% 90%, var(--accent, #3b82f6), transparent 50%);
 }
 

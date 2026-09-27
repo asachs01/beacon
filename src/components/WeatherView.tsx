@@ -6,6 +6,7 @@ import { hasToken } from '../api/ha-rest';
 import { findWeatherEntity, getWeatherForecast } from '../api/ha-services';
 import { refreshWhileAwake } from '../utils/display-sleep';
 import '../styles/weather.css';
+import '../styles/glass.css';
 
 interface ForecastItem {
   datetime: string;

@@ -74,7 +74,8 @@ After an add-on update a running display asks for old file names and
 server.js answers with index.html; `lazyNamed` reloads the page once.
 Their stylesheets are imported by the screens themselves (settings.css,
 music.css, photos.css, weather.css, timer.css, focus.css), not main.tsx, so they
-download with the screen. Rules something on the startup path needs stay
+download with the screen; glass.css, the frosted panels Music, Weather and
+Timer share, is imported by each of the three. Rules something on the startup path needs stay
 in a startup stylesheet (e.g. settings-buttons.css, now-playing.css).
 
 ### Release Versions Only Go Up
