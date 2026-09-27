@@ -2079,6 +2079,10 @@ a:focus:not(:focus-visible) {
   :root {
     --time-axis-width: 36px;
     --hour-height: 52px;
+    /* Mobile tab bar slightly shorter. Set here rather than as the bar's
+       height, so the space kept for it (and everything placed above it)
+       matches: a 16px strip of page showed between them on phones. */
+    --mobile-tab-bar-height: 56px;
   }
 
   .header-family-name {
@@ -2147,11 +2151,6 @@ a:focus:not(:focus-visible) {
 
   .modal-footer {
     padding: 12px 16px;
-  }
-
-  /* Mobile tab bar slightly shorter */
-  .mobile-tab-bar {
-    height: 56px;
   }
 
   .mobile-tab {

@@ -666,7 +666,6 @@ export function App() {
         ) : activeView === 'music' ? (
           <LazyBoundary>
             <MusicView
-              activePlayer={music.activePlayer}
               players={music.players}
               selectedPlayerId={music.selectedPlayerId}
               onPlay={music.play}
@@ -674,6 +673,9 @@ export function App() {
               onNext={music.next}
               onPrevious={music.previous}
               onSetVolume={music.setVolume}
+              onSeek={music.seek}
+              onSetShuffle={music.setShuffle}
+              onSetRepeat={music.setRepeat}
               onSelectPlayer={music.selectPlayer}
             />
           </LazyBoundary>

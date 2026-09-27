@@ -1,5 +1,5 @@
 import { HomeAssistantClient } from './homeassistant';
-import { MediaPlayer, MediaPlayerState } from '../types/music';
+import { MediaPlayer, MediaPlayerState, MediaRepeat } from '../types/music';
 import { hasToken, callHaService, fetchAllStates, getEntityState } from './ha-rest';
 
 /**
@@ -21,12 +21,50 @@ export function parseMediaPlayer(entity: {
     media_content_id: attrs.media_content_id as string | undefined,
     media_duration: attrs.media_duration as number | undefined,
     media_position: attrs.media_position as number | undefined,
+    media_position_updated_at: attrs.media_position_updated_at as string | undefined,
     entity_picture: attrs.entity_picture as string | undefined,
     app_name: attrs.app_name as string | undefined,
     device_class: attrs.device_class as string | undefined,
     volume_level: attrs.volume_level as number | undefined,
     is_volume_muted: attrs.is_volume_muted as boolean | undefined,
+    shuffle: attrs.shuffle as boolean | undefined,
+    repeat: attrs.repeat as MediaRepeat | undefined,
+    supported_features: attrs.supported_features as number | undefined,
   };
+}
+
+/** HA's MediaPlayerEntityFeature bits for the controls that aren't always there. */
+export const MediaFeature = {
+  SEEK: 2,
+  SHUFFLE_SET: 32768,
+  REPEAT_SET: 262144,
+} as const;
+
+/**
+ * Whether the player can do this. Without supported_features (an older
+ * add-on state, a test) seeking is assumed; shuffle and repeat only show
+ * when the player reports them, as HA leaves those attributes out otherwise.
+ */
+export function canDo(player: MediaPlayer, feature: number): boolean {
+  if (player.supported_features != null) return (player.supported_features & feature) !== 0;
+  if (feature === MediaFeature.SHUFFLE_SET) return player.shuffle != null;
+  if (feature === MediaFeature.REPEAT_SET) return player.repeat != null;
+  return true;
+}
+
+/**
+ * Where the track is now. Home Assistant reports the position when it was
+ * last measured (media_position_updated_at) and doesn't update it while
+ * playing; counting on from when the screen opened showed it minutes behind.
+ */
+export function positionAt(player: MediaPlayer, now: number): number | null {
+  if (player.media_position == null) return null;
+  let position = player.media_position;
+  if (player.state === 'playing' && player.media_position_updated_at) {
+    const measuredAt = Date.parse(player.media_position_updated_at);
+    if (!Number.isNaN(measuredAt)) position += Math.max(0, (now - measuredAt) / 1000);
+  }
+  return player.media_duration ? Math.min(position, player.media_duration) : position;
 }
 
 /**
@@ -136,3 +174,12 @@ export const previous = (client: HomeAssistantClient | null, entityId: string) =
 
 export const setVolume = (client: HomeAssistantClient | null, entityId: string, level: number) =>
   callMedia(client, 'volume_set', entityId, { volume_level: Math.max(0, Math.min(1, level)) });
+
+export const seek = (client: HomeAssistantClient | null, entityId: string, position: number) =>
+  callMedia(client, 'media_seek', entityId, { seek_position: Math.max(0, position) });
+
+export const setShuffle = (client: HomeAssistantClient | null, entityId: string, shuffle: boolean) =>
+  callMedia(client, 'shuffle_set', entityId, { shuffle });
+
+export const setRepeat = (client: HomeAssistantClient | null, entityId: string, repeat: MediaRepeat) =>
+  callMedia(client, 'repeat_set', entityId, { repeat });
