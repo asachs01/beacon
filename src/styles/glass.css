@@ -24,6 +24,8 @@
   --glass-blur: blur(24px) saturate(1.8);
   /* Frostier, for sheets and bars that lie over other text */
   --glass-sheet: color-mix(in srgb, var(--bg-surface, #fff) 80%, transparent);
+  /* Nearly solid, for menus whose items must read clearly over anything */
+  --glass-menu: color-mix(in srgb, var(--bg-surface, #fff) 94%, transparent);
   /* Rows and buttons inside a glass panel */
   --glass-fill: color-mix(in srgb, var(--text-primary, #1a1a1a) 5%, transparent);
 }
@@ -53,6 +55,7 @@
   [data-theme="dark"] .timer {
     --glass-bg: var(--bg-surface, #fff);
     --glass-sheet: var(--bg-surface, #fff);
+    --glass-menu: var(--bg-surface, #fff);
     --glass-edge: rgba(128, 128, 128, 0.2);
     --glass-fill: rgba(128, 128, 128, 0.1);
   }
@@ -69,15 +72,21 @@
   [data-theme="dark"] .timer {
     --glass-bg: var(--bg-surface, #fff);
     --glass-sheet: var(--bg-surface, #fff);
+    --glass-menu: var(--bg-surface, #fff);
     --glass-blur: none;
   }
 }
 
-/* ─── The wash behind every screen ─────────────────────────────────
-   The accent colour, faintly. Music, Weather, Timer and Photos paint
-   their own backgrounds over it. .beacon-main isolates, so this sits
-   above its background and below the screen. */
-.beacon-main::before {
+/* ─── The wash behind the whole app ───────────────────────────────
+   The accent colour, faintly, behind the sidebar and every screen. Music,
+   Weather and Timer paint their own over it. .beacon isolates, so this
+   sits above its background and below everything else. */
+.beacon {
+  position: relative;
+  isolation: isolate;
+}
+
+.beacon::before {
   content: '';
   position: absolute;
   top: 0;
@@ -94,7 +103,9 @@
 }
 
 /* Screens that painted a solid background over it */
-.beacon .grocery-view {
+.beacon .beacon-main,
+.beacon .grocery-view,
+.beacon .settings-view {
   background: transparent;
 }
 
@@ -112,6 +123,9 @@
 .beacon .grocery-view-select,
 .beacon .grocery-view-input,
 .beacon .grocery-view-section,
+.beacon .sidebar,
+.beacon .settings-nav,
+.beacon .settings-group,
 .music-view .music-panel,
 .music-view .music-sheet,
 .weather-view .weather-tile,
@@ -264,6 +278,174 @@
 
 .beacon .grocery-view-item-row + .grocery-view-item-row {
   border-top: 1px solid var(--glass-edge);
+}
+
+/* ─── Sidebar and the phone tab bar ─── */
+.beacon .sidebar {
+  border-width: 0;
+  box-shadow: none;
+}
+
+.beacon--sidebar-left .sidebar {
+  border-right-width: 1px;
+}
+
+.beacon--sidebar-right .sidebar {
+  border-left-width: 1px;
+}
+
+/* Phones: a frosted bar, as in iOS, with the page showing through. The
+   frost is a layer behind the tabs, not on the bar itself: the More menu
+   is inside the bar, and a backdrop-filter on the bar made the page show
+   through the menu. (The bar is fixed, so it keeps the layer behind it.) */
+.beacon .mobile-tab-bar {
+  background: transparent;
+  border-top-color: var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-shine), 0 -4px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* Sidebar set to Bottom on a large screen: the bar isn't fixed there, so
+   position it, to keep the layer below within it */
+@media (min-width: 769px) {
+  .beacon--sidebar-bottom .mobile-tab-bar {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.beacon .mobile-tab-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  background: var(--glass-sheet);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+.beacon .mobile-more-menu {
+  background: var(--glass-menu);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
+}
+
+/* ─── Settings ─── */
+.beacon .settings-nav {
+  border-width: 0 1px 0 0;
+  box-shadow: none;
+}
+
+.beacon .settings-group {
+  border-radius: 22px;
+}
+
+.beacon .settings-row + .settings-row {
+  border-top-color: var(--glass-edge);
+}
+
+.beacon .settings-input,
+.beacon .settings-select,
+.beacon .settings-segment,
+.beacon .settings-theme-card {
+  background: var(--glass-fill);
+  border-color: var(--glass-edge);
+}
+
+.beacon .settings-input,
+.beacon .settings-select {
+  border-radius: 10px;
+}
+
+.beacon .settings-segment {
+  border-radius: 10px;
+}
+
+.beacon .settings-theme-card--active {
+  border-color: var(--accent, #3b82f6);
+}
+
+/* ─── Photos ───
+   Always dark glass, over the photo, whatever the theme. PhotoFrame is
+   rendered outside .beacon (straight into <body>, to cover the screen). */
+.photo-frame .photo-frame-overlay,
+.photo-frame .photo-frame-empty,
+.photo-frame .photo-frame-control-btn,
+.photo-frame .photo-frame-back,
+.photo-frame .photo-frame-info {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 10px 40px rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+}
+
+/* The clock, date and weather: a glass card in the corner, rather than a
+   dark band across the bottom of the photo */
+.photo-frame .photo-frame-overlay {
+  right: auto;
+  bottom: calc(24px + var(--ha-safe-bottom, 0px));
+  left: calc(24px + var(--ha-safe-left, 0px));
+  max-width: calc(100% - 48px);
+  box-sizing: border-box;
+  padding: 18px 26px 20px;
+  border-radius: 26px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+/* Above the music bar while one shows */
+.photo-frame:has(.photo-frame-music) .photo-frame-overlay {
+  bottom: calc(96px + var(--ha-safe-bottom, 0px));
+}
+
+.photo-frame .photo-frame-control-btn {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.photo-frame .photo-frame-control-btn--play {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.photo-frame .photo-frame-back,
+.photo-frame .photo-frame-info {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* No photos: a glass card, centred, over the theme's colours rather
+   than a black screen */
+.photo-frame:has(> .photo-frame-empty) {
+  display: flex;
+}
+
+@supports (color: color-mix(in srgb, red 50%, blue)) {
+  .photo-frame:has(> .photo-frame-empty) {
+    background:
+      radial-gradient(circle at 15% 10%, color-mix(in srgb, var(--accent, #3b82f6) 45%, #000), transparent 55%),
+      radial-gradient(circle at 90% 90%, color-mix(in srgb, var(--accent, #3b82f6) 35%, #000), transparent 50%),
+      #0b0f19;
+  }
+}
+
+.photo-frame .photo-frame-empty {
+  height: auto;
+  margin: auto;
+  padding: 28px 36px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 480px) {
+  .photo-frame .photo-frame-overlay {
+    bottom: calc(16px + var(--ha-safe-bottom, 0px));
+    left: calc(16px + var(--ha-safe-left, 0px));
+    max-width: calc(100% - 32px);
+    padding: 14px 18px 16px;
+  }
 }
 
 /* ─── Music, Weather and Timer ─── */
