@@ -21,6 +21,8 @@ interface PhotoFrameProps {
   showClock?: boolean;
   showWeather?: boolean;
   intervalSeconds?: number;
+  /** How the next photo comes in (Settings > Photos > Transition Style). */
+  transition?: 'fade' | 'slide';
   weatherText?: string;
   /** Music state — pass these to show NowPlayingBar over photos */
   musicPlayer?: MediaPlayer | null;
@@ -50,6 +52,7 @@ export function PhotoFrame({
   showClock = true,
   showWeather = false,
   intervalSeconds = 30,
+  transition = 'fade',
   weatherText,
   musicPlayer,
   onMusicPlay,
@@ -170,7 +173,7 @@ export function PhotoFrame({
   }
 
   return fullScreen(
-    <div className="photo-frame" ref={frameRef} onClick={handleTap}>
+    <div className={`photo-frame photo-frame--${transition}`} ref={frameRef} onClick={handleTap}>
       {/* Photo with crossfade */}
       <div className="photo-frame-image-wrapper" key={fadeKey}>
         <CoverPhoto

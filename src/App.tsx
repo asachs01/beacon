@@ -191,8 +191,8 @@ export function App() {
     }
   }, [localCal, deleteHaEvent]);
 
-  const { weather } = useWeather(client, fullAppShown);
-  const music = useMusic(client, connected, fullAppShown);
+  const { weather } = useWeather(client, fullAppShown, settings.weatherEntity);
+  const music = useMusic(client, connected, fullAppShown, settings.musicDefaultPlayer);
   const {
     chores,
     currentCompletions,
@@ -718,6 +718,8 @@ export function App() {
         ) : activeView === 'photos' ? (
           <LazyBoundary>
             <PhotoFrame
+              intervalSeconds={settings.photoInterval}
+              transition={settings.photoTransition}
               musicPlayer={music.activePlayer}
               onMusicPlay={() => music.activePlayer && music.play(music.activePlayer.entity_id)}
               onMusicPause={() => music.activePlayer && music.pause(music.activePlayer.entity_id)}
