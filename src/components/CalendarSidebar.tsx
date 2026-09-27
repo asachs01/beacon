@@ -5,6 +5,7 @@ import { Chore, FamilyMember } from '../types/family';
 import { TaskChecklist } from './TaskChecklist';
 import { DashboardTodoItem } from '../hooks/useDashboardTasks';
 import { eventOccursOnDay } from '../utils/event-dates';
+import { formatClockTime, type TimeFormat } from '../utils/time-format';
 
 interface CalendarSidebarProps {
   events: CalendarEvent[];
@@ -14,6 +15,7 @@ interface CalendarSidebarProps {
   todoItems: DashboardTodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string) => void;
   members?: FamilyMember[];
+  timeFormat?: TimeFormat;
 }
 
 export function CalendarSidebar({
@@ -24,6 +26,7 @@ export function CalendarSidebar({
   todoItems,
   onToggleTodo,
   members = [],
+  timeFormat = '12h',
 }: CalendarSidebarProps) {
   const todayKey = format(new Date(), 'yyyy-MM-dd');
 
@@ -55,7 +58,7 @@ export function CalendarSidebar({
                   <span className="cal-sidebar-event-title">{event.title}</span>
                   {event.start.includes('T') && (
                     <span className="cal-sidebar-event-time">
-                      {format(parseISO(event.start), 'h:mm a')}
+                      {formatClockTime(parseISO(event.start), timeFormat)}
                     </span>
                   )}
                 </div>

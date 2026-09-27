@@ -718,6 +718,7 @@ export function App() {
             <PhotoFrame
               intervalSeconds={settings.photoInterval}
               transition={settings.photoTransition}
+              timeFormat={settings.timeFormat}
               musicPlayer={music.activePlayer}
               onMusicPlay={() => music.activePlayer && music.play(music.activePlayer.entity_id)}
               onMusicPause={() => music.activePlayer && music.pause(music.activePlayer.entity_id)}
@@ -743,7 +744,7 @@ export function App() {
                 )}
               </div>
               <div className="header-right">
-                <Clock />
+                <Clock timeFormat={settings.timeFormat} />
               </div>
             </header>
 
@@ -762,6 +763,7 @@ export function App() {
                 <WeekCalendar
                   events={events}
                   weekStartsOn={settings.weekStartsOn}
+                  timeFormat={settings.timeFormat}
                   hiddenCalendars={hiddenCalendars}
                   onEventClick={handleEventClick}
                   onSlotClick={handleSlotClick}
@@ -777,6 +779,7 @@ export function App() {
                 todoItems={dashboardTasks.items}
                 onToggleTodo={dashboardTasks.toggleItem}
                 members={members}
+                timeFormat={settings.timeFormat}
               />
             </div>
 
@@ -844,6 +847,7 @@ export function App() {
         screenSaverTimeoutMin={settings.screenSaverTimeout}
         showPhotos={settings.screenSaverShowPhotos}
         photoIntervalSeconds={settings.photoInterval}
+        timeFormat={settings.timeFormat}
       />
 
       {/* Demo indicator — only show outside of add-on ingress */}

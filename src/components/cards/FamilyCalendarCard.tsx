@@ -4,7 +4,7 @@ import { readBoolean } from './card-config';
 
 /** Per-member calendar grid (default layout's main content). */
 export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
-  const { members, byMember, other, todayEvents, onEventClick, selectedMemberFilter, toggleMemberFilter, isViewingToday } = context;
+  const { members, byMember, other, todayEvents, onEventClick, selectedMemberFilter, toggleMemberFilter, isViewingToday, timeFormat } = context;
   const showOther = readBoolean(config, 'show_other', true);
 
   const hasMemberCalendars = members.some(
@@ -21,7 +21,7 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
           ) : (
             <div className="dashboard-events-list">
               {todayEvents.map((event) => (
-                <EventCard key={event.id} event={event} onClick={onEventClick} />
+                <EventCard key={event.id} event={event} onClick={onEventClick} timeFormat={timeFormat} />
               ))}
             </div>
           )}
@@ -64,7 +64,7 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
                 <div className="dash-member-empty">Nothing scheduled {isViewingToday ? 'today' : 'this day'}</div>
               ) : (
                 memberEvents.map((event) => (
-                  <EventCard key={event.id} event={event} onClick={onEventClick} />
+                  <EventCard key={event.id} event={event} onClick={onEventClick} timeFormat={timeFormat} />
                 ))
               )}
             </div>
@@ -81,7 +81,7 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
           </div>
           <div className="dash-member-events">
             {other.map((event) => (
-              <EventCard key={event.id} event={event} onClick={onEventClick} />
+              <EventCard key={event.id} event={event} onClick={onEventClick} timeFormat={timeFormat} />
             ))}
           </div>
         </section>

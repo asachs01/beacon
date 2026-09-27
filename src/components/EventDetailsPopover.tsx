@@ -3,12 +3,14 @@ import { createPortal } from 'react-dom';
 import { format, parseISO } from 'date-fns';
 import { CalendarEvent, getFullColor } from '../types';
 import { lastDayOfAllDayEvent } from '../utils/event-dates';
+import { formatClockTime, type TimeFormat } from '../utils/time-format';
 
 interface EventDetailsPopoverProps {
   event: CalendarEvent;
   anchor: DOMRect;
   onClose: () => void;
   onEdit: () => void;
+  timeFormat?: TimeFormat;
 }
 
 const POPOVER_WIDTH = 320;
@@ -16,7 +18,7 @@ const POPOVER_MARGIN = 8;
 const VIEWPORT_PAD = 16;
 const ESTIMATED_HEIGHT = 240;
 
-export function EventDetailsPopover({ event, anchor, onClose, onEdit }: EventDetailsPopoverProps) {
+export function EventDetailsPopover({ event, anchor, onClose, onEdit, timeFormat = '12h' }: EventDetailsPopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number }>(() => computePosition(anchor, ESTIMATED_HEIGHT));
 
@@ -60,8 +62,8 @@ export function EventDetailsPopover({ event, anchor, onClose, onEdit }: EventDet
       ? `${format(startD, 'EEE, MMM d')} · All day`
       : `${format(startD, 'MMM d')} – ${format(lastD, 'MMM d')} · All day`
     : sameDay
-      ? `${format(startD, 'EEE, MMM d')} · ${format(startD, 'h:mm a')} – ${format(endD, 'h:mm a')}`
-      : `${format(startD, 'MMM d, h:mm a')} – ${format(endD, 'MMM d, h:mm a')}`;
+      ? `${format(startD, 'EEE, MMM d')} · ${formatClockTime(startD, timeFormat)} – ${formatClockTime(endD, timeFormat)}`
+      : `${format(startD, 'MMM d')}, ${formatClockTime(startD, timeFormat)} – ${format(endD, 'MMM d')}, ${formatClockTime(endD, timeFormat)}`;
 
   return createPortal(
     <div

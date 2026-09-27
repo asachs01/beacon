@@ -1,5 +1,6 @@
 import { format, parseISO } from 'date-fns';
 import { CalendarEvent, getPastelColor, getFullColor } from '../types';
+import type { TimeFormat } from '../utils/time-format';
 
 interface EventBlockProps {
   event: CalendarEvent;
@@ -11,16 +12,19 @@ interface EventBlockProps {
   expanded?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: (e: React.DragEvent) => void;
+  timeFormat?: TimeFormat;
 }
 
-export function EventBlock({ event, onClick, style, allDay, multiDay, draggable, expanded, onDragStart, onDragEnd }: EventBlockProps) {
+export function EventBlock({ event, onClick, style, allDay, multiDay, draggable, expanded, onDragStart, onDragEnd, timeFormat = '12h' }: EventBlockProps) {
   const pastel = getPastelColor(event.color);
   const full = getFullColor(event.color);
   const isPast = parseISO(event.end).getTime() < Date.now();
 
   const timeLabel = event.allDay
     ? 'All day'
-    : `${format(parseISO(event.start), 'h:mm')} - ${format(parseISO(event.end), 'h:mm a')}`;
+    : timeFormat === '24h'
+      ? `${format(parseISO(event.start), 'HH:mm')} - ${format(parseISO(event.end), 'HH:mm')}`
+      : `${format(parseISO(event.start), 'h:mm')} - ${format(parseISO(event.end), 'h:mm a')}`;
 
   // For multi-day bars rendered inside the spanning container,
   // we just render content (the outer button is handled by WeekCalendar)

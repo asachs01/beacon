@@ -1,12 +1,12 @@
-import { format } from 'date-fns';
 import { useClock } from '../hooks/useClock';
+import { formatClockTime, type TimeFormat } from '../utils/time-format';
 
-export function Clock() {
+export function Clock({ timeFormat = '12h' }: { timeFormat?: TimeFormat }) {
   const now = useClock();
 
   return (
     <span className="clock-mini">
-      {format(now, 'h:mm a')}
+      {formatClockTime(now, timeFormat)}
     </span>
   );
 }

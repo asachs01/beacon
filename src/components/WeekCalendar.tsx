@@ -16,6 +16,7 @@ import { EventBlock } from './EventBlock';
 import { EventDetailsPopover } from './EventDetailsPopover';
 import { useWeatherForecast } from '../hooks/useWeatherForecast';
 import { weatherIcon } from '../types/weather-icons';
+import { formatHourLabel, type TimeFormat } from '../utils/time-format';
 
 interface WeekCalendarProps {
   events: CalendarEvent[];
@@ -26,6 +27,7 @@ interface WeekCalendarProps {
   onVisibleWeekChange?: (weekStart: Date) => void;
   /** First day of the week: 0 = Sunday, 1 = Monday. */
   weekStartsOn?: 0 | 1;
+  timeFormat?: TimeFormat;
 }
 
 const START_HOUR = 7;
@@ -92,12 +94,6 @@ function useIsMobile() {
   return isMobile;
 }
 
-function formatHour(hour: number): string {
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const h = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-  return `${h} ${ampm}`;
-}
-
 /** Describes a multi-day bar segment for the all-day row */
 interface MultiDaySpan {
   event: CalendarEvent;
@@ -109,7 +105,7 @@ interface MultiDaySpan {
   lane: number;
 }
 
-export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule, onVisibleWeekChange, weekStartsOn = 0 }: WeekCalendarProps) {
+export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule, onVisibleWeekChange, weekStartsOn = 0, timeFormat = '12h' }: WeekCalendarProps) {
   const today = new Date();
   const todayWeekStart = startOfWeek(today, { weekStartsOn });
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -629,6 +625,7 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                           allDay
                           multiDay
                           expanded={expandedEventId === mds.event.id}
+                          timeFormat={timeFormat}
                         />
                       </button>
                     );
@@ -656,6 +653,7 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                       onClick={handleEventBlockClick}
                       allDay
                       expanded={expandedEventId === event.id}
+                      timeFormat={timeFormat}
                     />
                   ))}
                 </div>
@@ -675,7 +673,7 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
               className="week-time-slot"
               style={{ gridRow: hour - START_HOUR + 1 }}
             >
-              <span className="week-time-label">{formatHour(hour)}</span>
+              <span className="week-time-label">{formatHourLabel(hour, timeFormat)}</span>
             </div>
           ))}
 
@@ -709,7 +707,7 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                         onClick={() => onSlotClick(key, hour)}
                         onDragOver={(e) => handleDragOver(key, hour, e)}
                         onDrop={(e) => handleDrop(key, hour, e)}
-                        aria-label={`Add event on ${format(day, 'EEEE')} at ${formatHour(hour)}`}
+                        aria-label={`Add event on ${format(day, 'EEEE')} at ${formatHourLabel(hour, timeFormat)}`}
                       />
                       {/* Ghost preview */}
                       {isGhostTarget && dragEvent && (
@@ -730,6 +728,7 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                     style={getEventStyle(event, day, overlapLayout.get(event.id))}
                     draggable
                     expanded={expandedEventId === event.id}
+                    timeFormat={timeFormat}
                     onDragStart={(e) => handleDragStart(event, e)}
                     onDragEnd={handleDragEnd}
                   />
@@ -754,6 +753,7 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
           event={expandedEvent}
           anchor={expandedAnchor}
           onClose={closeExpanded}
+          timeFormat={timeFormat}
           onEdit={() => {
             const ev = expandedEvent;
             closeExpanded();
