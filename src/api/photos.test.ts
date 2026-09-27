@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { media, resetMedia, addPhotos, MEDIA_ROOT, PHOTO_FOLDER } from '../test/fake-media-source';
 import {
   listPhotos,
+  folderMediaIds,
   resolvePhotoUrl,
   forgetPhotoUrl,
   clearPhotoCaches,
@@ -80,6 +81,22 @@ describe('listPhotos', () => {
     expect(await listPhotos()).toHaveLength(3);
   });
 
+  // "/media/local/…" is the web address HA serves /media/… at. It was
+  // taken as a path on disk (/media/local/beacon/photos), so the Photos
+  // screen said "No photos available".
+  it('finds the folder given as its web address', async () => {
+    addPhotos(3);
+    localStorage.setItem('beacon-settings', JSON.stringify({ photoDirectory: '/media/local/beacon/photos' }));
+    expect(await listPhotos()).toHaveLength(3);
+    expect(media.browses).not.toContain(`${MEDIA_ROOT}/local/beacon/photos`);
+  });
+
+  it('still finds a folder that is actually named "local"', async () => {
+    addPhotos(2, `${MEDIA_ROOT}/local/family`);
+    localStorage.setItem('beacon-settings', JSON.stringify({ photoDirectory: '/media/local/family' }));
+    expect(await listPhotos()).toHaveLength(2);
+  });
+
   it('lists a photo once when both sources contain it', async () => {
     const [id] = addPhotos(1);
     media.folders.set(MEDIA_ROOT, [id]);
@@ -122,5 +139,21 @@ describe('resolvePhotoUrl', () => {
     forgetPhotoUrl(id, first); // stale report: keep the newer URL
     expect(await resolvePhotoUrl(id)).toBe(second);
     expect(media.resolves).toHaveLength(2);
+  });
+});
+
+describe('folderMediaIds', () => {
+  it('reads the folder in any of the forms HA uses for it', () => {
+    expect(folderMediaIds('/media/beacon/photos')).toEqual([PHOTO_FOLDER]);
+    expect(folderMediaIds('/media/local/beacon/photos')).toEqual([PHOTO_FOLDER, `${MEDIA_ROOT}/local/beacon/photos`]);
+    expect(folderMediaIds('beacon/photos/')).toEqual([PHOTO_FOLDER]);
+    expect(folderMediaIds(` ${PHOTO_FOLDER} `)).toEqual([PHOTO_FOLDER]);
+    expect(folderMediaIds('/media')).toEqual([MEDIA_ROOT]);
+    expect(folderMediaIds('/media/local')).toEqual([MEDIA_ROOT, `${MEDIA_ROOT}/local`]);
+  });
+
+  it("doesn't take a folder whose name starts with media or local for those", () => {
+    expect(folderMediaIds('/mediafiles/photos')).toEqual([`${MEDIA_ROOT}/mediafiles/photos`]);
+    expect(folderMediaIds('/media/localphotos')).toEqual([`${MEDIA_ROOT}/localphotos`]);
   });
 });
