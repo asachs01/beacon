@@ -1,0 +1,103 @@
+/* ============================================================
+   Beacon — frosted glass for the Music, Weather and Timer screens
+
+   Their panels are see-through, blurring the colour washed behind them,
+   with a thin light edge along the top, as on iOS. Imported by each of
+   those screens (MusicView, WeatherView, Timer). The selectors name the
+   screen as well as the panel, so they win over the screen's own
+   stylesheet whichever loads first.
+   ============================================================ */
+
+.music-view,
+.weather-view,
+.timer {
+  --glass-bg: color-mix(in srgb, var(--bg-surface, #fff) 55%, transparent);
+  --glass-edge: color-mix(in srgb, var(--text-primary, #1a1a1a) 9%, transparent);
+  --glass-shine: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
+  --glass-blur: blur(24px) saturate(1.8);
+  /* Frostier, for the speakers sheet, which lies over the controls' text */
+  --glass-sheet: color-mix(in srgb, var(--bg-surface, #fff) 80%, transparent);
+}
+
+/* Dark themes: a fainter shine and deeper shadow */
+[data-theme="dark"] .music-view,
+[data-theme="dark"] .weather-view,
+[data-theme="dark"] .timer {
+  --glass-bg: color-mix(in srgb, var(--bg-surface, #1e293b) 45%, transparent);
+  --glass-edge: rgba(255, 255, 255, 0.08);
+  --glass-shine: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Without color-mix() (older Silk on Echo Show), or when the device asks
+   for less transparency: solid panels. */
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .music-view,
+  .weather-view,
+  .timer,
+  [data-theme="dark"] .music-view,
+  [data-theme="dark"] .weather-view,
+  [data-theme="dark"] .timer {
+    --glass-bg: var(--bg-surface, #fff);
+    --glass-sheet: var(--bg-surface, #fff);
+    --glass-edge: rgba(128, 128, 128, 0.2);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .music-view,
+  .weather-view,
+  .timer,
+  [data-theme="dark"] .music-view,
+  [data-theme="dark"] .weather-view,
+  [data-theme="dark"] .timer {
+    --glass-bg: var(--bg-surface, #fff);
+    --glass-sheet: var(--bg-surface, #fff);
+    --glass-blur: none;
+  }
+}
+
+.music-view .music-panel,
+.music-view .music-sheet,
+.weather-view .weather-tile,
+.weather-view .weather-refresh-btn,
+.timer .timer-modes,
+.timer .timer-add-section,
+.timer .timer-card,
+.timer .timer-laps {
+  border: 1px solid var(--glass-edge);
+  background: var(--glass-bg);
+  box-shadow: inset 0 1px 0 var(--glass-shine), var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* The Music controls sit on a glass card */
+.music-view .music-panel {
+  box-sizing: border-box;
+  padding: clamp(16px, 3vh, 28px) clamp(16px, 2.5vw, 28px);
+  border-radius: 28px;
+}
+
+.music-view .music-sheet {
+  background: var(--glass-sheet);
+}
+
+/* The speakers sheet rises from the bottom edge on phones: no border there */
+@media (max-width: 699px) {
+  .music-view .music-sheet {
+    border-bottom: none;
+  }
+}
+
+/* A timer that's up keeps its red glass */
+.timer .timer-card--finished {
+  background: color-mix(in srgb, var(--timer-stop, #ef4444) 22%, var(--glass-bg));
+}
+
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .timer .timer-card--finished {
+    background: var(--timer-stop-soft);
+  }
+}

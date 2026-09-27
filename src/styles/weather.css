@@ -42,9 +42,10 @@
   left: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.16;
+  opacity: 0.26;
   background-image:
     radial-gradient(circle at 20% 0%, var(--wx-tint), transparent 60%),
+    radial-gradient(circle at 70% 45%, var(--wx-tint), transparent 35%),
     radial-gradient(circle at 100% 100%, var(--wx-tint), transparent 55%);
 }
 

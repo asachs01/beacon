@@ -64,15 +64,16 @@
   background-size: cover;
   background-position: center;
   filter: blur(64px) saturate(1.4);
-  /* Only a tint: the screen stays close to the others */
-  opacity: 0.16;
+  /* A tint, stronger than elsewhere in the app, for the glass to blur;
+     the screen stays close to the others */
+  opacity: 0.26;
 }
 
 /* No artwork: a soft gradient instead */
 .music-backdrop--plain,
 .music-view--empty .music-backdrop {
   filter: none;
-  opacity: 0.12;
+  opacity: 0.18;
   background-image:
     radial-gradient(circle at 18% 12%, var(--accent, #3b82f6), transparent 55%),
     radial-gradient(circle at 88% 88%, var(--accent, #3b82f6), transparent 50%);
