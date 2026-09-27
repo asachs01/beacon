@@ -1,3 +1,25 @@
+## [1.59.2](https://github.com/f1f1f1f1f1f1/Family/compare/v1.59.1...v1.59.2) (2026-09-27)
+
+
+### Bug Fixes
+
+* a family member's linked calendar or PIN can be removed ([0c14b11](https://github.com/f1f1f1f1f1f1/Family/commit/0c14b11d944c4308603145ed89eb3894012729b5))
+* a streak shows as over once a day passes with nothing done ([ecfc1e4](https://github.com/f1f1f1f1f1f1/Family/commit/ecfc1e4508ffe20fa48791efebc49b25ba46aa82))
+* a tap that wakes the screen doesn't also press what's under it ([c9db09f](https://github.com/f1f1f1f1f1f1/Family/commit/c9db09fa986b8e4b121849d6392dd92a6ba00b0e))
+* chores of family members who were removed show as open chores ([17a26f6](https://github.com/f1f1f1f1f1f1/Family/commit/17a26f624cd12c55f0adaca7ab606a825f57431c))
+* Google Tasks sync: a task deleted just after it was imported stays deleted ([48eb640](https://github.com/f1f1f1f1f1f1/Family/commit/48eb64084607112d17d354fc8ba5efa11b68020f))
+* moving the volume unmutes a muted speaker ([fbc38cb](https://github.com/f1f1f1f1f1f1/Family/commit/fbc38cb36799ac4ea269b4b300b4adac4ba98925))
+* no reminders for calendars turned off in Settings ([fe97133](https://github.com/f1f1f1f1f1f1/Family/commit/fe97133f084065b4f62447c3df7104741227454e))
+* Reset to Defaults asks first ([4eb3233](https://github.com/f1f1f1f1f1f1/Family/commit/4eb3233a2208f2ffe11b62cd6c3e75978429cdef))
+* the Calendar's weather shows on the right day east of UTC ([627f0bf](https://github.com/f1f1f1f1f1f1/Family/commit/627f0bf02d0e9f4d4c7350bcfef15cda231958f6))
+* the dashboard keeps showing events after the week it was opened in ([7dd6fce](https://github.com/f1f1f1f1f1f1/Family/commit/7dd6fcecdd70a792586414d94fea5029d76aee5a))
+* the now-playing bar shows where the track is, and its volume stops jumping back ([a3508fd](https://github.com/f1f1f1f1f1f1/Family/commit/a3508fd9f0a06fedcb6c38d0544bc61968a87d92))
+
+
+### Performance Improvements
+
+* Home Assistant cards stop polling while the screen saver is up ([fbf9efc](https://github.com/f1f1f1f1f1f1/Family/commit/fbf9efc3f30d7cee826e72dba70831bbe28efa81))
+
 ## [1.59.1](https://github.com/f1f1f1f1f1f1/Family/compare/v1.59.0...v1.59.1) (2026-09-27)
 
 
