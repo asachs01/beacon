@@ -1,3 +1,10 @@
+## [1.58.1](https://github.com/f1f1f1f1f1f1/Family/compare/v1.58.0...v1.58.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* Sidebar Position "Bottom" on large screens shows a proper tab bar ([e319c60](https://github.com/f1f1f1f1f1f1/Family/commit/e319c6079aaf16f8d6093e58d13849fbd5b84c6e))
+
 # [1.58.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.57.0...v1.58.0) (2026-09-27)
 
 
