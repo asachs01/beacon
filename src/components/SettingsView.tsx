@@ -236,6 +236,7 @@ export function SettingsView({
   const [kidDisplayMemberId, setKidDisplayMemberId] = useState('');
   const [copiedFocusUrl, setCopiedFocusUrl] = useState(false);
   const [colorEditId, setColorEditId] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   // ---- Routine editor state ----
   const routinesApi = useRoutines();
@@ -1851,9 +1852,19 @@ export function SettingsView({
             <button
               type="button"
               className="settings-btn settings-btn--danger"
-              onClick={onResetSettings}
+              onClick={() => {
+                // Every display's settings go back to the defaults, with no
+                // undo: a second tap does it, as for deletes.
+                if (!confirmReset) {
+                  setConfirmReset(true);
+                  setTimeout(() => setConfirmReset(false), 3000);
+                  return;
+                }
+                setConfirmReset(false);
+                onResetSettings();
+              }}
             >
-              Reset to Defaults
+              {confirmReset ? 'Tap again to reset' : 'Reset to Defaults'}
             </button>
           </div>
         </div>

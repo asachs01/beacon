@@ -62,3 +62,17 @@ describe('SettingsView family members', () => {
     expect(stored.pin).toBeFalsy();
   });
 });
+
+describe('SettingsView reset', () => {
+  // It reset every display's settings on one tap, with no undo.
+  it('resets to the defaults only on a second tap', () => {
+    const on = renderSettings();
+    fireEvent.click(screen.getByText('About'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset to Defaults' }));
+    expect(on.onResetSettings).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tap again to reset' }));
+    expect(on.onResetSettings).toHaveBeenCalledTimes(1);
+  });
+});
