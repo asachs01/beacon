@@ -24,6 +24,8 @@ const mocks = vi.hoisted(() => {
       logout: async () => {},
     },
     tasks: { items: [], toggleItem: async () => {}, users: [] },
+    /** The events App last gave the reminders. */
+    reminded: [] as { id: string }[],
   };
 });
 
@@ -34,8 +36,12 @@ vi.mock('./hooks/useCalendarEvents', () => ({
   useCalendarEvents: () => mocks.calendarEvents,
 }));
 vi.mock('./hooks/useDashboardTasks', () => ({ useDashboardTasks: () => mocks.tasks }));
+vi.mock('./hooks/useNotifications', () => ({
+  useNotifications: (events: { id: string }[]) => { mocks.reminded = events; },
+}));
 
 import { App } from './App';
+import { resetStoredData } from './hooks/useStoredData';
 
 /** The window of the last calendar fetch. */
 function lastFetched() {
@@ -53,6 +59,7 @@ function coversDay(day: Date) {
 const settle = () => act(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); });
 
 beforeEach(() => {
+  resetStoredData();
   // jsdom has no matchMedia; the Calendar screen uses it to pick the mobile layout.
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: false,
@@ -66,6 +73,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   mocks.fetchEvents.mockClear();
+  mocks.calendarEvents.events = [];
   delete (document as { hidden?: boolean }).hidden;
 });
 
@@ -103,5 +111,22 @@ describe('App: which week of events is loaded', () => {
     await settle();
 
     expect(coversDay(new Date())).toBe(true);
+  });
+});
+
+describe('App: event reminders', () => {
+  // Calendars turned off in Settings still sent reminders for their events.
+  it('only reminds of events on calendars that are shown', async () => {
+    localStorage.setItem('beacon-settings', JSON.stringify({ permanentlyHiddenCalendars: ['calendar.work'] }));
+    const event = (id: string, calendarId: string) => ({
+      id, title: id, start: '2026-09-28T09:00:00', end: '2026-09-28T10:00:00', allDay: false,
+      calendarId, calendarName: calendarId, color: '#10b981',
+    });
+    mocks.calendarEvents.events = [event('standup', 'calendar.work'), event('swim', 'calendar.family')];
+
+    render(<App />);
+    await settle();
+
+    expect(mocks.reminded.map((e) => e.id)).toEqual(['swim']);
   });
 });

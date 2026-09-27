@@ -306,8 +306,9 @@ export function App() {
     [fetchEvents],
   );
 
-  // Event notifications (browser + HA mobile_app)
-  useNotifications(events, client, fullAppShown, settings.notificationMinutes);
+  // Event notifications (browser + HA mobile_app), not for calendars turned
+  // off in Settings (they used to remind of those too)
+  useNotifications(visibleEvents, client, fullAppShown, settings.notificationMinutes);
 
   // Leaderboard is still a slide-over panel (not a full view); Chores is now
   // a real full-screen activeView (see PRD: dedicated chores screen).
