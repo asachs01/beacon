@@ -137,3 +137,25 @@ describe('useChores', () => {
     expect(earnings).toEqual([{ member_id: 'kai', total_cents: 700, chore_count: 3 }]);
   });
 });
+
+describe('useChores streaks', () => {
+  // A streak's record keeps its count until the next chore restarts it at 1,
+  // so one that ended days ago still showed as going (🔥5, "hot" at 7).
+  it('shows a streak as over once a whole day went by with nothing done', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date(2026, 8, 28, 9, 0));
+      db.collections.set('beacon_streaks', [
+        { id: 'kai', member_id: 'kai', current: 5, longest: 5, last_completed: new Date(2026, 8, 24, 18, 0).toISOString() },
+        { id: 'sam', member_id: 'sam', current: 3, longest: 4, last_completed: new Date(2026, 8, 27, 18, 0).toISOString() },
+      ] as { id: string }[]);
+      const { result } = renderHook(() => useChores());
+      await waitFor(() => expect(result.current.streaks).toHaveLength(2));
+
+      expect(result.current.getStreakForMember('kai')).toMatchObject({ current: 0, longest: 5 });
+      expect(result.current.getStreakForMember('sam')).toMatchObject({ current: 3, longest: 4 }); // done yesterday: still going
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
