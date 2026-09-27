@@ -1,3 +1,10 @@
+# [1.57.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.56.0...v1.57.0) (2026-09-27)
+
+
+### Features
+
+* frosted glass on the Dashboard, Calendar, Chores, Lists and Tasks screens ([098a1f7](https://github.com/f1f1f1f1f1f1/Family/commit/098a1f78beeb6b4d1c5349adb57ed7b357ae1bf3))
+
 # [1.56.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.55.0...v1.56.0) (2026-09-27)
 
 
