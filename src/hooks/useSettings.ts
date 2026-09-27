@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { getConfig } from '../config';
 import { saveDataPatch } from '../api/beacon-store';
 import { useStoredData } from './useStoredData';
+import { DEFAULT_DARK_END, DEFAULT_DARK_START } from './useTheme';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -87,8 +88,8 @@ function buildDefaults(): BeaconSettings {
 
     themeId: config.theme,
     autoDarkMode: config.auto_dark_mode,
-    darkModeStart: '19:00',
-    darkModeEnd: '06:00',
+    darkModeStart: DEFAULT_DARK_START,
+    darkModeEnd: DEFAULT_DARK_END,
     fontScale: 'normal',
     sidebarPosition: 'left',
 

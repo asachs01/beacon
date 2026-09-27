@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useTheme } from '../hooks/useTheme';
 import {
   Settings as SettingsIcon,
   Palette,
@@ -228,7 +227,6 @@ export function SettingsView({
   calendars,
   onEnterFocusMode,
 }: SettingsViewProps) {
-  const { setTheme: applyTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
   const [editingMember, setEditingMember] = useState<string | null>(null);
   const [memberForm, setMemberForm] = useState<MemberForm>(EMPTY_FORM);
@@ -584,7 +582,7 @@ export function SettingsView({
                 key={entry.id}
                 type="button"
                 className={`settings-theme-card ${isActive ? 'settings-theme-card--active' : ''}`}
-                onClick={() => { onUpdateSettings({ themeId: entry.id }); applyTheme(entry.id); }}
+                onClick={() => onUpdateSettings({ themeId: entry.id })}
               >
                 <div className="settings-theme-preview">
                   {entry.colors.map((color, i) => (

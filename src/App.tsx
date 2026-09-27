@@ -234,11 +234,9 @@ export function App() {
 
   const dashboardTasks = useDashboardTasks(connected, settings.groceryListIds, settings.hideLocalTaskList, choreSyncListIds, fullAppShown);
 
-  // Apply theme at App level so it stays active regardless of which view is shown
-  const { setTheme } = useTheme();
-  useEffect(() => {
-    setTheme(settings.themeId);
-  }, [settings.themeId, setTheme]);
+  // Apply theme at App level so it stays active regardless of which view is
+  // shown, dark by night with Auto Dark Mode on.
+  useTheme(settings.themeId, settings);
 
   useEffect(() => {
     applyFontScale(settings.fontScale);
