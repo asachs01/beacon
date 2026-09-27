@@ -23,6 +23,8 @@
 }
 .omni-add--sidebar-bottom {
   right: 24px;
+  /* Above the tab bar, which Sidebar Position > Bottom shows on any screen */
+  bottom: calc(var(--mobile-tab-bar-height, 72px) + 24px + var(--now-playing-height, 0px));
 }
 
 /* ---- Backdrop ---- */
