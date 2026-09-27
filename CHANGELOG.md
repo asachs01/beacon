@@ -1,3 +1,26 @@
+## [1.52.13](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.12...v1.52.13) (2026-09-27)
+
+
+### Bug Fixes
+
+* 24-hour time shows everywhere once set ([851ceb0](https://github.com/f1f1f1f1f1f1/Family/commit/851ceb0c66b51285da730d6ac8afab491fa1d9ef))
+* a to-do or shopping list never shows another list's items ([8035064](https://github.com/f1f1f1f1f1f1/Family/commit/803506462651b736e63c7777972eb92221920670))
+* an all-day event's details show the days it's on ([a7f05da](https://github.com/f1f1f1f1f1f1/Family/commit/a7f05da3831792df246c8750a0a4454cdb67baec))
+* Auto Dark Mode turns the display dark at the hours set ([5dc42c6](https://github.com/f1f1f1f1f1f1/Family/commit/5dc42c6bd65cf66802f342a62580fc9cf0ce0685))
+* deleting a calendar event asks first ([ab39a94](https://github.com/f1f1f1f1f1f1/Family/commit/ab39a9401f0b762745432cba5303440c393fb7a3))
+* displays show what other displays change within seconds ([ec0293f](https://github.com/f1f1f1f1f1f1/Family/commit/ec0293f4f08dc4616ceb8934f10a4448f5523005))
+* Settings no longer offers options that did nothing ([cc411a9](https://github.com/f1f1f1f1f1f1/Family/commit/cc411a99803b68574763e49fe44abe69df6ffc5e))
+* Show Seconds and Always-On Display take effect ([50831bd](https://github.com/f1f1f1f1f1f1/Family/commit/50831bd8827cc0ab148fe534a836f18a92716e4a))
+* the leaderboard's week starts on the day set in Settings ([8472e2d](https://github.com/f1f1f1f1f1f1/Family/commit/8472e2d9ac28da5d4f59915240850bc9f5e54f7f))
+* the native app's event reminders reach Home Assistant ([3f9c2d0](https://github.com/f1f1f1f1f1f1/Family/commit/3f9c2d048a42a1678d978e658b1aa2f8c3184308))
+* the Weather Entity, Default Player and photo settings take effect ([7f22d48](https://github.com/f1f1f1f1f1f1/Family/commit/7f22d48356073f3ec3a21b9c5a5e777d2c3b9b62))
+* turning on the Google Tasks sync doesn't import finished tasks ([1e74669](https://github.com/f1f1f1f1f1f1/Family/commit/1e746690a4ee554a12420e87a7e9014c4acd5906))
+
+
+### Performance Improvements
+
+* settings changes re-fetch the calendars only when colors changed ([067c341](https://github.com/f1f1f1f1f1f1/Family/commit/067c341854244560316072eec36e0701e634ee03))
+
 ## [1.52.12](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.11...v1.52.12) (2026-09-27)
 
 
