@@ -1,3 +1,10 @@
+# [1.58.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.57.0...v1.58.0) (2026-09-27)
+
+
+### Features
+
+* frosted glass on the sidebar, phone tab bar, Settings and Photos ([d810770](https://github.com/f1f1f1f1f1f1/Family/commit/d810770a861429f1405bfce95e505609710fa7f0))
+
 # [1.57.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.56.0...v1.57.0) (2026-09-27)
 
 
