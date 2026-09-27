@@ -1,3 +1,10 @@
+# [1.53.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.14...v1.53.0) (2026-09-27)
+
+
+### Features
+
+* iOS-style Now Playing music screen with seeking, shuffle and repeat ([8fde89e](https://github.com/f1f1f1f1f1f1/Family/commit/8fde89e20a48b4f62ce17150a0280843d1c2c167))
+
 ## [1.52.14](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.13...v1.52.14) (2026-09-27)
 
 
