@@ -9,7 +9,6 @@ html[data-theme] .beacon,
 html[data-theme] .panel,
 html[data-theme] .week-day,
 html[data-theme] .forecast-day,
-html[data-theme] .family-filter,
 html[data-theme] .modal,
 html[data-theme] .modal-overlay {
   transition:

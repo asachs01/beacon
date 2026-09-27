@@ -376,82 +376,10 @@ a:focus:not(:focus-visible) {
   border-radius: 0 3px 3px 0;
 }
 
-/* --- Filter Bar (above calendar) --- */
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px 0;
+/* --- "Connecting..." above the calendar while HA is unreachable --- */
+.calendar-status {
   flex-shrink: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.filter-bar::-webkit-scrollbar {
-  display: none;
-}
-
-/* "Connecting..." while HA is unreachable, after the calendar pills */
-.filter-bar .connection-status {
-  margin-left: auto;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-/* --- Family Filter (Header Pills) --- */
-.family-filter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
-}
-
-.filter-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  transition: all var(--transition);
-  min-height: 36px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.filter-pill:hover {
-  background: var(--bg-hover);
-}
-
-.filter-pill--active {
-  background: var(--bg-surface);
-  border-color: var(--border);
-  box-shadow: var(--shadow-sm);
-}
-
-.filter-pill--hidden {
-  opacity: 0.35;
-  background: transparent;
-}
-
-.filter-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: all var(--transition);
-}
-
-.filter-name {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.filter-pill--hidden .filter-name {
-  color: var(--text-muted);
+  padding: 10px 16px 0;
 }
 
 /* --- Calendar Body --- */
@@ -1842,19 +1770,6 @@ a:focus:not(:focus-visible) {
     padding: 8px 8px 0;
   }
 
-  .filter-bar {
-    padding: 6px 8px 0;
-  }
-
-  .filter-name {
-    font-size: 0.7rem;
-  }
-
-  .filter-pill {
-    padding: 4px 10px;
-    min-height: 32px;
-  }
-
   /* --- Calendar header --- */
   .week-header-day-name {
     font-size: 0.6rem;
@@ -2035,14 +1950,6 @@ a:focus:not(:focus-visible) {
 
   .beacon-body {
     padding: 4px 4px 0;
-  }
-
-  .filter-bar {
-    padding: 4px 4px 0;
-  }
-
-  .filter-pill {
-    padding: 4px 6px;
   }
 
   .week-header-day-name {

@@ -84,7 +84,6 @@ You will see the Beacon add-on info page when installation is complete.
 2. Set the following options:
 
 ```yaml
-family_name: "My Family"
 theme: "skylight"
 auto_dark_mode: true
 weather_entity: "weather.home"
@@ -93,9 +92,8 @@ photo_interval: 30
 screen_saver_timeout: 5
 ```
 
-3. Replace `"My Family"` with your family name (this appears in the dashboard greeting)
-4. Replace `"weather.home"` with your actual weather entity ID (find it in **Settings > Devices & Services > Entities**, search for "weather")
-5. Click **Save**
+3. Replace `"weather.home"` with your actual weather entity ID (find it in **Settings > Devices & Services > Entities**, search for "weather")
+4. Click **Save**
 
 ### Step 4: Start Beacon
 
@@ -190,7 +188,6 @@ Create a `.env` file in the project root:
 ```bash
 VITE_HA_URL=http://YOUR_HA_IP:8123
 VITE_HA_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
-VITE_FAMILY_NAME="My Family"
 VITE_THEME=skylight
 VITE_AUTO_DARK_MODE=true
 VITE_HA_WEATHER_ENTITY=weather.home
@@ -264,7 +261,7 @@ This is the most common calendar source. Follow every step carefully.
 
 5. **Verify in Beacon**:
    - Open Beacon and navigate to the Calendar view (calendar icon in sidebar)
-   - You should see your calendars listed as colored filter pills above the week view
+   - You should see your calendars listed in **Settings > Calendar**
    - Events should appear on the correct days and times
 
 > **Using other calendar sources?** Beacon works with any calendar integration Home Assistant supports. CalDAV (Nextcloud, Fastmail, iCloud), ICS feeds, and the Local Calendar integration all work the same way — set them up in HA, and Beacon will discover them automatically.

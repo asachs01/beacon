@@ -10,7 +10,6 @@ import { WeekCalendar } from './components/WeekCalendar';
 import { DashboardView } from './components/DashboardView';
 import { AdvancedDashboard } from './components/lazy-advanced-dashboard';
 import { EventModal, EventFormData } from './components/EventModal';
-import { FamilyFilter } from './components/FamilyFilter';
 import { useSettings } from './hooks/useSettings';
 import { ChoresView } from './components/ChoresView';
 import { Sidebar, SidebarView } from './components/Sidebar';
@@ -248,18 +247,12 @@ export function App() {
     setHaKioskMode(settings.hideHaHeader);
   }, [settings.hideHaHeader]);
 
-  // Calendar-view visibility state. Seeded from the Settings-level
-  // permanentlyHiddenCalendars list (source of truth) so calendars disabled
-  // in Settings → Calendar are hidden here too, and kept in sync whenever
-  // that setting changes (e.g. edited in another tab/session) rather than
-  // only on first mount.
-  const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(
+  // Calendars turned off in Settings → Calendar. (The Calendar screen had
+  // pills above it that toggled the same list; they were removed.)
+  const hiddenCalendars = useMemo(
     () => new Set(settings.permanentlyHiddenCalendars),
+    [settings.permanentlyHiddenCalendars],
   );
-
-  useEffect(() => {
-    setHiddenCalendars(new Set(settings.permanentlyHiddenCalendars));
-  }, [settings.permanentlyHiddenCalendars]);
 
   const visibleEvents = useMemo(
     () => events.filter((event) => !hiddenCalendars.has(event.calendarId)),
@@ -350,22 +343,6 @@ export function App() {
     colorRefreshRef.current.fetchCalendars();
     colorRefreshRef.current.refetchEventsForWeek(colorRefreshRef.current.visibleWeekStart);
   }, [calendarColorsKey, members]);
-
-  const handleToggleCalendar = useCallback((calendarId: string) => {
-    setHiddenCalendars(prev => {
-      const next = new Set(prev);
-      if (next.has(calendarId)) {
-        next.delete(calendarId);
-      } else {
-        next.add(calendarId);
-      }
-      // Persist to Settings so the Calendar-view selection survives
-      // navigation/remount and reload — settings.permanentlyHiddenCalendars
-      // is the single source of truth for calendar visibility.
-      updateSettings({ permanentlyHiddenCalendars: Array.from(next) });
-      return next;
-    });
-  }, [updateSettings]);
 
   const handleEventClick = useCallback((event: CalendarEvent) => {
     setSelectedEvent(event);
@@ -728,22 +705,14 @@ export function App() {
           </LazyBoundary>
         ) : (
           <>
-            {/* Calendar pills above the calendar, and a note while HA is
-                unreachable. (A header with the family name, date and clock
-                sat above them; the Dashboard shows those.) */}
-            <div className="filter-bar">
-              <FamilyFilter
-                calendars={calendars}
-                hiddenCalendars={hiddenCalendars}
-                onToggle={handleToggleCalendar}
-              />
-              {!connected && (
-                <div className="connection-status" role="status">
-                  <span className="connection-dot" />
-                  Connecting...
-                </div>
-              )}
-            </div>
+            {/* A note above the calendar while HA is unreachable. (The
+                header and calendar pills that sat here were removed.) */}
+            {!connected && (
+              <div className="calendar-status connection-status" role="status">
+                <span className="connection-dot" />
+                Connecting...
+              </div>
+            )}
 
             {/* Calendar Body — two-column on desktop */}
             <div className="beacon-body beacon-body--two-col">

@@ -10,7 +10,6 @@ import { DEFAULT_DARK_END, DEFAULT_DARK_START } from './useTheme';
 
 export interface BeaconSettings {
   // General
-  familyName: string;
   defaultView: 'dashboard' | 'calendar' | 'grocery' | 'tasks' | 'music' | 'photos';
   timeFormat: '12h' | '24h';
   weekStartsOn: 0 | 1; // 0 = Sunday, 1 = Monday
@@ -80,7 +79,6 @@ function buildDefaults(): BeaconSettings {
   const config = getConfig();
 
   return {
-    familyName: config.family_name,
     defaultView: 'dashboard',
     timeFormat: '12h',
     weekStartsOn: 0,

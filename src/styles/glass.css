@@ -114,7 +114,6 @@
 .beacon .dash-member-col,
 .beacon .dash-sidebar,
 .beacon .dash-classic-col,
-.beacon .filter-pill,
 .beacon .week-calendar,
 .beacon .calendar-sidebar,
 .beacon .chores-member-col,
@@ -186,19 +185,6 @@
 }
 
 /* ─── Calendar ─── */
-.beacon .filter-pill {
-  box-shadow: none;
-}
-
-.beacon .filter-pill--active {
-  background: var(--glass-sheet);
-  box-shadow: inset 0 1px 0 var(--glass-shine), var(--glass-shadow);
-}
-
-.beacon .filter-pill--hidden {
-  background: transparent;
-}
-
 .beacon .week-calendar {
   border-radius: 22px 22px 0 0;
   border-bottom: none;

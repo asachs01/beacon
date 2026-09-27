@@ -162,13 +162,13 @@ describe('useStoredData, changes made elsewhere', () => {
 
 describe('useSettings', () => {
   it('sends only the changed fields, keeping settings changed on another device', async () => {
-    localStorage.setItem('beacon-settings', JSON.stringify({ familyName: 'Stale', timeFormat: '12h' }));
+    localStorage.setItem('beacon-settings', JSON.stringify({ defaultGroceryList: 'Stale', timeFormat: '12h' }));
     const { result } = renderHook(() => useSettings());
     // Another device changes the time format before this one refreshes.
-    server.data.set('beacon-settings', { familyName: 'Stale', timeFormat: '24h' });
-    act(() => { result.current.updateSettings({ familyName: 'Smiths' }); });
-    expect(server.patches).toEqual([{ key: 'beacon-settings', patch: { familyName: 'Smiths' } }]);
-    expect(server.data.get('beacon-settings')).toEqual({ familyName: 'Smiths', timeFormat: '24h' });
+    server.data.set('beacon-settings', { defaultGroceryList: 'Stale', timeFormat: '24h' });
+    act(() => { result.current.updateSettings({ defaultGroceryList: 'Smiths' }); });
+    expect(server.patches).toEqual([{ key: 'beacon-settings', patch: { defaultGroceryList: 'Smiths' } }]);
+    expect(server.data.get('beacon-settings')).toEqual({ defaultGroceryList: 'Smiths', timeFormat: '24h' });
     expect(server.saves).toEqual([]);
   });
 });

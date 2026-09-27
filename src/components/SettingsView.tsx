@@ -423,17 +423,6 @@ export function SettingsView({
       <div className="settings-group">
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Family Name</div>
-          </div>
-          <input
-            type="text"
-            className="settings-input"
-            value={settings.familyName}
-            onChange={(e) => onUpdateSettings({ familyName: e.target.value })}
-          />
-        </div>
-        <div className="settings-row">
-          <div>
             <div className="settings-row-label">Default View</div>
             <div className="settings-row-sublabel">Screen shown at startup</div>
           </div>
