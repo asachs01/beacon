@@ -106,4 +106,25 @@ describe('useMusic', () => {
     await act(async () => { await result.current.setVolume(0.5, 'media_player.kitchen'); });
     expect(setMuted).not.toHaveBeenCalled();
   });
+
+  // The check read the players after the new volume (and "unmuted") was
+  // already showing: the screen re-renders before Home Assistant answers,
+  // as act() above doesn't let it, so the unmute was never sent.
+  it('unmutes a muted player when the volume call takes a moment to answer', async () => {
+    vi.mocked(getMediaPlayers).mockResolvedValueOnce([
+      player('media_player.living_room', 'playing', { volume_level: 0.3, is_volume_muted: true }),
+    ]);
+    const { result } = renderHook(() => useMusic(noClient, true, true));
+    await waitFor(() => expect(result.current.players).toHaveLength(1));
+    vi.mocked(setMuted).mockClear();
+
+    let answer!: () => void;
+    vi.mocked(setVolume).mockImplementationOnce(() => new Promise<void>((resolve) => { answer = resolve; }));
+    let done!: Promise<void>;
+    act(() => { done = result.current.setVolume(0.6, 'media_player.living_room'); });
+    expect(result.current.players[0]).toMatchObject({ volume_level: 0.6, is_volume_muted: false });
+
+    await act(async () => { answer(); await done; });
+    expect(setMuted).toHaveBeenCalledWith(null, 'media_player.living_room', false);
+  });
 });

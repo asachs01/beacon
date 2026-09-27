@@ -1,6 +1,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { subDays } from 'date-fns';
 import { FamilyStore, notifyFamilyDataChanged, onFamilyDataChanged } from '../api/family';
 import { choreRoundKey, weekStartsOnSetting } from '../api/chore-rounds';
+import { localDayKey } from '../api/date-keys';
 import { saveThen } from '../utils/save-errors';
 import { unlessUnchanged } from '../utils/same-data';
 import { byDay, useClock } from './useClock';
@@ -97,16 +99,15 @@ export function useChores(enabled = true) {
 
   const getStreakForMember = useCallback(
     (memberId: string): Streak => {
-      return (
-        streaks.find((s) => s.member_id === memberId) ?? {
-          member_id: memberId,
-          current: 0,
-          longest: 0,
-          last_completed: '',
-        }
-      );
+      const streak = streaks.find((s) => s.member_id === memberId);
+      if (!streak) return { member_id: memberId, current: 0, longest: 0, last_completed: '' };
+      // A day with nothing done ends a streak. Its record keeps the count
+      // until the next chore restarts it at 1, and that old count showed.
+      const last = localDayKey(streak.last_completed ?? '');
+      const going = last === localDayKey(today) || last === localDayKey(subDays(today, 1));
+      return going ? streak : { ...streak, current: 0 };
     },
-    [streaks]
+    [streaks, today]
   );
 
   const getChoresForMember = useCallback(

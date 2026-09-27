@@ -6,6 +6,7 @@
  * entities). This module keeps a single timer and one cache for all of them.
  */
 import { getAllEntityStates, getEntityState } from './ha-rest';
+import { refreshWhileAwake } from '../utils/display-sleep';
 
 export interface HaEntityState {
   entity_id: string;
@@ -28,7 +29,7 @@ const BULK_FETCH_THRESHOLD = 8;
 
 const subscriptions = new Set<Subscription>();
 const cache = new Map<string, HaEntityState>();
-let timer: ReturnType<typeof setInterval> | null = null;
+let stopTimer: (() => void) | null = null;
 
 function subscribedEntityIds(): string[] {
   const entityIds = new Set<string>();
@@ -72,24 +73,21 @@ export async function refreshEntities(entityIds?: string[]): Promise<void> {
   notifyAll();
 }
 
-function handleVisibilityChange(): void {
-  if (!document.hidden) void refreshEntities();
-}
-
+/**
+ * Not while the page is hidden or the screen saver is up, like the app's
+ * other refreshes; a tick missed then is made up when it's looked at again.
+ * It went on under the screen saver, where a wall display spends most of the
+ * day: with more than BULK_FETCH_THRESHOLD entities, every entity's state
+ * was downloaded every 5 seconds.
+ */
 function startPolling(): void {
-  if (timer) return;
-  timer = setInterval(() => {
-    if (!document.hidden) void refreshEntities();
-  }, POLL_INTERVAL);
-  document.addEventListener('visibilitychange', handleVisibilityChange);
+  if (stopTimer) return;
+  stopTimer = refreshWhileAwake(() => void refreshEntities(), POLL_INTERVAL);
 }
 
 function stopPolling(): void {
-  if (timer) {
-    clearInterval(timer);
-    timer = null;
-  }
-  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  stopTimer?.();
+  stopTimer = null;
 }
 
 export function subscribeEntities(entityIds: string[], listener: Listener): () => void {

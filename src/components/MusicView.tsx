@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { MediaPlayer, MediaRepeat } from '../types/music';
 import { positionAt, canDo, MediaFeature } from '../api/music';
+import { useVolumeDrag } from '../hooks/useVolumeDrag';
 import '../styles/music.css';
 
 interface MusicViewProps {
@@ -77,57 +78,15 @@ function Artwork({ src, alt, className, onFail }: {
   );
 }
 
-/**
- * Volume, set as the slider moves but at most every quarter second: every
- * move used to be a Home Assistant service call, dozens per drag.
- */
+/** Volume, set as the slider moves (see useVolumeDrag). */
 function VolumeSlider({ level, disabled, onChange }: {
   level: number;
   /** The player can't have its volume set (e.g. some Apple TVs) */
   disabled?: boolean;
   onChange: (level: number) => void;
 }) {
-  const [dragged, setDragged] = useState<number | null>(null);
-  const lastSent = useRef(0);
-  const pending = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const settle = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const holding = useRef(false);
-  useEffect(() => () => {
-    clearTimeout(pending.current);
-    clearTimeout(settle.current);
-  }, []);
-
-  // Show the player's own volume again 3 s after the last change if it
-  // never reports this one (the player refused it, say)
-  const settleLater = () => {
-    clearTimeout(settle.current);
-    settle.current = setTimeout(() => { if (!holding.current) setDragged(null); }, 3000);
-  };
-  const release = () => {
-    holding.current = false;
-    settleLater();
-  };
-
-  const set = (value: number) => {
-    setDragged(value);
-    clearTimeout(pending.current);
-    const wait = 250 - (Date.now() - lastSent.current);
-    const send = () => {
-      lastSent.current = Date.now();
-      onChange(value);
-    };
-    if (wait <= 0) send();
-    else pending.current = setTimeout(send, wait);
-    settleLater();
-  };
-  // What's set shows until the player reports it back. It used to go back
-  // to the player's volume at any report, even mid-drag or one read before
-  // the player had changed, so the slider jumped back to the old volume.
-  useEffect(() => {
-    if (!holding.current && dragged !== null && Math.abs(level - dragged) < 0.015) setDragged(null);
-  }, [level, dragged]);
-
-  const shown = dragged ?? level;
+  const volume = useVolumeDrag(level, onChange);
+  const shown = volume.value;
   return (
     <div className={`music-volume${disabled ? ' music-volume--disabled' : ''}`}>
       <Volume className="music-volume-icon" aria-hidden="true" />
@@ -140,10 +99,10 @@ function VolumeSlider({ level, disabled, onChange }: {
         value={shown}
         disabled={disabled}
         style={{ '--fill': `${shown * 100}%` } as React.CSSProperties}
-        onChange={(e) => set(parseFloat(e.target.value))}
-        onPointerDown={() => { holding.current = true; }}
-        onPointerUp={release}
-        onPointerCancel={release}
+        onChange={(e) => volume.set(parseFloat(e.target.value))}
+        onPointerDown={volume.onPointerDown}
+        onPointerUp={volume.onPointerUp}
+        onPointerCancel={volume.onPointerCancel}
         aria-label="Volume"
       />
       <Volume2 className="music-volume-icon" aria-hidden="true" />

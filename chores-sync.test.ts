@@ -253,6 +253,18 @@ describe('chores sync (add-on)', () => {
     expect(task()).toHaveLength(2);
   });
 
+  // Its link didn't record the list, so the next pass took the missing task
+  // for one moved to another list, dropped the link and made it again.
+  it('leaves an imported task deleted if it goes from Google before the next pass', async () => {
+    const { run, task } = await setup();
+    task().push({ uid: 'mine', summary: 'Feed the cat', status: 'needs_action' });
+    await run(); // imported
+    task().splice(task().findIndex((it) => it.uid === 'mine'), 1);
+    await run();
+    await run();
+    expect(task().map((it) => it.summary)).toEqual(['Vacuum']);
+  });
+
   it('imports a new Google task only once, even when passes are requested at the same time', async () => {
     const { sync, task } = await setup();
     task().push({ uid: 'mine', summary: 'Feed the cat', status: 'needs_action' });

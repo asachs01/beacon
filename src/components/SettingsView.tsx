@@ -236,6 +236,7 @@ export function SettingsView({
   const [kidDisplayMemberId, setKidDisplayMemberId] = useState('');
   const [copiedFocusUrl, setCopiedFocusUrl] = useState(false);
   const [colorEditId, setColorEditId] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   // ---- Routine editor state ----
   const routinesApi = useRoutines();
@@ -313,11 +314,12 @@ export function SettingsView({
       avatar: memberForm.avatar,
       color: memberForm.color,
       role: memberForm.role,
-      pin: memberForm.pin || undefined,
-      calendar_entity: memberForm.calendar_entity || undefined,
-      additional_calendar_entities: memberForm.additional_calendar_entities.length > 0
-        ? memberForm.additional_calendar_entities
-        : undefined,
+      // Sent even when empty: the add-on merges an edit into the stored
+      // member, so a field left out kept its old value, and a linked
+      // calendar or a PIN could never be removed.
+      pin: memberForm.pin,
+      calendar_entity: memberForm.calendar_entity,
+      additional_calendar_entities: memberForm.additional_calendar_entities,
     };
     if (memberFormMode === 'edit' && editingMember) {
       onUpdateMember(editingMember, data);
@@ -1850,9 +1852,19 @@ export function SettingsView({
             <button
               type="button"
               className="settings-btn settings-btn--danger"
-              onClick={onResetSettings}
+              onClick={() => {
+                // Every display's settings go back to the defaults, with no
+                // undo: a second tap does it, as for deletes.
+                if (!confirmReset) {
+                  setConfirmReset(true);
+                  setTimeout(() => setConfirmReset(false), 3000);
+                  return;
+                }
+                setConfirmReset(false);
+                onResetSettings();
+              }}
             >
-              Reset to Defaults
+              {confirmReset ? 'Tap again to reset' : 'Reset to Defaults'}
             </button>
           </div>
         </div>

@@ -472,10 +472,14 @@ function createChoresSync({
           frequency: 'once',
           value_cents: 0,
         });
+        // With its list, like the links made below: without one, a task
+        // deleted in Google before the next pass counted as moved to another
+        // list, and was made again.
         await store.add(COLLECTIONS.links, {
           chore_id: newChore.id,
           member_id: member.id,
           uid: item.uid,
+          entity_id: entityId,
           last_synced_status: item.status,
         });
         known.add(item.uid);

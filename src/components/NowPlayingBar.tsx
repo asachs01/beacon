@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Play,
   Pause,
@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { MediaPlayer } from '../types/music';
 import { getConfig } from '../config';
+import { positionAt } from '../api/music';
+import { useVolumeDrag } from '../hooks/useVolumeDrag';
 
 interface NowPlayingBarProps {
   player: MediaPlayer | null;
@@ -20,6 +22,26 @@ interface NowPlayingBarProps {
   onExpand?: () => void;
 }
 
+/** The bar's volume, set as the slider moves (see useVolumeDrag). */
+function BarVolumeSlider({ level, onChange }: { level: number; onChange: (level: number) => void }) {
+  const volume = useVolumeDrag(level, onChange);
+  return (
+    <input
+      type="range"
+      className="now-playing-volume-slider"
+      min={0}
+      max={1}
+      step={0.02}
+      value={volume.value}
+      onChange={(e) => volume.set(parseFloat(e.target.value))}
+      onPointerDown={volume.onPointerDown}
+      onPointerUp={volume.onPointerUp}
+      onPointerCancel={volume.onPointerCancel}
+      aria-label="Volume"
+    />
+  );
+}
+
 export function NowPlayingBar({
   player,
   onPlay,
@@ -29,20 +51,19 @@ export function NowPlayingBar({
   onSetVolume,
   onExpand,
 }: NowPlayingBarProps) {
-  // Local progress tracking
-  const [position, setPosition] = useState(player?.media_position ?? 0);
-  const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
+  // Where the track is, counted on from when Home Assistant measured it (it
+  // doesn't update the position while playing), as on the Music screen. It
+  // was counted from when the bar appeared, so a track that had played for
+  // minutes showed as just started.
+  const [now, setNow] = useState(() => Date.now());
+  const playing = player?.state === 'playing';
   useEffect(() => {
-    setPosition(player?.media_position ?? 0);
-  }, [player?.media_position]);
-
-  useEffect(() => {
-    if (animRef.current) clearInterval(animRef.current);
-    if (player?.state !== 'playing') return;
-    animRef.current = setInterval(() => setPosition((prev) => prev + 1), 1000);
-    return () => { if (animRef.current) clearInterval(animRef.current); };
-  }, [player?.state, player?.media_position]);
+    if (!playing) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [playing]);
+  const position = (player && positionAt(player, now)) ?? 0;
 
   if (!player || (player.state !== 'playing' && player.state !== 'paused')) {
     return null;
@@ -130,15 +151,11 @@ export function NowPlayingBar({
         >
           {player.is_volume_muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
         </button>
-        <input
-          type="range"
-          className="now-playing-volume-slider"
-          min={0}
-          max={1}
-          step={0.02}
-          value={player.is_volume_muted ? 0 : (player.volume_level ?? 0.5)}
-          onChange={(e) => onSetVolume(parseFloat(e.target.value))}
-          aria-label="Volume"
+        {/* Per speaker: another one starting to play doesn't keep this one's drag */}
+        <BarVolumeSlider
+          key={player.entity_id}
+          level={player.is_volume_muted ? 0 : (player.volume_level ?? 0.5)}
+          onChange={onSetVolume}
         />
       </div>
     </div>
