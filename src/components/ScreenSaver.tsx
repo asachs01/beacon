@@ -12,11 +12,11 @@ const POSITION_INTERVAL = 30_000; // move clock every 30s
 type Phase = 'awake' | 'dim' | 'screensaver';
 
 /** Only mounted while the screensaver shows, so it starts on the right time. */
-function ScreenSaverTime() {
+function ScreenSaverTime({ timeFormat }: { timeFormat: '12h' | '24h' }) {
   const now = useClock();
   return (
     <>
-      <div className="screensaver-time">{format(now, 'h:mm')}</div>
+      <div className="screensaver-time">{format(now, timeFormat === '24h' ? 'HH:mm' : 'h:mm')}</div>
       <div className="screensaver-date">{format(now, 'EEEE, MMMM d')}</div>
     </>
   );
@@ -28,6 +28,7 @@ interface ScreenSaverProps {
   screenSaverTimeoutMin?: number;
   showPhotos?: boolean;
   photoIntervalSeconds?: number;
+  timeFormat?: '12h' | '24h';
 }
 
 export function ScreenSaver({
@@ -36,6 +37,7 @@ export function ScreenSaver({
   screenSaverTimeoutMin = 10,
   showPhotos = false,
   photoIntervalSeconds = 30,
+  timeFormat = '12h',
 }: ScreenSaverProps) {
   const [phase, setPhase] = useState<Phase>('awake');
 
@@ -153,7 +155,7 @@ export function ScreenSaver({
         className="screensaver-clock"
         style={{ left: `${position.x}%`, top: `${position.y}%` }}
       >
-        <ScreenSaverTime />
+        <ScreenSaverTime timeFormat={timeFormat} />
       </div>
     </div>
   );

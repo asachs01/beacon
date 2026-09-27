@@ -241,6 +241,18 @@ describe('chores sync (add-on)', () => {
     expect(task()).toHaveLength(2);
   });
 
+  // Google Tasks keeps finished tasks: turning the sync on imported every
+  // task a member had ever finished as a finished one-off chore.
+  it("doesn't import a task that's already done in Google", async () => {
+    const { run, task } = await setup();
+    task().push({ uid: 'old', summary: "Last term's project", status: 'completed' });
+    await run();
+    await run();
+    expect(chores().map((c) => c.name)).toEqual(['Vacuum']);
+    expect(completions()).toHaveLength(0);
+    expect(task()).toHaveLength(2);
+  });
+
   it('imports a new Google task only once, even when passes are requested at the same time', async () => {
     const { sync, task } = await setup();
     task().push({ uid: 'mine', summary: 'Feed the cat', status: 'needs_action' });

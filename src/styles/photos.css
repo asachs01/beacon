@@ -49,6 +49,20 @@
   }
 }
 
+/* Settings > Photos > Transition Style: Slide */
+.photo-frame--slide .photo-frame-image-wrapper {
+  animation: photo-slide 700ms ease-out;
+}
+
+@keyframes photo-slide {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 /* Bottom gradient overlay */
 .photo-frame-overlay {
   position: absolute;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadData, loadDataSync, loadServerData, saveData, saveDataNow } from '../api/beacon-store';
 import { isAddOn } from '../utils/ha-env';
+import { onDataChanged } from '../api/data-changes';
 
 /**
  * This display's current value of each key, shared by every hook using it.
@@ -12,6 +13,10 @@ const shared = new Map<string, { value: unknown; listeners: Set<(value: unknown)
 /** Server saves in progress per key, one after another. */
 const saveQueues = new Map<string, Promise<void>>();
 const queuedSaves = new Map<string, number>();
+/** Reloads in progress per key, shared by every hook showing it. */
+const reloads = new Map<string, Promise<void>>();
+/** How many changes this display has made to each key, to spot one made during a reload. */
+const changesMade = new Map<string, number>();
 
 function entry(key: string, initial: () => unknown) {
   let e = shared.get(key);
@@ -34,6 +39,8 @@ export function resetStoredData(): void {
   shared.clear();
   saveQueues.clear();
   queuedSaves.clear();
+  reloads.clear();
+  changesMade.clear();
 }
 
 /**
@@ -68,9 +75,27 @@ export function useStoredData<T>(key: string, fallback: T, normalize: (value: T)
     };
   }, [key]);
 
-  /** Re-fetch from the server, without saving. */
-  const refresh = useCallback(async () => {
-    publish(key, normalizeRef.current(await loadData(key, fallbackRef.current)));
+  /**
+   * Re-fetch from the server, without saving. Hooks showing the same key
+   * share one fetch. What it brings isn't shown if this display changed the
+   * value meanwhile (it would undo that until the save lands; the save shows
+   * the server's result itself), or if it's what's already showing.
+   */
+  const refresh = useCallback(() => {
+    let reload = reloads.get(key);
+    if (!reload) {
+      const changesBefore = changesMade.get(key) ?? 0;
+      reload = loadData(key, fallbackRef.current)
+        .then((loaded) => {
+          if ((changesMade.get(key) ?? 0) !== changesBefore || queuedSaves.get(key)) return;
+          const next = normalizeRef.current(loaded);
+          const current = shared.get(key)?.value;
+          if (current === undefined || JSON.stringify(current) !== JSON.stringify(next)) publish(key, next);
+        })
+        .finally(() => reloads.delete(key));
+      reloads.set(key, reload);
+    }
+    return reload;
   }, [key]);
 
   useEffect(() => {
@@ -79,8 +104,13 @@ export function useStoredData<T>(key: string, fallback: T, normalize: (value: T)
       if (!document.hidden) void refresh();
     };
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [refresh]);
+    // Changed on another display (see data-changes.ts).
+    const stopWatching = onDataChanged(key, () => void refresh());
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      stopWatching();
+    };
+  }, [refresh, key]);
 
   /**
    * Apply a change and save the result. Pass `save: false` when the caller
@@ -89,6 +119,7 @@ export function useStoredData<T>(key: string, fallback: T, normalize: (value: T)
   const update = useCallback((updater: (prev: T) => T, save = true): T => {
     const current = entry(key, () => normalizeRef.current(loadDataSync(key, fallbackRef.current)));
     const next = updater(current.value as T);
+    changesMade.set(key, (changesMade.get(key) ?? 0) + 1);
     publish(key, next);
     if (!save) return next;
     if (!isAddOn()) {

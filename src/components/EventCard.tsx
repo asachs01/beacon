@@ -1,19 +1,21 @@
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { CalendarEvent, getPastelColor, getFullColor } from '../types';
+import { formatClockTime, type TimeFormat } from '../utils/time-format';
 
 interface EventCardProps {
   event: CalendarEvent;
   onClick?: (event: CalendarEvent) => void;
+  timeFormat?: TimeFormat;
 }
 
-export function EventCard({ event, onClick }: EventCardProps) {
+export function EventCard({ event, onClick, timeFormat = '12h' }: EventCardProps) {
   const pastel = getPastelColor(event.color);
   const full = getFullColor(event.color);
   const isPast = parseISO(event.end).getTime() < Date.now();
 
   const timeLabel = event.allDay
     ? 'All day'
-    : `${format(parseISO(event.start), 'h:mm a')} - ${format(parseISO(event.end), 'h:mm a')}`;
+    : `${formatClockTime(parseISO(event.start), timeFormat)} - ${formatClockTime(parseISO(event.end), timeFormat)}`;
 
   return (
     <div

@@ -66,6 +66,20 @@ describe('listPhotos', () => {
     expect(await listPhotos()).toHaveLength(2);
   });
 
+  // Settings' Source Directory used to be ignored: the add-on option was
+  // read once, at startup.
+  it('browses the folder chosen in Settings, and a newly chosen one at once', async () => {
+    const garden = `${MEDIA_ROOT}/garden`;
+    addPhotos(2, garden);
+    addPhotos(3);
+    localStorage.setItem('beacon-settings', JSON.stringify({ photoDirectory: '/media/garden' }));
+    expect(await listPhotos()).toHaveLength(2);
+    expect(media.browses).toContain(garden);
+
+    localStorage.setItem('beacon-settings', JSON.stringify({ photoDirectory: '/media/beacon/photos' }));
+    expect(await listPhotos()).toHaveLength(3);
+  });
+
   it('lists a photo once when both sources contain it', async () => {
     const [id] = addPhotos(1);
     media.folders.set(MEDIA_ROOT, [id]);

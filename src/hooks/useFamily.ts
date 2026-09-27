@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { FamilyStore, notifyFamilyDataChanged, onFamilyDataChanged } from '../api/family';
 import { saveThen } from '../utils/save-errors';
+import { unlessUnchanged } from '../utils/same-data';
 import { FamilyMember } from '../types/family';
 
 export function useFamily() {
@@ -10,7 +11,7 @@ export function useFamily() {
 
   const refresh = useCallback(async () => {
     const m = await store.getMembers();
-    setMembers(m);
+    setMembers((prev) => unlessUnchanged(prev, m));
   }, [store]);
 
   useEffect(() => {

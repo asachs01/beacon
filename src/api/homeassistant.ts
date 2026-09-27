@@ -349,12 +349,17 @@ export class HomeAssistantClient {
     }>>;
   }
 
+  /**
+   * Calls a service; for `entityId`, or with no target when it's empty (a
+   * service like notify.notify takes none — HA refuses an empty entity id,
+   * so the event reminders sent that way never arrived).
+   */
   async callService(domain: string, service: string, entityId: string, data?: Record<string, unknown>): Promise<unknown> {
     return this.sendMessage({
       type: 'call_service',
       domain,
       service,
-      target: { entity_id: entityId },
+      ...(entityId ? { target: { entity_id: entityId } } : {}),
       service_data: data || {},
     });
   }

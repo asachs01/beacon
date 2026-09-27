@@ -450,7 +450,10 @@ function createChoresSync({
     }
 
     // --- Pull: tasks with no known link were added directly in that
-    // member's Google Tasks app. Import as a chore assigned to them. ---
+    // member's Google Tasks app. Import as a chore assigned to them, unless
+    // it's already done: Google Tasks keeps finished tasks, and turning the
+    // sync on imported every one a member had ever finished as a finished
+    // one-off chore. ---
     for (const member of activeMembers) {
       const entityId = listByMember[member.id];
       const items = itemsByEntity.get(entityId) ?? [];
@@ -461,6 +464,7 @@ function createChoresSync({
         // Family's own task whose link was lost: adopted below.
         if (item.description?.includes(LEGACY_MARKER_PREFIX)) continue;
         if (unlinkedTitles.get(entityId)?.has(item.summary)) continue;
+        if (item.status === 'completed') continue;
 
         const newChore = await store.add(COLLECTIONS.chores, {
           name: item.summary,
@@ -475,8 +479,7 @@ function createChoresSync({
           last_synced_status: item.status,
         });
         known.add(item.uid);
-        change(`imported new Google task "${item.summary}" (${item.status}) as a chore for ${memberName(member.id)}`);
-        if (item.status === 'completed') await completeChore(newChore, member.id);
+        change(`imported new Google task "${item.summary}" as a chore for ${memberName(member.id)}`);
         choresChanged = true;
       }
     }

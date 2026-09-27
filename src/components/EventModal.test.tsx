@@ -162,7 +162,21 @@ describe('EventModal', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Tap again to delete' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('HA rejected the delete');
+  });
+
+  // One tap on a touchscreen deleted the event from the calendar itself.
+  it('asks before deleting', async () => {
+    const user = userEvent.setup();
+    const onDelete = vi.fn();
+    render(<EventModal event={makeEvent()} calendars={calendars} onSave={vi.fn()} onDelete={onDelete} onClose={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(onDelete).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Tap again to delete' }));
+    expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
   describe('repeating events', () => {
@@ -182,10 +196,12 @@ describe('EventModal', () => {
       render(<EventModal event={occurrence} calendars={calendars} onSave={vi.fn()} onDelete={onDelete} onClose={vi.fn()} />);
 
       await user.click(screen.getByRole('button', { name: 'Delete' }));
+      await user.click(screen.getByRole('button', { name: 'Tap again to delete' }));
       expect(onDelete).toHaveBeenLastCalledWith(occurrence, 'this');
 
       await user.selectOptions(screen.getByLabelText('Change'), 'following');
       await user.click(screen.getByRole('button', { name: 'Delete' }));
+      await user.click(screen.getByRole('button', { name: 'Tap again to delete' }));
       expect(onDelete).toHaveBeenLastCalledWith(occurrence, 'following');
     });
 

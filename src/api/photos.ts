@@ -2,8 +2,17 @@ import { PhotoEntry, PhotoSource } from '../types/photos';
 import { getConfig } from '../config';
 import { hasToken, callBeaconAction } from './ha-rest';
 import { isAddOn } from '../utils/ha-env';
+import { loadDataSync } from './beacon-store';
 
-const { photo_directory: PHOTOS_PATH } = getConfig();
+/**
+ * Settings > Photos > Source Directory (this display's copy of the
+ * settings), else the `photo_directory` add-on option. The setting used to
+ * be ignored: the option was read once, at startup.
+ */
+function photoDirectory(): string {
+  const chosen = loadDataSync<{ photoDirectory?: string } | null>('beacon-settings', null)?.photoDirectory?.trim();
+  return chosen || getConfig().photo_directory;
+}
 
 /**
  * How long a browsed photo list is reused. Shared by everything showing
@@ -125,12 +134,14 @@ let listCache: { key: string; at: number; entries: Promise<PhotoEntry[]> } | nul
 
 /**
  * Every photo in the configured sources (HA's local media root and the
- * `photo_directory` folder), in folder order. Browsed once and shared for
+ * photo folder, see photoDirectory), in folder order. Browsed once and shared for
  * PHOTO_LIST_TTL_MS; a list that came back empty or incomplete because a
  * browse failed isn't kept, so the next call tries again.
  */
 export function listPhotos(sources: PhotoSource[] = ['ha_media', 'local']): Promise<PhotoEntry[]> {
-  const key = [...sources].sort().join(',');
+  const folder = photoDirectory();
+  // With the folder, so a different one chosen in Settings is browsed at once.
+  const key = `${[...sources].sort().join(',')}|${folder}`;
   if (listCache && listCache.key === key && Date.now() - listCache.at < PHOTO_LIST_TTL_MS) {
     return listCache.entries;
   }
@@ -140,7 +151,7 @@ export function listPhotos(sources: PhotoSource[] = ['ha_media', 'local']): Prom
     browses.push(browsePhotos('media-source://media_source/local', 'ha_media'));
   }
   if (sources.includes('local')) {
-    browses.push(browsePhotos(toMediaContentId(PHOTOS_PATH), 'local'));
+    browses.push(browsePhotos(toMediaContentId(folder), 'local'));
   }
   // google_photos would require OAuth — not implemented yet
 

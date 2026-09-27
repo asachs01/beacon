@@ -27,15 +27,19 @@ interface UseMusicReturn {
 
 /**
  * `enabled: false` stops listening for player changes and polling; turning
- * it back on re-reads the players.
+ * it back on re-reads the players. `defaultPlayerId` (Settings > Default
+ * Player) is the player shown until another is picked; it used to be
+ * ignored.
  */
 export function useMusic(
   getClient: () => HomeAssistantClient | null,
   connected: boolean,
   enabled = true,
+  defaultPlayerId = '',
 ): UseMusicReturn {
   const [players, setPlayers] = useState<MediaPlayer[]>([]);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [pickedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const selectedPlayerId = pickedPlayerId ?? (defaultPlayerId.trim() || null);
   const subscriptionRef = useRef<number | null>(null);
 
   const activePlayer =

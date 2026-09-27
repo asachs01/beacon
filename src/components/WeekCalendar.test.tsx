@@ -19,6 +19,23 @@ describe('WeekCalendar', () => {
     vi.unstubAllGlobals();
   });
 
+  it("labels the hours and events in Settings' time format", () => {
+    vi.setSystemTime(new Date(2026, 8, 28, 9, 0));
+    const event = {
+      id: 'e1', title: 'Swim', start: '2026-09-28T16:00:00', end: '2026-09-28T17:30:00', allDay: false,
+      calendarId: 'calendar.family', calendarName: 'Family', color: '#3b82f6',
+    };
+    const { getByText, getByTitle, rerender } = render(
+      <WeekCalendar events={[event]} hiddenCalendars={new Set()} onEventClick={vi.fn()} onSlotClick={vi.fn()} timeFormat="24h" />,
+    );
+    expect(getByText('15:00')).toBeInTheDocument();
+    expect(getByTitle('Swim (16:00 - 17:30)')).toBeInTheDocument();
+
+    rerender(<WeekCalendar events={[event]} hiddenCalendars={new Set()} onEventClick={vi.fn()} onSlotClick={vi.fn()} />);
+    expect(getByText('3 PM')).toBeInTheDocument();
+    expect(getByTitle('Swim (4:00 - 5:30 PM)')).toBeInTheDocument();
+  });
+
   // A wall display stays open for days. It used to keep showing (and
   // fetching events for) the old week after Saturday midnight until the
   // page was reloaded.

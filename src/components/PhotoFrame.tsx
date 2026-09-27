@@ -9,6 +9,8 @@ import {
   Info,
 } from 'lucide-react';
 import { usePhotos } from '../hooks/usePhotos';
+import { useClock } from '../hooks/useClock';
+import { formatClockTime, type TimeFormat } from '../utils/time-format';
 import { requestFullBleed } from '../utils/ha-kiosk';
 import { NowPlayingBar } from './NowPlayingBar';
 import { PhotoDiagnostics } from './PhotoDiagnostics';
@@ -21,6 +23,9 @@ interface PhotoFrameProps {
   showClock?: boolean;
   showWeather?: boolean;
   intervalSeconds?: number;
+  /** How the next photo comes in (Settings > Photos > Transition Style). */
+  transition?: 'fade' | 'slide';
+  timeFormat?: TimeFormat;
   weatherText?: string;
   /** Music state — pass these to show NowPlayingBar over photos */
   musicPlayer?: MediaPlayer | null;
@@ -32,13 +37,7 @@ interface PhotoFrameProps {
   onBack?: () => void;
 }
 
-function formatClock(): string {
-  const now = new Date();
-  return now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-function formatDate(): string {
-  const now = new Date();
+function formatDate(now: Date): string {
   return now.toLocaleDateString([], {
     weekday: 'long',
     month: 'long',
@@ -50,6 +49,8 @@ export function PhotoFrame({
   showClock = true,
   showWeather = false,
   intervalSeconds = 30,
+  transition = 'fade',
+  timeFormat = '12h',
   weatherText,
   musicPlayer,
   onMusicPlay,
@@ -90,19 +91,12 @@ export function PhotoFrame({
     if (showDiagnostics) setActive(false);
   }, [showDiagnostics, setActive]);
   const frameRef = useRef<HTMLDivElement>(null);
-  const [clock, setClock] = useState(formatClock());
-  const [date, setDate] = useState(formatDate());
+  // On the minute, in Settings' time format (it followed the browser's).
+  const now = useClock();
+  const clock = formatClockTime(now, timeFormat);
+  const date = formatDate(now);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [fadeKey, setFadeKey] = useState(0);
-
-  // Update clock every minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setClock(formatClock());
-      setDate(formatDate());
-    }, 30_000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Track photo changes for crossfade
   useEffect(() => {
@@ -170,7 +164,7 @@ export function PhotoFrame({
   }
 
   return fullScreen(
-    <div className="photo-frame" ref={frameRef} onClick={handleTap}>
+    <div className={`photo-frame photo-frame--${transition}`} ref={frameRef} onClick={handleTap}>
       {/* Photo with crossfade */}
       <div className="photo-frame-image-wrapper" key={fadeKey}>
         <CoverPhoto

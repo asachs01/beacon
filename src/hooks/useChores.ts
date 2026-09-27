@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { FamilyStore, notifyFamilyDataChanged, onFamilyDataChanged } from '../api/family';
 import { choreRoundKey, weekStartsOnSetting } from '../api/chore-rounds';
 import { saveThen } from '../utils/save-errors';
+import { unlessUnchanged } from '../utils/same-data';
 import { byDay, useClock } from './useClock';
 import { Chore, ChoreCompletion, Streak, MemberEarnings } from '../types/family';
 
@@ -20,9 +21,9 @@ export function useChores(enabled = true) {
   const refresh = useCallback(async () => {
     const [c, s] = await Promise.all([store.getChores(), store.getStreaks()]);
     const current = await store.getCurrentCompletions(c);
-    setChores(c);
-    setCurrentCompletions(current);
-    setStreaks(s);
+    setChores((prev) => unlessUnchanged(prev, c));
+    setCurrentCompletions((prev) => unlessUnchanged(prev, current));
+    setStreaks((prev) => unlessUnchanged(prev, s));
   }, [store]);
 
   // What counts as done is worked out as data loads, so it loads again when

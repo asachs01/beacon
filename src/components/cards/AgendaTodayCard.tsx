@@ -3,7 +3,7 @@ import { EventCard } from '../EventCard';
 
 /** Classic layout's "Today" agenda column. */
 export function AgendaTodayCard({ context }: DashboardCardProps) {
-  const { todayEvents, onEventClick, isViewingToday } = context;
+  const { todayEvents, onEventClick, isViewingToday, timeFormat } = context;
 
   return (
     <section className="dash-classic-col">
@@ -13,7 +13,7 @@ export function AgendaTodayCard({ context }: DashboardCardProps) {
         ) : (
           <div className="dashboard-events-list">
             {todayEvents.map((event) => (
-              <EventCard key={event.id} event={event} onClick={onEventClick} />
+              <EventCard key={event.id} event={event} onClick={onEventClick} timeFormat={timeFormat} />
             ))}
           </div>
         )}

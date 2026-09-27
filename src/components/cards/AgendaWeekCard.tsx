@@ -4,7 +4,7 @@ import { EventCard } from '../EventCard';
 
 /** Classic layout's "This Week" agenda column. */
 export function AgendaWeekCard({ context }: DashboardCardProps) {
-  const { weekEvents, onEventClick } = context;
+  const { weekEvents, onEventClick, timeFormat } = context;
 
   return (
     <section className="dash-classic-col">
@@ -18,7 +18,7 @@ export function AgendaWeekCard({ context }: DashboardCardProps) {
             ) : (
               <div className="dashboard-events-list">
                 {dayEvents.map((event) => (
-                  <EventCard key={event.id} event={event} onClick={onEventClick} />
+                  <EventCard key={event.id} event={event} onClick={onEventClick} timeFormat={timeFormat} />
                 ))}
               </div>
             )}

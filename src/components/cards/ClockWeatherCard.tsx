@@ -1,11 +1,14 @@
 import { format } from 'date-fns';
 import { DashboardCardProps } from '../../types/dashboard-cards';
 import { weatherIcon, conditionLabel } from '../../types/weather-icons';
-import { useClock } from '../../hooks/useClock';
+import { useClock, byMinute, bySecond } from '../../hooks/useClock';
+import { formatClockTime } from '../../utils/time-format';
 
 export function ClockWeatherCard({ context }: DashboardCardProps) {
-  // Its own clock, so only this card re-renders when the minute changes.
-  const now = useClock();
+  const { showSeconds } = context;
+  // Its own clock, so only this card re-renders when the minute (or, with
+  // Settings' Show Seconds, the second) changes.
+  const now = useClock(showSeconds ? bySecond : byMinute);
   const {
     timeFormat,
     weather,
@@ -16,7 +19,7 @@ export function ClockWeatherCard({ context }: DashboardCardProps) {
     goToNextDay,
     goToToday,
   } = context;
-  const timeString = format(now, timeFormat === '24h' ? 'HH:mm' : 'h:mm a');
+  const timeString = formatClockTime(now, timeFormat, showSeconds);
   const dateString = format(now, 'EEEE, MMMM d');
 
   return (

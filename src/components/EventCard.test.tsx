@@ -26,6 +26,12 @@ describe('EventCard', () => {
     expect(screen.getByText('4:00 PM - 5:30 PM')).toBeInTheDocument();
   });
 
+  // Settings' 24-hour time used to be ignored here, on the dashboard.
+  it('shows the times in 24-hour time when set', () => {
+    render(<EventCard event={makeEvent()} timeFormat="24h" />);
+    expect(screen.getByText('16:00 - 17:30')).toBeInTheDocument();
+  });
+
   it('shows "All day" instead of a time range for all-day events', () => {
     render(<EventCard event={makeEvent({ allDay: true })} />);
     expect(screen.getByText('All day')).toBeInTheDocument();

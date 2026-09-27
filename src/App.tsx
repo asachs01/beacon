@@ -22,9 +22,9 @@ import { ScreenSaver } from './components/ScreenSaver';
 import { GroceryView } from './components/GroceryView';
 import { OmniAdd } from './components/OmniAdd';
 import { CalendarSidebar } from './components/CalendarSidebar';
-import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
+import { useWakeLock } from './hooks/useWakeLock';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
 import { LazyBoundary } from './components/LazyBoundary';
@@ -37,6 +37,8 @@ import { setHaKioskMode } from './utils/ha-kiosk';
 import { applyFontScale } from './utils/font-scale';
 import { formToPayload, movedPayload, occurrenceTarget, type EditScope, type EventPayload, type OccurrenceTarget } from './utils/calendar-edits';
 import { SaveFailedNotice } from './components/SaveFailedNotice';
+import { onDataChanged, watchDataChanges } from './api/data-changes';
+import { FAMILY_COLLECTIONS, notifyFamilyDataChanged } from './api/family';
 
 const config = getConfig();
 
@@ -77,7 +79,6 @@ function LeaderboardPanel({ open, onClose }: { open: boolean; onClose: () => voi
 export function App() {
   const auth = useHaAuth();
   const { client, connected } = useHomeAssistant();
-  const { isIngress, compact } = useIngressDetect();
   const {
     settings,
     updateSettings,
@@ -189,8 +190,8 @@ export function App() {
     }
   }, [localCal, deleteHaEvent]);
 
-  const { weather } = useWeather(client, fullAppShown);
-  const music = useMusic(client, connected, fullAppShown);
+  const { weather } = useWeather(client, fullAppShown, settings.weatherEntity);
+  const music = useMusic(client, connected, fullAppShown, settings.musicDefaultPlayer);
   const {
     chores,
     currentCompletions,
@@ -208,6 +209,19 @@ export function App() {
     available: choresSyncAvailable,
   } = useChoresSync(settings.choresSyncEnabled);
 
+  // What another display (or the Google Tasks sync) changes shows here
+  // within seconds: chores, completions, members and routines are loaded
+  // again by every screen showing them, and settings, lists and the
+  // built-in calendar watch their own keys (useStoredData).
+  useEffect(() => {
+    const stopWatching = watchDataChanges();
+    const stopFamily = onDataChanged(FAMILY_COLLECTIONS, () => notifyFamilyDataChanged());
+    return () => {
+      stopFamily();
+      stopWatching();
+    };
+  }, []);
+
   // Lists mirrored as chores by the Google Tasks sync already show on the
   // Chores screen, so keep them out of the Tasks screen and dashboard.
   const choreSyncListKey = settings.choresSyncEnabled
@@ -220,11 +234,12 @@ export function App() {
 
   const dashboardTasks = useDashboardTasks(connected, settings.groceryListIds, settings.hideLocalTaskList, choreSyncListIds, fullAppShown);
 
-  // Apply theme at App level so it stays active regardless of which view is shown
-  const { setTheme } = useTheme();
-  useEffect(() => {
-    setTheme(settings.themeId);
-  }, [settings.themeId, setTheme]);
+  // Apply theme at App level so it stays active regardless of which view is
+  // shown, dark by night with Auto Dark Mode on.
+  useTheme(settings.themeId, settings);
+
+  // Settings > Display > Always-On Display
+  useWakeLock(settings.alwaysOnDisplay);
 
   useEffect(() => {
     applyFontScale(settings.fontScale);
@@ -320,6 +335,9 @@ export function App() {
 
   // Re-fetch when calendar colors or family members change so colors update
   // immediately, without recreating the 5-minute polling interval above.
+  // Colors by content: every settings reload (now whenever any setting
+  // changes on any display) brings a new colors object.
+  const calendarColorsKey = JSON.stringify(settings.calendarColors);
   const colorRefreshRef = useRef({ connected, fullAppShown, fetchCalendars, refetchEventsForWeek, visibleWeekStart });
   colorRefreshRef.current = { connected, fullAppShown, fetchCalendars, refetchEventsForWeek, visibleWeekStart };
   const didColorRefreshMount = useRef(false);
@@ -332,7 +350,7 @@ export function App() {
     if (!colorRefreshRef.current.connected || !colorRefreshRef.current.fullAppShown) return;
     colorRefreshRef.current.fetchCalendars();
     colorRefreshRef.current.refetchEventsForWeek(colorRefreshRef.current.visibleWeekStart);
-  }, [settings.calendarColors, members]);
+  }, [calendarColorsKey, members]);
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
     setHiddenCalendars(prev => {
@@ -587,7 +605,7 @@ export function App() {
   }
 
   return (
-    <div className={`beacon beacon--sidebar-${sidebarPos} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''} ${showNowPlaying ? 'beacon--now-playing' : ''}`}>
+    <div className={`beacon beacon--sidebar-${sidebarPos} ${showNowPlaying ? 'beacon--now-playing' : ''}`}>
       {focusInvalid && (
         <div className="focus-invalid-banner">
           Kid display member not found — showing the full app.
@@ -622,6 +640,7 @@ export function App() {
               layout={settings.dashboardLayout}
               advancedDashboard={settings.advancedDashboard}
               timeFormat={settings.timeFormat}
+              showSeconds={settings.showSeconds}
               selectedDate={dashboardDate}
               onSelectedDateChange={setDashboardDate}
               defaultShoppingList={
@@ -694,6 +713,9 @@ export function App() {
         ) : activeView === 'photos' ? (
           <LazyBoundary>
             <PhotoFrame
+              intervalSeconds={settings.photoInterval}
+              transition={settings.photoTransition}
+              timeFormat={settings.timeFormat}
               musicPlayer={music.activePlayer}
               onMusicPlay={() => music.activePlayer && music.play(music.activePlayer.entity_id)}
               onMusicPause={() => music.activePlayer && music.pause(music.activePlayer.entity_id)}
@@ -719,7 +741,7 @@ export function App() {
                 )}
               </div>
               <div className="header-right">
-                <Clock />
+                <Clock timeFormat={settings.timeFormat} showSeconds={settings.showSeconds} />
               </div>
             </header>
 
@@ -738,6 +760,7 @@ export function App() {
                 <WeekCalendar
                   events={events}
                   weekStartsOn={settings.weekStartsOn}
+                  timeFormat={settings.timeFormat}
                   hiddenCalendars={hiddenCalendars}
                   onEventClick={handleEventClick}
                   onSlotClick={handleSlotClick}
@@ -753,6 +776,7 @@ export function App() {
                 todoItems={dashboardTasks.items}
                 onToggleTodo={dashboardTasks.toggleItem}
                 members={members}
+                timeFormat={settings.timeFormat}
               />
             </div>
 
@@ -835,6 +859,7 @@ export function App() {
         screenSaverTimeoutMin={settings.screenSaverTimeout}
         showPhotos={settings.screenSaverShowPhotos}
         photoIntervalSeconds={settings.photoInterval}
+        timeFormat={settings.timeFormat}
       />
 
       {/* Demo indicator — only show outside of add-on ingress */}

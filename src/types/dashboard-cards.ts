@@ -58,6 +58,8 @@ export interface DashboardLayoutView {
  */
 export interface DashboardCardContext {
   timeFormat: '12h' | '24h';
+  /** Settings > Display > Show Seconds on Clock. */
+  showSeconds: boolean;
   events: CalendarEvent[];
   weather: WeatherData | null;
   onWeatherClick?: () => void;

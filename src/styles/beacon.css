@@ -2164,35 +2164,6 @@ a:focus:not(:focus-visible) {
   }
 }
 
-/* --- HA Ingress mode --- */
-/* Beacon sidebar should show alongside HA's sidebar.
-   The ingress iframe already gets the space after HA's sidebar,
-   so Beacon's sidebar just needs to be slightly narrower. */
-.beacon--ingress {
-  --sidebar-width: 52px;
-}
-
-.beacon--ingress.beacon--sidebar-left {
-  grid-template-columns: 52px 1fr;
-}
-
-.beacon--ingress.beacon--sidebar-right {
-  grid-template-columns: 1fr 52px;
-}
-
-/* On very narrow viewports in ingress (phone), switch to bottom tabs */
-/* compact sidebar hiding is handled via inline style in component */
-
-.beacon--compact {
-  grid-template-columns: 1fr !important;
-  --sidebar-width: 0px;
-  padding-bottom: var(--mobile-tab-bar-height, 72px);
-}
-
-.beacon--compact .mobile-tab-bar {
-  display: flex;
-}
-
 /* ============================================================
    Accessibility: Reduced Motion
    ============================================================ */

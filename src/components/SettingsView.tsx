@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useTheme } from '../hooks/useTheme';
 import {
   Settings as SettingsIcon,
   Palette,
@@ -28,6 +27,7 @@ import type { ChoresSyncStatus } from '../hooks/useChoresSync';
 import { buildFocusUrl } from '../focus';
 import { exitToHomeAssistant, isInHaPanel } from '../utils/ha-kiosk';
 import { useRoutines } from '../hooks/useRoutines';
+import { isWakeLockSupported } from '../hooks/useWakeLock';
 import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
 import '../styles/settings.css';
 
@@ -228,7 +228,6 @@ export function SettingsView({
   calendars,
   onEnterFocusMode,
 }: SettingsViewProps) {
-  const { setTheme: applyTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
   const [editingMember, setEditingMember] = useState<string | null>(null);
   const [memberForm, setMemberForm] = useState<MemberForm>(EMPTY_FORM);
@@ -500,25 +499,6 @@ export function SettingsView({
             onChange={(v) => onUpdateSettings({ weekStartsOn: Number(v) as 0 | 1 })}
           />
         </div>
-        <div className="settings-row">
-          <div className="settings-row-label">Language / Locale</div>
-          <select
-            className="settings-select"
-            value={settings.locale}
-            onChange={(e) => onUpdateSettings({ locale: e.target.value })}
-          >
-            <option value="en-US">English (US)</option>
-            <option value="en-GB">English (UK)</option>
-            <option value="es">Espa&#241;ol</option>
-            <option value="fr">Fran&#231;ais</option>
-            <option value="de">Deutsch</option>
-            <option value="it">Italiano</option>
-            <option value="pt">Portugu&#234;s</option>
-            <option value="nl">Nederlands</option>
-            <option value="ja">Japanese</option>
-            <option value="ko">Korean</option>
-          </select>
-        </div>
       </div>
 
       <h2 className="settings-section-title" style={{ marginTop: 32 }}>Dashboard Layout</h2>
@@ -584,7 +564,7 @@ export function SettingsView({
                 key={entry.id}
                 type="button"
                 className={`settings-theme-card ${isActive ? 'settings-theme-card--active' : ''}`}
-                onClick={() => { onUpdateSettings({ themeId: entry.id }); applyTheme(entry.id); }}
+                onClick={() => onUpdateSettings({ themeId: entry.id })}
               >
                 <div className="settings-theme-preview">
                   {entry.colors.map((color, i) => (
@@ -1367,44 +1347,6 @@ export function SettingsView({
       </div>
 
       <div className="settings-group">
-        <div className="settings-group-title">Grocy</div>
-        <div className="settings-row">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span
-              className={`settings-status-dot ${settings.grocyEnabled ? 'settings-status-dot--connected' : 'settings-status-dot--disconnected'}`}
-            />
-            <div>
-              <div className="settings-row-label">Grocy Integration</div>
-              <div className="settings-row-sublabel">Grocery and meal planning</div>
-            </div>
-          </div>
-          <Toggle
-            checked={settings.grocyEnabled}
-            onChange={(v) => onUpdateSettings({ grocyEnabled: v })}
-          />
-        </div>
-      </div>
-
-      <div className="settings-group">
-        <div className="settings-group-title">AnyList</div>
-        <div className="settings-row">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span
-              className={`settings-status-dot ${settings.anylistEnabled ? 'settings-status-dot--connected' : 'settings-status-dot--disconnected'}`}
-            />
-            <div>
-              <div className="settings-row-label">AnyList Integration</div>
-              <div className="settings-row-sublabel">Shared shopping lists</div>
-            </div>
-          </div>
-          <Toggle
-            checked={settings.anylistEnabled}
-            onChange={(v) => onUpdateSettings({ anylistEnabled: v })}
-          />
-        </div>
-      </div>
-
-      <div className="settings-group">
         <div className="settings-group-title">Grocery</div>
         <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12 }}>
           <div>
@@ -1643,7 +1585,11 @@ export function SettingsView({
         <div className="settings-row">
           <div>
             <div className="settings-row-label">Always-On Display</div>
-            <div className="settings-row-sublabel">Prevent screen from sleeping</div>
+            <div className="settings-row-sublabel">
+              {isWakeLockSupported()
+                ? 'Prevent screen from sleeping'
+                : 'Prevent screen from sleeping — not available in this browser, or without https'}
+            </div>
           </div>
           <Toggle
             checked={settings.alwaysOnDisplay}
@@ -1653,21 +1599,11 @@ export function SettingsView({
         <div className="settings-row">
           <div>
             <div className="settings-row-label">Show Seconds on Clock</div>
-            <div className="settings-row-sublabel">Display seconds in the header clock</div>
+            <div className="settings-row-sublabel">Display seconds on the dashboard and screen clocks</div>
           </div>
           <Toggle
             checked={settings.showSeconds}
             onChange={(v) => onUpdateSettings({ showSeconds: v })}
-          />
-        </div>
-        <div className="settings-row">
-          <div>
-            <div className="settings-row-label">Kiosk Mode</div>
-            <div className="settings-row-sublabel">Hide the sidebar for a cleaner display</div>
-          </div>
-          <Toggle
-            checked={settings.kioskMode}
-            onChange={(v) => onUpdateSettings({ kioskMode: v })}
           />
         </div>
       </div>

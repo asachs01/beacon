@@ -30,6 +30,9 @@ const STORAGE_KEYS = {
   routine_completions: 'beacon_routine_completions',
 } as const;
 
+/** Every collection family data is stored in. */
+export const FAMILY_COLLECTIONS: string[] = Object.values(STORAGE_KEYS);
+
 /**
  * Fired whenever family data changes, so every mounted useFamily /
  * useChores / useRoutines instance refreshes — each screen keeps its own

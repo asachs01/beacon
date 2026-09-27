@@ -1,21 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
 import { WeatherData } from '../types';
-import { getConfig } from '../config';
 import { hasToken } from '../api/ha-rest';
-import { findWeatherEntity } from '../api/ha-services';
+import { findWeatherEntity, weatherEntityId } from '../api/ha-services';
 import { refreshWhileAwake } from '../utils/display-sleep';
 
 const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
-/** `enabled: false` stops refreshing (the last reading is kept); turning it back on fetches at once. */
-export function useWeather(getClient: () => HomeAssistantClient | null, enabled = true) {
+/**
+ * `enabled: false` stops refreshing (the last reading is kept); turning it
+ * back on fetches at once. `entityId` is Settings' Weather Entity: changing
+ * it fetches at once too.
+ */
+export function useWeather(getClient: () => HomeAssistantClient | null, enabled = true, entityId?: string) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchWeather = useCallback(async () => {
     const client = getClient();
-    const configEntity = getConfig().weather_entity;
+    const configEntity = entityId?.trim() || weatherEntityId();
 
     // Try WebSocket client first
     if (client?.isConnected) {
@@ -32,7 +35,7 @@ export function useWeather(getClient: () => HomeAssistantClient | null, enabled 
     // Fall back to REST API (proxy mode)
     if (hasToken()) {
       try {
-        const entity = await findWeatherEntity();
+        const entity = await findWeatherEntity(configEntity);
         if (entity) {
           const attrs = entity.attributes;
           setWeather({
@@ -49,7 +52,7 @@ export function useWeather(getClient: () => HomeAssistantClient | null, enabled 
         setError(err instanceof Error ? err.message : 'Failed to fetch weather');
       }
     }
-  }, [getClient]);
+  }, [getClient, entityId]);
 
   useEffect(() => {
     if (!enabled) return;

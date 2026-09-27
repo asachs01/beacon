@@ -533,6 +533,23 @@ async function writeFileAtomic(filePath, contents) {
 
 async function writeCollectionArray(name, items) {
   await writeFileAtomic(collectionFilePath(name), JSON.stringify(items));
+  noteChanged(name);
+}
+
+/**
+ * How many times each stored file (DATA_DIR/<key>.json, from either API or
+ * the chores sync) has been written since the add-on started, so displays
+ * can tell that something they show was changed elsewhere without
+ * downloading it all again: GET /beacon-action/changes answers with every
+ * count. `boot` changes when the add-on restarts, which starts the counts
+ * over. Displays used to fetch family data only when opened, at midnight,
+ * or after their own changes, so another display's changes never showed.
+ */
+const BOOT_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+const changeCounts = new Map();
+
+function noteChanged(key) {
+  changeCounts.set(key, (changeCounts.get(key) || 0) + 1);
 }
 
 function generateItemId() {
@@ -772,6 +789,7 @@ async function handleDataApi(req, res) {
         }
         await writeFileAtomic(filePath, JSON.stringify({ ...existing, ...parsed }));
       });
+      noteChanged(key);
       if (key === SETTINGS_KEY) void choresSync.settingsChanged();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));
@@ -1280,6 +1298,21 @@ function handleChoresSyncAction(req, res) {
 }
 
 /**
+ * GET /beacon-action/changes → { boot, counts: { [key]: writes } }: how
+ * often each stored file has been written (see changeCounts). Polled by
+ * every display, so it's small and never cached.
+ */
+function handleChangesAction(req, res) {
+  if (req.method !== 'GET') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+  res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+  res.end(JSON.stringify({ boot: BOOT_ID, counts: Object.fromEntries(changeCounts) }));
+}
+
+/**
  * Answers 500 when an async route fails in a way it didn't handle itself.
  * Otherwise the rejection goes unhandled, which ends the whole add-on
  * process — every display loses its server, and the chores sync stops.
@@ -1314,6 +1347,12 @@ const server = http.createServer((req, res) => {
   // Voice / natural-language action API
   if (req.url === '/beacon-action/voice') {
     handleVoiceAction(req, res);
+    return;
+  }
+
+  // Which stored data has changed, for displays to catch up
+  if (req.url === '/beacon-action/changes') {
+    handleChangesAction(req, res);
     return;
   }
 

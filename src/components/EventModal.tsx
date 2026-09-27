@@ -267,12 +267,27 @@ export function EventModal({
     }
   };
 
+  // The first tap on Delete asks, a second one deletes (as for chores): the
+  // event goes from the calendar itself, Google's too, with no undo. One tap
+  // on a wall display's touchscreen used to delete it.
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  useEffect(() => {
+    if (!confirmingDelete) return;
+    const timer = setTimeout(() => setConfirmingDelete(false), 4000);
+    return () => clearTimeout(timer);
+  }, [confirmingDelete]);
+
   const handleDelete = async () => {
     if (!event) return;
     if (event.hasStableId === false) {
       setError("This event can't be deleted — it has no stable ID from its calendar provider.");
       return;
     }
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
+    setConfirmingDelete(false);
     setError(null);
     setSubmitting(true);
     try {
@@ -459,7 +474,7 @@ export function EventModal({
           <div className="modal-footer">
             {isEditing && (
               <button type="button" className="btn btn--danger" onClick={handleDelete} disabled={submitting}>
-                Delete
+                {confirmingDelete ? 'Tap again to delete' : 'Delete'}
               </button>
             )}
             <div className="modal-footer-right">

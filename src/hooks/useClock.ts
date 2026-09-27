@@ -8,13 +8,16 @@ export const byMinute = (d: Date) => `${localDayKey(d)} ${d.getHours()}:${d.getM
 /** Changes at local midnight. */
 export const byDay = (d: Date) => localDayKey(d);
 
+/** Changes every second — for a clock showing seconds; it wakes every second. */
+export const bySecond = (d: Date) => `${byMinute(d)}:${d.getSeconds()}`;
+
 /**
  * The current time, for things that show or depend on it.
  *
- * Wakes at each minute boundary, so a clock flips the moment the minute
- * changes, but only updates (re-rendering the caller) when `bucket` says
- * something the caller shows has changed: `useClock(byDay)` re-renders once
- * a day, at midnight. Keep `bucket` a module-level function — a new one
+ * Wakes at each minute boundary (each second for bySecond), so a clock
+ * flips the moment the minute changes, but only updates (re-rendering the
+ * caller) when `bucket` says something the caller shows has changed:
+ * `useClock(byDay)` re-renders once a day, at midnight. Keep `bucket` a module-level function — a new one
  * every render restarts the timer.
  *
  * Replaces one-second intervals, which re-rendered every card and list on a
@@ -32,14 +35,17 @@ export function useClock(bucket: (d: Date) => string = byMinute): Date {
     };
 
     // Re-measured every time rather than a fixed 60s interval, so the
-    // clock never drifts off the minute.
+    // clock never drifts off the minute (or the second, for bySecond).
+    const everySecond = bucket === bySecond;
     const schedule = () => {
       const current = new Date();
-      const untilNextMinute = 60_000 - (current.getSeconds() * 1000 + current.getMilliseconds());
+      const untilNext = everySecond
+        ? 1000 - current.getMilliseconds()
+        : 60_000 - (current.getSeconds() * 1000 + current.getMilliseconds());
       timer = setTimeout(() => {
         sync();
         schedule();
-      }, untilNextMinute);
+      }, untilNext);
     };
 
     // Timers are slowed or paused while the app is in the background;

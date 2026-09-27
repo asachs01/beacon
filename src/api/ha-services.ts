@@ -5,6 +5,7 @@
  */
 import { callHaService, fetchAllStates, haFetch } from './ha-rest';
 import { getConfig } from '../config';
+import { loadDataSync } from './beacon-store';
 
 /**
  * Call a service with return_response and return the part of the
@@ -57,11 +58,20 @@ export interface HaState {
 }
 
 /**
- * The weather entity to show: the one configured in the add-on options if
- * it exists, otherwise the first `weather.*` entity. Null if there's none.
+ * Settings > Integrations > Weather Entity (this display's copy of the
+ * settings), else the add-on option. The setting used to be ignored.
  */
-export async function findWeatherEntity(): Promise<HaState | null> {
-  const configured = getConfig().weather_entity;
+export function weatherEntityId(): string {
+  const chosen = loadDataSync<{ weatherEntity?: string } | null>('beacon-settings', null)?.weatherEntity?.trim();
+  return chosen || getConfig().weather_entity;
+}
+
+/**
+ * The weather entity to show: `configured` (by default the one chosen in
+ * Settings) if it exists, otherwise the first `weather.*` entity. Null if
+ * there's none.
+ */
+export async function findWeatherEntity(configured = weatherEntityId()): Promise<HaState | null> {
   if (configured) {
     try {
       return await haFetch(`/api/states/${configured}`) as HaState;
