@@ -377,7 +377,6 @@ export function MusicView({
           className={`music-backdrop${art ? '' : ' music-backdrop--plain'}`}
           style={art ? { backgroundImage: `url("${art}")` } : undefined}
         />
-        <div className="music-scrim" />
       </div>
 
       <div className="music-layout">
