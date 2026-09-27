@@ -189,16 +189,20 @@ export function useMusic(
   const playersRef = useRef(players);
   playersRef.current = players;
   const setVolume = useCallback(
-    (level: number, entityId?: string) => control(
-      entityId,
-      async (client, id) => {
-        await apiSetVolume(client, id, level);
-        if (playersRef.current.find((p) => p.entity_id === id)?.is_volume_muted) {
-          await apiSetMuted(client, id, false);
-        }
-      },
-      () => ({ volume_level: level, is_volume_muted: false }),
-    ),
+    (level: number, entityId?: string) => {
+      // Which players are muted, read before control() shows them unmuted:
+      // the screen re-renders before the volume call answers, so reading it
+      // afterwards found none muted and the unmute was never sent.
+      const muted = new Set(playersRef.current.filter((p) => p.is_volume_muted).map((p) => p.entity_id));
+      return control(
+        entityId,
+        async (client, id) => {
+          await apiSetVolume(client, id, level);
+          if (muted.has(id)) await apiSetMuted(client, id, false);
+        },
+        () => ({ volume_level: level, is_volume_muted: false }),
+      );
+    },
     [control],
   );
   const stepVolume = useCallback(
