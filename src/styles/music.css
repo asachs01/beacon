@@ -4,8 +4,8 @@
    An iOS-style Now Playing. The artwork, blurred, fills the screen behind
    the player; the artwork sits beside the controls on landscape screens
    and above them on portrait ones, sized so everything fits without
-   scrolling (down to an Echo Show 5's 960×480). Always light-on-dark, like
-   iOS, whatever the theme.
+   scrolling (down to an Echo Show 5's 960×480). In the theme's own
+   colours, like the other screens, with a wash of the artwork's colour.
    ============================================================ */
 
 .music-view {
@@ -19,8 +19,25 @@
   height: 100%;
   overflow: hidden;
   isolation: isolate;
-  color: #fff;
-  background: #1c1c1e;
+  /* The theme's colours, and see-through versions of its text colour for
+     tracks, tiles and pressed buttons. */
+  --music-fg: var(--text-primary, #1a1a1a);
+  --music-fg-2: var(--text-secondary, #6b7280);
+  --music-fill: color-mix(in srgb, var(--music-fg) 82%, transparent);
+  --music-track: color-mix(in srgb, var(--music-fg) 16%, transparent);
+  --music-soft: color-mix(in srgb, var(--music-fg) 8%, transparent);
+  color: var(--music-fg);
+  background: var(--bg-primary, #faf9f6);
+}
+
+/* Browsers without color-mix() (older Silk on Echo Show): greys that work
+   on light and dark themes alike. */
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .music-view {
+    --music-fill: rgba(128, 128, 128, 0.9);
+    --music-track: rgba(128, 128, 128, 0.3);
+    --music-soft: rgba(128, 128, 128, 0.14);
+  }
 }
 
 /* The background, in a layer of its own: the blurred artwork overhangs the
@@ -44,31 +61,23 @@
   right: -12%;
   bottom: -12%;
   left: -12%;
-  background-color: #2c2c2e;
   background-size: cover;
   background-position: center;
-  filter: blur(56px) saturate(1.6);
+  filter: blur(64px) saturate(1.4);
+  /* Only a tint: the screen stays close to the others */
+  opacity: 0.16;
 }
 
 /* No artwork: a soft gradient instead */
 .music-backdrop--plain,
 .music-view--empty .music-backdrop {
   filter: none;
+  opacity: 0.12;
   background-image:
-    radial-gradient(circle at 18% 12%, rgba(94, 92, 230, 0.55), transparent 55%),
-    radial-gradient(circle at 88% 88%, rgba(255, 55, 95, 0.38), transparent 50%),
-    linear-gradient(160deg, #2c2c2e, #1c1c1e);
+    radial-gradient(circle at 18% 12%, var(--accent, #3b82f6), transparent 55%),
+    radial-gradient(circle at 88% 88%, var(--accent, #3b82f6), transparent 50%);
 }
 
-/* Keeps white text readable over bright artwork */
-.music-scrim {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.45) 100%);
-}
 
 .music-layout {
   display: flex;
@@ -94,7 +103,7 @@
   height: 100%;
   object-fit: cover;
   border-radius: clamp(10px, calc(var(--art-size) * 0.035), 18px);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
   transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 500ms ease;
   animation: music-fade-in 400ms ease;
 }
@@ -102,15 +111,15 @@
 /* Paused, the artwork eases back, as on iOS */
 .music-view--paused .music-art {
   transform: scale(0.84);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
 }
 
 .music-art--placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06));
-  color: rgba(255, 255, 255, 0.55);
+  background: linear-gradient(145deg, var(--music-track), var(--music-soft));
+  color: var(--music-fg-2);
 }
 
 .music-art--placeholder svg {
@@ -138,7 +147,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
-  color: #fff;
+  color: var(--music-fg);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -148,7 +157,7 @@
   margin: 4px 0 0;
   font-size: clamp(1rem, 0.85rem + 0.9vmin, 1.4rem);
   line-height: 1.3;
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--music-fg-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -168,21 +177,21 @@
 }
 
 .music-progress-hit:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline: 2px solid var(--music-fg-2);
   outline-offset: 2px;
 }
 
 .music-progress-track {
   height: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--music-track);
   overflow: hidden;
   transition: height 180ms ease, transform 180ms ease;
 }
 
 .music-progress-fill {
   height: 100%;
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--music-fill);
   transition: width 1s linear;
 }
 
@@ -197,12 +206,12 @@
 }
 
 .music-progress--dragging .music-progress-fill {
-  background: #fff;
+  background: var(--music-fg);
   transition: none;
 }
 
 .music-progress--dragging .music-progress-times {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--music-fill);
 }
 
 .music-progress-times {
@@ -211,7 +220,7 @@
   margin-top: 8px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--music-fg-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -231,7 +240,7 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: #fff;
+  color: var(--music-fg);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 150ms ease, background 150ms ease;
@@ -249,12 +258,12 @@
 
 .music-transport-btn:active {
   transform: scale(0.88);
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--music-soft);
 }
 
 @media (hover: hover) {
   .music-transport-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--music-soft);
   }
 }
 
@@ -269,7 +278,7 @@
   border: none;
   border-radius: 12px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--music-fg-2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 150ms ease, background 150ms ease, color 150ms ease;
@@ -282,8 +291,8 @@
 
 /* On: a light tile behind the icon, like iOS's shuffle and repeat */
 .music-mode-btn--on {
-  background: rgba(255, 255, 255, 0.24);
-  color: #fff;
+  background: var(--music-track);
+  color: var(--music-fg);
 }
 
 .music-mode-btn:active {
@@ -294,7 +303,7 @@
 .music-mode-btn:focus-visible,
 .music-output:focus-visible,
 .music-sheet-item:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline: 2px solid var(--music-fg-2);
   outline-offset: 2px;
 }
 
@@ -309,7 +318,7 @@
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--music-fg-2);
 }
 
 .music-slider {
@@ -326,7 +335,7 @@
 .music-slider::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 3px;
-  background: linear-gradient(to right, rgba(255, 255, 255, 0.88) var(--fill, 0%), rgba(255, 255, 255, 0.22) var(--fill, 0%));
+  background: linear-gradient(to right, var(--music-fill) var(--fill, 0%), var(--music-track) var(--fill, 0%));
 }
 
 .music-slider::-webkit-slider-thumb {
@@ -343,13 +352,13 @@
 .music-slider::-moz-range-track {
   height: 6px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--music-track);
 }
 
 .music-slider::-moz-range-progress {
   height: 6px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.88);
+  background: var(--music-fill);
 }
 
 .music-slider::-moz-range-thumb {
@@ -362,7 +371,7 @@
 }
 
 .music-slider:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 4px var(--music-track);
 }
 
 /* Which speaker, and the button to pick another */
@@ -376,8 +385,8 @@
   padding: 10px 18px;
   border: none;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.92);
+  background: var(--music-soft);
+  color: var(--music-fill);
   font: inherit;
   font-size: 0.95rem;
   font-weight: 600;
@@ -386,12 +395,12 @@
 }
 
 .music-output:active {
-  background: rgba(255, 255, 255, 0.24);
+  background: var(--music-track);
 }
 
 .music-output:disabled {
   background: transparent;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--music-fg-2);
   cursor: default;
 }
 
@@ -480,7 +489,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.25);
   animation: music-fade-in 200ms ease;
 }
 
@@ -493,10 +502,8 @@
   padding: 8px 8px calc(12px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
   border-radius: 22px 22px 0 0;
-  background: rgba(44, 44, 46, 0.8);
-  -webkit-backdrop-filter: blur(30px) saturate(1.6);
-  backdrop-filter: blur(30px) saturate(1.6);
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.35);
+  background: var(--bg-surface, #fff);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.18);
   animation: music-sheet-up 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -505,7 +512,7 @@
   height: 5px;
   margin: 4px auto 6px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--music-track);
 }
 
 .music-sheet-title {
@@ -513,7 +520,7 @@
   font-size: 1.05rem;
   font-weight: 700;
   text-align: center;
-  color: #fff;
+  color: var(--music-fg);
 }
 
 .music-sheet-list {
@@ -533,7 +540,7 @@
   border: none;
   border-radius: 14px;
   background: transparent;
-  color: #fff;
+  color: var(--music-fg);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -542,7 +549,7 @@
 
 .music-sheet-item:active,
 .music-sheet-item--current {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--music-soft);
 }
 
 .music-sheet-art {
@@ -558,8 +565,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--music-soft);
+  color: var(--music-fg-2);
 }
 
 .music-sheet-art svg {
@@ -581,7 +588,7 @@
 
 .music-sheet-state {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--music-fg-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -591,7 +598,7 @@
   width: 22px;
   height: 22px;
   flex-shrink: 0;
-  color: #0a84ff;
+  color: var(--accent, #3b82f6);
 }
 
 @media (min-width: 700px) {
@@ -628,20 +635,20 @@
   width: 64px;
   height: 64px;
   margin-bottom: 6px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--music-fg-2);
 }
 
 .music-empty-title {
   margin: 0;
   font-size: 1.4rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--music-fg);
 }
 
 .music-empty-text {
   max-width: 320px;
   margin: 0;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--music-fg-2);
 }
 
 @keyframes music-fade-in {
