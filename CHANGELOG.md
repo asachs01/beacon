@@ -1,3 +1,10 @@
+## [1.52.14](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.13...v1.52.14) (2026-09-27)
+
+
+### Bug Fixes
+
+* photos show again when their folder is given as /media/local/… ([5b16d12](https://github.com/f1f1f1f1f1f1/Family/commit/5b16d125918551515f7c1da7870d42303d1beb03))
+
 ## [1.52.13](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.12...v1.52.13) (2026-09-27)
 
 
