@@ -57,6 +57,19 @@ describe('HomeAssistantClient', () => {
     await expect(request).rejects.toThrow('Connection to Home Assistant lost');
   });
 
+  // The event reminders' notify.notify call went with an empty entity id,
+  // which Home Assistant refuses.
+  it('sends a service call without a target when it has no entity', async () => {
+    const client = await connected();
+    void client.callService('notify', 'notify', '', { message: 'Soccer in 10 minutes' });
+    void client.callService('light', 'toggle', 'light.kitchen');
+
+    const [notify, toggle] = latest().sent.filter((m) => m.type === 'call_service');
+    expect(notify).not.toHaveProperty('target');
+    expect(notify.service_data).toEqual({ message: 'Soccer in 10 minutes' });
+    expect(toggle.target).toEqual({ entity_id: 'light.kitchen' });
+  });
+
   // connect() never failed when the socket closed before logging in, so
   // retries never backed off while Home Assistant was down.
   it('backs off between reconnects while Home Assistant is down', async () => {
