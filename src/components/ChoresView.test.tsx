@@ -1,11 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { FamilyMember } from '../types/family';
+import type { Chore, FamilyMember } from '../types/family';
 
 const mocks = vi.hoisted(() => ({
   addChore: vi.fn(),
   settings: { currencySymbol: '$' },
+  chores: [] as Chore[],
 }));
 
 const sam: FamilyMember = { id: 'sam', name: 'Sam', avatar: '👧', color: '#ec4899', role: 'child' };
@@ -14,7 +15,7 @@ vi.mock('../hooks/useFamily', () => ({ useFamily: () => ({ members: [sam] }) }))
 vi.mock('../hooks/useSettings', () => ({ useSettings: () => ({ settings: mocks.settings }) }));
 vi.mock('../hooks/useChores', () => ({
   useChores: () => ({
-    chores: [],
+    chores: mocks.chores,
     addChore: mocks.addChore,
     updateChore: vi.fn(),
     removeChore: vi.fn(),
@@ -98,5 +99,21 @@ describe('ChoresView chore value', () => {
     const { form } = await openNewChoreForm();
 
     expect(form.getByText('€')).toBeInTheDocument();
+  });
+});
+
+describe('ChoresView open chores', () => {
+  afterEach(() => {
+    mocks.chores = [];
+  });
+
+  // A chore whose people had all been removed from the family showed in no
+  // column and not as open, so it couldn't be reassigned or deleted.
+  it('lists a chore whose people were all removed as an open chore', () => {
+    mocks.chores = [{ id: 'c1', name: 'Walk the dog', assigned_to: ['gone'], frequency: 'daily', value_cents: 0 }];
+    render(<ChoresView />);
+
+    expect(screen.getByRole('heading', { name: 'Open Chores' })).toBeInTheDocument();
+    expect(screen.getByText('Walk the dog')).toBeInTheDocument();
   });
 });

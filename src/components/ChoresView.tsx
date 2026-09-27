@@ -323,7 +323,10 @@ export function ChoresView() {
     streak: getStreakForMember(member.id),
   }));
 
-  const unassignedChores = chores.filter((c) => c.assigned_to.length === 0);
+  // Also chores whose people have all been removed from the family: they
+  // showed nowhere, so couldn't be reassigned or deleted.
+  const memberIds = new Set(members.map((m) => m.id));
+  const unassignedChores = chores.filter((c) => !c.assigned_to.some((id) => memberIds.has(id)));
 
   const handleClaimChore = (choreId: string, memberId: string) => {
     const chore = chores.find((c) => c.id === choreId);
