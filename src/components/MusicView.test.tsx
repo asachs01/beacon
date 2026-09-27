@@ -35,6 +35,7 @@ const handlers = () => ({
   onPrevious: vi.fn(),
   onSetVolume: vi.fn(),
   onSeek: vi.fn(),
+  onStepVolume: vi.fn(),
   onSetShuffle: vi.fn(),
   onSetRepeat: vi.fn(),
 });
@@ -168,6 +169,64 @@ describe('MusicView', () => {
 
     expect(container.querySelector('.music-backdrop')).toHaveClass('music-backdrop--plain');
     expect(screen.getByRole('img', { name: 'Afterglow' })).toHaveClass('music-art--placeholder');
+  });
+
+  // It went back to the player's volume at any report, even one read before
+  // the player had changed, so the slider jumped back to the old volume.
+  it('keeps the volume set until the player reports it, not jumping back to a stale one', () => {
+    const on = handlers();
+    const { rerender } = render(<MusicView players={[livingRoom]} selectedPlayerId={null} {...on} />);
+    const slider = () => screen.getByRole('slider', { name: 'Volume' });
+
+    fireEvent.change(slider(), { target: { value: '0.7' } });
+    expect(on.onSetVolume).toHaveBeenLastCalledWith(0.7, 'media_player.living_room');
+
+    // A report from before the player changed
+    rerender(<MusicView players={[{ ...livingRoom, volume_level: 0.41 }]} selectedPlayerId={null} {...on} />);
+    expect(slider()).toHaveValue('0.7');
+
+    rerender(<MusicView players={[{ ...livingRoom, volume_level: 0.7 }]} selectedPlayerId={null} {...on} />);
+    expect(slider()).toHaveValue('0.7');
+  });
+
+  it('shows the player’s own volume again if it never reports the one set', () => {
+    const on = handlers();
+    const { rerender } = render(<MusicView players={[livingRoom]} selectedPlayerId={null} {...on} />);
+    const slider = () => screen.getByRole('slider', { name: 'Volume' });
+
+    fireEvent.change(slider(), { target: { value: '0.9' } });
+    rerender(<MusicView players={[{ ...livingRoom, volume_level: 0.4 }]} selectedPlayerId={null} {...on} />);
+    act(() => { vi.advanceTimersByTime(3000); });
+
+    expect(slider()).toHaveValue('0.4');
+  });
+
+  it('greys the volume out for a player whose volume can’t be set', () => {
+    render(<MusicView players={[{ ...livingRoom, supported_features: 1 }]} selectedPlayerId={null} {...handlers()} />);
+    expect(screen.getByRole('slider', { name: 'Volume' })).toBeDisabled();
+  });
+
+  // An Apple TV only steps its volume, as its remote's buttons do: the
+  // slider sent levels it ignored.
+  it('offers volume down and up for a player that can only step its volume', () => {
+    const on = handlers();
+    const appleTv = { ...livingRoom, entity_id: 'media_player.apple_tv', supported_features: 1 | 1024 };
+    render(<MusicView players={[appleTv]} selectedPlayerId={null} {...on} />);
+
+    expect(screen.queryByRole('slider', { name: 'Volume' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Volume up' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Volume down' }));
+    expect(on.onStepVolume).toHaveBeenNthCalledWith(1, 1, 'media_player.apple_tv');
+    expect(on.onStepVolume).toHaveBeenNthCalledWith(2, -1, 'media_player.apple_tv');
+  });
+
+  it('shows one track position after switching speakers', () => {
+    render(<MusicView players={[livingRoom, kitchen]} selectedPlayerId={null} {...handlers()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Speaker: Living Room, change speaker' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Kitchen/ }));
+
+    expect(screen.getAllByRole('slider', { name: 'Track position' })).toHaveLength(1);
+    expect(screen.getAllByRole('slider', { name: 'Volume' })).toHaveLength(1);
   });
 
   it('says when there are no speakers', () => {

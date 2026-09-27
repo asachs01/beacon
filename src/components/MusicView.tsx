@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getConfig } from '../config';
 import {
-  Play, Pause, Rewind, FastForward, Volume, Volume2, Speaker, Check, ChevronDown, Music, Shuffle, Repeat, Repeat1,
+  Play, Pause, Rewind, FastForward, Volume, Volume1, Volume2, Speaker, Check, ChevronDown, Music, Shuffle, Repeat,
+  Repeat1,
 } from 'lucide-react';
 import { MediaPlayer, MediaRepeat } from '../types/music';
 import { positionAt, canDo, MediaFeature } from '../api/music';
@@ -18,6 +19,8 @@ interface MusicViewProps {
   onPrevious: (entityId?: string) => void;
   onSetVolume: (level: number, entityId?: string) => void;
   onSeek: (position: number, entityId?: string) => void;
+  /** A step up (+1) or down (-1), for players that can't set a level */
+  onStepVolume: (direction: 1 | -1, entityId?: string) => void;
   onSetShuffle: (shuffle: boolean, entityId?: string) => void;
   onSetRepeat: (repeat: MediaRepeat, entityId?: string) => void;
 }
@@ -78,11 +81,32 @@ function Artwork({ src, alt, className, onFail }: {
  * Volume, set as the slider moves but at most every quarter second: every
  * move used to be a Home Assistant service call, dozens per drag.
  */
-function VolumeSlider({ level, onChange }: { level: number; onChange: (level: number) => void }) {
+function VolumeSlider({ level, disabled, onChange }: {
+  level: number;
+  /** The player can't have its volume set (e.g. some Apple TVs) */
+  disabled?: boolean;
+  onChange: (level: number) => void;
+}) {
   const [dragged, setDragged] = useState<number | null>(null);
   const lastSent = useRef(0);
   const pending = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(pending.current), []);
+  const settle = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const holding = useRef(false);
+  useEffect(() => () => {
+    clearTimeout(pending.current);
+    clearTimeout(settle.current);
+  }, []);
+
+  // Show the player's own volume again 3 s after the last change if it
+  // never reports this one (the player refused it, say)
+  const settleLater = () => {
+    clearTimeout(settle.current);
+    settle.current = setTimeout(() => { if (!holding.current) setDragged(null); }, 3000);
+  };
+  const release = () => {
+    holding.current = false;
+    settleLater();
+  };
 
   const set = (value: number) => {
     setDragged(value);
@@ -94,13 +118,18 @@ function VolumeSlider({ level, onChange }: { level: number; onChange: (level: nu
     };
     if (wait <= 0) send();
     else pending.current = setTimeout(send, wait);
+    settleLater();
   };
-  // What's set shows until the player reports it back.
-  useEffect(() => setDragged(null), [level]);
+  // What's set shows until the player reports it back. It used to go back
+  // to the player's volume at any report, even mid-drag or one read before
+  // the player had changed, so the slider jumped back to the old volume.
+  useEffect(() => {
+    if (!holding.current && dragged !== null && Math.abs(level - dragged) < 0.015) setDragged(null);
+  }, [level, dragged]);
 
   const shown = dragged ?? level;
   return (
-    <div className="music-volume">
+    <div className={`music-volume${disabled ? ' music-volume--disabled' : ''}`}>
       <Volume className="music-volume-icon" aria-hidden="true" />
       <input
         type="range"
@@ -109,11 +138,34 @@ function VolumeSlider({ level, onChange }: { level: number; onChange: (level: nu
         max={1}
         step={0.01}
         value={shown}
+        disabled={disabled}
         style={{ '--fill': `${shown * 100}%` } as React.CSSProperties}
         onChange={(e) => set(parseFloat(e.target.value))}
+        onPointerDown={() => { holding.current = true; }}
+        onPointerUp={release}
+        onPointerCancel={release}
         aria-label="Volume"
       />
       <Volume2 className="music-volume-icon" aria-hidden="true" />
+    </div>
+  );
+}
+
+/**
+ * Volume down and up, for players that can only step their volume, not set
+ * a level: an Apple TV, whose steps are its remote's volume buttons (so they
+ * reach a TV or receiver on HDMI).
+ */
+function VolumeStepper({ onStep }: { onStep: (direction: 1 | -1) => void }) {
+  return (
+    <div className="music-volume music-volume--steps">
+      <button type="button" className="music-volume-step" onClick={() => onStep(-1)} aria-label="Volume down">
+        <Volume1 aria-hidden="true" />
+      </button>
+      <span className="music-volume-step-label">Volume</span>
+      <button type="button" className="music-volume-step" onClick={() => onStep(1)} aria-label="Volume up">
+        <Volume2 aria-hidden="true" />
+      </button>
     </div>
   );
 }
@@ -297,6 +349,7 @@ export function MusicView({
   onPrevious,
   onSetVolume,
   onSeek,
+  onStepVolume,
   onSetShuffle,
   onSetRepeat,
 }: MusicViewProps) {
@@ -443,10 +496,16 @@ export function MusicView({
             )}
           </div>
 
-          <VolumeSlider
-            level={player.is_volume_muted ? 0 : (player.volume_level ?? 0)}
-            onChange={(level) => onSetVolume(level, entityId)}
-          />
+          {!canDo(player, MediaFeature.VOLUME_SET) && canDo(player, MediaFeature.VOLUME_STEP) ? (
+            <VolumeStepper onStep={(direction) => onStepVolume(direction, entityId)} />
+          ) : (
+            <VolumeSlider
+              key={`volume-${entityId}`}
+              level={player.is_volume_muted ? 0 : (player.volume_level ?? 0)}
+              disabled={!canDo(player, MediaFeature.VOLUME_SET)}
+              onChange={(level) => onSetVolume(level, entityId)}
+            />
+          )}
 
           <button
             type="button"
