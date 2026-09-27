@@ -6,7 +6,6 @@ import {
 import { MediaPlayer, MediaRepeat } from '../types/music';
 import { positionAt, canDo, MediaFeature } from '../api/music';
 import '../styles/music.css';
-import '../styles/glass.css';
 
 interface MusicViewProps {
   players: MediaPlayer[];
