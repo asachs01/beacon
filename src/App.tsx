@@ -25,6 +25,7 @@ import { CalendarSidebar } from './components/CalendarSidebar';
 import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
+import { useWakeLock } from './hooks/useWakeLock';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
 import { LazyBoundary } from './components/LazyBoundary';
@@ -237,6 +238,9 @@ export function App() {
   // Apply theme at App level so it stays active regardless of which view is
   // shown, dark by night with Auto Dark Mode on.
   useTheme(settings.themeId, settings);
+
+  // Settings > Display > Always-On Display
+  useWakeLock(settings.alwaysOnDisplay);
 
   useEffect(() => {
     applyFontScale(settings.fontScale);
@@ -640,6 +644,7 @@ export function App() {
               layout={settings.dashboardLayout}
               advancedDashboard={settings.advancedDashboard}
               timeFormat={settings.timeFormat}
+              showSeconds={settings.showSeconds}
               selectedDate={dashboardDate}
               onSelectedDateChange={setDashboardDate}
               defaultShoppingList={
@@ -744,7 +749,7 @@ export function App() {
                 )}
               </div>
               <div className="header-right">
-                <Clock timeFormat={settings.timeFormat} />
+                <Clock timeFormat={settings.timeFormat} showSeconds={settings.showSeconds} />
               </div>
             </header>
 

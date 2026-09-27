@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { format } from 'date-fns';
-import { useClock, byDay, useSelectedDay } from './useClock';
+import { useClock, byDay, bySecond, useSelectedDay } from './useClock';
 
 const hhmm = (d: Date) => format(d, 'HH:mm');
 const advance = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
@@ -15,6 +15,18 @@ afterEach(() => {
 });
 
 describe('useClock', () => {
+  // For Settings' Show Seconds on Clock.
+  it('ticks every second with bySecond', () => {
+    vi.setSystemTime(new Date(2026, 8, 26, 14, 5, 30, 250));
+    const { result } = renderHook(() => useClock(bySecond));
+    expect(format(result.current, 'HH:mm:ss')).toBe('14:05:30');
+
+    advance(750);
+    expect(format(result.current, 'HH:mm:ss')).toBe('14:05:31');
+    advance(1000);
+    expect(format(result.current, 'HH:mm:ss')).toBe('14:05:32');
+  });
+
   it('flips exactly on the minute, and renders nothing in between', () => {
     vi.setSystemTime(new Date(2026, 8, 26, 14, 5, 30, 250));
     let renders = 0;

@@ -27,6 +27,7 @@ import type { ChoresSyncStatus } from '../hooks/useChoresSync';
 import { buildFocusUrl } from '../focus';
 import { exitToHomeAssistant, isInHaPanel } from '../utils/ha-kiosk';
 import { useRoutines } from '../hooks/useRoutines';
+import { isWakeLockSupported } from '../hooks/useWakeLock';
 import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
 import '../styles/settings.css';
 
@@ -1641,7 +1642,11 @@ export function SettingsView({
         <div className="settings-row">
           <div>
             <div className="settings-row-label">Always-On Display</div>
-            <div className="settings-row-sublabel">Prevent screen from sleeping</div>
+            <div className="settings-row-sublabel">
+              {isWakeLockSupported()
+                ? 'Prevent screen from sleeping'
+                : 'Prevent screen from sleeping — not available in this browser, or without https'}
+            </div>
           </div>
           <Toggle
             checked={settings.alwaysOnDisplay}
@@ -1651,7 +1656,7 @@ export function SettingsView({
         <div className="settings-row">
           <div>
             <div className="settings-row-label">Show Seconds on Clock</div>
-            <div className="settings-row-sublabel">Display seconds in the header clock</div>
+            <div className="settings-row-sublabel">Display seconds on the dashboard and screen clocks</div>
           </div>
           <Toggle
             checked={settings.showSeconds}

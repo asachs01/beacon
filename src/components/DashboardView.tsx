@@ -34,6 +34,7 @@ interface DashboardViewProps {
   layout?: 'default' | 'classic' | 'compact';
   advancedDashboard?: boolean;
   timeFormat: '12h' | '24h';
+  showSeconds?: boolean;
   selectedDate: Date;
   onSelectedDateChange: (date: Date) => void;
   /** HA to-do list for shopping cards that don't pick their own. */
@@ -55,6 +56,7 @@ export function DashboardView({
   layout = 'default',
   advancedDashboard = false,
   timeFormat,
+  showSeconds = false,
   selectedDate,
   onSelectedDateChange,
   defaultShoppingList = '',
@@ -102,6 +104,7 @@ export function DashboardView({
   const context: DashboardCardContext = {
     defaultShoppingList,
     timeFormat,
+    showSeconds,
     events,
     weather,
     onWeatherClick,
