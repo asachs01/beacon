@@ -46,10 +46,26 @@ function stateLabel(player: MediaPlayer): string {
   return 'Not playing';
 }
 
-function Artwork({ src, alt, className }: { src: string | null; alt: string; className: string }) {
+function Artwork({ src, alt, className, onFail }: {
+  src: string | null;
+  alt: string;
+  className: string;
+  onFail?: (src: string) => void;
+}) {
   const [failed, setFailed] = useState<string | null>(null);
   if (src && failed !== src) {
-    return <img key={src} className={className} src={src} alt={alt} onError={() => setFailed(src)} />;
+    return (
+      <img
+        key={src}
+        className={className}
+        src={src}
+        alt={alt}
+        onError={() => {
+          setFailed(src);
+          onFail?.(src);
+        }}
+      />
+    );
   }
   return (
     <div className={`${className} music-art--placeholder`} role="img" aria-label={alt}>
@@ -292,6 +308,7 @@ export function MusicView({
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [shownId, setShownId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [failedArt, setFailedArt] = useState<string | null>(null);
   const byId = (id: string | null) => (id ? players.find((p) => p.entity_id === id) : undefined);
   const lastShown = byId(shownId);
   const player = byId(pickedId)
@@ -336,7 +353,11 @@ export function MusicView({
     );
   }
 
-  const art = artworkUrl(player);
+  // Some apps (Netflix on Apple TV, say) announce artwork HA then can't
+  // fetch: the blurred background showed a broken image rather than the
+  // plain one.
+  const reportedArt = artworkUrl(player);
+  const art = reportedArt !== failedArt ? reportedArt : null;
   const hasTrack = !!player.media_title;
   const title = player.media_title || player.app_name || 'Not Playing';
   const subtitle = hasTrack
@@ -361,7 +382,12 @@ export function MusicView({
 
       <div className="music-layout">
         <div className="music-art-frame">
-          <Artwork src={art} alt={player.media_album_name || title} className="music-art" />
+          <Artwork
+            src={art}
+            alt={player.media_album_name || title}
+            className="music-art"
+            onFail={setFailedArt}
+          />
         </div>
 
         <div className="music-panel">
