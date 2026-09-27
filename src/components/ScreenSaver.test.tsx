@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, act } from '@testing-library/react';
+import { render, act, fireEvent } from '@testing-library/react';
 import { media, resetMedia, addPhotos } from '../test/fake-media-source';
 import { clearPhotoCaches } from '../api/photos';
 import { clearLoadedPhotos } from '../utils/photo-loader';
@@ -88,5 +88,32 @@ describe('ScreenSaver and background refreshes', () => {
     expect(isDisplayAsleep()).toBe(true);
     unmount();
     expect(isDisplayAsleep()).toBe(false);
+  });
+});
+
+describe('ScreenSaver wake', () => {
+  // Touching the dimmed screen woke it at touchstart, taking the overlay
+  // away, and the browser then sent the tap's click to whatever was under
+  // the finger: waking the display ticked a chore or switched a light.
+  it("wakes on a tap without also pressing what's under it", async () => {
+    const pressed = vi.fn();
+    const { container, getByRole } = render(
+      <>
+        <button type="button" onClick={pressed}>Tick chore</button>
+        <ScreenSaver enabled dimTimeoutMin={5} screenSaverTimeoutMin={10} />
+      </>,
+    );
+    await wait(6 * MIN);
+    expect(container.querySelector('.screensaver-dim')).not.toBeNull();
+
+    act(() => { window.dispatchEvent(new Event('touchstart')); });
+    expect(container.querySelector('.screensaver-dim')).toBeNull();
+    fireEvent.click(getByRole('button', { name: 'Tick chore' }));
+    expect(pressed).not.toHaveBeenCalled();
+
+    // The next tap is for the app.
+    await wait(1000);
+    fireEvent.click(getByRole('button', { name: 'Tick chore' }));
+    expect(pressed).toHaveBeenCalledTimes(1);
   });
 });

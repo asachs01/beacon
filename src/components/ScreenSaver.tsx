@@ -11,6 +11,16 @@ const POSITION_INTERVAL = 30_000; // move clock every 30s
 
 type Phase = 'awake' | 'dim' | 'screensaver';
 
+/** Keeps the next click (within a moment) from reaching the app. */
+function swallowNextClick(): void {
+  const stop = (e: Event) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+  window.addEventListener('click', stop, { capture: true, once: true });
+  setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 700);
+}
+
 /** Only mounted while the screensaver shows, so it starts on the right time. */
 function ScreenSaverTime({ timeFormat }: { timeFormat: '12h' | '24h' }) {
   const now = useClock();
@@ -80,7 +90,17 @@ export function ScreenSaver({
     if (photosWanted && phase === 'dim' && currentPhotoUrl) preloadPhoto(currentPhotoUrl);
   }, [photosWanted, phase, currentPhotoUrl]);
 
-  const wake = useCallback(() => {
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+
+  const wake = useCallback((event?: Event) => {
+    // A tap on the dimmed screen or the screensaver only wakes the display.
+    // It wakes at touchstart, which takes the overlay away, so the tap's
+    // click that follows used to land on whatever was under the finger: a
+    // chore ticked, a light switched.
+    if (phaseRef.current !== 'awake' && (event?.type === 'touchstart' || event?.type === 'mousedown')) {
+      swallowNextClick();
+    }
     lastActivityRef.current = Date.now();
     setPhase('awake');
   }, []);
@@ -133,11 +153,11 @@ export function ScreenSaver({
   if (!enabled || phase === 'awake') return null;
 
   if (phase === 'dim') {
-    return <div className="screensaver-dim" onClick={wake} />;
+    return <div className="screensaver-dim" onClick={() => wake()} />;
   }
 
   return (
-    <div className="screensaver-overlay" onClick={wake}>
+    <div className="screensaver-overlay" onClick={() => wake()}>
       {showPhotos && currentPhoto && (
         <>
           <CoverPhoto
