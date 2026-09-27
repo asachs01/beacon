@@ -313,11 +313,12 @@ export function SettingsView({
       avatar: memberForm.avatar,
       color: memberForm.color,
       role: memberForm.role,
-      pin: memberForm.pin || undefined,
-      calendar_entity: memberForm.calendar_entity || undefined,
-      additional_calendar_entities: memberForm.additional_calendar_entities.length > 0
-        ? memberForm.additional_calendar_entities
-        : undefined,
+      // Sent even when empty: the add-on merges an edit into the stored
+      // member, so a field left out kept its old value, and a linked
+      // calendar or a PIN could never be removed.
+      pin: memberForm.pin,
+      calendar_entity: memberForm.calendar_entity,
+      additional_calendar_entities: memberForm.additional_calendar_entities,
     };
     if (memberFormMode === 'edit' && editingMember) {
       onUpdateMember(editingMember, data);
