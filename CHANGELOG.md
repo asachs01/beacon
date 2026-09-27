@@ -1,3 +1,10 @@
+## [1.59.1](https://github.com/f1f1f1f1f1f1/Family/compare/v1.59.0...v1.59.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* Music volume works on an Apple TV, and the slider stops snapping back ([86c2ed2](https://github.com/f1f1f1f1f1f1/Family/commit/86c2ed2d2610ecc674f173dfdc11d64066825615))
+
 # [1.59.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.58.1...v1.59.0) (2026-09-27)
 
 
