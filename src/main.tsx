@@ -10,6 +10,8 @@ import './styles/now-playing.css';
 import './styles/screensaver.css';
 import './styles/omni-add.css';
 import './styles/settings-buttons.css';
+// The frosted-glass look every main screen shares; last, so it wins ties.
+import './styles/glass.css';
 // On-demand screens import their own stylesheets (settings.css, music.css,
 // photos.css, weather.css, timer.css, focus.css), so those download with the screen.
 import { initNativeBridge } from './native';

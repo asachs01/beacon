@@ -1,13 +1,19 @@
 /* ============================================================
-   Beacon — frosted glass for the Music, Weather and Timer screens
+   Beacon — the frosted-glass look, app-wide
 
-   Their panels are see-through, blurring the colour washed behind them,
-   with a thin light edge along the top, as on iOS. Imported by each of
-   those screens (MusicView, WeatherView, Timer). The selectors name the
-   screen as well as the panel, so they win over the screen's own
-   stylesheet whichever loads first.
+   Every main screen shares one look, first made for Music, Weather and
+   Timer: the theme's own colours with a soft wash of colour behind, and
+   panels of see-through glass that blur it, with a thin light edge along
+   the top, as on iOS.
+
+   A startup stylesheet (main.tsx imports it after the others): the
+   Dashboard, Calendar, Chores and Lists screens need it at once. Its
+   selectors name the screen as well as the panel (e.g. `.beacon
+   .dash-member-col`), so they win over each screen's own rules whichever
+   loads first.
    ============================================================ */
 
+.beacon,
 .music-view,
 .weather-view,
 .timer {
@@ -16,11 +22,14 @@
   --glass-shine: rgba(255, 255, 255, 0.5);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
   --glass-blur: blur(24px) saturate(1.8);
-  /* Frostier, for the speakers sheet, which lies over the controls' text */
+  /* Frostier, for sheets and bars that lie over other text */
   --glass-sheet: color-mix(in srgb, var(--bg-surface, #fff) 80%, transparent);
+  /* Rows and buttons inside a glass panel */
+  --glass-fill: color-mix(in srgb, var(--text-primary, #1a1a1a) 5%, transparent);
 }
 
 /* Dark themes: a fainter shine and deeper shadow */
+[data-theme="dark"] .beacon,
 [data-theme="dark"] .music-view,
 [data-theme="dark"] .weather-view,
 [data-theme="dark"] .timer {
@@ -28,27 +37,33 @@
   --glass-edge: rgba(255, 255, 255, 0.08);
   --glass-shine: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --glass-fill: color-mix(in srgb, var(--text-primary, #f8fafc) 7%, transparent);
 }
 
 /* Without color-mix() (older Silk on Echo Show), or when the device asks
    for less transparency: solid panels. */
 @supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .beacon,
   .music-view,
   .weather-view,
   .timer,
+  [data-theme="dark"] .beacon,
   [data-theme="dark"] .music-view,
   [data-theme="dark"] .weather-view,
   [data-theme="dark"] .timer {
     --glass-bg: var(--bg-surface, #fff);
     --glass-sheet: var(--bg-surface, #fff);
     --glass-edge: rgba(128, 128, 128, 0.2);
+    --glass-fill: rgba(128, 128, 128, 0.1);
   }
 }
 
 @media (prefers-reduced-transparency: reduce) {
+  .beacon,
   .music-view,
   .weather-view,
   .timer,
+  [data-theme="dark"] .beacon,
   [data-theme="dark"] .music-view,
   [data-theme="dark"] .weather-view,
   [data-theme="dark"] .timer {
@@ -58,6 +73,45 @@
   }
 }
 
+/* ─── The wash behind every screen ─────────────────────────────────
+   The accent colour, faintly. Music, Weather, Timer and Photos paint
+   their own backgrounds over it. .beacon-main isolates, so this sits
+   above its background and below the screen. */
+.beacon-main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.14;
+  background-image:
+    radial-gradient(circle at 12% 8%, var(--accent, #3b82f6), transparent 50%),
+    radial-gradient(circle at 70% 45%, var(--accent, #3b82f6), transparent 35%),
+    radial-gradient(circle at 95% 95%, var(--accent, #3b82f6), transparent 50%);
+}
+
+/* Screens that painted a solid background over it */
+.beacon .grocery-view {
+  background: transparent;
+}
+
+/* ─── Glass panels ─────────────────────────────────────────────── */
+.beacon .dash-topbar-weather,
+.beacon .dash-member-col,
+.beacon .dash-sidebar,
+.beacon .dash-classic-col,
+.beacon .beacon-header,
+.beacon .filter-pill,
+.beacon .week-calendar,
+.beacon .calendar-sidebar,
+.beacon .chores-member-col,
+.beacon .chores-person-tab,
+.beacon .grocery-view-select,
+.beacon .grocery-view-input,
+.beacon .grocery-view-section,
 .music-view .music-panel,
 .music-view .music-sheet,
 .weather-view .weather-tile,
@@ -72,6 +126,147 @@
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
+
+/* ─── Dashboard ─── */
+.beacon .dash-topbar-weather {
+  border-radius: 18px;
+}
+
+.beacon .dash-member-col,
+.beacon .dash-classic-col {
+  padding: 14px;
+  border-radius: 22px;
+}
+
+.beacon .dash-member-header {
+  border-bottom-color: var(--glass-edge);
+}
+
+.beacon .dash-sidebar {
+  padding: 16px 18px;
+  border-radius: 22px;
+}
+
+/* Phones and portrait tablets: one column that scrolls as a whole. Each
+   person's events show in full: the rows were squeezed to fit the screen
+   (the main area allowed itself no height), cutting them off. */
+@media (max-width: 768px) {
+  .beacon .dash-main,
+  .beacon .dash-sidebar {
+    min-height: auto;
+  }
+
+  .beacon .dash-family-grid {
+    height: auto;
+  }
+
+  .beacon .dash-member-events {
+    flex: none;
+    overflow: visible;
+  }
+
+  .beacon .dash-sidebar {
+    padding: 16px;
+    border-top: 1px solid var(--glass-edge);
+    overflow: visible;
+  }
+}
+
+/* ─── Calendar ─── */
+.beacon .beacon-header {
+  border-width: 0 0 1px;
+  box-shadow: none;
+  background: var(--glass-sheet);
+}
+
+.beacon .filter-pill {
+  box-shadow: none;
+}
+
+.beacon .filter-pill--active {
+  background: var(--glass-sheet);
+  box-shadow: inset 0 1px 0 var(--glass-shine), var(--glass-shadow);
+}
+
+.beacon .filter-pill--hidden {
+  background: transparent;
+}
+
+.beacon .week-calendar {
+  border-radius: 22px 22px 0 0;
+  border-bottom: none;
+}
+
+.beacon .week-nav {
+  background: transparent;
+  border-bottom-color: var(--glass-edge);
+}
+
+.beacon .week-nav-btn,
+.beacon .week-nav-jump-btn,
+.beacon .week-nav-today {
+  border-color: transparent;
+  border-radius: 10px;
+  background: var(--glass-fill);
+}
+
+.beacon .week-nav-today--active,
+.beacon .week-nav-today:disabled {
+  background: transparent;
+}
+
+.beacon .beacon-body--two-col {
+  gap: 16px;
+}
+
+.beacon .calendar-sidebar {
+  border-radius: 22px 22px 0 0;
+  border-bottom: none;
+}
+
+/* ─── Chores ─── */
+.beacon .chores-member-col {
+  border-radius: 22px;
+}
+
+.beacon .chore-card {
+  border-radius: 14px;
+  background: var(--glass-fill);
+}
+
+.beacon .chores-person-tab {
+  box-shadow: none;
+}
+
+.beacon .chores-person-tab--active {
+  border-color: var(--accent, #3b82f6);
+  background: var(--glass-sheet);
+}
+
+/* The person tabs stay at the top as the chores scroll under them */
+.beacon .chores-person-tabs {
+  background: transparent;
+}
+
+/* ─── Lists and Tasks ─── */
+.beacon .grocery-view-select,
+.beacon .grocery-view-input {
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 var(--glass-shine);
+}
+
+/* Each section is an inset list, as in iOS Reminders */
+.beacon .grocery-view-section {
+  margin-bottom: 16px;
+  padding: 2px 8px 6px;
+  border-radius: 22px;
+}
+
+.beacon .grocery-view-item-row + .grocery-view-item-row {
+  border-top: 1px solid var(--glass-edge);
+}
+
+/* ─── Music, Weather and Timer ─── */
 
 /* The Music controls sit on a glass card */
 .music-view .music-panel {
