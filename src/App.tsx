@@ -276,13 +276,24 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only the screen shown at startup
   }, []);
 
-  // Visible week shown by the calendar (drives event fetch window)
+  // The week the Calendar screen shows (it reports it as it changes)
   const [visibleWeekStart, setVisibleWeekStart] = useState<Date>(() =>
     startOfWeek(new Date(), { weekStartsOn: settings.weekStartsOn }),
   );
 
   // Day currently selected on the Dashboard's day view (moves on at midnight while on today)
   const [dashboardDate, setDashboardDate] = useSelectedDay();
+
+  // The week whose events are loaded: the Calendar screen's while it's open,
+  // otherwise the week of the dashboard's day, which moves on at midnight.
+  // Only the Calendar screen used to set it, so a display left on the
+  // dashboard kept the week it was opened in (and showed no events from the
+  // next Monday on), and one back from another week on the Calendar showed
+  // that week's. Kept by its time, as a new Date each render would refetch.
+  const fetchWeekStartMs = (activeView === 'calendar'
+    ? visibleWeekStart
+    : startOfWeek(dashboardDate, { weekStartsOn: settings.weekStartsOn })).getTime();
+  const fetchWeekStart = useMemo(() => new Date(fetchWeekStartMs), [fetchWeekStartMs]);
 
   // Helper: refetch events for a given week, with one extra day on either side
   // so multi-day events that bleed in/out of the visible week still render.
@@ -313,25 +324,25 @@ export function App() {
 
     const loadData = async () => {
       await fetchCalendars();
-      await refetchEventsForWeek(visibleWeekStart);
+      await refetchEventsForWeek(fetchWeekStart);
     };
 
     loadData();
 
-    // Refresh every 5 minutes for the currently-visible week (the list of
+    // Refresh every 5 minutes for that week (the list of
     // calendars is asked for again once it's CALENDAR_LIST_MAX_AGE_MS old)
     const interval = setInterval(loadData, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [connected, fullAppShown, fetchCalendars, refetchEventsForWeek, visibleWeekStart]);
+  }, [connected, fullAppShown, fetchCalendars, refetchEventsForWeek, fetchWeekStart]);
 
   // Re-fetch when calendar colors or family members change so colors update
   // immediately, without recreating the 5-minute polling interval above.
   // Colors by content: every settings reload (now whenever any setting
   // changes on any display) brings a new colors object.
   const calendarColorsKey = JSON.stringify(settings.calendarColors);
-  const colorRefreshRef = useRef({ connected, fullAppShown, fetchCalendars, refetchEventsForWeek, visibleWeekStart });
-  colorRefreshRef.current = { connected, fullAppShown, fetchCalendars, refetchEventsForWeek, visibleWeekStart };
+  const colorRefreshRef = useRef({ connected, fullAppShown, fetchCalendars, refetchEventsForWeek, fetchWeekStart });
+  colorRefreshRef.current = { connected, fullAppShown, fetchCalendars, refetchEventsForWeek, fetchWeekStart };
   const didColorRefreshMount = useRef(false);
   useEffect(() => {
     if (!didColorRefreshMount.current) {
@@ -341,7 +352,7 @@ export function App() {
     // Paused: the fetch above runs with the latest colors when it resumes.
     if (!colorRefreshRef.current.connected || !colorRefreshRef.current.fullAppShown) return;
     colorRefreshRef.current.fetchCalendars();
-    colorRefreshRef.current.refetchEventsForWeek(colorRefreshRef.current.visibleWeekStart);
+    colorRefreshRef.current.refetchEventsForWeek(colorRefreshRef.current.fetchWeekStart);
   }, [calendarColorsKey, members]);
 
   const handleEventClick = useCallback((event: CalendarEvent) => {
@@ -399,7 +410,7 @@ export function App() {
         if (calendarId !== settings.lastEventCalendar) updateSettings({ lastEventCalendar: calendarId });
       }
 
-      await refetchEventsForWeek(visibleWeekStart);
+      await refetchEventsForWeek(fetchWeekStart);
 
       handleCloseModal();
     } catch (err) {
@@ -408,7 +419,7 @@ export function App() {
       // instead of the save silently appearing to do nothing.
       throw err;
     }
-  }, [selectedEvent, createEvent, updateEvent, deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal, settings.lastEventCalendar, updateSettings]);
+  }, [selectedEvent, createEvent, updateEvent, deleteEvent, refetchEventsForWeek, fetchWeekStart, handleCloseModal, settings.lastEventCalendar, updateSettings]);
 
   const handleDeleteEvent = useCallback(async (event: CalendarEvent, scope: EditScope) => {
     try {
@@ -417,7 +428,7 @@ export function App() {
       }
       await deleteEvent(event.calendarId, event.uid ?? event.id, occurrenceTarget(event, scope));
 
-      await refetchEventsForWeek(visibleWeekStart);
+      await refetchEventsForWeek(fetchWeekStart);
 
       handleCloseModal();
     } catch (err) {
@@ -426,7 +437,7 @@ export function App() {
         ? new Error('This calendar does not support deleting events.')
         : err;
     }
-  }, [deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
+  }, [deleteEvent, refetchEventsForWeek, fetchWeekStart, handleCloseModal]);
 
   const handleEventReschedule = useCallback(async (event: CalendarEvent, newDate: string, newHour: number) => {
     try {
@@ -448,11 +459,11 @@ export function App() {
         await deleteEvent(event.calendarId, uid, target);
       }
 
-      await refetchEventsForWeek(visibleWeekStart);
+      await refetchEventsForWeek(fetchWeekStart);
     } catch (err) {
       console.error('Failed to reschedule event:', err);
     }
-  }, [updateEvent, deleteEvent, createEvent, refetchEventsForWeek, visibleWeekStart]);
+  }, [updateEvent, deleteEvent, createEvent, refetchEventsForWeek, fetchWeekStart]);
 
   const handleAddEvent = useCallback(() => {
     setSelectedEvent(null);
