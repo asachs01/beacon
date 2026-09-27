@@ -22,7 +22,6 @@ import { ScreenSaver } from './components/ScreenSaver';
 import { GroceryView } from './components/GroceryView';
 import { OmniAdd } from './components/OmniAdd';
 import { CalendarSidebar } from './components/CalendarSidebar';
-import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
 import { useWakeLock } from './hooks/useWakeLock';
@@ -80,7 +79,6 @@ function LeaderboardPanel({ open, onClose }: { open: boolean; onClose: () => voi
 export function App() {
   const auth = useHaAuth();
   const { client, connected } = useHomeAssistant();
-  const { isIngress, compact } = useIngressDetect();
   const {
     settings,
     updateSettings,
@@ -609,7 +607,7 @@ export function App() {
   }
 
   return (
-    <div className={`beacon beacon--sidebar-${sidebarPos} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''} ${showNowPlaying ? 'beacon--now-playing' : ''}`}>
+    <div className={`beacon beacon--sidebar-${sidebarPos} ${showNowPlaying ? 'beacon--now-playing' : ''}`}>
       {focusInvalid && (
         <div className="focus-invalid-banner">
           Kid display member not found — showing the full app.
