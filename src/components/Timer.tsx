@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Play, Pause, RotateCcw, Flag, X, Plus, Volume2, BellOff, BellRing } from 'lucide-react';
+import '../styles/timer.css';
 
 const PRESETS = [
   { label: '1m', seconds: 60 },
@@ -340,12 +341,16 @@ export function Timer({ compact = false, shown = true, onShow }: TimerProps) {
 
   return (
     <div className={`timer ${compact ? 'timer--compact' : ''}`}>
-      {/* Mode switcher */}
-      <div className="timer-modes">
+      <div className="timer-bg" aria-hidden="true" />
+      <div className="timer-scroll">
+
+      {/* Mode switcher: an iOS segmented control */}
+      <div className="timer-modes" role="group" aria-label="Mode">
         <button
           type="button"
           className={`timer-mode-btn ${mode === 'timers' ? 'timer-mode-btn--active' : ''}`}
           onClick={() => setMode('timers')}
+          aria-pressed={mode === 'timers'}
         >
           Timers
         </button>
@@ -353,34 +358,29 @@ export function Timer({ compact = false, shown = true, onShow }: TimerProps) {
           type="button"
           className={`timer-mode-btn ${mode === 'stopwatch' ? 'timer-mode-btn--active' : ''}`}
           onClick={() => setMode('stopwatch')}
+          aria-pressed={mode === 'stopwatch'}
         >
           Stopwatch
         </button>
       </div>
 
       {mode === 'timers' && (
-        <>
-          {/* Sound picker */}
-          <div className="timer-sound-picker">
-            <Volume2 size={14} className="timer-sound-icon" />
-            {SOUND_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                className={`timer-sound-btn ${sound === opt.key ? 'timer-sound-btn--active' : ''}`}
-                onClick={() => {
-                  changeSound(opt.key);
-                  playSoundOnce(opt.key);
-                }}
-                title={`Preview ${opt.label}`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Add Timer section */}
-          <div className="timer-add-section">
+        <div className="timer-body timer-body--timers">
+          {/* New timer */}
+          <section className="timer-tile timer-add-section" aria-label="New timer">
+            <div className="timer-presets">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  className={`timer-preset ${selectedPreset === p.seconds ? 'timer-preset--active' : ''}`}
+                  onClick={() => setSelectedPreset(p.seconds)}
+                  aria-pressed={selectedPreset === p.seconds}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
             <input
               type="text"
               className="timer-name-input"
@@ -389,154 +389,165 @@ export function Timer({ compact = false, shown = true, onShow }: TimerProps) {
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') addTimer(); }}
             />
-            <div className="timer-presets">
-              {PRESETS.map((p) => (
+            <div className="timer-sound-picker">
+              <Volume2 size={16} className="timer-sound-icon" aria-hidden="true" />
+              {SOUND_OPTIONS.map((opt) => (
                 <button
-                  key={p.label}
+                  key={opt.key}
                   type="button"
-                  className={`timer-preset ${selectedPreset === p.seconds ? 'timer-preset--active' : ''}`}
-                  onClick={() => setSelectedPreset(p.seconds)}
+                  className={`timer-sound-btn ${sound === opt.key ? 'timer-sound-btn--active' : ''}`}
+                  onClick={() => {
+                    changeSound(opt.key);
+                    playSoundOnce(opt.key);
+                  }}
+                  title={`Preview ${opt.label}`}
+                  aria-pressed={sound === opt.key}
                 >
-                  {p.label}
+                  {opt.label}
                 </button>
               ))}
             </div>
             <button
               type="button"
-              className="timer-btn timer-btn--play timer-start-btn"
+              className="timer-start-btn"
               onClick={addTimer}
               title="Start timer"
             >
-              <Plus size={compact ? 14 : 16} />
+              <Plus size={20} aria-hidden="true" />
               <span>Start</span>
             </button>
-          </div>
+          </section>
 
-          {/* Active timers list */}
-          {timers.length > 0 && (
-            <div className="timer-list">
-              {timers.map((t) => {
-                const remaining = getRemaining(t);
-                return (
-                  <div
-                    key={t.id}
-                    className={`timer-card ${t.finished ? 'timer-card--finished' : ''}`}
-                  >
-                    <div className="timer-card-name">{t.name}</div>
-                    <div className={`timer-card-time ${t.finished ? 'timer-display--finished' : ''}`}>
-                      {formatTime(remaining)}
-                    </div>
-                    <div className="timer-card-controls">
-                      {t.finished && (
-                        <button
-                          type="button"
-                          className="timer-btn timer-btn--dismiss timer-btn--sm"
-                          onClick={() => dismissTimer(t.id)}
-                          title="Dismiss alarm"
-                        >
-                          <BellOff size={14} />
-                        </button>
-                      )}
-                      {!t.finished && (
-                        t.running ? (
-                          <button
-                            type="button"
-                            className="timer-btn timer-btn--pause timer-btn--sm"
-                            onClick={() => pauseTimer(t.id)}
-                            title="Pause"
-                          >
-                            <Pause size={14} />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="timer-btn timer-btn--play timer-btn--sm"
-                            onClick={() => resumeTimer(t.id)}
-                            title="Resume"
-                          >
-                            <Play size={14} />
-                          </button>
-                        )
-                      )}
-                      <button
-                        type="button"
-                        className="timer-btn timer-btn--sm"
-                        onClick={() => cancelTimer(t.id)}
-                        title="Remove"
-                      >
-                        <X size={14} />
-                      </button>
+          {/* Running timers, each with a ring that empties as it counts down */}
+          <section className="timer-list" aria-label="Timers">
+            {timers.length === 0 && (
+              <p className="timer-list-empty">Pick a time and press Start. Timers keep running on other screens.</p>
+            )}
+            {timers.map((t) => {
+              const remaining = getRemaining(t);
+              const left = t.totalMs > 0 ? remaining / t.totalMs : 0;
+              return (
+                <div
+                  key={t.id}
+                  className={`timer-card ${t.finished ? 'timer-card--finished' : ''} ${!t.running && !t.finished ? 'timer-card--paused' : ''}`}
+                >
+                  <div className="timer-ring">
+                    <svg viewBox="0 0 100 100" aria-hidden="true">
+                      <circle className="timer-ring-track" cx="50" cy="50" r="45" />
+                      <circle
+                        className="timer-ring-fill"
+                        cx="50"
+                        cy="50"
+                        r="45"
+                        pathLength={1}
+                        strokeDasharray="1"
+                        strokeDashoffset={1 - left}
+                      />
+                    </svg>
+                    <div className="timer-ring-text">
+                      <span className={`timer-card-time ${t.finished ? 'timer-display--finished' : ''}`}>
+                        {formatTime(remaining)}
+                      </span>
+                      <span className="timer-card-name">{t.name}</span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </>
+                  <div className="timer-card-controls">
+                    <button
+                      type="button"
+                      className="timer-btn timer-btn--sm"
+                      onClick={() => cancelTimer(t.id)}
+                      title="Remove"
+                      aria-label={`Remove ${t.name}`}
+                    >
+                      <X size={18} />
+                    </button>
+                    {t.finished ? (
+                      <button
+                        type="button"
+                        className="timer-btn timer-btn--dismiss timer-btn--sm"
+                        onClick={() => dismissTimer(t.id)}
+                        title="Dismiss alarm"
+                      >
+                        <BellOff size={18} />
+                      </button>
+                    ) : t.running ? (
+                      <button
+                        type="button"
+                        className="timer-btn timer-btn--pause timer-btn--sm"
+                        onClick={() => pauseTimer(t.id)}
+                        title="Pause"
+                      >
+                        <Pause size={18} fill="currentColor" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="timer-btn timer-btn--play timer-btn--sm"
+                        onClick={() => resumeTimer(t.id)}
+                        title="Resume"
+                      >
+                        <Play size={18} fill="currentColor" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        </div>
       )}
 
       {mode === 'stopwatch' && (
-        <>
-          <div className="timer-display">
-            {formatTime(swElapsed)}
-          </div>
+        <div className="timer-body timer-body--stopwatch">
+          <div className="timer-stopwatch">
+            <div className="timer-display">
+              {formatTime(swElapsed)}
+            </div>
 
-          <div className="timer-controls">
-            {!swRunning ? (
-              <button
-                type="button"
-                className="timer-btn timer-btn--play"
-                onClick={swStart}
-                title="Start"
-              >
-                <Play size={compact ? 16 : 20} />
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="timer-btn timer-btn--pause"
-                onClick={swPause}
-                title="Pause"
-              >
-                <Pause size={compact ? 16 : 20} />
-              </button>
-            )}
-
-            {swRunning && (
-              <button
-                type="button"
-                className="timer-btn"
-                onClick={swLap}
-                title="Lap"
-              >
-                <Flag size={compact ? 16 : 20} />
-              </button>
-            )}
-
-            {(swElapsed > 0) && (
-              <button
-                type="button"
-                className="timer-btn"
-                onClick={swReset}
-                title="Reset"
-              >
-                <RotateCcw size={compact ? 16 : 20} />
-              </button>
-            )}
+            {/* As on iOS: Lap / Reset on the left, Start / Stop on the right */}
+            <div className="timer-controls">
+              {swRunning ? (
+                <button type="button" className="timer-btn" onClick={swLap} title="Lap">
+                  <Flag size={compact ? 16 : 22} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="timer-btn"
+                  onClick={swReset}
+                  title="Reset"
+                  disabled={swElapsed === 0}
+                >
+                  <RotateCcw size={compact ? 16 : 22} />
+                </button>
+              )}
+              {!swRunning ? (
+                <button type="button" className="timer-btn timer-btn--play" onClick={swStart} title="Start">
+                  <Play size={compact ? 16 : 22} fill="currentColor" />
+                </button>
+              ) : (
+                <button type="button" className="timer-btn timer-btn--pause" onClick={swPause} title="Pause">
+                  <Pause size={compact ? 16 : 22} fill="currentColor" />
+                </button>
+              )}
+            </div>
           </div>
 
           {!compact && laps.length > 0 && (
-            <div className="timer-laps">
-              {laps.map((lap, i) => (
-                <div key={i} className="timer-lap">
+            <ol className="timer-tile timer-laps" aria-label="Laps">
+              {laps.map((lap, i) => ({ lap, i })).reverse().map(({ lap, i }) => (
+                <li key={i} className="timer-lap">
                   <span className="timer-lap-label">Lap {i + 1}</span>
-                  <span className="timer-lap-time">{formatTime(lap)}</span>
-                </div>
+                  <span className="timer-lap-time">{formatTime(lap - (laps[i - 1] ?? 0))}</span>
+                  <span className="timer-lap-total">{formatTime(lap)}</span>
+                </li>
               ))}
-            </div>
+            </ol>
           )}
-        </>
+        </div>
       )}
+
+      </div>
 
       {/* On another screen (this one is hidden): the timer that's ringing */}
       {!shown && ringing.length > 0 && createPortal(

@@ -8,11 +8,10 @@ import './styles/dashboard.css';
 import './styles/grocery.css';
 import './styles/now-playing.css';
 import './styles/screensaver.css';
-import './styles/widgets.css';
 import './styles/omni-add.css';
 import './styles/settings-buttons.css';
 // On-demand screens import their own stylesheets (settings.css, music.css,
-// photos.css, weather.css, focus.css), so those download with the screen.
+// photos.css, weather.css, timer.css, focus.css), so those download with the screen.
 import { initNativeBridge } from './native';
 import { applyStoredTheme } from './hooks/useTheme';
 import { applyStoredFontScale } from './utils/font-scale';

@@ -794,13 +794,7 @@ export function App() {
         )}
         {timerOpened && (
           <div
-            style={{
-              display: activeView === 'timer' ? 'flex' : 'none',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              padding: 24,
-            }}
+            style={{ display: activeView === 'timer' ? 'flex' : 'none', height: '100%' }}
           >
             <LazyBoundary>
               <Timer shown={activeView === 'timer'} onShow={() => handleChangeView('timer')} />
