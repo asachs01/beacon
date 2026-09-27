@@ -2,7 +2,6 @@
 # Beacon -- Home Assistant Add-on entry point
 
 # Read options from /data/options.json (populated by HA Supervisor)
-FAMILY_NAME="$(bashio::config 'family_name' 2>/dev/null || echo 'My Family')"
 THEME="$(bashio::config 'theme' 2>/dev/null || echo 'skylight')"
 AUTO_DARK_MODE="$(bashio::config 'auto_dark_mode' 2>/dev/null || echo 'true')"
 WEATHER_ENTITY="$(bashio::config 'weather_entity' 2>/dev/null || echo 'weather.home')"
@@ -55,7 +54,7 @@ CONFIG_JS="/app/dist/runtime-config.js"
 # The options go before `node` so they're in its environment. (They used to
 # follow the script, where node only sees them as arguments: every add-on
 # option was ignored and runtime-config.js always had the defaults.)
-HA_URL="${HA_URL}" HA_BROWSER_TOKEN="${HA_BROWSER_TOKEN}" FAMILY_NAME="${FAMILY_NAME}" \
+HA_URL="${HA_URL}" HA_BROWSER_TOKEN="${HA_BROWSER_TOKEN}" \
   THEME="${THEME}" AUTO_DARK_MODE="${AUTO_DARK_MODE}" WEATHER_ENTITY="${WEATHER_ENTITY}" \
   PHOTO_DIRECTORY="${PHOTO_DIRECTORY}" PHOTO_INTERVAL="${PHOTO_INTERVAL}" \
   SCREEN_SAVER_TIMEOUT="${SCREEN_SAVER_TIMEOUT}" ADDON_SLUG="${ADDON_SLUG}" \
@@ -63,7 +62,6 @@ HA_URL="${HA_URL}" HA_BROWSER_TOKEN="${HA_BROWSER_TOKEN}" FAMILY_NAME="${FAMILY_
   const config = {
     ha_url: process.env.HA_URL || '',
     ha_token: process.env.HA_BROWSER_TOKEN || '',
-    family_name: process.env.FAMILY_NAME || 'My Family',
     theme: process.env.THEME || 'skylight',
     auto_dark_mode: process.env.AUTO_DARK_MODE !== 'false',
     weather_entity: process.env.WEATHER_ENTITY || 'weather.home',

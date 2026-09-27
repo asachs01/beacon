@@ -65,7 +65,6 @@
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  --header-height: 64px;
   --time-axis-width: 64px;
   --hour-height: 72px;
 }
@@ -377,127 +376,10 @@ a:focus:not(:focus-visible) {
   border-radius: 0 3px 3px 0;
 }
 
-/* --- Filter Bar (above calendar) --- */
-.filter-bar {
-  padding: 8px 16px 0;
+/* --- "Connecting..." above the calendar while HA is unreachable --- */
+.calendar-status {
   flex-shrink: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.filter-bar::-webkit-scrollbar {
-  display: none;
-}
-
-/* --- Header (simplified — nav moved to sidebar) --- */
-.beacon-header {
-  flex-shrink: 0;
-  height: var(--header-height);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-subtle);
-  z-index: 10;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.header-family-name {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.3px;
-}
-
-.header-date {
-  font-size: 0.9rem;
-  font-weight: 400;
-  color: var(--text-secondary);
-}
-
-.header-separator {
-  width: 1px;
-  height: 24px;
-  background: var(--border);
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-/* --- Tiny Clock --- */
-.clock-mini {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-  min-width: 72px;
-  text-align: right;
-}
-
-/* --- Family Filter (Header Pills) --- */
-.family-filter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
-}
-
-.filter-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  transition: all var(--transition);
-  min-height: 36px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.filter-pill:hover {
-  background: var(--bg-hover);
-}
-
-.filter-pill--active {
-  background: var(--bg-surface);
-  border-color: var(--border);
-  box-shadow: var(--shadow-sm);
-}
-
-.filter-pill--hidden {
-  opacity: 0.35;
-  background: transparent;
-}
-
-.filter-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: all var(--transition);
-}
-
-.filter-name {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.filter-pill--hidden .filter-name {
-  color: var(--text-muted);
+  padding: 10px 16px 0;
 }
 
 /* --- Calendar Body --- */
@@ -1659,13 +1541,8 @@ a:focus:not(:focus-visible) {
 /* --- Responsive: Tablet landscape 1024x768 (primary target) --- */
 @media (max-width: 1100px) {
   :root {
-    --header-height: 56px;
     --time-axis-width: 52px;
     --hour-height: 64px;
-  }
-
-  .header-family-name {
-    font-size: 1.15rem;
   }
 
   .week-header-day-number {
@@ -1888,44 +1765,9 @@ a:focus:not(:focus-visible) {
     display: flex;
   }
 
-  /* --- Header: simplified on mobile --- */
-  .beacon-header {
-    padding: 0 12px;
-    height: 48px;
-  }
-
-  .header-separator {
-    display: none;
-  }
-
-  .header-date {
-    display: none;
-  }
-
-  .clock-mini {
-    display: none;
-  }
-
-  .header-family-name {
-    font-size: 1.1rem;
-  }
-
   /* --- Calendar body spacing --- */
   .beacon-body {
     padding: 8px 8px 0;
-  }
-
-  .filter-bar {
-    padding: 6px 8px 0;
-  }
-
-  .filter-name {
-    font-size: 0.7rem;
-  }
-
-  .filter-pill {
-    padding: 4px 10px;
-    min-height: 32px;
   }
 
   /* --- Calendar header --- */
@@ -2106,25 +1948,8 @@ a:focus:not(:focus-visible) {
     --mobile-tab-bar-height: 56px;
   }
 
-  .header-family-name {
-    font-size: 1rem;
-  }
-
-  .beacon-header {
-    padding: 0 8px;
-    height: 44px;
-  }
-
   .beacon-body {
     padding: 4px 4px 0;
-  }
-
-  .filter-bar {
-    padding: 4px 4px 0;
-  }
-
-  .filter-pill {
-    padding: 4px 6px;
   }
 
   .week-header-day-name {

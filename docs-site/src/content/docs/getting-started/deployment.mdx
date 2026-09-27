@@ -46,7 +46,6 @@ docker run -d \
   -p 3000:3000 \
   -e SUPERVISOR_TOKEN="YOUR_LONG_LIVED_TOKEN" \
   -e HA_URL="http://192.168.1.100:8123" \
-  -e FAMILY_NAME="Sachs" \
   -e THEME="midnight" \
   -e WEATHER_ENTITY="weather.home" \
   ghcr.io/asachs01/beacon:latest
@@ -66,7 +65,6 @@ services:
     environment:
       SUPERVISOR_TOKEN: "${HA_TOKEN}"
       HA_URL: "http://192.168.1.100:8123"
-      FAMILY_NAME: "Sachs"
       THEME: "midnight"
       AUTO_DARK_MODE: "true"
       WEATHER_ENTITY: "weather.home"
@@ -234,7 +232,7 @@ You can run Beacon on multiple displays simultaneously. Each display:
 - Connects to the same Home Assistant instance
 - Shows the same calendar events (since they come from HA)
 - Has its own independent localStorage (family members, chores, theme preference)
-- Can be configured with different themes or family names
+- Can be configured with different themes
 
 ### Example: Kitchen + Living Room
 

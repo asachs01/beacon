@@ -18,7 +18,6 @@ homeassistant_api: true
 hassio_api: true
 auth_api: true
 options:
-  family_name: "My Family"
   theme: "skylight"
   auto_dark_mode: true
   weather_entity: "weather.home"
@@ -26,7 +25,6 @@ options:
   photo_interval: 30
   screen_saver_timeout: 5
 schema:
-  family_name: str
   theme: str
   auto_dark_mode: bool
   weather_entity: str

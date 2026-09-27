@@ -114,8 +114,6 @@
 .beacon .dash-member-col,
 .beacon .dash-sidebar,
 .beacon .dash-classic-col,
-.beacon .beacon-header,
-.beacon .filter-pill,
 .beacon .week-calendar,
 .beacon .calendar-sidebar,
 .beacon .chores-member-col,
@@ -187,25 +185,6 @@
 }
 
 /* ─── Calendar ─── */
-.beacon .beacon-header {
-  border-width: 0 0 1px;
-  box-shadow: none;
-  background: var(--glass-sheet);
-}
-
-.beacon .filter-pill {
-  box-shadow: none;
-}
-
-.beacon .filter-pill--active {
-  background: var(--glass-sheet);
-  box-shadow: inset 0 1px 0 var(--glass-shine), var(--glass-shadow);
-}
-
-.beacon .filter-pill--hidden {
-  background: transparent;
-}
-
 .beacon .week-calendar {
   border-radius: 22px 22px 0 0;
   border-bottom: none;
@@ -236,6 +215,14 @@
 .beacon .calendar-sidebar {
   border-radius: 22px 22px 0 0;
   border-bottom: none;
+}
+
+/* Echo Show-sized screens: a narrower side panel pays for the gap beside
+   it, which pushed Saturday off the week (it fit with no gap) */
+@media (max-width: 1100px) {
+  .beacon .calendar-sidebar {
+    width: 240px;
+  }
 }
 
 /* ─── Chores ─── */
@@ -391,7 +378,7 @@
 
 /* Above the music bar while one shows */
 .photo-frame:has(.photo-frame-music) .photo-frame-overlay {
-  bottom: calc(96px + var(--ha-safe-bottom, 0px));
+  bottom: calc(112px + var(--ha-safe-bottom, 0px));
 }
 
 .photo-frame .photo-frame-control-btn {

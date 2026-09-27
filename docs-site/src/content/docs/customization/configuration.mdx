@@ -17,7 +17,6 @@ These options are set in **Settings > Add-ons > Beacon > Configuration** when ru
 
 | Option | Type | Default | Description | Example |
 |--------|------|---------|-------------|---------|
-| `family_name` | string | `"My Family"` | Your family name. Appears in the dashboard greeting ("Good morning, Sachs") and the calendar header. | `"Sachs"` |
 | `theme` | string | `"skylight"` | The color theme to use. Options: `skylight`, `midnight`, `nord`, `dracula`, `monokai`, `rose`, `forest`. The theme selector in the sidebar overrides this value. | `"midnight"` |
 | `auto_dark_mode` | boolean | `true` | When true and theme is set to `auto`, Beacon switches between Skylight (day) and Midnight (night) based on time of day. | `true` |
 | `weather_entity` | string | `"weather.home"` | The Home Assistant weather entity ID to use for temperature and forecast data. Leave empty to disable weather. | `"weather.forecast_home"` |
@@ -28,7 +27,6 @@ These options are set in **Settings > Add-ons > Beacon > Configuration** when ru
 ### Example add-on configuration
 
 ```yaml
-family_name: "Sachs"
 theme: "midnight"
 auto_dark_mode: true
 weather_entity: "weather.home"
@@ -49,7 +47,6 @@ When running Beacon as a standalone Docker container or in development mode, con
 |----------|---------|---------|
 | `SUPERVISOR_TOKEN` | `ha_token` | (none) |
 | `HA_URL` | `ha_url` | `http://supervisor/core` |
-| `FAMILY_NAME` | `family_name` | `My Family` |
 | `THEME` | `theme` | `skylight` |
 | `AUTO_DARK_MODE` | `auto_dark_mode` | `true` |
 | `WEATHER_ENTITY` | `weather_entity` | `weather.home` |
@@ -65,7 +62,6 @@ Create a `.env` file in the project root:
 |----------|---------|---------|
 | `VITE_HA_URL` | `ha_url` | `http://supervisor/core` |
 | `VITE_HA_TOKEN` | `ha_token` | (none) |
-| `VITE_FAMILY_NAME` | `family_name` | `My Family` |
 | `VITE_THEME` | `theme` | `skylight` |
 | `VITE_AUTO_DARK_MODE` | `auto_dark_mode` | `true` (set to `false` to disable) |
 | `VITE_HA_WEATHER_ENTITY` | `weather_entity` | `weather.home` |
@@ -78,7 +74,6 @@ Create a `.env` file in the project root:
 ```bash
 VITE_HA_URL=http://192.168.1.100:8123
 VITE_HA_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-VITE_FAMILY_NAME="Sachs"
 VITE_THEME=midnight
 VITE_AUTO_DARK_MODE=true
 VITE_HA_WEATHER_ENTITY=weather.home
@@ -112,7 +107,6 @@ import { getConfig } from './config';
 const config = getConfig();
 // config.ha_url       - Home Assistant URL
 // config.ha_token     - Access token
-// config.family_name  - Family name
 // config.theme        - Theme ID
 // config.auto_dark_mode - Auto dark mode flag
 // config.weather_entity - Weather entity ID
@@ -131,7 +125,6 @@ In add-on mode, `run.sh` generates this JavaScript object:
 window.__BEACON_CONFIG__ = {
   ha_url: "http://supervisor/core",
   ha_token: "SUPERVISOR_TOKEN_VALUE",
-  family_name: "Sachs",
   theme: "midnight",
   auto_dark_mode: true,
   weather_entity: "weather.home",
