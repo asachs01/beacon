@@ -1,3 +1,10 @@
+## [1.53.1](https://github.com/f1f1f1f1f1f1/Family/compare/v1.53.0...v1.53.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* music seeking, shuffle and repeat work on the add-on ([739c155](https://github.com/f1f1f1f1f1f1/Family/commit/739c15530aa845f1189157050bc65a233639183a))
+
 # [1.53.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.14...v1.53.0) (2026-09-27)
 
 
