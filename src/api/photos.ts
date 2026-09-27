@@ -28,22 +28,28 @@ export const PHOTO_LIST_TTL_MS = 60 * 60 * 1000;
  */
 export const PHOTO_URL_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
+const MEDIA_ROOT_ID = 'media-source://media_source/local';
+
 /**
- * Converts a plain filesystem-style path (e.g. "/media/beacon/photos", as
- * configured via the `photo_directory` add-on option) into the
- * `media-source://` content id HA's browse_media/resolve_media APIs
- * actually expect. Leaves already-qualified media-source ids untouched.
+ * The `media-source://` ids HA's browse_media/resolve_media APIs may mean by
+ * a photo folder setting, most likely first. HA keeps local media in /media
+ * on disk (media-source://media_source/local/… in its API) and serves them
+ * at /media/local/… on the web, and the folder may be given in any of those
+ * forms: "/media/beacon/photos", "/media/local/beacon/photos" (the web
+ * address of the same folder — it was taken as the path on disk, which
+ * doesn't exist, so no photos showed) or a media-source id. A folder
+ * actually named "local" in /media comes second.
  */
-function toMediaContentId(path: string): string {
-  if (!path) return 'media-source://media_source/local';
-  if (path.startsWith('media-source://')) return path;
+export function folderMediaIds(path: string): string[] {
+  const folder = path.trim();
+  if (folder.startsWith('media-source://')) return [folder];
 
-  const trimmed = path.replace(/^\/+|\/+$/g, ''); // strip leading/trailing slashes
-  const withoutMediaPrefix = trimmed.replace(/^media\/?/, ''); // "media/beacon/photos" -> "beacon/photos"
-
-  return withoutMediaPrefix
-    ? `media-source://media_source/local/${withoutMediaPrefix}`
-    : 'media-source://media_source/local';
+  // Inside /media: "media/beacon/photos" -> "beacon/photos"
+  const relative = folder.replace(/^\/+|\/+$/g, '').replace(/^media(\/|$)/, '');
+  const inside = /^local(\/|$)/.test(relative)
+    ? [relative.replace(/^local\/?/, ''), relative] // web address first
+    : [relative];
+  return [...new Set(inside.map((rest) => (rest ? `${MEDIA_ROOT_ID}/${rest}` : MEDIA_ROOT_ID)))];
 }
 
 /**
@@ -130,6 +136,26 @@ async function browsePhotos(mediaContentId: string, source: PhotoSource): Promis
   }
 }
 
+/**
+ * The photos in a folder setting: from the first id it may mean that has
+ * any (see folderMediaIds). Rejects only if none could be browsed.
+ */
+async function browseFolder(folder: string): Promise<PhotoEntry[]> {
+  let found: PhotoEntry[] | null = null;
+  let error: unknown;
+  for (const id of folderMediaIds(folder)) {
+    try {
+      const photos = await browsePhotos(id, 'local');
+      if (photos.length > 0) return photos;
+      found ??= photos;
+    } catch (err) {
+      error ??= err;
+    }
+  }
+  if (found) return found;
+  throw error;
+}
+
 let listCache: { key: string; at: number; entries: Promise<PhotoEntry[]> } | null = null;
 
 /**
@@ -148,10 +174,10 @@ export function listPhotos(sources: PhotoSource[] = ['ha_media', 'local']): Prom
 
   const browses: Promise<PhotoEntry[]>[] = [];
   if (sources.includes('ha_media')) {
-    browses.push(browsePhotos('media-source://media_source/local', 'ha_media'));
+    browses.push(browsePhotos(MEDIA_ROOT_ID, 'ha_media'));
   }
   if (sources.includes('local')) {
-    browses.push(browsePhotos(toMediaContentId(folder), 'local'));
+    browses.push(browseFolder(folder));
   }
   // google_photos would require OAuth — not implemented yet
 

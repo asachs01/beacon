@@ -1482,7 +1482,7 @@ export function SettingsView({
         <div className="settings-row">
           <div>
             <div className="settings-row-label">Source Directory</div>
-            <div className="settings-row-sublabel">Path to photo directory on HA</div>
+            <div className="settings-row-sublabel">A folder in Home Assistant's media, e.g. /media/beacon/photos</div>
           </div>
           <input
             type="text"
