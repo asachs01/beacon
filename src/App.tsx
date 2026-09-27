@@ -6,7 +6,6 @@ import { useFamily } from './hooks/useFamily';
 import { useWeather } from './hooks/useWeather';
 import { useChores } from './hooks/useChores';
 import { useChoresSync } from './hooks/useChoresSync';
-import { Clock } from './components/Clock';
 import { WeekCalendar } from './components/WeekCalendar';
 import { DashboardView } from './components/DashboardView';
 import { AdvancedDashboard } from './components/lazy-advanced-dashboard';
@@ -729,31 +728,21 @@ export function App() {
           </LazyBoundary>
         ) : (
           <>
-            {/* Header */}
-            <header className="beacon-header">
-              <div className="header-left">
-                <span className="header-family-name">{settings.familyName}</span>
-                <span className="header-separator" />
-                <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
-                {!connected && (
-                  <div className="connection-status">
-                    <span className="connection-dot" />
-                    Connecting...
-                  </div>
-                )}
-              </div>
-              <div className="header-right">
-                <Clock timeFormat={settings.timeFormat} showSeconds={settings.showSeconds} />
-              </div>
-            </header>
-
-            {/* Family filter pills — above the calendar */}
+            {/* Calendar pills above the calendar, and a note while HA is
+                unreachable. (A header with the family name, date and clock
+                sat above them; the Dashboard shows those.) */}
             <div className="filter-bar">
               <FamilyFilter
                 calendars={calendars}
                 hiddenCalendars={hiddenCalendars}
                 onToggle={handleToggleCalendar}
               />
+              {!connected && (
+                <div className="connection-status" role="status">
+                  <span className="connection-dot" />
+                  Connecting...
+                </div>
+              )}
             </div>
 
             {/* Calendar Body — two-column on desktop */}

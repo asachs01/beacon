@@ -174,22 +174,25 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
-/* Music bar positioned at bottom over the photo */
+/* Music bar: a frosted panel floating over the photo, clear of the
+   edges, rather than a dark strip across the bottom */
 .photo-frame-music {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  right: calc(24px + var(--ha-safe-right, 0px));
+  bottom: calc(24px + var(--ha-safe-bottom, 0px));
+  left: calc(24px + var(--ha-safe-left, 0px));
   z-index: 5;
-  padding-bottom: var(--ha-safe-bottom, 0px);
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .photo-frame-music .now-playing-bar {
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 10px 40px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
 }
 
 .photo-frame-music .now-playing-title,
@@ -253,11 +256,6 @@
     width: 48px;
     height: 48px;
   }
-
-  /* Keep the photo music bar above the mobile tab bar */
-  .photo-frame-music {
-    bottom: var(--mobile-tab-bar-height, 0px);
-  }
 }
 
 /* --- Responsive: Phone < 480px --- */
@@ -276,6 +274,12 @@
 
   .photo-frame-controls {
     gap: 20px;
+  }
+
+  .photo-frame-music {
+    right: calc(12px + var(--ha-safe-right, 0px));
+    bottom: calc(12px + var(--ha-safe-bottom, 0px));
+    left: calc(12px + var(--ha-safe-left, 0px));
   }
 
   .photo-frame-control-btn {

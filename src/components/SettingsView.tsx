@@ -424,7 +424,6 @@ export function SettingsView({
         <div className="settings-row">
           <div>
             <div className="settings-row-label">Family Name</div>
-            <div className="settings-row-sublabel">Shown in the calendar header</div>
           </div>
           <input
             type="text"
