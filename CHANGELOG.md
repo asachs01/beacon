@@ -1,3 +1,12 @@
+## [1.52.12](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.11...v1.52.12) (2026-09-27)
+
+
+### Bug Fixes
+
+* chores ticked on the dashboard count for the person they're for ([2dc4f83](https://github.com/f1f1f1f1f1f1/Family/commit/2dc4f8309d4e63be01604c2093766d5e62e71285))
+* the chore value field keeps the amount typed ([c57b446](https://github.com/f1f1f1f1f1f1/Family/commit/c57b4461e12b41508a9cb506cc6bf12be9f8d1cc))
+* timers keep running on other screens and ring there ([128a952](https://github.com/f1f1f1f1f1f1/Family/commit/128a952d93bf87ef0a4c7954db34701aa39bce78))
+
 ## [1.52.11](https://github.com/f1f1f1f1f1f1/Family/compare/v1.52.10...v1.52.11) (2026-09-26)
 
 
