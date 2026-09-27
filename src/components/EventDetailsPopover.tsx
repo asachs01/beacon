@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { format, parseISO } from 'date-fns';
 import { CalendarEvent, getFullColor } from '../types';
+import { lastDayOfAllDayEvent } from '../utils/event-dates';
 
 interface EventDetailsPopoverProps {
   event: CalendarEvent;
@@ -50,11 +51,14 @@ export function EventDetailsPopover({ event, anchor, onClose, onEdit }: EventDet
 
   const startD = parseISO(event.start);
   const endD = parseISO(event.end);
-  const sameDay = format(startD, 'yyyy-MM-dd') === format(endD, 'yyyy-MM-dd');
+  // An all-day event ends the day after its last day, as HA sends it: a
+  // one-day event showed as "Sep 26 – Sep 27".
+  const lastD = event.allDay ? parseISO(lastDayOfAllDayEvent(event.start, event.end)) : endD;
+  const sameDay = format(startD, 'yyyy-MM-dd') === format(lastD, 'yyyy-MM-dd');
   const fullTime = event.allDay
     ? sameDay
       ? `${format(startD, 'EEE, MMM d')} · All day`
-      : `${format(startD, 'MMM d')} – ${format(endD, 'MMM d')} · All day`
+      : `${format(startD, 'MMM d')} – ${format(lastD, 'MMM d')} · All day`
     : sameDay
       ? `${format(startD, 'EEE, MMM d')} · ${format(startD, 'h:mm a')} – ${format(endD, 'h:mm a')}`
       : `${format(startD, 'MMM d, h:mm a')} – ${format(endD, 'MMM d, h:mm a')}`;
