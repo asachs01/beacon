@@ -1,3 +1,10 @@
+# [1.55.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.54.0...v1.55.0) (2026-09-27)
+
+
+### Features
+
+* Weather and Timer screens in the Music screen's style ([d8e2bef](https://github.com/f1f1f1f1f1f1/Family/commit/d8e2bef1131e6c5d3f264f60daeac3236dca50d3))
+
 # [1.54.0](https://github.com/f1f1f1f1f1f1/Family/compare/v1.53.1...v1.54.0) (2026-09-27)
 
 
