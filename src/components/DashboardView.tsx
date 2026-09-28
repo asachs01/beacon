@@ -90,9 +90,11 @@ export function DashboardView({
   }, [events, selectedDate]);
 
   // Group the next 7 days of events for the Classic "This Week" column
-  // (starts tomorrow — today is covered by the Today column)
+  // (starts the day after the viewed day — that day is the Today column).
+  // Anchored on selectedDate, not today, so it stays within the fetched window
+  // (App keys the fetch on the viewed day's week) when the day is browsed.
   const weekEvents = useMemo(() => {
-    const start = addDays(startOfDay(today), 1);
+    const start = addDays(startOfDay(selectedDate), 1);
     return Array.from({ length: 7 }, (_, i) => {
       const day = addDays(start, i);
       const dayEvents = events
@@ -100,7 +102,7 @@ export function DashboardView({
         .sort((a, b) => a.start.localeCompare(b.start));
       return { day, events: dayEvents };
     });
-  }, [events, today]);
+  }, [events, selectedDate]);
 
   const context: DashboardCardContext = {
     defaultShoppingList,

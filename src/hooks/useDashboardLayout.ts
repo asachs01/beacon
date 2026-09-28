@@ -217,6 +217,12 @@ export function useDashboardLayout(preset: DashboardPreset) {
   // One save at a time, in order, so an older save can't land last.
   const saving = useRef<Promise<void>>(Promise.resolve());
   const serverHasViews = useRef(false);
+  // The latest views, updated synchronously in updateRegion so several region
+  // edits fired in the same tick (GridStack emits one 'change' per region)
+  // each build on the previous one instead of a stale render snapshot —
+  // otherwise only the last region's edit would survive.
+  const viewsRef = useRef(views);
+  viewsRef.current = views;
 
   useEffect(() => {
     let cancelled = false;
@@ -250,8 +256,12 @@ export function useDashboardLayout(preset: DashboardPreset) {
         serverHasViews.current = true;
       }
       await write();
-    }).catch(() => {
-      /* reported by beacon-collection, for App's notice */
+    }).catch(async () => {
+      // The write failed (beacon-collection raises the "Couldn't save" notice).
+      // Revert the optimistic state to the server's copy, so the display can't
+      // keep showing — and build later edits on — a layout the server rejected.
+      const loaded = await loadViews(preset).catch(() => null);
+      if (loaded) setViews((current) => unlessUnchanged(current, loaded));
     });
   };
 
@@ -274,8 +284,28 @@ export function useDashboardLayout(preset: DashboardPreset) {
   const defaultRegions = useMemo(() => defaultLayoutFor(preset), [preset]);
   const regions = customized ? activeView.regions : defaultRegions;
 
-  const updateLayout = (regions: DashboardRegionLayout) => {
-    changeView(activeView.id, { regions: dedupeRegions(regions), customized: true });
+  /** The regions a view currently shows (the preset's until it's customized). */
+  const regionsOf = (view: StoredDashboardView): DashboardRegionLayout =>
+    view.id !== DEFAULT_VIEW_ID || view.customized ? view.regions : defaultLayoutFor(preset);
+
+  /**
+   * Replace one region's cards on the active view. Reads the freshest views
+   * from the ref and writes the result straight back to it, so several region
+   * 'change' events in the same tick compose instead of overwriting each other.
+   */
+  const updateRegion = (region: keyof DashboardRegionLayout, cards: DashboardCard[]) => {
+    const prev = viewsRef.current;
+    const idx = Math.max(0, prev.findIndex((v) => v.id === activeViewId));
+    const view = prev[idx];
+    const nextRegions = dedupeRegions({ ...regionsOf(view), [region]: cards });
+    const next = prev.map((v, i) => (i === idx ? { ...v, regions: nextRegions, customized: true } : v));
+    viewsRef.current = next;
+    setViews(next);
+    // An add with a known id merges into that item (see collectionAdd in server.js).
+    save(next, () => addToCollection<Partial<StoredDashboardView>>(
+      VIEWS_COLLECTION,
+      { regions: nextRegions, customized: true, id: view.id },
+    ));
   };
 
   const resetToPreset = () => {
@@ -311,7 +341,7 @@ export function useDashboardLayout(preset: DashboardPreset) {
   return {
     layout: regions,
     customized,
-    updateLayout,
+    updateRegion,
     resetToPreset,
     views,
     activeViewId: activeView.id,

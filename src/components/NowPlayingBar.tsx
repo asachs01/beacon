@@ -19,6 +19,7 @@ interface NowPlayingBarProps {
   onNext: () => void;
   onPrevious: () => void;
   onSetVolume: (level: number) => void;
+  onToggleMute: (muted: boolean) => void;
   onExpand?: () => void;
 }
 
@@ -49,6 +50,7 @@ export function NowPlayingBar({
   onNext,
   onPrevious,
   onSetVolume,
+  onToggleMute,
   onExpand,
 }: NowPlayingBarProps) {
   // Where the track is, counted on from when Home Assistant measured it (it
@@ -146,7 +148,7 @@ export function NowPlayingBar({
         <button
           type="button"
           className="now-playing-btn"
-          onClick={() => onSetVolume(player.is_volume_muted ? (player.volume_level || 0.5) : 0)}
+          onClick={() => onToggleMute(!player.is_volume_muted)}
           aria-label={player.is_volume_muted ? 'Unmute' : 'Mute'}
         >
           {player.is_volume_muted ? <VolumeX size={16} /> : <Volume2 size={16} />}

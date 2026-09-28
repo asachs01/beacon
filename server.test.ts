@@ -294,4 +294,19 @@ describe('add-on server', () => {
     await add({ id: 'kai', member_id: 'kai', current: 2 });
     expect(await fetch(`${base}/beacon-collection/test_streaks`).then((r) => r.json())).toEqual([{ id: 'kai', member_id: 'kai', current: 2 }]);
   });
+
+  // /beacon-data and /beacon-collection share DATA_DIR/<key>.json. A non-array
+  // written to a collection's key through /beacon-data would make every
+  // collection read of it 500, so the data API refuses collection keys.
+  it('refuses to write a collection key through /beacon-data', async () => {
+    await fetch(`${base}/beacon-collection/beacon_family_members`, { method: 'POST', body: '{"id":"m1","name":"Alex"}' });
+
+    const blocked = await fetch(`${base}/beacon-data/beacon_family_members`, { method: 'PUT', body: '{}' });
+    expect(blocked.status).toBe(409);
+
+    // The collection is untouched and still reads back as an array.
+    const read = await fetch(`${base}/beacon-collection/beacon_family_members`);
+    expect(read.status).toBe(200);
+    expect(await read.json()).toContainEqual({ id: 'm1', name: 'Alex' });
+  });
 });

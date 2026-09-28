@@ -6,6 +6,8 @@ const GROCERY_KEYWORDS = [
 
 /** Fallback classification used when no grocery lists are configured in Settings. */
 export function isGroceryListName(name: string): boolean {
-  const lower = name.toLowerCase();
-  return GROCERY_KEYWORDS.some((kw) => lower.includes(kw));
+  // Match a keyword only at a word start, so "reStore" / "appStore" / "pieceMeal"
+  // aren't read as "store" / "meal". Anchoring at \b (not full-word) still lets
+  // plurals and suffixes match: "groceries", "meals", "shopping".
+  return GROCERY_KEYWORDS.some((kw) => new RegExp(`\\b${kw}`, 'i').test(name));
 }

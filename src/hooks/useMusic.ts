@@ -35,6 +35,7 @@ interface UseMusicReturn {
   next: (entityId?: string) => Promise<void>;
   previous: (entityId?: string) => Promise<void>;
   setVolume: (level: number, entityId?: string) => Promise<void>;
+  setMuted: (muted: boolean, entityId?: string) => Promise<void>;
   seek: (position: number, entityId?: string) => Promise<void>;
   /** A step up (+1) or down (-1), for players that can't set a level */
   stepVolume: (direction: 1 | -1, entityId?: string) => Promise<void>;
@@ -205,6 +206,16 @@ export function useMusic(
     },
     [control],
   );
+  const setMuted = useCallback(
+    (muted: boolean, entityId?: string) => control(
+      entityId,
+      (client, id) => apiSetMuted(client, id, muted),
+      // HA keeps volume_level across a mute, so unmuting restores it; showing
+      // the change at once keeps the button's icon in step with the tap.
+      () => ({ is_volume_muted: muted }),
+    ),
+    [control],
+  );
   const stepVolume = useCallback(
     (direction: 1 | -1, entityId?: string) => control(
       entityId,
@@ -249,6 +260,7 @@ export function useMusic(
     next,
     previous,
     setVolume,
+    setMuted,
     seek,
     stepVolume,
     setShuffle,

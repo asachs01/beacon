@@ -240,6 +240,9 @@ export function EventModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // The inputs stay enabled while saving, so a second Enter would fire a
+    // second create/update — two identical calendar events, with no undo.
+    if (submitting) return;
     if (!form.summary.trim()) {
       setError('Title is required.');
       return;

@@ -9,7 +9,10 @@ interface StreakBadgeProps {
 export function StreakBadge({ streak, size = 'md' }: StreakBadgeProps) {
   const [showLongest, setShowLongest] = useState(false);
 
-  if (streak.current === 0 && streak.longest === 0) return null;
+  // A lapsed streak keeps its `longest` but resets `current` to 0; the badge
+  // shows the active count, so with no active streak there's nothing to show
+  // (it used to render "🔥 0").
+  if (streak.current === 0) return null;
 
   const isHot = streak.current >= 7;
   const sizeClass = `streak-badge--${size}`;

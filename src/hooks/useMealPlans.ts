@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { loadData } from '../api/beacon-store';
 import { localDayKey } from '../api/date-keys';
+import { refreshWhileAwake } from '../utils/display-sleep';
+import { useClock, byDay } from './useClock';
 import { MealPlanEntry, DayMenu } from '../types/meals';
 
 const STORAGE_KEY = 'beacon_meal_plans';
@@ -18,12 +20,17 @@ export function useMealPlans() {
       loadData<MealPlanEntry[]>(STORAGE_KEY, []).then(setEntries);
     };
     load();
-    const interval = setInterval(load, REFRESH_INTERVAL);
-    return () => clearInterval(interval);
+    // Pause polling while the display sleeps or the tab is hidden (like every
+    // other data hook), so a wall display on the screensaver stops fetching
+    // and re-rendering the dashboard behind it all night.
+    return refreshWhileAwake(load, REFRESH_INTERVAL);
   }, []);
 
-  // Local date, so the menu turns over at the family's midnight, not UTC's.
-  const todayStr = localDayKey();
+  // Re-render at local midnight so the menu rolls over to the new day even on a
+  // display left untouched overnight. Local date, so it turns over at the
+  // family's midnight, not UTC's.
+  const now = useClock(byDay);
+  const todayStr = localDayKey(now);
 
   const todaysMenu: DayMenu = useMemo(() => {
     const meals = entries

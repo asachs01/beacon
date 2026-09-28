@@ -83,6 +83,17 @@ export class HomeAssistantClient {
   /** Set by disconnect(): a disposed client stays disconnected. */
   private disposed = false;
   private onConnectionChange?: (connected: boolean) => void;
+  // Keepalive: a half-open socket (mobile backgrounding, Wi-Fi→cellular) may
+  // never fire `close`, so without this every request would hang forever and
+  // no reconnect would run. A ping goes out every heartbeatIntervalMs; if no
+  // frame at all arrives within heartbeatTimeoutMs of it, the socket is treated
+  // as dead and closed (which fails pending requests and schedules a reconnect).
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private pongTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly heartbeatIntervalMs = 30000;
+  private readonly heartbeatTimeoutMs = 10000;
+  /** A single request can't outlive this, even before the heartbeat notices. */
+  private readonly requestTimeoutMs = 30000;
 
   constructor(url: string, token: string) {
     this.url = url.replace(/^http/, 'ws');
@@ -114,7 +125,17 @@ export class HomeAssistantClient {
       this.ws = ws;
 
       ws.onmessage = (event) => {
-        const msg = JSON.parse(event.data) as HAMessage;
+        let msg: HAMessage;
+        try {
+          msg = JSON.parse(event.data) as HAMessage;
+        } catch {
+          // Ignore a frame that isn't valid JSON rather than throwing inside
+          // the handler (which, during the handshake, would leave connect()
+          // hanging forever).
+          return;
+        }
+        // Any frame proves the socket is alive, so clear the pong watchdog.
+        this.noteLiveness();
 
         if (msg.type === 'auth_required') {
           ws.send(JSON.stringify({
@@ -127,6 +148,7 @@ export class HomeAssistantClient {
         if (msg.type === 'auth_ok') {
           this.authenticated = true;
           this.reconnectDelay = 1000;
+          this.startHeartbeat();
           this.onConnectionChange?.(true);
           resolve();
           return;
@@ -168,6 +190,7 @@ export class HomeAssistantClient {
       ws.onclose = () => {
         if (this.ws === ws) this.ws = null;
         this.authenticated = false;
+        this.stopHeartbeat();
         reject(new Error('Connection to Home Assistant closed')); // no-op once connected
         this.failPending(new Error('Connection to Home Assistant lost'));
         this.onConnectionChange?.(false);
@@ -190,6 +213,52 @@ export class HomeAssistantClient {
     this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
   }
 
+  /** Starts (or restarts) the keepalive once the socket is authenticated. */
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      // Arm the watchdog, then ping; any inbound frame (including the pong)
+      // clears it via noteLiveness. If none arrives in time, the socket is dead.
+      this.armPongTimeout();
+      if (this.ws && this.authenticated) {
+        try {
+          this.ws.send(JSON.stringify({ id: this.msgId++, type: 'ping' }));
+        } catch {
+          // send failed on a broken socket: let the watchdog force the close.
+        }
+      }
+    }, this.heartbeatIntervalMs);
+  }
+
+  private armPongTimeout() {
+    if (this.pongTimer) return; // already waiting on a reply
+    this.pongTimer = setTimeout(() => {
+      this.pongTimer = null;
+      // No traffic since the ping: treat the socket as dead. Closing it fires
+      // onclose, which fails pending requests and schedules a reconnect.
+      this.ws?.close();
+    }, this.heartbeatTimeoutMs);
+  }
+
+  /** A frame arrived, so the socket is alive: cancel the pong watchdog. */
+  private noteLiveness() {
+    if (this.pongTimer) {
+      clearTimeout(this.pongTimer);
+      this.pongTimer = null;
+    }
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+    if (this.pongTimer) {
+      clearTimeout(this.pongTimer);
+      this.pongTimer = null;
+    }
+  }
+
   /** Requests waiting for an answer that won't come get an error instead of hanging. */
   private failPending(err: Error) {
     const pending = [...this.pendingRequests.values()];
@@ -204,7 +273,17 @@ export class HomeAssistantClient {
         return;
       }
       const id = this.msgId++;
-      this.pendingRequests.set(id, { resolve, reject });
+      // A reply that never comes (e.g. a half-open socket the heartbeat hasn't
+      // caught yet) must not leave the caller's promise pending forever.
+      const timeout = setTimeout(() => {
+        if (this.pendingRequests.delete(id)) {
+          reject(new Error('Home Assistant request timed out'));
+        }
+      }, this.requestTimeoutMs);
+      this.pendingRequests.set(id, {
+        resolve: (value) => { clearTimeout(timeout); resolve(value); },
+        reject: (reason) => { clearTimeout(timeout); reject(reason); },
+      });
       this.ws.send(JSON.stringify({ ...msg, id }));
     });
   }
@@ -323,6 +402,7 @@ export class HomeAssistantClient {
    */
   disconnect() {
     this.disposed = true;
+    this.stopHeartbeat();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;

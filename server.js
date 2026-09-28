@@ -515,6 +515,60 @@ function collectionFilePath(name) {
 }
 
 /**
+ * Keys the collection API owns (each holds a JSON array). The data API shares
+ * the same DATA_DIR/<key>.json files, so it must refuse to write these: a
+ * non-array body sent to /beacon-data/<one of these> would make every
+ * /beacon-collection read of it answer 500 for the whole family and stall the
+ * chores sync, until the file was fixed by hand.
+ */
+const COLLECTION_KEYS = new Set([
+  'beacon_family_members',
+  'beacon_chores',
+  'beacon_completions',
+  'beacon_streaks',
+  'beacon_routines',
+  'beacon_routine_completions',
+  'beacon_dashboard_views',
+  'beacon_chores_sync_links',
+  'beacon_routine_sync_links',
+]);
+
+// A stored key is at most this long, and once this many distinct keys exist no
+// new ones are created — so a client can't flood /data with files (or grow the
+// in-memory maps and the /beacon-action/changes payload) with arbitrary keys.
+const MAX_KEY_LENGTH = 64;
+const MAX_STORED_KEYS = 512;
+
+/** Keys already on disk, read once, so a new key can be told from an existing
+ *  one without a stat on every write. */
+let storedKeysCache = null;
+async function knownStoredKeys() {
+  if (storedKeysCache) return storedKeysCache;
+  const keys = new Set();
+  try {
+    for (const entry of await fsp.readdir(DATA_DIR)) {
+      if (entry.endsWith('.json')) keys.add(entry.slice(0, -'.json'.length));
+    }
+  } catch { /* empty or missing dir: nothing stored yet */ }
+  storedKeysCache = keys;
+  return keys;
+}
+
+/** Rejects (400) an over-long key, or a brand-new key once the cap is reached. */
+async function assertWritableKey(key) {
+  if (key.length > MAX_KEY_LENGTH) {
+    throw Object.assign(new Error('key too long'), { status: 400 });
+  }
+  const keys = await knownStoredKeys();
+  if (!keys.has(key)) {
+    if (keys.size >= MAX_STORED_KEYS) {
+      throw Object.assign(new Error('too many stored keys'), { status: 400 });
+    }
+    keys.add(key);
+  }
+}
+
+/**
  * Write a data file atomically: write a temporary file next to it, then
  * rename it over the original. A rename is atomic on the same filesystem,
  * so a crash or power loss mid-write leaves either the old file or the new
@@ -673,6 +727,7 @@ async function handleCollectionApi(req, res) {
     }
 
     if (req.method === 'POST' && !itemId) {
+      await assertWritableKey(name); // POST is what first creates a collection's file
       const bodyBuf = await collectBody(req);
       if (!bodyBuf) throw new Error('Missing request body');
       const item = JSON.parse(bodyBuf.toString('utf8'));
@@ -754,6 +809,15 @@ async function handleDataApi(req, res) {
 
   if (req.method === 'PUT' || req.method === 'POST') {
     try {
+      // Collections require a JSON array; a blob written here isn't validated
+      // as one, so writing a collection's key through this endpoint would
+      // corrupt it (see COLLECTION_KEYS). Use /beacon-collection/<name> instead.
+      if (COLLECTION_KEYS.has(key)) {
+        res.writeHead(409, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: `${key} is a collection; use /beacon-collection/${key}` }));
+        return;
+      }
+      await assertWritableKey(key);
       const bodyBuf = await collectBody(req);
       // An empty save would replace the stored data with {}.
       if (!bodyBuf) throw new Error('Missing request body');
