@@ -1,95 +1,129 @@
 ---
 title: "Deployment"
-description: "Deploying Beacon — HA add-on, Docker standalone, reverse proxy, hardware recommendations, kiosk mode, and performance optimization."
+description: "Deploy the Family add-on or a versioned standalone Docker image with server-side Home Assistant access and an HTTPS reverse proxy."
 order: 4
 ---
 
 # Deployment
 
-This guide covers all deployment options for Beacon: the Home Assistant add-on, standalone Docker, reverse proxy setup, hardware recommendations, kiosk mode configuration, and performance optimization.
+This guide covers the Family fork's Home Assistant add-on, standalone Docker image, reverse proxy setup, hardware recommendations, and kiosk mode.
 
 ---
 
 ## HA Add-on deployment
 
-The simplest deployment. See [Getting Started](/docs/getting-started/installation/) for the step-by-step installation.
+The simplest deployment. Add `https://github.com/f1f1f1f1f1f1/Family` to the Home Assistant add-on store and install **Family**. See [Getting Started](/docs/getting-started/installation/) for the full steps.
 
 **How it works under the hood:**
 
-1. The Dockerfile uses a two-stage build:
-   - **Build stage**: Node.js 20 Alpine builds the Vite/React app (`npm ci && npm run build`)
-   - **Runtime stage**: Based on `ghcr.io/hassio-addons/base:16.3.2`, installs Node.js and the `serve` static file server
-2. `run.sh` runs at container start:
-   - Reads add-on options from `/data/options.json` via `bashio::config`
-   - Generates `runtime-config.js` with the configuration values
-   - Injects the script tag into `index.html`
-   - Starts `serve` on port 3000
-3. HA's ingress proxy forwards requests from the sidebar panel to port 3000
+1. `config.yaml` has no `image:` setting. Home Assistant Supervisor builds the root `Dockerfile` itself on installation/update; it does **not** pull the standalone GHCR image. Releases update the manifest version through semantic-release; do not change it by hand. Supervisor does not rebuild this source-built add-on until the manifest version changes.
+2. The build stage uses Node.js 22 Alpine to run `npm ci --ignore-scripts` and `npm run build`. The runtime stage uses `ghcr.io/hassio-addons/base:16.3.2`, installs Node.js, and copies only the built app, the server and its runtime dependencies, and `run.sh`.
+3. `run.sh` reads add-on options from Supervisor and writes `runtime-config.js` with display settings and an **empty HA token**. The Node server listens on port 3000, serves the SPA, persists family data under `/data`, and proxies allowed HA API requests using the Supervisor token on the server.
+4. HA ingress authenticates browser sessions and forwards requests to the add-on. Set a private 6–8 digit `parent_pin` in the add-on options to unlock privileged actions and a nonempty `allowed_entities` CSV of exact HA IDs for entity/service access. Do not expose the add-on port directly or place it behind an unauthenticated external proxy.
 
-**Health check**: The container includes a health check that runs every 30 seconds:
-```
-wget -qO /dev/null http://localhost:3000/ || exit 1
-```
+The image health check makes a local GET to `http://127.0.0.1:3000/beacon-action/health`. This checks server/HA API readiness rather than simply returning the SPA shell.
 
 ---
 
 ## Docker standalone deployment
 
-For running Beacon outside of Home Assistant's add-on system.
+For Home Assistant Core installations without Supervisor, or a separately managed container. This image is published by the fork's release workflow at `ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z` after a new semantic-release tag is created; there is **no `latest` tag**. The workflow refuses to republish a tag that already exists. Existing versions from before the image workflow may not have an image. Choose an available tag on [the GHCR package page](https://github.com/f1f1f1f1f1f1/Family/pkgs/container/family); for the strongest pin, use its content digest below.
 
-### Basic deployment
+### Configure credentials
+
+Create an environment file **outside the repository**, readable only by the Docker operator (for example `/secure/path/family.env`):
+
+```dotenv
+HA_URL=http://homeassistant.local:8123
+HA_TOKEN=replace-with-a-dedicated-HA-long-lived-access-token
+BEACON_PASSWORD=replace-with-a-strong-unique-password
+BEACON_PARENT_PIN=REPLACE_WITH_6_TO_8_DIGIT_PIN
+BEACON_ALLOWED_ENTITIES=calendar.family,todo.shopping_list,weather.home,media_player.living_room
+BEACON_HOST=0.0.0.0
+THEME=midnight
+AUTO_DARK_MODE=true
+WEATHER_ENTITY=weather.home
+PHOTO_DIRECTORY=/media/beacon/photos
+PHOTO_INTERVAL=30
+SCREEN_SAVER_TIMEOUT=5
+```
+
+Replace all placeholders and sample entity IDs: HTTP Basic username is `beacon`, password is the at-least-16-character `BEACON_PASSWORD`, and privileged actions separately require the 6–8 digit `BEACON_PARENT_PIN`. `BEACON_ALLOWED_ENTITIES` is a CSV of **exact** IDs from HA (include each calendar, todo list, weather entity and media player you use); empty denies HA entity/service access. `HA_URL` must be reachable from **inside the container**. The HA token stays server-side. `BEACON_HOST=0.0.0.0` is needed for the server to accept connections forwarded from Docker, **not** a reason to bind the host port publicly. Mount `/data` for persistent family data.
+
+`THEME`, `AUTO_DARK_MODE`, `WEATHER_ENTITY`, `PHOTO_DIRECTORY`, `PHOTO_INTERVAL`, and `SCREEN_SAVER_TIMEOUT` are optional **runtime** display defaults in Docker. Match `WEATHER_ENTITY` with an ID in `BEACON_ALLOWED_ENTITIES`; a display's saved preferences may override the defaults. The generated `runtime-config.js` contains these non-secret settings and `ha_available` (a Boolean indicating server-side HA credentials), but **never `HA_URL` or `HA_TOKEN`**. Recreate the container to apply env-file changes. If an earlier version put a long-lived token in browser storage or a `VITE_HA_TOKEN` build, [revoke and replace it](https://github.com/f1f1f1f1f1f1/Family/blob/main/SECURITY.md); clearing the browser copy cannot undo earlier exposure.
+
+### Run with Docker
 
 ```bash
-docker run -d \
-  --name beacon \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="YOUR_LONG_LIVED_TOKEN" \
-  -e HA_URL="http://192.168.1.100:8123" \
-  -e THEME="midnight" \
-  -e WEATHER_ENTITY="weather.home" \
-  ghcr.io/asachs01/beacon:latest
+docker run -d --name family --restart unless-stopped \
+  -p 127.0.0.1:3000:3000 \
+  --env-file /secure/path/family.env \
+  -v family-data:/data \
+  ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z
 ```
+
+Replace `vX.Y.Z` with a published version. HTTP Basic is not encryption: only open `http://127.0.0.1:3000` on the host; provide remote/tablet access through an **HTTPS reverse proxy**. Never change `-p 127.0.0.1:3000:3000` to a LAN/all-interface HTTP bind.
+
+After signing in with Basic username `beacon` and password `BEACON_PASSWORD`, unlock privileged controls with the separate 6–8 digit `BEACON_PARENT_PIN`. That parent session expires **10 minutes from PIN entry**, even while the app polls; re-enter the PIN afterward. Kid Display sessions instead renew on normal session polling for a sliding 24-hour period.
+
+### Pull by immutable digest
+
+Get the **top-level multi-platform `Digest: sha256:...`** shown for your published version, then replace `REPLACE_WITH_INDEX_DIGEST` with its hexadecimal value:
+
+```bash
+docker buildx imagetools inspect ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z
+docker pull ghcr.io/f1f1f1f1f1f1/family@sha256:REPLACE_WITH_INDEX_DIGEST
+```
+
+Use `ghcr.io/f1f1f1f1f1f1/family@sha256:REPLACE_WITH_INDEX_DIGEST` in place of the `:vX.Y.Z` image reference in `docker run` or Compose. A digest identifies the exact published image even if someone with registry access later moves a tag; the release workflow itself fails rather than overwriting an existing version tag.
 
 ### Docker Compose
 
 ```yaml
-version: "3.8"
 services:
-  beacon:
-    image: ghcr.io/asachs01/beacon:latest
-    container_name: beacon
+  family:
+    image: ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z # replace with a published version
     restart: unless-stopped
     ports:
-      - "3000:3000"
-    environment:
-      SUPERVISOR_TOKEN: "${HA_TOKEN}"
-      HA_URL: "http://192.168.1.100:8123"
-      THEME: "midnight"
-      AUTO_DARK_MODE: "true"
-      WEATHER_ENTITY: "weather.home"
-      PHOTO_DIRECTORY: "/media/beacon/photos"
-      PHOTO_INTERVAL: "30"
-      SCREEN_SAVER_TIMEOUT: "5"
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - /secure/path/family.env
+    volumes:
+      - family-data:/data
+volumes:
+  family-data:
 ```
 
 ### Building from source
 
 ```bash
-git clone https://github.com/asachs01/beacon.git
-cd beacon
-docker build -t beacon .
-docker run -d --name beacon -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="..." \
-  -e HA_URL="..." \
-  beacon
+git clone https://github.com/f1f1f1f1f1f1/Family.git
+cd Family
+docker build -t family:local .
+docker run -d --name family -p 127.0.0.1:3000:3000 \
+  --env-file /secure/path/family.env -v family-data:/data family:local
+```
+
+The same Dockerfile is used by the add-on, but the standalone container requires the environment variables above rather than Supervisor's token. Do not put them in `VITE_*` variables; Vite exposes those to the browser.
+
+### Verify a published release
+
+Release builds are signed keylessly with GitHub Actions OIDC and accompanied by an image-digest build-provenance attestation. **After a new release is published** (not for historical tags without images), install `cosign`/GitHub CLI and check a pinned version before deployment:
+
+```bash
+cosign verify \
+  --certificate-identity 'https://github.com/f1f1f1f1f1f1/Family/.github/workflows/release.yml@refs/heads/main' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+  ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z
+gh attestation verify oci://ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z \
+  --repo f1f1f1f1f1f1/Family
 ```
 
 ---
 
 ## Reverse proxy setup
 
-If you want to access Beacon from outside your local network or behind a reverse proxy.
+For any remote/tablet access to standalone Docker, run an HTTPS reverse proxy **on the same host** as the loopback-bound port. Keep the container's HTTP port off the LAN: only the proxy's TLS listener may be remotely reachable, and it must forward Basic authentication rather than bypass it. Add-on users should use Home Assistant's authenticated ingress instead.
 
 ### Nginx
 
@@ -107,11 +141,6 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-
-        # WebSocket support (for HA API passthrough)
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
     }
 }
 ```
@@ -120,7 +149,7 @@ server {
 
 ```
 beacon.yourdomain.com {
-    reverse_proxy localhost:3000
+    reverse_proxy 127.0.0.1:3000
 }
 ```
 
@@ -128,9 +157,9 @@ Caddy handles SSL certificates automatically via Let's Encrypt.
 
 ### Important notes
 
-- Beacon connects to Home Assistant's WebSocket API directly from the browser. The browser must be able to reach the HA URL configured in `ha_url`.
-- If you put Beacon behind a reverse proxy but HA is on a different domain/port, you may need to configure CORS on HA or ensure both are accessible from the browser.
-- For best results, keep Beacon and HA on the same network and access Beacon via the reverse proxy.
+- The reverse proxy must preserve the browser's `Authorization` header for HTTP Basic; configure TLS certificates and an HTTPS redirect. Do not cache authenticated responses or add an unauthenticated proxy route to Family.
+- In add-on and Docker mode the browser talks only to Family's same-origin server. The server contacts HA using its own token; you do not need to expose HA to the browser or configure HA CORS for this deployment.
+- If the proxy runs in a separate container, `127.0.0.1` there is **not** the Family container. Use a private Docker network instead of exposing the container port publicly.
 
 ---
 
@@ -176,7 +205,7 @@ Kiosk mode locks the device to showing only Beacon, preventing accidental naviga
 [Fully Kiosk Browser](https://www.fully-kiosk.com/) is the recommended kiosk solution for Android tablets.
 
 1. Install Fully Kiosk Browser from the APK (it is not on the Play Store)
-2. Set the **Start URL** to your Beacon address
+2. Set the **Start URL** to the signed-in Home Assistant ingress URL (add-on) or your HTTPS proxy address (standalone Docker)
 3. Enable these settings:
    - **Web Auto Reload**: Enable, set to reload on connectivity change
    - **Keep Screen On**: Yes
@@ -229,16 +258,16 @@ firefox --kiosk http://YOUR_BEACON_URL
 
 You can run Beacon on multiple displays simultaneously. Each display:
 
-- Connects to the same Home Assistant instance
-- Shows the same calendar events (since they come from HA)
-- Has its own independent localStorage (family members, chores, theme preference)
-- Can be configured with different themes
+- Accesses the same Home Assistant instance through Family's server
+- Shows the same calendar events from HA
+- Shares family/chores data through the add-on's `/data` storage (or the standalone container's mounted `/data` volume); localStorage is a display cache
+- Can keep its own theme preference in the browser
 
 ### Example: Kitchen + Living Room
 
 1. Set up a Fire tablet in the kitchen with the Skylight theme
 2. Set up a Raspberry Pi + monitor in the living room with the Midnight theme
-3. Both connect to the same HA URL and show the same calendars
+3. Both open the same HA ingress panel or HTTPS standalone URL and show the same calendars
 
 ---
 
@@ -259,10 +288,8 @@ You can run Beacon on multiple displays simultaneously. Each display:
 
 ### General
 
-- Beacon's production build is a static site served by `serve`. It has minimal server overhead.
-- The main resource consumption is in the browser (JavaScript, DOM rendering, WebSocket connection).
-- Network usage is minimal: WebSocket messages for state changes, REST API calls for photos and grocery data.
-- The health check (`wget` every 30 seconds) has negligible impact.
+- The Node.js server serves the built app, stores family data, and proxies HA REST calls; it is not a generic static-site server.
+- Most rendering work is in the browser. HA requests and the health check also use server/HA resources, so monitor the add-on logs if response times rise.
 
 ---
 
@@ -270,16 +297,15 @@ You can run Beacon on multiple displays simultaneously. Each display:
 
 ### Container does not start
 
-1. Check Docker logs: `docker logs beacon`
-2. Verify the `SUPERVISOR_TOKEN` is valid (not expired)
-3. Verify the `HA_URL` is reachable from the Docker container (try `docker exec beacon wget -qO- http://HA_URL/api/`)
+1. Check container logs: `docker logs family` (or **Settings > Add-ons > Family > Log** for the add-on).
+2. Check health status: `docker inspect --format '{{.State.Health.Status}}' family`. The health endpoint is intended for local requests inside the container; a failed HA API readiness check is **unhealthy** even if static assets load.
+3. For standalone Docker, verify `HA_URL` is reachable from the **container** and `HA_TOKEN`, `BEACON_PASSWORD`, `BEACON_PARENT_PIN`, and `BEACON_ALLOWED_ENTITIES` are configured in the private environment file. For the add-on, check the Supervisor connection plus `parent_pin` and `allowed_entities` options.
 
-### Beacon loads but shows "Demo Mode"
+### Beacon loads but HA data is missing
 
-This means Beacon could not connect to Home Assistant. Check:
-1. The `ha_url` is correct and reachable from the browser
-2. The `ha_token` is valid
-3. The HA instance is running and the WebSocket API is accessible
+1. Check the Home Assistant server is running. In Docker mode, use an `HA_URL` reachable from within the container and a valid server-side `HA_TOKEN`.
+2. Check Family server logs for denied or failed HA API requests and make sure every needed entity ID appears in `allowed_entities` (add-on) or `BEACON_ALLOWED_ENTITIES` (Docker). An empty list blocks HA entity/service access. In add-on mode, make sure you opened it through an authenticated HA ingress session.
+3. Do not fix this by placing an HA token in `VITE_HA_TOKEN`, `runtime-config.js`, or the browser.
 
 ### Display goes to sleep / screen turns off
 

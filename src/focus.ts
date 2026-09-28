@@ -61,9 +61,15 @@ export function buildFocusUrl(memberId: string): string {
     return url.toString();
   }
 
-  // Fallback (standalone/dev mode, or if the slug couldn't be determined
-  // at container startup): use the current URL as before.
-  const url = new URL(window.location.href);
+  // Without the slug, an ingress URL contains a per-session capability.
+  // Never copy it, even if the user arrived through an older ingress path.
+  if (/(?:^|\/)(?:hassio_ingress|ingress)\//.test(window.location.pathname)) {
+    throw new Error('Cannot share Kid Display until the add-on slug is available. Restart the add-on.');
+  }
+
+  // Standalone/dev mode: do not carry any query, fragment, or credentials
+  // from the current address into a URL that will be shared.
+  const url = new URL(window.location.pathname, window.location.origin);
   url.searchParams.set(FOCUS_URL_PARAM, memberId);
   return url.toString();
 }

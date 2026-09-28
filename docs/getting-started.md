@@ -2,7 +2,7 @@
 
 A visual walkthrough of Beacon — your family's daily signal. This guide shows you what to expect after installation, with annotated screenshots of every major view at both desktop and mobile sizes.
 
-> **Looking for installation instructions?** See the [README](../README.md) for quick-start steps, or the [full Getting Started guide](https://beacon-family-docs.netlify.app/docs/getting-started/) on the docs site for detailed setup (Google Calendar, Docker, development, tablet mounting, and more).
+> **Looking for installation instructions?** See the [README](../README.md) for quick-start steps, or the [full Getting Started guide](https://beacon-family-docs.netlify.app/docs/getting-started/installation/) on the docs site for detailed setup (Google Calendar, Docker, development, tablet mounting, and more). Install the **Family** add-on from `https://github.com/f1f1f1f1f1f1/Family`, not another repository.
 
 ---
 
@@ -221,7 +221,7 @@ The settings view is where you configure Beacon's behavior, appearance, and inte
    - **Avatar** -- choose from 55+ emoji options across 5 categories (People, Animals, Nature, Fun, Food)
    - **Color** -- pick from 8 colors (blue, green, purple, orange, pink, teal, yellow, red)
    - **Role** -- Parent or Child
-   - **PIN** (optional) -- a 4-6 digit numeric code
+   - **PIN** (optional) -- a 4-8 digit numeric code for this member; the add-on's separate 6-8 digit `parent_pin` option is required to unlock privileged actions
 5. Tap **Add Member**.
 6. Repeat for each family member.
 

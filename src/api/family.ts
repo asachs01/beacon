@@ -1,5 +1,6 @@
 import {
   FamilyMember,
+  FamilyMemberInput,
   Chore,
   ChoreCompletion,
   Streak,
@@ -16,6 +17,7 @@ import {
 import { startOfDay, startOfToday, parseISO, subDays } from 'date-fns';
 import { localDayKey } from './date-keys';
 import { choreRoundKey, choreRoundStart, completesCurrentRound, weekStartsOnSetting } from './chore-rounds';
+import { isAddOn } from '../utils/ha-env';
 
 function choreCompletionId(choreId: string, memberId: string, roundKey: string): string {
   return `chore-${encodeURIComponent(choreId)}:${encodeURIComponent(memberId)}:${roundKey}`;
@@ -87,11 +89,11 @@ export class FamilyStore {
     return getCollectionSync<FamilyMember>(STORAGE_KEYS.members);
   }
 
-  async addMember(member: Omit<FamilyMember, 'id'>): Promise<FamilyMember> {
+  async addMember(member: FamilyMemberInput): Promise<FamilyMember> {
     return addToCollection<FamilyMember>(STORAGE_KEYS.members, member);
   }
 
-  async updateMember(id: string, data: Partial<Omit<FamilyMember, 'id'>>): Promise<FamilyMember | null> {
+  async updateMember(id: string, data: Partial<FamilyMemberInput>): Promise<FamilyMember | null> {
     return updateInCollection<FamilyMember>(STORAGE_KEYS.members, id, data);
   }
 
@@ -183,8 +185,9 @@ export class FamilyStore {
       verified_by: verifiedBy,
     });
 
-    // Update streaks
-    await this.updateStreakForMember(memberId);
+    // In proxy mode the server updates streaks atomically with this request,
+    // including completions made from a Kid Display.
+    if (!isAddOn()) await this.updateStreakForMember(memberId);
 
     return completion;
   }

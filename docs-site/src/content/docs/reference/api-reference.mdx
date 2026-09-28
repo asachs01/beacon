@@ -8,6 +8,8 @@ order: 2
 
 This document covers the internal APIs that Beacon uses to communicate with Home Assistant and manage data. It is intended for developers who want to understand Beacon's data layer or build extensions.
 
+> **Deployment note:** The Home Assistant WebSocket examples below describe the **direct development/native login** path and are not instructions for the Family add-on or standalone Docker. In those deployments, browsers must not receive an HA token: the server proxies supported same-origin REST requests with its server-side `SUPERVISOR_TOKEN` (add-on) or `HA_TOKEN` (Docker). Use authenticated HA ingress, a 6–8 digit parent PIN, and a nonempty `allowed_entities` CSV in the add-on; use HTTP Basic username `beacon`/password `BEACON_PASSWORD`, a separate `BEACON_PARENT_PIN`, and `BEACON_ALLOWED_ENTITIES` behind HTTPS for standalone Docker. Never put `VITE_HA_TOKEN` in a production build.
+
 ---
 
 ## Home Assistant WebSocket Client
@@ -25,7 +27,7 @@ const client = new HomeAssistantClient(url: string, token: string);
 | Parameter | Description |
 |-----------|-------------|
 | `url` | Home Assistant URL (http/https). Automatically converted to ws/wss and `/api/websocket` is appended. |
-| `token` | Long-lived access token or Supervisor token |
+| `token` | HA long-lived access token entered through direct development/native onboarding. Never provide a Supervisor token to the browser; the add-on uses it server-side. |
 
 ### Connection
 
@@ -354,10 +356,10 @@ The `FamilyStore` class manages family member, chore, completion, streak, and ro
 
 ### Storage
 
-- **Primary**: Browser localStorage
-- **Secondary sync**: HA `input_text.*` helpers (when connected and data < 255 chars)
+- **Add-on and standalone Docker**: `/beacon-collection/*` on the Family server is authoritative. Atomic writes persist under `/data`; localStorage contains a browser cache for initial rendering.
+- **Direct development/native without the Family server**: localStorage may be the primary store on that one device.
 
-### LocalStorage keys
+### Collection/cache keys
 
 | Key | Contents |
 |-----|----------|
@@ -428,22 +430,26 @@ Returns the resolved configuration object (cached after first call):
 interface BeaconConfig {
   ha_url: string;
   ha_token: string;
+  ha_available: boolean;
   theme: string;
   auto_dark_mode: boolean;
   weather_entity: string;
   photo_directory: string;
   photo_interval: number;
   screen_saver_timeout: number;
+  addon_slug: string;
 }
 ```
 
-### Resolution order
+### Resolution order and credential safety
 
-For each property, the first non-empty value wins:
+Non-secret display properties are resolved from:
 
 1. `window.__BEACON_CONFIG__[property]` (runtime injection by `run.sh`)
-2. `import.meta.env.VITE_[PROPERTY]` (Vite build-time environment)
+2. `import.meta.env.VITE_[PROPERTY]` (development build-time defaults)
 3. Hard-coded default
+
+`ha_url` and `ha_token` are **empty in add-on/Docker runtime-config.js**; `ha_available` only indicates that server-side HA credentials are configured. Docker display defaults such as `THEME` and `WEATHER_ENTITY` are injected at runtime, not baked into the frontend. The server uses its HA token for same-origin requests. Direct development/native onboarding may populate a device-local login; never set `VITE_HA_TOKEN`, since Vite would expose it in browser assets. The server-backed app deletes older browser-stored HA credentials at startup, but previously bundled/stored long-lived tokens still need to be revoked and replaced.
 
 ---
 

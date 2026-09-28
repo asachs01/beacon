@@ -37,6 +37,9 @@ import { formToPayload, movedPayload, occurrenceTarget, type EditScope, type Eve
 import { SaveFailedNotice } from './components/SaveFailedNotice';
 import { onDataChanged, watchDataChanges } from './api/data-changes';
 import { FAMILY_COLLECTIONS, notifyFamilyDataChanged } from './api/family';
+import { clearSensitiveCache, enterDisplay, getBeaconSession, type BeaconSession } from './api/beacon-auth';
+import { ParentUnlock } from './components/ParentUnlock';
+import { isAddOn } from './utils/ha-env';
 
 const config = getConfig();
 
@@ -74,7 +77,7 @@ function LeaderboardPanel({ open, onClose }: { open: boolean; onClose: () => voi
   return <Leaderboard open={open && ready} onClose={onClose} />;
 }
 
-export function App() {
+function DashboardApp({ onEnterDisplay }: { onEnterDisplay?: (memberId: string) => Promise<void> }) {
   const auth = useHaAuth();
   const { client, connected } = useHomeAssistant();
   const {
@@ -118,9 +121,10 @@ export function App() {
   }, []);
 
   const handleEnterFocusMode = useCallback((memberId: string) => {
+    if (onEnterDisplay) return onEnterDisplay(memberId);
     setDeviceFocusMember(memberId);
     setFocusMemberId(memberId);
-  }, []);
+  }, [onEnterDisplay]);
 
   // The Kid Display (and its loading screen) replaces the whole app, so the
   // app's own refreshes — calendar, weather, music, tasks, chores — pause
@@ -559,14 +563,9 @@ export function App() {
   }
 
   // Show onboarding ONLY when running as a standalone app with no HA connection configured.
-  // Skip if: __BEACON_CONFIG__ exists (add-on injected it), or env token set, or already onboarded,
-  // or running in an iframe (HA ingress), or URL has /ingress/ path.
-  const isHaManaged = !!(
-    window.__BEACON_CONFIG__ ||
-    import.meta.env.VITE_HA_TOKEN ||
-    window !== window.parent ||
-    window.location.pathname.includes('/ingress/')
-  );
+  // The server injects runtime config in ingress and standalone Docker.
+  // An arbitrary embedding page is not proof of HA authentication.
+  const isHaManaged = !!window.__BEACON_CONFIG__;
   if (!isHaManaged && !auth.state.isOnboarded) {
     return (
       <LazyBoundary fallback={<LoadingScreen />}>
@@ -839,4 +838,107 @@ export function App() {
       )}
     </div>
   );
+}
+
+function FocusShell({ memberId, onExit }: { memberId: string; onExit: () => void }) {
+  const { settings } = useSettings();
+  useChoresSync(settings.choresSyncEnabled);
+  useEffect(() => {
+    const stopWatching = watchDataChanges();
+    const stopFamily = onDataChanged(FAMILY_COLLECTIONS, () => notifyFamilyDataChanged());
+    return () => {
+      stopFamily();
+      stopWatching();
+    };
+  }, []);
+  return (
+    <LazyBoundary fallback={<LoadingScreen />}>
+      <FocusView memberId={memberId} settings={settings} onExit={onExit} />
+    </LazyBoundary>
+  );
+}
+
+export function App() {
+  const [focusId, setFocusId] = useState<string | null>(() => getFocusMemberId());
+  const [session, setSession] = useState<BeaconSession | null>(null);
+  const clearedDisplayCache = useRef<string | null>(null);
+  const [authorizationError, setAuthorizationError] = useState('');
+  const [retry, setRetry] = useState(0);
+
+  useEffect(() => {
+    if (!isAddOn()) return;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const next = await getBeaconSession(focusId);
+        if (!active) return;
+        if (next.role === 'display' && clearedDisplayCache.current !== next.memberId) {
+          clearSensitiveCache();
+          clearedDisplayCache.current = next.memberId;
+        } else if (next.role !== 'display') {
+          clearedDisplayCache.current = null;
+        }
+        setSession(next);
+        setAuthorizationError('');
+      } catch (err) {
+        if (!active) return;
+        console.error('Family authorization failed:', err);
+        setAuthorizationError(err instanceof Error ? err.message : 'Cannot verify Family session');
+        setSession(null);
+      }
+    };
+    void refresh();
+    const interval = setInterval(() => void refresh(), 60_000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [focusId, retry]);
+
+  if (!isAddOn()) return <DashboardApp />;
+  if (authorizationError) {
+    return (
+      <main className="auth-screen">
+        <div className="auth-card">
+          <p role="alert">{authorizationError}</p>
+          <button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button>
+          {focusId && (
+            <button type="button" onClick={() => { clearFocusMode(); setFocusId(null); }}>
+              Return to parent access
+            </button>
+          )}
+        </div>
+      </main>
+    );
+  }
+  if (!session) return <LoadingScreen />;
+
+  if (focusId && session.role === 'display' && session.memberId === focusId) {
+    return <FocusShell memberId={focusId} onExit={() => {
+      clearFocusMode();
+      setFocusId(null);
+      setSession({ role: 'parent' });
+    }} />;
+  }
+
+  if (focusId && session.role === 'none' && session.requiresPin) {
+    return <ParentUnlock mode="display" memberId={focusId} onUnlocked={setSession} />;
+  }
+
+  if (session.role !== 'parent') {
+    return <ParentUnlock mode="parent" onUnlocked={setSession} />;
+  }
+
+  const startDisplay = async (memberId: string) => {
+    clearSensitiveCache();
+    clearedDisplayCache.current = memberId;
+    const next = await enterDisplay(memberId);
+    if (next.role !== 'display' || next.memberId !== memberId) {
+      throw new Error('Family did not authorize this display');
+    }
+    setDeviceFocusMember(memberId);
+    setFocusId(memberId);
+    setSession(next);
+  };
+  return <DashboardApp onEnterDisplay={startDisplay} />;
 }

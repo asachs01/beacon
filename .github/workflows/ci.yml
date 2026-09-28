@@ -19,6 +19,33 @@ jobs:
 
       - run: npm ci
 
+      - name: Audit production dependencies (high and critical)
+        run: npm audit --omit=dev --audit-level=high
+
+      # The production audit omits build tools, so gate Vite's advisory floor separately.
+      - name: Verify patched Vite dev dependency
+        run: |
+          node --input-type=commonjs <<'NODE'
+          const declared = require('./package.json').devDependencies.vite;
+          const installed = require('vite/package.json').version;
+          const lowerBound = typeof declared === 'string'
+            ? /^(?:\^|~)?(\d+\.\d+\.\d+)$/.exec(declared)?.[1]
+            : null;
+          function atLeast(version, minimum) {
+            if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) return false;
+            const parts = version.split('.').map(Number);
+            const floor = minimum.split('.').map(Number);
+            for (let index = 0; index < 3; index++) {
+              if (parts[index] > floor[index]) return true;
+              if (parts[index] < floor[index]) return false;
+            }
+            return true;
+          }
+          if (!atLeast(lowerBound, '6.4.3') || !atLeast(installed, '6.4.3')) {
+            throw new Error(`Vite must declare and install >=6.4.3; declared ${declared}, installed ${installed}`);
+          }
+          NODE
+
       - name: Type check
         run: npx tsc --noEmit
 

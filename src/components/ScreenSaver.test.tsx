@@ -60,7 +60,7 @@ describe('ScreenSaver photos', () => {
     expect(media.browses).toEqual([]);
 
     await wait(1.5 * MIN); // dimmed
-    expect(media.browses).toHaveLength(2);
+    expect(media.browses).toHaveLength(1);
     expect(media.resolves).toHaveLength(2); // this photo and the next
     expect(downloads).toHaveLength(1); // this photo, downloaded ahead
 

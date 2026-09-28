@@ -262,6 +262,26 @@
   text-align: center;
 }
 
+.focus-exit-pin {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.focus-exit-pin input,
+.focus-exit-pin select {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.focus-exit-error {
+  color: #c93030;
+}
+
 .focus-exit-actions {
   display: flex;
   gap: 12px;

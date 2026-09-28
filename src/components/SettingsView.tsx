@@ -18,6 +18,7 @@ import { GroceryList } from '../types/grocery';
 import { themes } from '../styles/themes';
 import {
   FamilyMember,
+  FamilyMemberInput,
   MEMBER_COLORS,
   AVATAR_CATEGORIES,
   Routine,
@@ -25,6 +26,7 @@ import {
 import type { BeaconSettings } from '../hooks/useSettings';
 import type { ChoresSyncStatus } from '../hooks/useChoresSync';
 import { buildFocusUrl } from '../focus';
+import { isAddOn } from '../utils/ha-env';
 import { exitToHomeAssistant, isInHaPanel } from '../utils/ha-kiosk';
 import { useRoutines } from '../hooks/useRoutines';
 import { isWakeLockSupported } from '../hooks/useWakeLock';
@@ -53,12 +55,12 @@ interface SettingsViewProps {
   onRunChoresSync?: () => Promise<void>;
   choresSyncStatus?: ChoresSyncStatus | null;
   onExportSettings: () => string;
-  onImportSettings: (json: string) => void;
+  onImportSettings: (json: string) => void | Promise<void>;
   onClearLocalStorage: () => void;
   // Family
   members: FamilyMember[];
-  onAddMember: (member: Omit<FamilyMember, 'id'>) => void;
-  onUpdateMember: (id: string, data: Partial<Omit<FamilyMember, 'id'>>) => void;
+  onAddMember: (member: FamilyMemberInput) => void;
+  onUpdateMember: (id: string, data: Partial<FamilyMemberInput>) => void;
   onRemoveMember: (id: string) => void;
   // HA connection
   connected: boolean;
@@ -66,7 +68,7 @@ interface SettingsViewProps {
   // Calendars
   calendars: Array<{ id: string; name: string; color?: string }>;
   // Kid Display
-  onEnterFocusMode: (memberId: string) => void;
+  onEnterFocusMode: (memberId: string) => void | Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -176,6 +178,8 @@ interface MemberForm {
   color: string;
   role: 'parent' | 'child';
   pin: string;
+  hasPin: boolean;
+  clearPin: boolean;
   calendar_entity: string;
   additional_calendar_entities: string[];
 }
@@ -186,6 +190,8 @@ const EMPTY_FORM: MemberForm = {
   color: MEMBER_COLORS[0],
   role: 'child',
   pin: '',
+  hasPin: false,
+  clearPin: false,
   calendar_entity: '',
   additional_calendar_entities: [],
 };
@@ -235,6 +241,9 @@ export function SettingsView({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [kidDisplayMemberId, setKidDisplayMemberId] = useState('');
   const [copiedFocusUrl, setCopiedFocusUrl] = useState(false);
+  const [focusUrlError, setFocusUrlError] = useState('');
+  const [focusStartError, setFocusStartError] = useState('');
+  const [importError, setImportError] = useState('');
   const [colorEditId, setColorEditId] = useState<string | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -299,7 +308,9 @@ export function SettingsView({
       avatar: member.avatar,
       color: member.color,
       role: member.role,
-      pin: member.pin ?? '',
+      pin: '',
+      hasPin: !!member.has_pin,
+      clearPin: false,
       calendar_entity: member.calendar_entity ?? '',
       additional_calendar_entities: member.additional_calendar_entities ?? [],
     });
@@ -309,18 +320,16 @@ export function SettingsView({
 
   const handleSaveMember = useCallback(() => {
     if (!memberForm.name.trim()) return;
-    const data = {
+    const data: FamilyMemberInput = {
       name: memberForm.name.trim(),
       avatar: memberForm.avatar,
       color: memberForm.color,
       role: memberForm.role,
-      // Sent even when empty: the add-on merges an edit into the stored
-      // member, so a field left out kept its old value, and a linked
-      // calendar or a PIN could never be removed.
-      pin: memberForm.pin,
       calendar_entity: memberForm.calendar_entity,
       additional_calendar_entities: memberForm.additional_calendar_entities,
     };
+    if (isAddOn() && memberForm.pin) data.pin = memberForm.pin;
+    else if (isAddOn() && memberFormMode === 'edit' && memberForm.clearPin) data.pin = '';
     if (memberFormMode === 'edit' && editingMember) {
       onUpdateMember(editingMember, data);
     } else {
@@ -369,12 +378,19 @@ export function SettingsView({
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
+      setImportError('');
       const reader = new FileReader();
       reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          onImportSettings(reader.result);
+        if (typeof reader.result !== 'string') {
+          setImportError('Could not read the settings file');
+          return;
         }
+        const json = reader.result;
+        void Promise.resolve().then(() => onImportSettings(json)).catch((err: unknown) => {
+          setImportError(err instanceof Error ? err.message : 'Could not import settings');
+        });
       };
+      reader.onerror = () => setImportError(reader.error?.message || 'Could not read the settings file');
       reader.readAsText(file);
     };
     input.click();
@@ -1025,7 +1041,9 @@ export function SettingsView({
           <div className="settings-row">
             <div>
               <div className="settings-row-label">PIN</div>
-              <div className="settings-row-sublabel">Optional, 4-6 digits</div>
+              <div className="settings-row-sublabel">
+                {isAddOn() ? 'Optional, 4-8 digits; verified only by the server' : 'PINs require the secured Family server'}
+              </div>
             </div>
             <input
               type="password"
@@ -1033,13 +1051,27 @@ export function SettingsView({
               style={{ width: 120 }}
               value={memberForm.pin}
               onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                setMemberForm((f) => ({ ...f, pin: val }));
+                const val = e.target.value.replace(/\D/g, '').slice(0, 8);
+                setMemberForm((f) => ({ ...f, pin: val, clearPin: false }));
               }}
-              placeholder="****"
+              placeholder={memberForm.hasPin && !memberForm.clearPin ? 'New PIN' : '****'}
               inputMode="numeric"
-              maxLength={6}
+              maxLength={8}
+              disabled={!isAddOn()}
+              aria-invalid={memberForm.pin.length > 0 && memberForm.pin.length < 4}
             />
+            {memberForm.pin.length > 0 && memberForm.pin.length < 4 && (
+              <span role="alert">PIN must have at least 4 digits</span>
+            )}
+            {memberFormMode === 'edit' && memberForm.hasPin && isAddOn() && (
+              <button
+                type="button"
+                className="settings-btn"
+                onClick={() => setMemberForm((f) => ({ ...f, pin: '', clearPin: !f.clearPin }))}
+              >
+                {memberForm.clearPin ? 'Keep PIN' : 'Remove PIN'}
+              </button>
+            )}
           </div>
           <div className="settings-row">
             <div>
@@ -1130,7 +1162,7 @@ export function SettingsView({
               type="button"
               className="settings-btn settings-btn--primary"
               onClick={handleSaveMember}
-              disabled={!memberForm.name.trim()}
+              disabled={!memberForm.name.trim() || (memberForm.pin.length > 0 && memberForm.pin.length < 4)}
             >
               {memberFormMode === 'edit' ? 'Save Changes' : 'Add Member'}
             </button>
@@ -1614,6 +1646,8 @@ export function SettingsView({
             onChange={(e) => {
               setKidDisplayMemberId(e.target.value);
               setCopiedFocusUrl(false);
+              setFocusUrlError('');
+              setFocusStartError('');
             }}
           >
             <option value="">Choose a member…</option>
@@ -1636,10 +1670,16 @@ export function SettingsView({
               <button
                 type="button"
                 className="settings-btn settings-btn--primary"
-                onClick={() => onEnterFocusMode(kidDisplayMemberId)}
+                onClick={() => {
+                  setFocusStartError('');
+                  Promise.resolve().then(() => onEnterFocusMode(kidDisplayMemberId))
+                    .catch((err: unknown) => setFocusStartError(
+                      err instanceof Error ? err.message : 'Could not start Kid Display'));
+                }}
               >
                 Start
               </button>
+              {focusStartError && <span role="alert">{focusStartError}</span>}
             </div>
             <div className="settings-row">
               <div>
@@ -1652,21 +1692,27 @@ export function SettingsView({
                 type="button"
                 className="settings-btn"
                 onClick={() => {
-                  const url = buildFocusUrl(kidDisplayMemberId);
-                  if (!navigator.clipboard) {
-                    window.prompt('Copy this URL:', url);
-                    return;
-                  }
-                  navigator.clipboard
-                    .writeText(url)
-                    .then(() => setCopiedFocusUrl(true))
-                    .catch(() => {
+                  try {
+                    const url = buildFocusUrl(kidDisplayMemberId);
+                    setFocusUrlError('');
+                    if (!navigator.clipboard) {
                       window.prompt('Copy this URL:', url);
-                    });
+                      return;
+                    }
+                    navigator.clipboard
+                      .writeText(url)
+                      .then(() => setCopiedFocusUrl(true))
+                      .catch(() => {
+                        window.prompt('Copy this URL:', url);
+                      });
+                  } catch (err) {
+                    setFocusUrlError(err instanceof Error ? err.message : 'Cannot make a shareable URL');
+                  }
                 }}
               >
                 {copiedFocusUrl ? 'Copied!' : 'Copy URL'}
               </button>
+              {focusUrlError && <span role="alert">{focusUrlError}</span>}
             </div>
           </>
         )}
@@ -1842,6 +1888,7 @@ export function SettingsView({
             <button type="button" className="settings-btn" onClick={handleImport}>
               Import Settings
             </button>
+            {importError && <p role="alert">{importError}</p>}
             <button
               type="button"
               className="settings-btn settings-btn--danger"

@@ -88,8 +88,8 @@ The screensaver phase always activates at 2x the dim timeout (e.g., 5-minute dim
 
 **Configuration examples:**
 - **Add-on**: `screen_saver_timeout: 5`
-- **Docker**: `SCREEN_SAVER_TIMEOUT=5`
-- **Development**: `VITE_SCREEN_SAVER_TIMEOUT=5`
+- **Docker**: Set `SCREEN_SAVER_TIMEOUT=5` at container startup or change it in Beacon's Settings
+- **Development**: Use Settings or a non-secret `VITE_SCREEN_SAVER_TIMEOUT=5` setting
 
 > **Note**: The current implementation uses hardcoded values (5 minutes for dim, 10 minutes for screensaver). The configuration option affects the dim timeout; the screensaver timeout is always double.
 

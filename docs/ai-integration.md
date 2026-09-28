@@ -1,18 +1,18 @@
 # AI and Voice Control Integration
 
-Beacon supports three approaches for voice and AI control, ranging from a simple built-in keyword API to full LLM agent tooling. Choose the one that fits your setup.
+This fork includes the authenticated built-in voice API and Home Assistant Assist sentence files. An older MCP interface is described below for reference, but its separate `mcp-server.cjs` executable is **not shipped by this repository** and cannot be enabled as an add-on or standalone Docker setting.
 
 | Approach | Best for | Requires LLM? | Setup |
 |----------|----------|----------------|-------|
-| [Voice API](#voice-api) | Quick automations, custom UIs | No | None (built-in) |
-| [MCP Server](#mcp-server) | Claude Code, LLM agents | Yes | Config file |
+| [Voice API](#voice-api) | Authenticated commands | No | Parent session and HA entity allowlist |
+| [MCP Server](#mcp-server) | Historical interface (not bundled) | Yes | Not currently installable from this fork |
 | [HA Custom Sentences](#ha-custom-sentences) | Home Assistant Assist voice | No | Copy two files |
 
 ---
 
 ## Voice API
 
-Beacon's server exposes a built-in REST endpoint for natural-language commands. It uses simple keyword matching (no LLM required) and runs entirely on the add-on container.
+Family's server exposes a REST endpoint for natural-language commands. It uses keyword matching (no LLM required). Access it **only** through authenticated Home Assistant ingress (add-on) or the standalone HTTPS reverse proxy; there is no unauthenticated `:8099` listener. A parent session is required for privileged requests; it expires **10 minutes after PIN entry** and is not renewed by app polling. In Docker mode, first authenticate with HTTP Basic username `beacon` and password `BEACON_PASSWORD`, then unlock the parent session with `BEACON_PARENT_PIN` (re-enter it after expiry). The target HA entities must be listed in `allowed_entities` (add-on) or `BEACON_ALLOWED_ENTITIES` (Docker).
 
 ### Endpoint
 
@@ -44,17 +44,7 @@ Content-Type: application/json
 | `check off <item>` / `mark <item> as done` | Marks a todo item as completed |
 | `complete <item>` / `finish <item>` | Same as above |
 
-```bash
-# Add an item
-curl -X POST http://<beacon-host>:8099/beacon-action/voice \
-  -H 'Content-Type: application/json' \
-  -d '{"text": "add eggs to the grocery list"}'
-
-# Complete a chore
-curl -X POST http://<beacon-host>:8099/beacon-action/voice \
-  -H 'Content-Type: application/json' \
-  -d '{"text": "mark dishes as done"}'
-```
+Post the JSON payload to `/beacon-action/voice` from a signed-in parent session on Family's **same origin**. Do not embed the HTTP Basic password or parent PIN in a script or browser URL.
 
 #### Media control
 
@@ -67,11 +57,7 @@ curl -X POST http://<beacon-host>:8099/beacon-action/voice \
 
 The voice API automatically finds the best media player: it prefers one that is currently playing, then paused, then falls back to the first available.
 
-```bash
-curl -X POST http://<beacon-host>:8099/beacon-action/voice \
-  -H 'Content-Type: application/json' \
-  -d '{"text": "set volume to 40"}'
-```
+Media commands require the target `media_player.*` entity in the configured allowlist.
 
 #### Navigation
 
@@ -81,11 +67,7 @@ curl -X POST http://<beacon-host>:8099/beacon-action/voice \
 
 Valid views: `dashboard`, `calendar`, `grocery`, `chores`, `music`, `photos`, `settings`.
 
-```bash
-curl -X POST http://<beacon-host>:8099/beacon-action/voice \
-  -H 'Content-Type: application/json' \
-  -d '{"text": "show the calendar"}'
-```
+Navigation commands use the same authenticated endpoint; no direct add-on port is exposed.
 
 #### Information queries
 
@@ -94,11 +76,7 @@ curl -X POST http://<beacon-host>:8099/beacon-action/voice \
 | `what's on today` / `today's schedule` | Fetches today's calendar events |
 | `what's the weather` / `weather today` | Returns current weather |
 
-```bash
-curl -X POST http://<beacon-host>:8099/beacon-action/voice \
-  -H 'Content-Type: application/json' \
-  -d '{"text": "what'\''s on my calendar"}'
-```
+Information queries are also subject to the HA entity allowlist.
 
 ### How it works
 
@@ -110,46 +88,15 @@ When a list or media player command is recognized, Beacon resolves the entity by
 
 ## MCP Server
 
-The MCP (Model Context Protocol) server exposes Beacon's features as structured tools that LLM agents (Claude Code, Claude Desktop, etc.) can call directly. This is the best approach for AI-powered automation where the LLM decides which actions to take.
+The MCP description below refers to a **separate, historical process**, not Family's Node web server. This fork does not contain the referenced `mcp-server.cjs`, and neither the source-built add-on nor the published Docker image exposes an MCP port. Do not use the legacy MCP variables as standalone Family credentials.
 
-### Setup
+### Standalone Family configuration (not an MCP setup)
 
-Add the Beacon MCP server to your client's configuration. For Claude Code:
+Run the Family web server with server-only `HA_URL` and `HA_TOKEN`, HTTP Basic (`BEACON_PASSWORD`), a separate `BEACON_PARENT_PIN`, and an explicit `BEACON_ALLOWED_ENTITIES` CSV. Set `BEACON_HOST=0.0.0.0` **inside Docker** and publish its host port only on `127.0.0.1`, behind an HTTPS reverse proxy for remote access. `SUPERVISOR_TOKEN` belongs to Supervisor-managed add-ons; it is **not** a standalone Family setting. See [Installation](https://beacon-family-docs.netlify.app/docs/getting-started/installation/) for the supported run commands.
 
-```bash
-claude mcp add beacon -- node /path/to/beacon/mcp-server.cjs
-```
+### Historical MCP tool interface (not currently bundled)
 
-Or add it to your MCP config file (`mcp-config.json`):
-
-```json
-{
-  "mcpServers": {
-    "beacon": {
-      "command": "node",
-      "args": ["beacon/mcp-server.cjs"],
-      "env": {
-        "SUPERVISOR_TOKEN": "your-long-lived-access-token",
-        "HA_URL": "http://supervisor/core"
-      }
-    }
-  }
-}
-```
-
-### Environment variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SUPERVISOR_TOKEN` | (none) | **Required.** A Home Assistant long-lived access token |
-| `HA_URL` | `http://supervisor/core` | HA base URL. Change this if running outside the add-on container |
-| `DATA_DIR` | `/data` | Path to Beacon's persistent data directory (for chore data) |
-
-To create a long-lived access token: open your HA profile page (click your name in the sidebar), scroll to "Long-lived access tokens", and create one.
-
-### Available tools
-
-The MCP server exposes 10 tools. All tool names are prefixed with `beacon_`.
+The former MCP interface listed 10 `beacon_`-prefixed tools. These descriptions are archival, not a currently deployable server.
 
 #### List tools
 
@@ -254,9 +201,9 @@ Supported actions: `play`, `pause`, `next`, `previous`, `volume`. For volume, in
 
 Reads/writes Beacon's local chore data files (`beacon_chores.json`, `beacon_family_members.json`, `beacon_completions.json` in the data directory).
 
-### Protocol details
+### Historical protocol details
 
-The MCP server communicates over stdio using JSON-RPC 2.0. It implements the MCP `2024-11-05` protocol version and supports `initialize`, `tools/list`, `tools/call`, and `ping` methods.
+The earlier MCP design used stdio with JSON-RPC 2.0 and the `2024-11-05` protocol version (`initialize`, `tools/list`, `tools/call`, and `ping`). It is not available as a standalone Family web-server endpoint in this fork.
 
 ---
 

@@ -1,12 +1,11 @@
 /**
  * Shared helpers for HA REST API calls.
  *
- * In add-on mode (proxy), API calls go through the ingress path to the
- * add-on's server.js which proxies to http://supervisor/core with
- * SUPERVISOR_TOKEN. No browser-side auth needed.
+ * With runtime-config.js (add-on or standalone Docker), API calls go
+ * through the same-origin Family server. HA credentials stay server-side.
  *
- * In standalone mode, API calls go directly to the HA instance with a
- * user-provided long-lived access token.
+ * Native/onboarding mode without that server can connect directly with a
+ * token entered on the device (never one compiled into the public bundle).
  */
 import { getConfig } from '../config';
 import { isAddOn, getIngressBasePath } from '../utils/ha-env';
@@ -188,7 +187,7 @@ export async function getAllEntityStates(maxAgeMs?: number): Promise<HaStateObje
 
 /** Whether HA API calls should work (add-on proxy or token configured) */
 export function hasToken(): boolean {
-  return isAddOn() || !!getHaToken();
+  return (isAddOn() && getConfig().ha_available) || !!getHaToken();
 }
 
 /**

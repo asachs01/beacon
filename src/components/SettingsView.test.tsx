@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { BeaconSettings } from '../hooks/useSettings';
 import type { FamilyMember } from '../types/family';
@@ -10,9 +10,18 @@ vi.mock('../hooks/useRoutines', () => ({
 import { SettingsView } from './SettingsView';
 
 const kai: FamilyMember = {
-  id: 'kai', name: 'Kai', avatar: '👦', color: '#3b82f6', role: 'child', pin: '1234',
+  id: 'kai', name: 'Kai', avatar: '👦', color: '#3b82f6', role: 'child', has_pin: true,
   calendar_entity: 'calendar.kai', additional_calendar_entities: ['calendar.soccer'],
 };
+
+beforeEach(() => {
+  window.__BEACON_CONFIG__ = { ha_url: '', ha_token: '' };
+});
+
+afterEach(() => {
+  delete window.__BEACON_CONFIG__;
+  vi.restoreAllMocks();
+});
 
 function renderSettings(props: Partial<Parameters<typeof SettingsView>[0]> = {}) {
   const on = {
@@ -51,7 +60,7 @@ describe('SettingsView family members', () => {
 
     fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: '' } });
     fireEvent.click(screen.getByText('Remove'));
-    fireEvent.change(screen.getByPlaceholderText('****'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Remove PIN' }));
     fireEvent.click(screen.getByText('Save Changes'));
 
     const [id, patch] = on.onUpdateMember.mock.calls[0];
@@ -59,7 +68,26 @@ describe('SettingsView family members', () => {
     expect(id).toBe('kai');
     expect(stored.calendar_entity).toBeFalsy();
     expect(stored.additional_calendar_entities).toEqual([]);
-    expect(stored.pin).toBeFalsy();
+    expect(patch.pin).toBe('');
+  });
+
+  it('never displays a saved PIN and leaves it unchanged when no new PIN is entered', () => {
+    const on = renderSettings();
+    fireEvent.click(screen.getByText('Family Members'));
+    fireEvent.click(screen.getByLabelText('Edit Kai'));
+    expect(screen.getByPlaceholderText('New PIN')).toHaveValue('');
+    fireEvent.click(screen.getByText('Save Changes'));
+    expect(on.onUpdateMember.mock.calls[0][1]).not.toHaveProperty('pin');
+  });
+
+  it('does not submit a PIN shorter than the server accepts', () => {
+    const on = renderSettings();
+    fireEvent.click(screen.getByText('Family Members'));
+    fireEvent.click(screen.getByLabelText('Edit Kai'));
+    fireEvent.change(screen.getByPlaceholderText('New PIN'), { target: { value: '123' } });
+    expect(screen.getByRole('alert')).toHaveTextContent('PIN must have at least 4 digits');
+    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeDisabled();
+    expect(on.onUpdateMember).not.toHaveBeenCalled();
   });
 });
 
@@ -74,5 +102,27 @@ describe('SettingsView reset', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Tap again to reset' }));
     expect(on.onResetSettings).toHaveBeenCalledTimes(1);
+  });
+
+  describe('SettingsView imports', () => {
+    it('shows a validation error instead of silently accepting a malformed settings file', async () => {
+      const onImportSettings = vi.fn(() => {
+        throw new Error('Invalid choresSyncListByMember');
+      });
+      renderSettings({ onImportSettings });
+      fireEvent.click(screen.getByText('About'));
+      vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(function (this: HTMLInputElement) {
+        Object.defineProperty(this, 'files', {
+          value: [new File(['{"choresSyncListByMember":null}'], 'settings.json', { type: 'application/json' })],
+          configurable: true,
+        });
+        this.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Import Settings' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Invalid choresSyncListByMember');
+      expect(onImportSettings).toHaveBeenCalledWith('{"choresSyncListByMember":null}');
+    });
   });
 });

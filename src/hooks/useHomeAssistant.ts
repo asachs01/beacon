@@ -2,63 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
 import { getConfig } from '../config';
 import { setHaToken } from '../api/ha-rest';
-import { isAddOn, isIngress } from '../utils/ha-env';
+import { isAddOn } from '../utils/ha-env';
 
 function resolveHaUrl(): string {
   const config = getConfig();
 
   if (config.ha_url && !config.ha_url.includes('supervisor')) return config.ha_url;
 
-  if (isIngress()) {
-    try {
-      return window.parent.location.origin;
-    } catch {
-      return window.location.origin;
-    }
-  }
-
   return window.location.origin;
-}
-
-/**
- * Request an access token from the HA frontend via the ingress postMessage API.
- */
-function requestIngressToken(): Promise<string | null> {
-  return new Promise((resolve) => {
-    if (!isIngress()) {
-      resolve(null);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      window.removeEventListener('message', handler);
-      resolve(null);
-    }, 3000);
-
-    // Determine the expected origin for postMessage validation
-    let expectedOrigin = '';
-    try { expectedOrigin = window.parent.location.origin; } catch { /* cross-origin */ }
-
-    function handler(event: MessageEvent) {
-      // Validate origin to prevent token injection from other frames
-      if (expectedOrigin && event.origin !== expectedOrigin) return;
-      if (event.data?.type === 'auth/token') {
-        clearTimeout(timeout);
-        window.removeEventListener('message', handler);
-        resolve(event.data.access_token || null);
-      }
-    }
-
-    window.addEventListener('message', handler);
-
-    try {
-      window.parent.postMessage({ type: 'auth/request' }, '*');
-    } catch {
-      clearTimeout(timeout);
-      window.removeEventListener('message', handler);
-      resolve(null);
-    }
-  });
 }
 
 export function useHomeAssistant() {
@@ -70,21 +21,19 @@ export function useHomeAssistant() {
 
     async function connect() {
       const config = getConfig();
-      let token = config.ha_token;
+      const token = config.ha_token;
       const url = resolveHaUrl();
 
-      // In add-on mode with the proxy, we don't need a browser-side token.
-      // The server.js proxy injects SUPERVISOR_TOKEN for all /api/* requests.
-      // Just mark as connected so REST-based hooks fire.
+      // In server-backed mode the browser has no HA token. The server uses
+      // its Supervisor token (add-on) or HA_TOKEN (standalone Docker).
       if (isAddOn() && !token) {
-        console.info('Beacon: Add-on proxy mode — using REST API via ingress.');
+        if (!config.ha_available) {
+          console.info('Family: Local-only server mode — Home Assistant is not configured.');
+          return;
+        }
+        console.info('Family: Server proxy mode — using same-origin REST API.');
         if (!cancelled) setConnected(true);
         return;
-      }
-
-      // If no token from config, try requesting one from HA ingress
-      if (!token && isIngress()) {
-        token = await requestIngressToken() || '';
       }
 
       if (!token) {

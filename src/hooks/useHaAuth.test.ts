@@ -32,6 +32,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete window.__BEACON_CONFIG__;
+  localStorage.removeItem('beacon_family_members');
 });
 
 describe('applySavedLogin', () => {
@@ -49,14 +50,26 @@ describe('applySavedLogin', () => {
     expect(readBeforehand).toMatchObject({ ha_url: 'http://ha.local:8123', ha_token: 'saved-token' });
   });
 
-  it("leaves the add-on's connection alone", async () => {
+  it("leaves the server's connection alone and removes an obsolete browser token", async () => {
     saveLogin();
+    localStorage.setItem('beacon_family_members', '[{"id":"kai","pin":"1234"}]');
     window.__BEACON_CONFIG__ = { ha_url: '', ha_token: '' };
     const { getConfig, applySavedLogin } = await reload();
 
     await applySavedLogin();
 
     expect(getConfig()).toMatchObject({ ha_url: '', ha_token: '' });
+    expect(localStorage.getItem('beacon_ha_token')).toBeNull();
+    expect(localStorage.getItem('beacon_family_members')).toBeNull();
+  });
+
+  it('does not claim an HA connection when the server is local-only', async () => {
+    window.__BEACON_CONFIG__ = { ha_url: '', ha_token: '', ha_available: false };
+    const { applySavedLogin, useHomeAssistant } = await reload();
+    await applySavedLogin();
+    const { result } = renderHook(() => useHomeAssistant());
+    expect(result.current.connected).toBe(false);
+    expect(clients).toEqual([]);
   });
 
   it("ignores a token when onboarding didn't finish", async () => {

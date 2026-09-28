@@ -3,35 +3,224 @@
  * Beacon add-on server.
  *
  * - Serves the static SPA from /app/dist
- * - Proxies /api/* to HA Supervisor API with SUPERVISOR_TOKEN
+ * - Proxies the app's permitted HA API calls using a server-only token
  * - Provides /beacon-data/* for persistent storage (survives rebuilds)
  * - Runs the Google Tasks chores sync (chores-sync.cjs)
  *
- * The Supervisor token has admin rights, so only the HA services and
- * paths Family uses are passed on, and writes from other websites are
- * refused — see server-guards.cjs.
+ * The HA token can have admin rights. In add-on mode only HA ingress may
+ * connect; standalone mode requires a separate browser password. A parent
+ * session and an entity allowlist gate privileged actions in both modes.
  */
 
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
+const { createHash, randomBytes, scryptSync, timingSafeEqual } = require('crypto');
 const WebSocket = require('ws');
 const {
   isServiceAllowed,
   isProxyRequestAllowed,
+  isTrustedIngressAddress,
+  parseAllowedEntities,
+  isEntityAllowed,
+  isServiceTargetAllowed,
   isCrossOriginWrite,
   describeRequester,
 } = require('./server-guards.cjs');
-const { createChoresSync } = require('./chores-sync.cjs');
+const { createChoresSync, dayKeyFormatter } = require('./chores-sync.cjs');
 
 const PORT = Number(process.env.BEACON_PORT) || 3000;
 const DIST = process.env.BEACON_DIST || '/app/dist';
-const SUPERVISOR_TOKEN = process.env.SUPERVISOR_TOKEN || '';
-const HA_API_BASE = process.env.HA_API_BASE_OVERRIDE || 'http://supervisor/core';
-const HA_WS_URL = process.env.HA_WS_URL_OVERRIDE || 'ws://supervisor/core/api/websocket';
+const IS_ADDON = Boolean(process.env.SUPERVISOR_TOKEN);
+const SUPERVISOR_TOKEN = process.env.SUPERVISOR_TOKEN || process.env.HA_TOKEN || '';
+const HOST = IS_ADDON ? '0.0.0.0' : (process.env.BEACON_HOST || '127.0.0.1');
+const PARENT_PIN = process.env.BEACON_PARENT_PIN || '';
+const BEACON_PASSWORD = process.env.BEACON_PASSWORD || '';
+const ALLOWED_ENTITIES = parseAllowedEntities(process.env.BEACON_ALLOWED_ENTITIES);
+
+if (process.env.SUPERVISOR_TOKEN && process.env.HA_TOKEN) {
+  throw new Error('Set SUPERVISOR_TOKEN only in the add-on, or HA_TOKEN only in standalone mode');
+}
+if (!/^\d{6,8}$/.test(PARENT_PIN)) {
+  throw new Error('Configure BEACON_PARENT_PIN as a 6-8 digit parent PIN before starting Family');
+}
+if (!IS_ADDON && BEACON_PASSWORD.length < 16) {
+  throw new Error('Standalone mode requires BEACON_PASSWORD (at least 16 characters)');
+}
+if (!IS_ADDON && Boolean(process.env.HA_URL) !== Boolean(process.env.HA_TOKEN)) {
+  throw new Error('Standalone HA access requires both HA_URL and HA_TOKEN');
+}
+
+const haBase = IS_ADDON ? 'http://supervisor/core' : process.env.HA_URL?.replace(/\/+$/, '');
+if (haBase) {
+  const parsed = new URL(haBase);
+  if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password || parsed.search || parsed.hash) {
+    throw new Error('HA_URL must be an http(s) URL without credentials, query or fragment');
+  }
+}
+const HA_API_BASE = process.env.HA_API_BASE_OVERRIDE || haBase || '';
+const haWebsocketUrl = HA_API_BASE ? new URL(`${HA_API_BASE}/api/websocket`) : null;
+if (haWebsocketUrl) haWebsocketUrl.protocol = haWebsocketUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+const HA_WS_URL = process.env.HA_WS_URL_OVERRIDE || haWebsocketUrl?.toString() || '';
+const haHttpClient = (url) => url.protocol === 'https:' ? https : http;
 // /data/ is HA add-on persistent storage (survives container rebuilds)
 const DATA_DIR = process.env.BEACON_DATA || '/data';
+
+const PARENT_SESSION_MS = 10 * 60 * 1000;
+const DISPLAY_SESSION_MS = 24 * 60 * 60 * 1000;
+const PIN_LOCK_MS = 15 * 60 * 1000;
+const MAX_SESSIONS = 1024;
+const SESSION_COOKIE = 'beacon_session';
+const parentPinDigest = createHash('sha256').update(PARENT_PIN).digest();
+const passwordDigest = createHash('sha256').update(`beacon:${BEACON_PASSWORD}`).digest();
+const sessions = new Map();
+const pinAttempts = new Map();
+
+function sendJson(res, status, data) {
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+  res.end(JSON.stringify(data));
+}
+
+function isStandaloneAuthenticated(req) {
+  const header = req.headers.authorization || '';
+  const match = /^Basic ([A-Za-z0-9+/]+={0,2})$/.exec(header);
+  if (!match || match[1].length > 1024) return false;
+  const provided = Buffer.from(match[1], 'base64');
+  const digest = createHash('sha256').update(provided).digest();
+  return timingSafeEqual(digest, passwordDigest);
+}
+
+function requesterIdentity(req) {
+  if (!IS_ADDON) return 'standalone';
+  const user = req.headers['x-remote-user-id'];
+  const ingress = req.headers['x-ingress-path'];
+  if (!user && !ingress) return '';
+  return JSON.stringify([user || '', ingress || '']);
+}
+
+function sessionPath(req) {
+  if (!IS_ADDON) return '/';
+  const ingress = req.headers['x-ingress-path'];
+  if (typeof ingress === 'string' && /^\/api\/hassio_ingress\/[A-Za-z0-9_-]+\/?$/.test(ingress)) {
+    return ingress.replace(/\/$/, '');
+  }
+  return '/';
+}
+
+function setSessionCookie(req, res, token, maxAge) {
+  const secure = req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https';
+  res.setHeader('Set-Cookie',
+    `${SESSION_COOKIE}=${token}; Path=${sessionPath(req)}; Max-Age=${maxAge}; HttpOnly; SameSite=Strict${secure ? '; Secure' : ''}`);
+}
+
+function readSession(req) {
+  const cookie = req.headers.cookie?.match(/(?:^|;\s*)beacon_session=([a-f0-9]{64})(?:;|$)/);
+  if (!cookie) return null;
+  const key = createHash('sha256').update(cookie[1]).digest('hex');
+  const session = sessions.get(key);
+  if (!session) return null;
+  if (session.expiresAt <= Date.now() || session.identity !== requesterIdentity(req)) {
+    sessions.delete(key);
+    return null;
+  }
+  return { ...session, token: cookie[1] };
+}
+
+function issueSession(req, res, role, memberId) {
+  const identity = requesterIdentity(req);
+  if (!identity) throw new Error('Missing trusted ingress identity');
+  const token = randomBytes(32).toString('hex');
+  const lifetime = role === 'parent' ? PARENT_SESSION_MS : DISPLAY_SESSION_MS;
+  const old = readSession(req);
+  if (old) sessions.delete(createHash('sha256').update(old.token).digest('hex'));
+  if (sessions.size >= MAX_SESSIONS) {
+    for (const [key, session] of sessions) {
+      if (session.expiresAt <= Date.now()) sessions.delete(key);
+    }
+    if (sessions.size >= MAX_SESSIONS) sessions.delete(sessions.keys().next().value);
+  }
+  sessions.set(createHash('sha256').update(token).digest('hex'), {
+    identity, role, memberId, expiresAt: Date.now() + lifetime,
+  });
+  setSessionCookie(req, res, token, Math.floor(lifetime / 1000));
+  return { role, ...(memberId ? { memberId } : {}) };
+}
+
+function revokeMemberSessions(memberId) {
+  for (const [key, session] of sessions) {
+    if (session.memberId === memberId) sessions.delete(key);
+  }
+}
+
+function pinIsRateLimited(identity, limit = 5) {
+  const attempt = pinAttempts.get(identity);
+  if (!attempt) return false;
+  if (Date.now() >= attempt.until) {
+    pinAttempts.delete(identity);
+    return false;
+  }
+  return attempt.count >= limit;
+}
+
+function failedPin(identity) {
+  if (pinAttempts.size >= MAX_SESSIONS && !pinAttempts.has(identity)) {
+    for (const [key, attempt] of pinAttempts) {
+      if (Date.now() >= attempt.until) pinAttempts.delete(key);
+    }
+    if (pinAttempts.size >= MAX_SESSIONS) pinAttempts.delete(pinAttempts.keys().next().value);
+  }
+  const previous = pinAttempts.get(identity);
+  pinAttempts.set(identity, {
+    count: (previous?.count || 0) + 1,
+    until: previous?.until > Date.now() ? previous.until : Date.now() + PIN_LOCK_MS,
+  });
+}
+
+function hashMemberPin(pin) {
+  const salt = randomBytes(16).toString('hex');
+  return `${salt}:${scryptSync(pin, salt, 32).toString('hex')}`;
+}
+
+function matchesMemberPin(pin, stored) {
+  if (typeof stored !== 'string') return false;
+  const match = /^([a-f0-9]{32}):([a-f0-9]{64})$/.exec(stored);
+  if (!match) throw storageError('A member PIN hash is invalid');
+  return timingSafeEqual(scryptSync(pin, match[1], 32), Buffer.from(match[2], 'hex'));
+}
+
+function publicMember(member) {
+  const { pin, pin_hash, has_pin, ...safe } = member;
+  return { ...safe, has_pin: typeof pin_hash === 'string' };
+}
+
+function memberPatch(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw Object.assign(new Error('Member must be an object'), { status: 400 });
+  }
+  if ('pin_hash' in body || 'has_pin' in body) {
+    throw Object.assign(new Error('PIN hashes are server-managed'), { status: 400 });
+  }
+  const { pin, ...member } = body;
+  if (pin !== undefined) {
+    if (pin !== '' && (typeof pin !== 'string' || !/^\d{4,8}$/.test(pin))) {
+      throw Object.assign(new Error('Member PIN must have 4-8 digits'), { status: 400 });
+    }
+    member.pin_hash = pin ? hashMemberPin(pin) : null;
+  }
+  if (member.role !== undefined && member.role !== 'parent' && member.role !== 'child') {
+    throw Object.assign(new Error('Invalid member role'), { status: 400 });
+  }
+  return member;
+}
+
+function setSecurityHeaders(res) {
+  res.setHeader('Content-Security-Policy', IS_ADDON ? "frame-ancestors 'self'" : "frame-ancestors 'none'");
+  res.setHeader('X-Frame-Options', IS_ADDON ? 'SAMEORIGIN' : 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+}
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -47,8 +236,8 @@ const MIME_TYPES = {
   '.webmanifest': 'application/manifest+json',
 };
 
-// Ensure data directory exists
-try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch { /* ignore */ }
+// Storage is required for authenticated sessions' data to be authoritative.
+fs.mkdirSync(DATA_DIR, { recursive: true });
 
 /**
  * Caching for the built app. Vite puts a content hash in every file name
@@ -154,10 +343,32 @@ function proxyToHA(req, res) {
   const targetUrl = `${HA_API_BASE}${req.url}`;
 
   collectBody(req).then((body) => {
+    const pathname = req.url.split('?')[0];
+    const entityPath = /^\/api\/(states|calendars)\/([a-z0-9_]+\.[a-z0-9_]+)$/.exec(pathname);
+    if (entityPath && !isEntityAllowed(entityPath[2], ALLOWED_ENTITIES,
+      entityPath[1] === 'calendars' ? 'calendar' : undefined)) {
+      sendJson(res, 403, { error: 'Entity not allowed' });
+      return;
+    }
+    if (req.method === 'POST') {
+      let data;
+      try {
+        data = JSON.parse(body?.toString('utf8') || '');
+      } catch {
+        sendJson(res, 400, { error: 'Invalid service request body' });
+        return;
+      }
+      const service = /^\/api\/services\/([a-z0-9_]+)\/([a-z0-9_]+)$/.exec(pathname);
+      if (!service || !isServiceTargetAllowed(service[1], data, ALLOWED_ENTITIES)) {
+        sendJson(res, 403, { error: 'Service entity not allowed' });
+        return;
+      }
+    }
+
     const url = new URL(targetUrl);
     const options = {
       hostname: url.hostname,
-      port: url.port || 80,
+      port: url.port || (url.protocol === 'https:' ? 443 : 80),
       path: url.pathname + url.search,
       method: req.method,
       headers: {
@@ -170,11 +381,46 @@ function proxyToHA(req, res) {
       options.headers['Content-Length'] = body.length;
     }
 
-    const proxyReq = http.request(options, (proxyRes) => {
-      res.writeHead(proxyRes.statusCode, proxyRes.headers);
-      proxyRes.pipe(res);
+    const proxyReq = haHttpClient(url).request(options, (proxyRes) => {
+      const listDomain = req.method === 'GET' && proxyRes.statusCode === 200
+        && (pathname === '/api/states' || pathname === '/api/calendars');
+      if (!listDomain) {
+        res.writeHead(proxyRes.statusCode, {
+          'Content-Type': proxyRes.headers['content-type'] || 'application/json',
+          'Cache-Control': 'no-store',
+        });
+        proxyRes.pipe(res);
+        return;
+      }
+      const chunks = [];
+      let size = 0;
+      proxyRes.on('data', (chunk) => {
+        size += chunk.length;
+        if (size > 16 * 1024 * 1024) {
+          proxyRes.destroy(new Error('HA entity list too large'));
+          return;
+        }
+        chunks.push(chunk);
+      });
+      proxyRes.on('end', () => {
+        try {
+          const items = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+          if (!Array.isArray(items)) throw new Error('HA entity list was not an array');
+          sendJson(res, 200, items.filter((item) =>
+            isEntityAllowed(item?.entity_id, ALLOWED_ENTITIES,
+              pathname === '/api/calendars' ? 'calendar' : undefined)));
+        } catch (err) {
+          console.error('Invalid Home Assistant entity list:', err);
+          sendJson(res, 502, { error: 'Invalid Home Assistant entity list' });
+        }
+      });
+      proxyRes.on('error', (err) => {
+        console.error('Home Assistant entity list error:', err);
+        if (!res.headersSent) sendJson(res, 502, { error: 'Failed to read Home Assistant entities' });
+      });
     });
 
+    proxyReq.setTimeout(60_000, () => proxyReq.destroy(new Error('Home Assistant request timed out')));
     proxyReq.on('error', (err) => {
       console.error('Proxy error:', err.message);
       // Once the answer has started, a second writeHead would throw.
@@ -232,6 +478,11 @@ function handleServiceCall(req, res) {
         );
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: `Service ${domain}.${service} is not allowed` }));
+        return;
+      }
+
+      if (!isServiceTargetAllowed(domain, data, ALLOWED_ENTITIES)) {
+        sendJson(res, 403, { error: 'Service entity not allowed' });
         return;
       }
 
@@ -305,7 +556,7 @@ function handleClientLog(req, res) {
 function haWsCommand(command, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
     if (!SUPERVISOR_TOKEN) {
-      reject(new Error('No Supervisor token available'));
+      reject(new Error('No server-side Home Assistant token available'));
       return;
     }
 
@@ -386,6 +637,10 @@ function handleCalendarEventAction(req, res) {
       if (op !== 'create' && op !== 'update' && op !== 'delete') {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'op must be "create", "update", or "delete"' }));
+        return;
+      }
+      if (!isEntityAllowed(entity_id, ALLOWED_ENTITIES, 'calendar')) {
+        sendJson(res, 403, { error: 'Calendar entity not allowed' });
         return;
       }
       if ((op === 'update' || op === 'delete') && !uid) {
@@ -541,17 +796,17 @@ const MAX_STORED_KEYS = 512;
 
 /** Keys already on disk, read once, so a new key can be told from an existing
  *  one without a stat on every write. */
-let storedKeysCache = null;
-async function knownStoredKeys() {
-  if (storedKeysCache) return storedKeysCache;
-  const keys = new Set();
-  try {
-    for (const entry of await fsp.readdir(DATA_DIR)) {
-      if (entry.endsWith('.json')) keys.add(entry.slice(0, -'.json'.length));
-    }
-  } catch { /* empty or missing dir: nothing stored yet */ }
-  storedKeysCache = keys;
-  return keys;
+let storedKeysPromise = null;
+function knownStoredKeys() {
+  if (!storedKeysPromise) {
+    storedKeysPromise = fsp.readdir(DATA_DIR).then((entries) =>
+      new Set(entries.filter((entry) => entry.endsWith('.json'))
+        .map((entry) => entry.slice(0, -'.json'.length)))).catch((err) => {
+      storedKeysPromise = null;
+      throw storageError(`couldn't list stored keys: ${err.message}`);
+    });
+  }
+  return storedKeysPromise;
 }
 
 /** Rejects (400) an over-long key, or a brand-new key once the cap is reached. */
@@ -561,11 +816,23 @@ async function assertWritableKey(key) {
   }
   const keys = await knownStoredKeys();
   if (!keys.has(key)) {
+    if (keys.size >= MAX_STORED_KEYS - 32) {
+      try {
+        for (const entry of await fsp.readdir(DATA_DIR)) {
+          if (entry.endsWith('.json')) keys.add(entry.slice(0, -'.json'.length));
+        }
+      } catch (err) {
+        throw storageError(`couldn't refresh stored keys: ${err.message}`);
+      }
+    }
+    if (keys.has(key)) return false;
     if (keys.size >= MAX_STORED_KEYS) {
       throw Object.assign(new Error('too many stored keys'), { status: 400 });
     }
     keys.add(key);
+    return true;
   }
+  return false;
 }
 
 /**
@@ -636,9 +903,42 @@ async function readCollectionArrayStrict(name) {
   return parsed;
 }
 
+let memberPinsMigration = null;
+function ensureMemberPinsMigrated() {
+  if (!memberPinsMigration) {
+    memberPinsMigration = withCollectionLock('beacon_family_members', async () => {
+      const members = await readCollectionArrayStrict('beacon_family_members');
+      let changed = false;
+      for (const member of members) {
+        if (!Object.hasOwn(member, 'pin')) continue;
+        if (member.pin && !member.pin_hash) {
+          if (typeof member.pin !== 'string' || !/^\d{4,8}$/.test(member.pin)) {
+            throw storageError('A stored member has an invalid legacy PIN');
+          }
+          member.pin_hash = hashMemberPin(member.pin);
+        }
+        delete member.pin;
+        changed = true;
+      }
+      if (changed) await writeCollectionArray('beacon_family_members', members);
+    }).catch((err) => {
+      memberPinsMigration = null;
+      throw err;
+    });
+  }
+  return memberPinsMigration;
+}
+
 /** A problem with the stored data rather than the request: answered with 500. */
 function storageError(message) {
   return Object.assign(new Error(message), { status: 500 });
+}
+
+function writeErrorStatus(err) {
+  if (err.status) return err.status;
+  if (err.message?.includes('too large')) return 413;
+  if (err instanceof SyntaxError || err.message === 'Request body incomplete') return 400;
+  return 500;
 }
 
 /**
@@ -649,13 +949,29 @@ function storageError(message) {
  */
 function collectionAdd(name, item) {
   return withCollectionLock(name, async () => {
-    const items = await readCollectionArrayStrict(name);
-    const idx = item.id ? items.findIndex((it) => it.id === item.id) : -1;
-    const newItem = idx >= 0 ? { ...items[idx], ...item } : { ...item, id: item.id || generateItemId() };
-    if (idx >= 0) items[idx] = newItem;
-    else items.push(newItem);
-    await writeCollectionArray(name, items);
-    return newItem;
+    const reserved = await assertWritableKey(name);
+    let wrote = false;
+    try {
+      const items = await readCollectionArrayStrict(name);
+      const idx = item.id ? items.findIndex((it) => it.id === item.id) : -1;
+      const newItem = idx >= 0 ? { ...items[idx], ...item } : { ...item, id: item.id || generateItemId() };
+      if (newItem.pin_hash === null) delete newItem.pin_hash;
+      if (idx >= 0) items[idx] = newItem;
+      else items.push(newItem);
+      await writeCollectionArray(name, items);
+      wrote = true;
+      if (name === 'beacon_family_members' && idx >= 0
+          && (Object.hasOwn(item, 'pin_hash') || Object.hasOwn(item, 'role'))) {
+        revokeMemberSessions(newItem.id);
+      }
+      if (name === 'beacon_completions' && typeof item.member_id === 'string') {
+        await advanceStreak(item.member_id);
+      }
+      return newItem;
+    } catch (err) {
+      if (reserved && !wrote) (await knownStoredKeys()).delete(name);
+      throw err;
+    }
   });
 }
 
@@ -666,28 +982,100 @@ function collectionUpdate(name, itemId, patch) {
     const idx = items.findIndex((it) => it.id === itemId);
     if (idx === -1) return null;
     items[idx] = { ...items[idx], ...patch, id: itemId };
+    if (items[idx].pin_hash === null) delete items[idx].pin_hash;
     await writeCollectionArray(name, items);
+    if (name === 'beacon_family_members'
+        && (Object.hasOwn(patch, 'pin_hash') || Object.hasOwn(patch, 'role'))) {
+      revokeMemberSessions(itemId);
+    }
     return items[idx];
   });
 }
 
 /** Remove one item by id; whether it was there. */
-function collectionRemove(name, itemId) {
+function collectionRemove(name, itemId, displayMemberId) {
   return withCollectionLock(name, async () => {
     const items = await readCollectionArrayStrict(name);
+    if (displayMemberId && items.some((item) => item.id === itemId && item.member_id !== displayMemberId)) {
+      throw Object.assign(new Error('Cannot change another member'), { status: 403 });
+    }
     const filtered = items.filter((it) => it.id !== itemId);
     const didRemove = filtered.length !== items.length;
-    if (didRemove) await writeCollectionArray(name, filtered);
+    if (didRemove) {
+      await writeCollectionArray(name, filtered);
+      if (name === 'beacon_family_members') revokeMemberSessions(itemId);
+    }
     return didRemove;
   });
 }
 
 /** Collections whose changes the chores sync pushes to Google Tasks. */
 const CHORES_SYNC_TRIGGER_COLLECTIONS = new Set(['beacon_chores', 'beacon_completions']);
+const DISPLAY_COLLECTIONS = new Set([
+  'beacon_family_members', 'beacon_chores', 'beacon_completions',
+  'beacon_streaks', 'beacon_routines', 'beacon_routine_completions',
+]);
+const DISPLAY_COMPLETIONS = new Set(['beacon_completions', 'beacon_routine_completions']);
 
-async function handleCollectionApi(req, res) {
+function displayItems(name, items, memberId) {
+  if (name === 'beacon_family_members') return items.filter((item) => item.id === memberId);
+  if (name === 'beacon_chores') {
+    return items.filter((item) => Array.isArray(item.assigned_to) && item.assigned_to.includes(memberId));
+  }
+  return items.filter((item) => item.member_id === memberId);
+}
+
+function isDisplayRequestAllowed(req) {
+  const pathname = req.url.split('?')[0];
+  if (req.method === 'GET' && (pathname === '/beacon-action/changes'
+    || pathname === '/beacon-action/chores-sync'
+    || pathname === '/beacon-data/beacon-settings')) return true;
+  const match = /^\/beacon-collection\/([a-zA-Z0-9_-]+)(?:\/([^/]+))?$/.exec(pathname);
+  if (!match) return false;
+  if (req.method === 'GET') return !match[2] && DISPLAY_COLLECTIONS.has(match[1]);
+  return DISPLAY_COMPLETIONS.has(match[1])
+    && ((req.method === 'POST' && !match[2]) || (req.method === 'DELETE' && !!match[2]));
+}
+
+async function displayCompletion(name, item, memberId) {
+  if (!item || typeof item !== 'object' || Array.isArray(item) || item.member_id !== memberId
+      || item.verified_by || Object.keys(item).some((key) =>
+        !['id', 'chore_id', 'routine_id', 'task_id', 'member_id', 'completed_at', 'verified_by'].includes(key))) {
+    throw Object.assign(new Error('Invalid display completion'), { status: 403 });
+  }
+  const now = new Date();
+  const dayKey = dayKeyFormatter(await getHaTimeZone());
+  const today = dayKey(now);
+  if (name === 'beacon_completions') {
+    const chores = await readCollectionArrayStrict('beacon_chores');
+    const chore = chores.find((candidate) => candidate.id === item.chore_id
+      && Array.isArray(candidate.assigned_to) && candidate.assigned_to.includes(memberId));
+    if (!chore) throw Object.assign(new Error('Chore is not assigned to this display'), { status: 403 });
+    const settings = await readSettingsFile();
+    const weekStartsOn = settings?.weekStartsOn === 1 ? 1 : 0;
+    const [year, month, day] = today.split('-').map(Number);
+    const back = (new Date(Date.UTC(year, month - 1, day)).getUTCDay() - weekStartsOn + 7) % 7;
+    const week = new Date(Date.UTC(year, month - 1, day - back)).toISOString().slice(0, 10);
+    const round = chore.frequency === 'once' ? 'once' : chore.frequency === 'weekly' ? week : today;
+    return {
+      id: `chore-${encodeURIComponent(chore.id)}:${encodeURIComponent(memberId)}:${round}`,
+      chore_id: chore.id, member_id: memberId, completed_at: now.toISOString(),
+    };
+  }
+  const routines = await readCollectionArrayStrict('beacon_routines');
+  const routine = routines.find((candidate) => candidate.id === item.routine_id
+    && candidate.member_id === memberId
+    && Array.isArray(candidate.tasks) && candidate.tasks.some((task) => task.id === item.task_id));
+  if (!routine) throw Object.assign(new Error('Routine task is not assigned to this display'), { status: 403 });
+  return {
+    id: `routine-${encodeURIComponent(routine.id)}:${encodeURIComponent(item.task_id)}:${encodeURIComponent(memberId)}:${today}`,
+    routine_id: routine.id, task_id: item.task_id, member_id: memberId, completed_at: now.toISOString(),
+  };
+}
+
+async function handleCollectionApi(req, res, session) {
   const parts = req.url.split('?')[0].replace(/^\/beacon-collection\//, '').split('/').filter(Boolean);
-  const name = (parts[0] || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  const name = parts[0] || '';
   let itemId = null;
   try {
     if (parts[1]) itemId = decodeURIComponent(parts[1]);
@@ -697,13 +1085,14 @@ async function handleCollectionApi(req, res) {
     return;
   }
 
-  if (!name) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(name) || parts.length > 2) {
     res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Missing collection name' }));
+    res.end(JSON.stringify({ error: 'Invalid collection name or path' }));
     return;
   }
 
   try {
+    if (name === 'beacon_family_members') await ensureMemberPinsMigrated();
     if (req.method === 'GET' && !itemId) {
       let items = await readCollectionArrayStrict(name);
       // ?since=<ISO time>: only items completed then or later. Completion
@@ -722,25 +1111,34 @@ async function handleCollectionApi(req, res) {
           || choreIds.has(it?.chore_id));
       }
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(items));
+      const visible = session.role === 'display' ? displayItems(name, items, session.memberId) : items;
+      res.end(JSON.stringify(name === 'beacon_family_members' ? visible.map(publicMember) : visible));
       return;
     }
 
     if (req.method === 'POST' && !itemId) {
-      await assertWritableKey(name); // POST is what first creates a collection's file
       const bodyBuf = await collectBody(req);
-      if (!bodyBuf) throw new Error('Missing request body');
-      const item = JSON.parse(bodyBuf.toString('utf8'));
+      if (!bodyBuf) throw Object.assign(new Error('Missing request body'), { status: 400 });
+      const parsed = JSON.parse(bodyBuf.toString('utf8'));
+      const item = name === 'beacon_family_members' ? memberPatch(parsed)
+        : session.role === 'display' ? await displayCompletion(name, parsed, session.memberId) : parsed;
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        throw Object.assign(new Error('Collection item must be an object'), { status: 400 });
+      }
       const created = await collectionAdd(name, item);
       if (CHORES_SYNC_TRIGGER_COLLECTIONS.has(name)) choresSync.requestSoon();
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(created));
+      res.end(JSON.stringify(name === 'beacon_family_members' ? publicMember(created) : created));
       return;
     }
 
     if (req.method === 'PUT' && itemId) {
       const bodyBuf = await collectBody(req);
-      const patch = JSON.parse((bodyBuf || '{}').toString('utf8'));
+      const parsed = JSON.parse((bodyBuf || '{}').toString('utf8'));
+      const patch = name === 'beacon_family_members' ? memberPatch(parsed) : parsed;
+      if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+        throw Object.assign(new Error('Collection patch must be an object'), { status: 400 });
+      }
       const updated = await collectionUpdate(name, itemId, patch);
       if (updated && CHORES_SYNC_TRIGGER_COLLECTIONS.has(name)) choresSync.requestSoon();
       if (!updated) {
@@ -749,12 +1147,13 @@ async function handleCollectionApi(req, res) {
         return;
       }
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(updated));
+      res.end(JSON.stringify(name === 'beacon_family_members' ? publicMember(updated) : updated));
       return;
     }
 
     if (req.method === 'DELETE' && itemId) {
-      const removed = await collectionRemove(name, itemId);
+      const removed = await collectionRemove(name, itemId,
+        session.role === 'display' ? session.memberId : undefined);
       if (removed && CHORES_SYNC_TRIGGER_COLLECTIONS.has(name)) choresSync.requestSoon();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: removed }));
@@ -764,7 +1163,7 @@ async function handleCollectionApi(req, res) {
     res.writeHead(405, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Method not allowed' }));
   } catch (err) {
-    res.writeHead(err.status ?? (err.message?.includes('too large') ? 413 : 400), { 'Content-Type': 'application/json' });
+    res.writeHead(writeErrorStatus(err), { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: err.message }));
   }
 }
@@ -775,24 +1174,42 @@ async function handleCollectionApi(req, res) {
  * GET  /beacon-data/:key  → read stored JSON
  * PUT  /beacon-data/:key  → write JSON body to storage
  */
-async function handleDataApi(req, res) {
+async function handleDataApi(req, res, session) {
   const [pathname, query = ''] = req.url.split('?');
-  // Sanitize key: only allow alphanumeric, hyphens, underscores
-  const key = pathname.replace('/beacon-data/', '').replace(/[^a-zA-Z0-9_-]/g, '');
+  const key = pathname.slice('/beacon-data/'.length);
   // ?merge: shallow-merge the body object into the stored object instead
   // of replacing it, so a client can send only the fields it changed.
   const merge = new URLSearchParams(query).has('merge');
-  if (!key) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
     res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Missing key' }));
+    res.end(JSON.stringify({ error: 'Invalid data key' }));
     return;
   }
 
   const filePath = path.join(DATA_DIR, `${key}.json`);
 
+  if (COLLECTION_KEYS.has(key)) {
+    sendJson(res, 409, { error: `${key} is a collection; use /beacon-collection/${key}` });
+    return;
+  }
+
   if (req.method === 'GET') {
     try {
       const data = await fsp.readFile(filePath, 'utf8');
+      if (session.role === 'display') {
+        const settings = JSON.parse(data);
+        if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+          throw storageError('Stored settings are invalid');
+        }
+        const visibleKeys = [
+          'timeFormat', 'currencySymbol', 'screenSaverEnabled', 'dimTimeout',
+          'screenSaverTimeout', 'weekStartsOn', 'choresSyncEnabled',
+        ];
+        sendJson(res, 200, Object.fromEntries(visibleKeys
+          .filter((setting) => Object.hasOwn(settings, setting))
+          .map((setting) => [setting, settings[setting]])));
+        return;
+      }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(data);
     } catch (err) {
@@ -800,8 +1217,7 @@ async function handleDataApi(req, res) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end('null');
       } else {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err.message }));
+        sendJson(res, 500, { error: err.message });
       }
     }
     return;
@@ -809,56 +1225,53 @@ async function handleDataApi(req, res) {
 
   if (req.method === 'PUT' || req.method === 'POST') {
     try {
-      // Collections require a JSON array; a blob written here isn't validated
-      // as one, so writing a collection's key through this endpoint would
-      // corrupt it (see COLLECTION_KEYS). Use /beacon-collection/<name> instead.
-      if (COLLECTION_KEYS.has(key)) {
-        res.writeHead(409, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: `${key} is a collection; use /beacon-collection/${key}` }));
-        return;
-      }
-      await assertWritableKey(key);
       const bodyBuf = await collectBody(req);
       // An empty save would replace the stored data with {}.
-      if (!bodyBuf) throw new Error('Missing request body');
+      if (!bodyBuf) throw Object.assign(new Error('Missing request body'), { status: 400 });
       const body = bodyBuf.toString('utf8');
       const parsed = JSON.parse(body); // validate JSON
       if (merge && (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed))) {
-        throw new Error('merge body must be a JSON object');
+        throw Object.assign(new Error('merge body must be a JSON object'), { status: 400 });
       }
       // Same lock as the collection API: both store DATA_DIR/<key>.json.
       await withCollectionLock(key, async () => {
-        if (!merge) {
-          await writeFileAtomic(filePath, body);
-          return;
-        }
-        // Only a missing file counts as empty: on any other read or parse
-        // error, merging into {} would replace every stored setting with
-        // just this patch.
-        let existing = {};
-        let raw = null;
+        const reserved = await assertWritableKey(key);
         try {
-          raw = await fsp.readFile(filePath, 'utf8');
-        } catch (err) {
-          if (err.code !== 'ENOENT') throw storageError(`couldn't read ${key}.json: ${err.message}`);
-        }
-        if (raw !== null) {
-          let current;
-          try {
-            current = JSON.parse(raw);
-          } catch (err) {
-            throw storageError(`${key}.json isn't valid JSON: ${err.message}`);
+          if (!merge) {
+            await writeFileAtomic(filePath, body);
+            return;
           }
-          if (current && typeof current === 'object' && !Array.isArray(current)) existing = current;
+          // Only a missing file counts as empty: on any other read or parse
+          // error, merging into {} would replace every stored setting with
+          // just this patch.
+          let existing = {};
+          let raw = null;
+          try {
+            raw = await fsp.readFile(filePath, 'utf8');
+          } catch (err) {
+            if (err.code !== 'ENOENT') throw storageError(`couldn't read ${key}.json: ${err.message}`);
+          }
+          if (raw !== null) {
+            let current;
+            try {
+              current = JSON.parse(raw);
+            } catch (err) {
+              throw storageError(`${key}.json isn't valid JSON: ${err.message}`);
+            }
+            if (current && typeof current === 'object' && !Array.isArray(current)) existing = current;
+          }
+          await writeFileAtomic(filePath, JSON.stringify({ ...existing, ...parsed }));
+        } catch (err) {
+          if (reserved) (await knownStoredKeys()).delete(key);
+          throw err;
         }
-        await writeFileAtomic(filePath, JSON.stringify({ ...existing, ...parsed }));
       });
       noteChanged(key);
       if (key === SETTINGS_KEY) void choresSync.settingsChanged();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));
     } catch (err) {
-      res.writeHead(err.status ?? (err.message?.includes('too large') ? 413 : 400), { 'Content-Type': 'application/json' });
+      res.writeHead(writeErrorStatus(err), { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message }));
     }
     return;
@@ -988,7 +1401,7 @@ function haRequest(method, apiPath, body, timeoutMs) {
     const url = new URL(`${HA_API_BASE}${apiPath}`);
     const options = {
       hostname: url.hostname,
-      port: url.port || 80,
+      port: url.port || (url.protocol === 'https:' ? 443 : 80),
       path: url.pathname + url.search,
       method,
       headers: {
@@ -998,7 +1411,7 @@ function haRequest(method, apiPath, body, timeoutMs) {
     };
     if (bodyBuf) options.headers['Content-Length'] = bodyBuf.length;
 
-    const r = http.request(options, (resp) => {
+    const r = haHttpClient(url).request(options, (resp) => {
       const chunks = [];
       resp.on('data', (c) => chunks.push(c));
       resp.on('end', () => {
@@ -1059,7 +1472,14 @@ function handleVoiceAction(req, res) {
       // Cache states for the duration of this request (avoids 4x /api/states calls)
       let _cachedStates = null;
       async function getStates() {
-        if (!_cachedStates) _cachedStates = haRequest('GET', '/api/states').then(r => r.data || []);
+        if (!_cachedStates) {
+          _cachedStates = haRequest('GET', '/api/states').then((r) => {
+            if (r.status !== 200 || !Array.isArray(r.data)) {
+              throw new Error(`Home Assistant states unavailable (HTTP ${r.status})`);
+            }
+            return r.data.filter((item) => isEntityAllowed(item?.entity_id, ALLOWED_ENTITIES));
+          });
+        }
         return _cachedStates;
       }
 
@@ -1226,6 +1646,11 @@ function handleVoiceAction(req, res) {
         return;
       }
 
+      if (intent.domain && !isServiceTargetAllowed(intent.domain, serviceData, ALLOWED_ENTITIES)) {
+        sendJson(res, 403, { error: 'Voice action entity not allowed' });
+        return;
+      }
+
       try {
         // No ?return_response: add_item and update_item return nothing, and
         // HA rejects asking them for a response (every to-do intent failed).
@@ -1288,6 +1713,9 @@ async function readSettingsFile() {
 
 /** HA service call for the sync; throws when HA answers with an error. */
 async function callHaServiceForSync(domain, service, data, { returnResponse = false, reason } = {}) {
+  if (!isServiceAllowed(domain, service) || !isServiceTargetAllowed(domain, data, ALLOWED_ENTITIES)) {
+    throw new Error(`Chores sync target is not allowed for ${domain}.${service}`);
+  }
   if (domain === 'todo' && service === 'remove_item') logTodoDelete(data, reason, 'chores sync (add-on)');
   const qs = returnResponse ? '?return_response' : '';
   const result = await haRequest('POST', `/api/services/${domain}/${service}${qs}`, data, SYNC_HA_TIMEOUT_MS);
@@ -1316,6 +1744,38 @@ async function getHaTimeZone() {
   return haTimeZone.name || process.env.TZ || undefined;
 }
 
+async function advanceStreak(memberId) {
+  const timeZone = await getHaTimeZone();
+  const dayKey = dayKeyFormatter(timeZone);
+  const now = new Date();
+  const today = dayKey(now);
+  const [year, month, day] = today.split('-').map(Number);
+  const yesterday = new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10);
+  await withCollectionLock('beacon_streaks', async () => {
+    const streaks = await readCollectionArrayStrict('beacon_streaks');
+    const index = streaks.findIndex((streak) => streak.member_id === memberId);
+    const existing = streaks[index];
+    if (dayKey(existing?.last_completed) === today) return;
+    const current = dayKey(existing?.last_completed) === yesterday ? (existing.current || 0) + 1 : 1;
+    const updated = {
+      id: memberId,
+      member_id: memberId,
+      current,
+      longest: Math.max(existing?.longest || 0, current),
+      last_completed: now.toISOString(),
+    };
+    const reserved = await assertWritableKey('beacon_streaks');
+    try {
+      if (index === -1) streaks.push(updated);
+      else streaks[index] = updated;
+      await writeCollectionArray('beacon_streaks', streaks);
+    } catch (err) {
+      if (reserved) (await knownStoredKeys()).delete('beacon_streaks');
+      throw err;
+    }
+  });
+}
+
 const choresSync = createChoresSync({
   store: {
     list: readCollectionArrayStrict,
@@ -1337,10 +1797,14 @@ const choresSync = createChoresSync({
  *                                   full report to the add-on log, and
  *                                   answer with the status and report
  */
-function handleChoresSyncAction(req, res) {
+function handleChoresSyncAction(req, res, session) {
   if (req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-    res.end(JSON.stringify(choresSync.status()));
+    const status = choresSync.status();
+    res.end(JSON.stringify(session.role === 'display'
+      ? { running: status.running, lastChangeAt: status.lastChangeAt, lastSyncedAt: status.lastSyncedAt,
+        lastError: null, problems: [] }
+      : status));
     return;
   }
   if (req.method !== 'POST') {
@@ -1366,14 +1830,177 @@ function handleChoresSyncAction(req, res) {
  * often each stored file has been written (see changeCounts). Polled by
  * every display, so it's small and never cached.
  */
-function handleChangesAction(req, res) {
+function handleChangesAction(req, res, session) {
   if (req.method !== 'GET') {
     res.writeHead(405, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Method not allowed' }));
     return;
   }
   res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-  res.end(JSON.stringify({ boot: BOOT_ID, counts: Object.fromEntries(changeCounts) }));
+  const counts = session.role === 'display'
+    ? [...changeCounts].filter(([key]) => DISPLAY_COLLECTIONS.has(key) || key === SETTINGS_KEY)
+    : changeCounts;
+  res.end(JSON.stringify({ boot: BOOT_ID, counts: Object.fromEntries(counts) }));
+}
+
+async function getDisplayMember(memberId) {
+  await ensureMemberPinsMigrated();
+  const members = await readCollectionArrayStrict('beacon_family_members');
+  return members.find((member) => member.id === memberId);
+}
+
+async function handleAuthorization(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const identity = requesterIdentity(req);
+  if (!identity) {
+    sendJson(res, 403, { error: 'Missing trusted ingress identity' });
+    return;
+  }
+
+  try {
+    const session = readSession(req);
+    if (url.pathname === '/beacon-auth/session' && req.method === 'GET') {
+      const displayId = url.searchParams.get('display');
+      if (url.searchParams.has('display') && !displayId) {
+        sendJson(res, 400, { error: 'Missing display member' });
+        return;
+      }
+      if (displayId) {
+        const member = await getDisplayMember(displayId);
+        if (!member) {
+          sendJson(res, 404, { error: 'Display member not found' });
+          return;
+        }
+        if (!session || session.role !== 'display' || session.memberId !== displayId) {
+          if (session?.role === 'parent' || !member.pin_hash) {
+            sendJson(res, 200, issueSession(req, res, 'display', displayId));
+          } else {
+            sendJson(res, 200, { role: 'none', requiresPin: true });
+          }
+          return;
+        }
+      }
+      if (session?.role === 'display') {
+        sessions.get(createHash('sha256').update(session.token).digest('hex')).expiresAt = Date.now() + DISPLAY_SESSION_MS;
+        setSessionCookie(req, res, session.token, Math.floor(DISPLAY_SESSION_MS / 1000));
+      }
+      sendJson(res, 200, session
+        ? { role: session.role, ...(session.memberId ? { memberId: session.memberId } : {}) }
+        : { role: 'none' });
+      return;
+    }
+
+    if (url.pathname === '/beacon-auth/parents' && req.method === 'GET') {
+      await ensureMemberPinsMigrated();
+      const members = await readCollectionArrayStrict('beacon_family_members');
+      sendJson(res, 200, members.filter((member) => member.role === 'parent' && member.pin_hash)
+        .map((member) => ({ id: member.id, name: member.name })));
+      return;
+    }
+
+    if (url.pathname === '/beacon-auth/logout' && req.method === 'POST') {
+      if (session) sessions.delete(createHash('sha256').update(session.token).digest('hex'));
+      setSessionCookie(req, res, '', 0);
+      sendJson(res, 200, { role: 'none' });
+      return;
+    }
+
+    if (req.method !== 'POST') {
+      sendJson(res, 405, { error: 'Method not allowed' });
+      return;
+    }
+
+    const body = await collectBody(req, 1024);
+    let data;
+    try {
+      data = JSON.parse(body?.toString('utf8') || '');
+    } catch {
+      sendJson(res, 400, { error: 'Invalid authorization request body' });
+      return;
+    }
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      sendJson(res, 400, { error: 'Invalid authorization request body' });
+      return;
+    }
+
+    if (url.pathname === '/beacon-auth/display') {
+      if (session?.role !== 'parent') {
+        sendJson(res, 403, { error: 'Parent session required' });
+        return;
+      }
+      const member = typeof data.member_id === 'string' && await getDisplayMember(data.member_id);
+      if (!member) {
+        sendJson(res, 404, { error: 'Display member not found' });
+        return;
+      }
+      sendJson(res, 200, issueSession(req, res, 'display', member.id));
+      return;
+    }
+
+    if (url.pathname !== '/beacon-auth/parent' && url.pathname !== '/beacon-auth/child') {
+      sendJson(res, 404, { error: 'Unknown authorization action' });
+      return;
+    }
+    const limiterIdentity = IS_ADDON ? (req.headers['x-remote-user-id'] || identity) : identity;
+    const attemptKey = `${limiterIdentity}:${url.pathname}`;
+    const globalKey = `all:${url.pathname}`;
+    if (pinIsRateLimited(attemptKey) || pinIsRateLimited(globalKey, 50)) {
+      res.setHeader('Retry-After', '900');
+      sendJson(res, 429, { error: 'Too many PIN attempts; try again later' });
+      return;
+    }
+
+    const pin = data.pin;
+    let valid = false;
+    let role = 'parent';
+    let memberId;
+    if (typeof pin === 'string' && /^\d{4,8}$/.test(pin)) {
+      if (url.pathname === '/beacon-auth/child' || data.member_id) {
+        const member = typeof data.member_id === 'string' && await getDisplayMember(data.member_id);
+        if (member?.pin_hash && (url.pathname === '/beacon-auth/child' || member.role === 'parent')) {
+          valid = matchesMemberPin(pin, member.pin_hash);
+          memberId = member.id;
+          role = url.pathname === '/beacon-auth/child' ? 'display' : 'parent';
+        }
+      } else {
+        valid = timingSafeEqual(createHash('sha256').update(pin).digest(), parentPinDigest);
+      }
+    }
+    if (!valid) {
+      failedPin(attemptKey);
+      failedPin(globalKey);
+      sendJson(res, 401, { error: 'Invalid PIN' });
+      return;
+    }
+    pinAttempts.delete(attemptKey);
+    sendJson(res, 200, issueSession(req, res, role, memberId));
+  } catch (err) {
+    console.error('Authorization failed:', err);
+    const status = writeErrorStatus(err);
+    sendJson(res, status, { error: status < 500 ? err.message : 'Authorization unavailable' });
+  }
+}
+
+async function handleHealth(req, res) {
+  if (req.method !== 'GET') {
+    sendJson(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  if (!SUPERVISOR_TOKEN || !HA_API_BASE) {
+    sendJson(res, 200, { status: 'local-only' });
+    return;
+  }
+  try {
+    const result = await haRequest('GET', '/api/config', null, 4000);
+    if (result.status !== 200) {
+      sendJson(res, 503, { error: `Home Assistant returned ${result.status}` });
+      return;
+    }
+    sendJson(res, 200, { status: 'ok' });
+  } catch (err) {
+    console.error('Home Assistant health check failed:', err);
+    sendJson(res, 503, { error: 'Home Assistant unavailable' });
+  }
 }
 
 /**
@@ -1394,6 +2021,23 @@ function answerUnexpectedError(req, res) {
 }
 
 const server = http.createServer((req, res) => {
+  setSecurityHeaders(res);
+  const localHealth = req.url === '/beacon-action/health'
+    && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+  if (IS_ADDON && !localHealth && !isTrustedIngressAddress(req.socket.remoteAddress)) {
+    sendJson(res, 403, { error: 'Only Home Assistant ingress may access this add-on' });
+    return;
+  }
+  if (!IS_ADDON && !localHealth && !isStandaloneAuthenticated(req)) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Family", charset="UTF-8"');
+    sendJson(res, 401, { error: 'Browser password required' });
+    return;
+  }
+  if (localHealth) {
+    handleHealth(req, res).catch(answerUnexpectedError(req, res));
+    return;
+  }
+
   // Refuse writes sent by another website (CSRF) before any route runs.
   if (isCrossOriginWrite(req.method, req.headers)) {
     console.warn(
@@ -1408,6 +2052,35 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.url.startsWith('/beacon-auth/')) {
+    handleAuthorization(req, res).catch(answerUnexpectedError(req, res));
+    return;
+  }
+
+  const protectedPath = req.url.startsWith('/beacon-action/')
+    || req.url.startsWith('/beacon-collection/')
+    || req.url.startsWith('/beacon-data/')
+    || req.url.startsWith('/api/');
+  if (!protectedPath) {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      sendJson(res, 405, { error: 'Method not allowed' });
+      return;
+    }
+    serveStatic(req, res).catch(answerUnexpectedError(req, res));
+    return;
+  }
+
+  res.setHeader('Cache-Control', 'no-store');
+  const session = readSession(req);
+  if (!session) {
+    sendJson(res, 401, { error: 'Parent or display session required' });
+    return;
+  }
+  if (session.role === 'display' && !isDisplayRequestAllowed(req)) {
+    sendJson(res, 403, { error: 'Parent session required' });
+    return;
+  }
+
   // Voice / natural-language action API
   if (req.url === '/beacon-action/voice') {
     handleVoiceAction(req, res);
@@ -1416,13 +2089,13 @@ const server = http.createServer((req, res) => {
 
   // Which stored data has changed, for displays to catch up
   if (req.url === '/beacon-action/changes') {
-    handleChangesAction(req, res);
+    handleChangesAction(req, res, session);
     return;
   }
 
   // Google Tasks chores sync: status (GET) and Sync Now (POST)
   if (req.url === '/beacon-action/chores-sync') {
-    handleChoresSyncAction(req, res);
+    handleChoresSyncAction(req, res, session);
     return;
   }
 
@@ -1452,13 +2125,13 @@ const server = http.createServer((req, res) => {
 
   // Atomic collection API (members, chores, routines, completions, etc.)
   if (req.url.startsWith('/beacon-collection/')) {
-    handleCollectionApi(req, res).catch(answerUnexpectedError(req, res));
+    handleCollectionApi(req, res, session).catch(answerUnexpectedError(req, res));
     return;
   }
 
   // Persistent data API
   if (req.url.startsWith('/beacon-data/')) {
-    handleDataApi(req, res).catch(answerUnexpectedError(req, res));
+    handleDataApi(req, res, session).catch(answerUnexpectedError(req, res));
     return;
   }
 
@@ -1466,7 +2139,7 @@ const server = http.createServer((req, res) => {
   if (req.url.startsWith('/api/')) {
     if (!SUPERVISOR_TOKEN) {
       res.writeHead(503);
-      res.end(JSON.stringify({ error: 'No Supervisor token available' }));
+      res.end(JSON.stringify({ error: 'No server-side Home Assistant token available' }));
     } else if (!isProxyRequestAllowed(req.method, req.url)) {
       console.warn(
         `[blocked] ${req.method} ${JSON.stringify(req.url.split('?')[0].slice(0, 200))} is not an HA API path Family uses; ` +
@@ -1480,7 +2153,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  serveStatic(req, res).catch(answerUnexpectedError(req, res));
+  sendJson(res, 404, { error: 'Unknown API route' });
 });
 
 // No WebSocket proxy: Family's pages talk to Home Assistant over REST
@@ -1489,12 +2162,19 @@ const server = http.createServer((req, res) => {
 // resetting its connection mid-upgrade crashed the add-on.
 server.on('upgrade', (req, socket) => {
   socket.on('error', () => {});
-  socket.end('HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');
+  const allowed = IS_ADDON
+    ? isTrustedIngressAddress(req.socket.remoteAddress)
+    : isStandaloneAuthenticated(req);
+  socket.end(`HTTP/1.1 ${allowed ? '404 Not Found' : '403 Forbidden'}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
 });
 
-server.listen(PORT, () => {
-  console.log(`Family server listening on port ${PORT}`);
-  console.log(`Supervisor token: ${SUPERVISOR_TOKEN ? 'available' : 'NOT available'}`);
+server.listen(PORT, HOST, () => {
+  console.log(`Family server listening on port ${PORT} (${IS_ADDON ? 'ingress' : HOST})`);
+  console.log(`Server-side HA access: ${SUPERVISOR_TOKEN ? 'available' : 'not configured (local-only)'}`);
   console.log(`Data directory: ${DATA_DIR}`);
-  choresSync.start();
+  ensureMemberPinsMigrated().then(() => choresSync.start()).catch((err) => {
+    console.error('Cannot migrate stored member PINs:', err);
+    server.close();
+    process.exitCode = 1;
+  });
 });

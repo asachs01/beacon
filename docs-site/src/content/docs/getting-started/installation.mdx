@@ -1,6 +1,6 @@
 ---
 title: "Getting Started"
-description: "Install Beacon as a Home Assistant add-on, Docker container, or development server and connect your family's calendar in under 10 minutes."
+description: "Install the Family add-on from this fork, deploy a pinned standalone Docker image, or run the development server."
 order: 2
 ---
 
@@ -16,8 +16,8 @@ This guide walks you through three ways to install Beacon, then covers first-tim
 
 | Requirement | Minimum | Recommended |
 |------------|---------|-------------|
-| Home Assistant | 2024.1+ with Supervisor | Latest stable |
-| Node.js (dev only) | 20.x | 22.x |
+| Home Assistant | HA OS/Supervised for the add-on; HA Core for Docker | Latest stable |
+| Node.js (dev only) | 22.x | Current 22.x LTS |
 | Docker (standalone only) | 20.10+ | Latest stable |
 | Web browser | Chrome 90+, Safari 15+, Firefox 90+ | Chrome or Chromium |
 
@@ -50,7 +50,7 @@ This guide walks you through three ways to install Beacon, then covers first-tim
 
 ## Installation Method 1: Home Assistant Add-on (Recommended)
 
-This is the easiest method. Beacon runs inside Home Assistant as a managed add-on.
+This is the easiest method. The **Family** add-on runs inside Home Assistant and is built by Supervisor from the root of [this fork](https://github.com/f1f1f1f1f1f1/Family). It does **not** install a prebuilt GHCR image.
 
 ### Step 1: Add the repository
 
@@ -62,21 +62,21 @@ This is the easiest method. Beacon runs inside Home Assistant as a managed add-o
 6. Select **Repositories**
 7. Paste this URL into the text field:
    ```
-   https://github.com/asachs01/beacon
+   https://github.com/f1f1f1f1f1f1/Family
    ```
 8. Click **Add**
 9. Click **Close**
 
-The page will reload. You should now see a "Beacon" section in the add-on store.
+The page will reload. You should now see **Family** in the add-on store. You can also [add this repository with one click](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Ff1f1f1f1f1f1%2FFamily).
 
 ### Step 2: Install the add-on
 
-1. Find **Beacon** in the add-on store (you may need to scroll down or search)
-2. Click on the Beacon card
+1. Find **Family** in the add-on store (you may need to scroll down or search)
+2. Click on the Family card
 3. Click **Install**
-4. Wait for the installation to complete (this downloads the container image, typically 30-60 seconds)
+4. Wait for Supervisor to build the container image from the repository root (the first install may take several minutes)
 
-You will see the Beacon add-on info page when installation is complete.
+You will see the Family add-on info page when installation is complete.
 
 ### Step 3: Configure the add-on
 
@@ -90,76 +90,94 @@ weather_entity: "weather.home"
 photo_directory: "/media/beacon/photos"
 photo_interval: 30
 screen_saver_timeout: 5
+parent_pin: "REPLACE_WITH_6_TO_8_DIGIT_PIN"
+allowed_entities: "calendar.family,todo.shopping_list,weather.home,media_player.living_room"
 ```
 
-3. Replace `"weather.home"` with your actual weather entity ID (find it in **Settings > Devices & Services > Entities**, search for "weather")
+3. Replace the `parent_pin` placeholder with a private 6–8 digit code to unlock privileged actions. Replace `"weather.home"` and every sample `allowed_entities` ID with the actual IDs in your HA instance (**Developer Tools > States**). List every calendar, todo list (including a Google Tasks list if used for chores), weather entity and media player you want Family to access. The comma-separated allowlist is **required for HA entity/service access**; an empty value denies it.
 4. Click **Save**
+
+No HA URL or token needs to be configured in the add-on: its server uses the Supervisor token, and `runtime-config.js` contains no HA token.
 
 ### Step 4: Start Beacon
 
 1. Go back to the **Info** tab
 2. Click **Start**
 3. Wait a few seconds for the container to start
-4. Click **Open Web UI** in the sidebar panel, or navigate directly to your Home Assistant URL — Beacon appears as a sidebar panel with a calendar-clock icon
+4. Click **Open Web UI** from the add-on page or open the Family sidebar panel while signed in to Home Assistant
 
 > **What you should see**: The Beacon dashboard with a large clock, the current date, a personalized greeting, and (if weather is configured) the current temperature. If you have not connected any calendars yet, the calendar view will be empty.
 
+The add-on is **ingress-only**: use an authenticated Home Assistant session, not a direct `:3000` URL or a reverse proxy to the add-on's internal port.
+The parent PIN unlock lasts **10 minutes from entry** even if the dashboard keeps polling; enter the configured 6–8 digit PIN again when privileged controls relock. A Kid Display session renews during normal session polling for a sliding 24-hour period.
+
 ### Step 5: Enable auto-start (optional)
 
-1. On the Beacon add-on page, toggle **Start on boot** to ON
+1. On the Family add-on page, toggle **Start on boot** to ON
 2. This ensures Beacon restarts automatically if Home Assistant reboots
 
 ---
 
 ## Installation Method 2: Docker Standalone
 
-Use this method if you want to run Beacon outside of Home Assistant, or if you use a Home Assistant Core installation without Supervisor.
+Use this method if you run Home Assistant Core without Supervisor, or want a separately managed container. Home Assistant is still required for HA integrations. This is a different distribution from the source-built add-on above.
 
-### Step 1: Pull and run the container
+### Step 1: Create an HA token
 
-```bash
-docker run -d \
-  --name beacon \
-  -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
-  -e HA_URL="http://YOUR_HA_IP:8123" \
-  ghcr.io/asachs01/beacon:latest
-```
-
-Replace:
-- `YOUR_HA_LONG_LIVED_TOKEN` with a long-lived access token from Home Assistant (create one at **Profile > Long-Lived Access Tokens**)
-- `YOUR_HA_IP` with your Home Assistant IP address or hostname
-
-### Step 2: Create a long-lived access token
-
-1. In Home Assistant, click your profile icon (bottom left)
+1. In Home Assistant, use a dedicated account for the container and click its profile icon
 2. Scroll to the bottom to **Long-Lived Access Tokens**
 3. Click **Create Token**
-4. Name it "Beacon"
+4. Name it "Family Docker"
 5. Copy the token immediately (you will not see it again)
 
-### Step 3: Access Beacon
+### Step 2: Prepare a private environment file
 
-Open a browser and navigate to:
+Create an environment file **outside your repository** (for example `/secure/path/family.env`) with permissions restricted to the Docker operator:
 
+```dotenv
+HA_URL=http://homeassistant.local:8123
+HA_TOKEN=replace-with-your-long-lived-access-token
+BEACON_PASSWORD=replace-with-a-strong-unique-password
+BEACON_PARENT_PIN=REPLACE_WITH_6_TO_8_DIGIT_PIN
+BEACON_ALLOWED_ENTITIES=calendar.family,todo.shopping_list,weather.home,media_player.living_room
+BEACON_HOST=0.0.0.0
+THEME=skylight
+WEATHER_ENTITY=weather.home
 ```
-http://YOUR_DOCKER_HOST:3000
+
+Replace all placeholders and sample entity IDs, including a password of at least 16 characters, a private **6–8 digit** parent PIN, and the CSV of exact HA IDs needed for your features. Without `BEACON_ALLOWED_ENTITIES`, HA entity/service requests are denied. `HA_URL` must be reachable **from the container**; `localhost` inside Docker is not your HA host. The HA token and passwords are server-only and must never be added to `VITE_*` variables, committed, or included in `runtime-config.js`. Non-secret `THEME` and `WEATHER_ENTITY` are Docker startup defaults; you can also set `AUTO_DARK_MODE`, `PHOTO_DIRECTORY`, `PHOTO_INTERVAL`, and `SCREEN_SAVER_TIMEOUT`. See [Configuration](/docs/customization/configuration/) for defaults and UI overrides.
+
+### Step 3: Run a published version
+
+Choose a `vX.Y.Z` tag that exists on [this fork's GHCR package](https://github.com/f1f1f1f1f1f1/Family/pkgs/container/family). Images begin with releases made after publication was enabled; there is no `latest` tag. Replace `vX.Y.Z` below with a published version:
+
+```bash
+docker run -d --name family --restart unless-stopped \
+  -p 127.0.0.1:3000:3000 \
+  --env-file /secure/path/family.env \
+  -v family-data:/data \
+  ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z
 ```
+
+Open `http://127.0.0.1:3000` on the Docker host and enter HTTP Basic username `beacon` and password `BEACON_PASSWORD` when prompted. Unlock privileged controls separately with `BEACON_PARENT_PIN`. To use a tablet or access the app remotely, put an **HTTPS reverse proxy** in front of that loopback port; never bind the container's plain-HTTP port directly to the LAN (Basic is not encryption). See [Deployment](/docs/getting-started/deployment/) for an example.
+
+**Migrating from an earlier build?** Family removes previously stored browser HA credentials when the server-backed app starts. Still [revoke/rotate any long-lived token](https://github.com/f1f1f1f1f1f1/Family/blob/main/SECURITY.md) that was stored in a browser or bundled with `VITE_HA_TOKEN`; copies may remain in old bundles, caches, or on devices.
 
 ### Docker Compose example
 
 ```yaml
-version: "3.8"
 services:
-  beacon:
-    image: ghcr.io/asachs01/beacon:latest
-    container_name: beacon
+  family:
+    image: ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z # replace with a published version
     restart: unless-stopped
     ports:
-      - "3000:3000"
-    environment:
-      - SUPERVISOR_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
-      - HA_URL=http://YOUR_HA_IP:8123
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - /secure/path/family.env
+    volumes:
+      - family-data:/data
+volumes:
+  family-data:
 ```
 
 ---
@@ -171,50 +189,31 @@ Use this method if you want to contribute to Beacon or run it directly from sour
 ### Step 1: Clone the repository
 
 ```bash
-git clone https://github.com/asachs01/beacon.git
-cd beacon
+git clone https://github.com/f1f1f1f1f1f1/Family.git
+cd Family
 ```
 
 ### Step 2: Install dependencies
 
 ```bash
-npm install
+npm ci
 ```
 
-### Step 3: Configure environment variables
-
-Create a `.env` file in the project root:
+### Step 3: Start the development server
 
 ```bash
-VITE_HA_URL=http://YOUR_HA_IP:8123
-VITE_HA_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
-VITE_THEME=skylight
-VITE_AUTO_DARK_MODE=true
-VITE_HA_WEATHER_ENTITY=weather.home
-VITE_PHOTO_DIRECTORY=/media/beacon/photos
-VITE_PHOTO_INTERVAL=30
-VITE_SCREEN_SAVER_TIMEOUT=5
+npm run dev -- --host 127.0.0.1
 ```
 
-### Step 4: Start the development server
+Open `http://127.0.0.1:3000` for hot module replacement. Do **not** use `VITE_HA_TOKEN`: Vite embeds `VITE_*` values in the browser bundle. For direct development/native HA login, use the app's onboarding flow when appropriate; for a production server with an HA token, use the add-on or Docker instead.
 
-```bash
-npm run dev
-```
-
-The dashboard will be available at `http://localhost:5173` with hot module replacement.
-
-### Step 5: Build for production
+### Step 4: Build for production
 
 ```bash
 npm run build
 ```
 
-The production build outputs to the `dist/` directory. Serve it with any static file server:
-
-```bash
-npx serve dist -l 3000 -s
-```
+This builds the browser assets into `dist/` but does **not** provide the server-side HA proxy, authentication, or persistent data API. Deploy through the add-on or Docker, not a generic static file server.
 
 ---
 
@@ -309,8 +308,8 @@ This creates a `calendar.family_calendar` entity. Events you create in Beacon wi
 
 3. Set the entity in Beacon's configuration:
    - For add-on: Configuration tab > set `weather_entity`
-   - For Docker: set the `WEATHER_ENTITY` environment variable
-   - For development: set `VITE_HA_WEATHER_ENTITY` in `.env`
+   - For Docker: set the `WEATHER_ENTITY` runtime environment variable and include the same entity ID in `BEACON_ALLOWED_ENTITIES`, or choose it in Beacon's Settings
+   - For development: choose it in Settings or set the non-secret `VITE_HA_WEATHER_ENTITY`
 
 ### Mounting and displaying on a tablet
 

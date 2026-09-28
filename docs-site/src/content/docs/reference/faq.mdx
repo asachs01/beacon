@@ -22,7 +22,7 @@ Beacon also works with **any calendar source** Home Assistant supports, includin
 
 ### Does Beacon send my data anywhere?
 
-**No.** Beacon runs entirely on your local network. It communicates only with your Home Assistant instance — never with any external server. There is no telemetry, analytics, or cloud dependency.
+The Family add-on/Docker server keeps HA credentials out of the browser. Beacon itself does not require a Beacon cloud account, but Home Assistant integrations such as Google Calendar or Google Tasks may communicate with external providers you have configured.
 
 Data flow: `Google/CalDAV -> Home Assistant -> Beacon (local only)`
 
@@ -32,7 +32,7 @@ Data flow: `Google/CalDAV -> Home Assistant -> Beacon (local only)`
 
 ### Can I use this without Home Assistant?
 
-Not currently. Beacon relies on Home Assistant for calendar data, weather, media players, and grocery integrations. If you do not have Home Assistant, [HA OS](https://www.home-assistant.io/installation/) is free and runs on a Raspberry Pi, old PC, or virtual machine.
+The development UI can display local/demo content, but HA integrations such as calendars, weather, and media players require Home Assistant. "Standalone Docker" means without **Supervisor**, not without Home Assistant. If you do not have HA, [HA OS](https://www.home-assistant.io/installation/) is an option.
 
 ---
 
@@ -109,15 +109,19 @@ Click the palette icon at the bottom of the sidebar. A dropdown shows all 7 them
 
 ### How do I change the weather entity?
 
-Set the `weather_entity` option to your HA weather entity ID (e.g., `weather.home`). Find your entity ID in **Settings > Devices & Services > Entities**. See [Configuration](/docs/customization/configuration/).
+In the add-on, set the `weather_entity` option to your HA weather entity ID (e.g., `weather.home`). In standalone Docker, set `WEATHER_ENTITY` as a non-secret startup default or choose it in Beacon's settings. Include that exact entity in `allowed_entities`/`BEACON_ALLOWED_ENTITIES`. Find the ID in **Settings > Devices & Services > Entities** in HA. See [Configuration](/docs/customization/configuration/).
 
 ### How do I connect multiple calendars?
 
-Add multiple calendar integrations in Home Assistant (Google Calendar, CalDAV, Local Calendar, etc.). Beacon discovers all `calendar.*` entities automatically. Show or hide specific calendars in **Settings > Calendar**.
+Add multiple calendar integrations in Home Assistant (Google Calendar, CalDAV, Local Calendar, etc.). List their exact `calendar.*` entity IDs in `allowed_entities` (add-on) or `BEACON_ALLOWED_ENTITIES` (Docker); Beacon discovers only allowed entities. Show or hide specific calendars in **Settings > Calendar**.
 
 ### How do I set up family members?
 
 Click the gear icon in the sidebar to open the Family Members modal. Click "+ Add Member" and fill in the name, avatar, color, role, and optional PIN. See [Family Members](/docs/features/family/).
+
+### Why did parent controls lock while the app was open?
+
+A parent session expires **10 minutes after the PIN is entered**, even when the app is active or polling. Re-enter the configured 6–8 digit add-on `parent_pin` or standalone `BEACON_PARENT_PIN` to continue privileged actions. Kid Display sessions instead slide for **24 hours from their most recent session poll**. Neither session replaces HA ingress login or Docker's HTTP Basic password.
 
 ---
 
@@ -125,41 +129,47 @@ Click the gear icon in the sidebar to open the Family Members modal. Click "+ Ad
 
 ### How do I update Beacon?
 
-**Add-on**: Go to **Settings > Add-ons > Beacon** and click **Update** if available.
+**Add-on**: Go to **Settings > Add-ons > Family** and click **Update** if available. Supervisor builds it from this fork's root Dockerfile; the standalone image does not replace that add-on.
 
-**Docker**: Pull the latest image and recreate the container:
+**Docker**: Choose a newer **published version** from [the fork's GHCR package](https://github.com/f1f1f1f1f1f1/Family/pkgs/container/family), then pull and recreate the container, keeping the same `/data` volume:
 ```bash
-docker pull ghcr.io/asachs01/beacon:latest
-docker stop beacon && docker rm beacon
-docker run -d --name beacon ... ghcr.io/asachs01/beacon:latest
+docker pull ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z
+docker stop family && docker rm family
+docker run -d --name family --restart unless-stopped \
+  -p 127.0.0.1:3000:3000 --env-file /secure/path/family.env \
+  -v family-data:/data ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z
 ```
+
+Replace `vX.Y.Z` with the actual new tag; there is no `latest` tag.
 
 ### Is my data preserved across updates?
 
-**Add-on**: Yes. Configuration and add-on data are preserved.
+**Add-on**: Yes. Configuration and family data in the add-on's `/data` directory are preserved across updates.
 
-**Browser data**: Family members, chores, and theme preferences are stored in the browser's localStorage and persist across updates. Clearing browser data will remove this information.
+**Standalone Docker**: Mount and retain a volume at `/data`; otherwise deleting the container can delete stored family data. Home Assistant entities remain in HA.
+
+**Browser data**: localStorage stores display preferences and caches. Clearing it may reset preferences, but the server-backed family data will be refreshed from `/data` when available.
 
 ### Can I back up my data?
 
-The browser localStorage data is not easily backed up. For critical family and chore data, consider exporting the localStorage keys:
-- `beacon_family_members`
-- `beacon_chores`
-- `beacon_completions`
-- `beacon_streaks`
+Use Home Assistant's add-on backup for the Supervisor-built add-on. For Docker, back up the volume mounted at `/data` and your Home Assistant data. Browser-only preferences may be lost when clearing a display's site data.
 
-You can view and copy these values in the browser's Developer Tools (F12 > Application > Local Storage).
+Do not rely on a browser localStorage export as the primary backup of server-backed collections.
 
 ---
 
 ## Troubleshooting
 
-### Beacon shows "Demo Mode"
+### Beacon loads without HA data
 
-This means Beacon cannot connect to Home Assistant. Check:
-1. The HA token is configured (add-on: automatic; Docker: `SUPERVISOR_TOKEN` env var; dev: `VITE_HA_TOKEN`)
-2. The HA URL is reachable from the browser
-3. Home Assistant is running
+Check:
+1. Home Assistant is running. In Docker, the server has `HA_URL` reachable **from its container** and a valid server-only `HA_TOKEN`; in the add-on, check Supervisor connectivity and authenticated HA ingress.
+2. Standalone HTTP Basic username `beacon` and password `BEACON_PASSWORD` are configured; the separate parent PIN unlocks privileged actions as described in [Configuration](/docs/customization/configuration/).
+3. `allowed_entities` (add-on) or `BEACON_ALLOWED_ENTITIES` (Docker) lists **exact** IDs for the calendars, todo lists, weather entities and media players Family needs. An empty list denies HA entity/service access. Check logs for denied calls; do not put an HA token in `VITE_HA_TOKEN` or `runtime-config.js` to work around missing data.
+
+For direct development/native login, use the app's onboarding flow rather than a token bundled into Vite.
+
+If an earlier build used `VITE_HA_TOKEN` or stored a long-lived HA token in your browser, **revoke and replace that token** from your HA profile. New server-backed sessions delete the browser copy, but cannot undo past exposure.
 
 ### Calendar is empty
 
@@ -177,8 +187,8 @@ This means Beacon cannot connect to Home Assistant. Check:
 ### Something else is broken
 
 1. Check the browser console (F12) for error messages
-2. Check the add-on logs (**Settings > Add-ons > Beacon > Log**)
-3. Open a [GitHub issue](https://github.com/asachs01/beacon/issues) with your HA version, browser, device, and relevant logs
+2. Check the add-on logs (**Settings > Add-ons > Family > Log**) or `docker logs family`
+3. Open a [GitHub issue in this fork](https://github.com/f1f1f1f1f1f1/Family/issues) with your HA version, browser, device, and relevant **redacted** logs (never share tokens or passwords)
 
 ---
 

@@ -27,12 +27,12 @@ afterEach(() => {
 });
 
 describe('listPhotos', () => {
-  it('browses each folder once and resolves no photo URLs', async () => {
+  it('browses the configured folder once and resolves no photo URLs', async () => {
     addPhotos(20);
     const photos = await listPhotos();
     expect(photos).toHaveLength(20);
     expect(photos[0]).toEqual({ id: `${PHOTO_FOLDER}/photo-1.jpg`, caption: 'photo-1.jpg', source: 'local' });
-    expect(media.browses.sort()).toEqual([MEDIA_ROOT, PHOTO_FOLDER].sort());
+    expect(media.browses).toEqual([PHOTO_FOLDER]);
     expect(media.resolves).toEqual([]);
   });
 
@@ -40,15 +40,15 @@ describe('listPhotos', () => {
     addPhotos(3);
     const [a, b] = await Promise.all([listPhotos(), listPhotos()]); // Photos screen + screensaver
     expect(a).toBe(b);
-    expect(media.browses).toHaveLength(2);
+    expect(media.browses).toHaveLength(1);
 
     vi.setSystemTime(Date.now() + PHOTO_LIST_TTL_MS - 1000);
     await listPhotos();
-    expect(media.browses).toHaveLength(2);
+    expect(media.browses).toHaveLength(1);
 
     vi.setSystemTime(Date.now() + 2000);
     await listPhotos();
-    expect(media.browses).toHaveLength(4);
+    expect(media.browses).toHaveLength(2);
   });
 
   it("doesn't keep a list from a failed browse", async () => {
@@ -73,12 +73,16 @@ describe('listPhotos', () => {
     const garden = `${MEDIA_ROOT}/garden`;
     addPhotos(2, garden);
     addPhotos(3);
+    addPhotos(1, MEDIA_ROOT);
     localStorage.setItem('beacon-settings', JSON.stringify({ photoDirectory: '/media/garden' }));
-    expect(await listPhotos()).toHaveLength(2);
-    expect(media.browses).toContain(garden);
+    expect((await listPhotos()).map((photo) => photo.id)).toEqual([
+      `${garden}/photo-1.jpg`, `${garden}/photo-2.jpg`,
+    ]);
+    expect(media.browses).toEqual([garden]);
 
     localStorage.setItem('beacon-settings', JSON.stringify({ photoDirectory: '/media/beacon/photos' }));
     expect(await listPhotos()).toHaveLength(3);
+    expect(media.browses).toEqual([garden, PHOTO_FOLDER]);
   });
 
   // "/media/local/…" is the web address HA serves /media/… at. It was
@@ -97,10 +101,25 @@ describe('listPhotos', () => {
     expect(await listPhotos()).toHaveLength(2);
   });
 
-  it('lists a photo once when both sources contain it', async () => {
+  it('uses the configured default when older stored settings have an invalid directory', async () => {
+    addPhotos(2);
+    localStorage.setItem('beacon-settings', JSON.stringify({ photoDirectory: { invalid: true } }));
+    expect(await listPhotos()).toHaveLength(2);
+    expect(media.browses).toEqual([PHOTO_FOLDER]);
+  });
+
+  it('does not include root-level photos even when the root also lists folder photos', async () => {
     const [id] = addPhotos(1);
-    media.folders.set(MEDIA_ROOT, [id]);
-    expect(await listPhotos()).toHaveLength(1);
+    const [other] = addPhotos(1, MEDIA_ROOT);
+    media.folders.set(MEDIA_ROOT, [id, other]);
+    expect((await listPhotos()).map((photo) => photo.id)).toEqual([id]);
+    expect(media.browses).toEqual([PHOTO_FOLDER]);
+  });
+
+  it('still browses the root for an explicit ha_media-only request', async () => {
+    const [id] = addPhotos(1, MEDIA_ROOT);
+    expect((await listPhotos(['ha_media'])).map((photo) => photo.id)).toEqual([id]);
+    expect(media.browses).toEqual([MEDIA_ROOT]);
   });
 });
 

@@ -39,8 +39,8 @@ You can organize photos in subdirectories if you prefer — Beacon scans the con
 Set the `photo_directory` option to point to your photos:
 
 - **Add-on**: Configuration tab > `photo_directory: "/media/beacon/photos"`
-- **Docker**: Environment variable `PHOTO_DIRECTORY=/media/beacon/photos`
-- **Development**: `.env` file > `VITE_PHOTO_DIRECTORY=/media/beacon/photos`
+- **Docker**: Set non-secret `PHOTO_DIRECTORY=/media/beacon/photos` at container startup or configure it in Beacon's Settings (the path must be available to HA, not just the container)
+- **Development**: Use Settings or a non-secret `VITE_PHOTO_DIRECTORY=/media/beacon/photos` setting
 
 ### Step 4: Verify in Home Assistant
 
@@ -103,8 +103,8 @@ The slideshow auto-advances every N seconds. The default is **30 seconds**.
 
 Configure it:
 - **Add-on**: `photo_interval: 30` (value in seconds)
-- **Docker**: `PHOTO_INTERVAL=30`
-- **Development**: `VITE_PHOTO_INTERVAL=30`
+- **Docker**: Set `PHOTO_INTERVAL=30` at container startup or change it in Beacon's Settings
+- **Development**: Use Settings or a non-secret `VITE_PHOTO_INTERVAL=30` setting
 
 ### Transition
 

@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import { getConfig } from '../config';
-import { saveDataPatch } from '../api/beacon-store';
 import { useStoredData } from './useStoredData';
 import { DEFAULT_DARK_END, DEFAULT_DARK_START } from './useTheme';
 
@@ -135,9 +134,81 @@ function buildDefaults(): BeaconSettings {
 // Persistence helpers
 // ---------------------------------------------------------------------------
 
-/** Stored settings may predate newer fields; fill those from defaults. */
-function withDefaults(stored: Partial<BeaconSettings> | null): BeaconSettings {
-  return { ...buildDefaults(), ...stored };
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** Fill missing fields and repair malformed legacy data loaded from storage. */
+function withDefaults(stored: unknown): BeaconSettings {
+  const settings = buildDefaults();
+  if (!isRecord(stored)) return settings;
+
+  const strings = [
+    'locale', 'themeId', 'defaultCalendar', 'lastEventCalendar',
+    'weatherEntity', 'defaultGroceryList', 'shoppingEntity',
+    'musicDefaultPlayer', 'photoDirectory', 'currencySymbol',
+  ] as const;
+  for (const field of strings) {
+    if (typeof stored[field] === 'string') settings[field] = stored[field];
+  }
+
+  for (const field of ['darkModeStart', 'darkModeEnd'] as const) {
+    const value = stored[field];
+    if (typeof value === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) settings[field] = value;
+  }
+
+  const booleans = [
+    'autoDarkMode', 'grocyEnabled', 'anylistEnabled', 'hideLocalGroceryList',
+    'hideLocalTaskList', 'hideHaHeader', 'advancedDashboard',
+    'screenSaverEnabled', 'screenSaverShowPhotos', 'alwaysOnDisplay',
+    'showSeconds', 'kioskMode', 'choresEnabled', 'choresSyncEnabled',
+  ] as const;
+  for (const field of booleans) {
+    if (typeof stored[field] === 'boolean') settings[field] = stored[field];
+  }
+
+  for (const field of ['photoInterval', 'dimTimeout', 'screenSaverTimeout'] as const) {
+    const value = stored[field];
+    if (typeof value === 'number' && Number.isFinite(value) && value >= 1) settings[field] = value;
+  }
+
+  for (const field of ['permanentlyHiddenCalendars', 'groceryListIds'] as const) {
+    const value = stored[field];
+    if (Array.isArray(value)) settings[field] = value.filter((item): item is string => typeof item === 'string');
+  }
+
+  for (const field of ['calendarColors', 'choresSyncListByMember'] as const) {
+    const value = stored[field];
+    if (isRecord(value)) {
+      settings[field] = Object.fromEntries(
+        Object.entries(value).filter(([, item]) => typeof item === 'string'),
+      ) as Record<string, string>;
+    }
+  }
+
+  const oneOf = <T extends string | number>(value: unknown, choices: readonly T[], fallback: T): T =>
+    choices.includes(value as T) ? value as T : fallback;
+
+  settings.defaultView = oneOf(stored.defaultView, ['dashboard', 'calendar', 'grocery', 'tasks', 'music', 'photos'], settings.defaultView);
+  settings.timeFormat = oneOf(stored.timeFormat, ['12h', '24h'], settings.timeFormat);
+  settings.weekStartsOn = oneOf(stored.weekStartsOn, [0, 1], settings.weekStartsOn);
+  settings.fontScale = oneOf(stored.fontScale, ['normal', 'large', 'extra-large'], settings.fontScale);
+  settings.sidebarPosition = oneOf(stored.sidebarPosition, ['left', 'right', 'bottom'], settings.sidebarPosition);
+  settings.defaultEventDuration = oneOf(stored.defaultEventDuration, [30, 60, 120], settings.defaultEventDuration);
+  settings.notificationMinutes = oneOf(stored.notificationMinutes, [5, 10, 15, 30], settings.notificationMinutes);
+  settings.photoTransition = oneOf(stored.photoTransition, ['fade', 'slide'], settings.photoTransition);
+  settings.dashboardLayout = oneOf(stored.dashboardLayout, ['default', 'classic', 'compact'], settings.dashboardLayout);
+  settings.payoutSchedule = oneOf(stored.payoutSchedule, ['weekly', 'monthly'], settings.payoutSchedule);
+
+  return settings;
+}
+
+function validPatch(patch: Partial<BeaconSettings>): Partial<BeaconSettings> {
+  if (!isRecord(patch)) return {};
+  const sanitized = withDefaults(patch);
+  return Object.fromEntries(
+    Object.entries(sanitized).filter(([field]) => Object.prototype.hasOwnProperty.call(patch, field)),
+  ) as Partial<BeaconSettings>;
 }
 
 const NO_STORED_SETTINGS = {} as BeaconSettings;
@@ -161,8 +232,8 @@ export function useSettings() {
    */
   const updateSettings = useCallback(
     (patch: Partial<BeaconSettings>) => {
-      const next = setSettings((prev) => ({ ...prev, ...patch }), false);
-      void saveDataPatch(STORAGE_KEY, patch, next);
+      const clean = validPatch(patch);
+      if (Object.keys(clean).length) setSettings((prev) => ({ ...prev, ...clean }), true, clean);
     },
     [setSettings],
   );
@@ -177,15 +248,31 @@ export function useSettings() {
     return JSON.stringify(settings, null, 2);
   }, [settings]);
 
-  /** Import settings from a JSON string. Invalid JSON is silently ignored. */
+  /** Reject invalid imports; unlike legacy reads, importing must never silently repair data. */
   const importSettings = useCallback((json: string) => {
-    let parsed: Partial<BeaconSettings>;
+    let parsed: unknown;
     try {
       parsed = JSON.parse(json);
     } catch {
-      return; // invalid JSON — do nothing
+      window.alert("Couldn't import settings: the file isn't valid JSON. No changes were made.");
+      return;
     }
-    setSettings(() => withDefaults(parsed));
+    if (!isRecord(parsed)) {
+      window.alert("Couldn't import settings: expected a JSON object. No changes were made.");
+      return;
+    }
+
+    const sanitized = withDefaults(parsed);
+    // JSON imports are serializable: any field the normalizer changed (or
+    // didn't recognize) had an invalid value and must not be persisted.
+    const invalid = Object.keys(parsed).find((field) =>
+      !Object.prototype.hasOwnProperty.call(sanitized, field)
+      || JSON.stringify(parsed[field]) !== JSON.stringify(sanitized[field as keyof BeaconSettings]));
+    if (invalid) {
+      window.alert(`Couldn't import settings: "${invalid}" is unknown or has an invalid value. No changes were made.`);
+      return;
+    }
+    setSettings(() => sanitized);
   }, [setSettings]);
 
   /** Clear all Beacon data from localStorage. */

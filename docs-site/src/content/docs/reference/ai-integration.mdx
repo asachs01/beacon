@@ -1,45 +1,27 @@
 ---
 title: "AI and Voice Control"
-description: "Control Beacon with voice commands, LLM agents, and Home Assistant Assist — three integration approaches for hands-free family dashboard control."
+description: "Use the authenticated Family voice API and Home Assistant Assist; the Claude plugin and MCP server are unsupported in this fork."
 order: 1
 ---
 
 # AI and Voice Control
 
-Beacon supports four approaches for voice and AI control. Choose the one that fits your setup, or use them all together.
+Family ships the authenticated voice API and Home Assistant Assist files. The Claude Code plugin and MCP interface are **unsupported in this fork** until the missing `mcp-server.cjs` executable is restored. The definitions below are historical reference, not working installation instructions.
 
 | Approach | Best for | Requires LLM? |
 |----------|----------|----------------|
-| [Claude Code Plugin](#claude-code-plugin) | Claude Code users | Yes |
-| [Voice API](#voice-api-built-in) | Quick automations, custom UIs | No |
-| [MCP Server](#mcp-server-for-llm-agents) | Any LLM agent (Open Claw, etc.) | Yes |
+| [Claude Code Plugin](#claude-code-plugin-unsupported) | Unsupported: missing MCP executable | Yes |
+| [Voice API](#voice-api-built-in) | Authenticated commands | No |
+| [MCP Server](#mcp-server-historical-reference) | Unsupported: not currently installable | Yes |
 | [HA Custom Sentences](#ha-custom-sentences-for-ha-assist) | Home Assistant Assist | No |
 
 ---
 
-## Claude Code Plugin
+## Claude Code Plugin (unsupported)
 
-The Beacon plugin for Claude Code gives you slash commands, domain knowledge (skills), and the MCP server in one package. Install it once and Claude understands how to manage your family dashboard.
+The repository contains command and skill files, but `claude-plugin/.mcp.json` points to the removed `../beacon/mcp-server.cjs`. **Do not install this plugin expecting working MCP tools or commands.** It remains unsupported until the executable and its integration are restored. Plugin-specific `BEACON_HA_TOKEN`/`SUPERVISOR_TOKEN` settings do not configure the Family container. For a supported web deployment, follow [Installation](/docs/getting-started/installation/) instead.
 
-### Installation
-
-```
-/plugin marketplace add asachs01/beacon
-```
-
-Then restart Claude Code. That's it — the plugin, skills, commands, and MCP server are all installed.
-
-Then set your environment variables:
-
-```bash
-export BEACON_HA_TOKEN="your-ha-long-lived-access-token"
-export BEACON_HA_URL="http://homeassistant.local:8123"
-export BEACON_DATA_DIR="/path/to/beacon/data"
-```
-
-Generate a token in Home Assistant: **Profile > Security > Long-Lived Access Tokens > Create Token**.
-
-### Slash Commands
+### Historical command definitions (not operational)
 
 | Command | Description |
 |---------|-------------|
@@ -48,9 +30,9 @@ Generate a token in Home Assistant: **Profile > Security > Long-Lived Access Tok
 | `/whats-for-dinner` | Show today's meal plan |
 | `/chore-status` | Chore completion status and earnings for today |
 
-### Skills
+### Historical skill metadata
 
-Skills are domain knowledge files that teach Claude how Beacon works. They activate automatically when you ask about related topics.
+The skill files describe Beacon concepts, but do not supply a functional MCP backend in this fork.
 
 | Skill | Triggers on |
 |-------|-------------|
@@ -60,32 +42,11 @@ Skills are domain knowledge files that teach Claude how Beacon works. They activ
 | **Meal Plans** | Viewing menus, AnyList sync, meal data |
 | **Dashboard** | Layout presets, widgets, per-member columns |
 
-### Example Usage
-
-```
-> /create-chore "Walk the dog" --assigned_to "Lennon, Elliott" --frequency daily --value 1.00 --icon 🐕
-
-> /family-schedule
-📅 Family Schedule — Wednesday, April 2
-👨 Aaron: 9:00 AM - Team standup, 2:00 PM - Dentist
-👩 Ashley: 10:00 AM - PTA meeting
-🧒 Lennon: (nothing today)
-🧒 Elliott: (nothing today)
-
-> /whats-for-dinner
-🌙 Dinner: Instant Pot Spaghetti
-
-> /chore-status
-✅ Make bed — Lennon, Elliott
-⬜ Walk the dog — pending (Lennon, Elliott)
-💰 Lennon: $1.50 today
-```
-
 ---
 
 ## Voice API (built-in)
 
-Beacon's server exposes a REST endpoint for natural-language commands. It uses keyword matching — no LLM, no cloud service, and no added latency.
+Family's server exposes a REST endpoint for natural-language commands. It uses keyword matching without an LLM. Calls require an authenticated **parent session** through HA ingress (add-on) or an HTTPS reverse proxy (Docker). The parent session expires **10 minutes from PIN entry**, even if the app polls; re-enter the configured 6–8 digit PIN afterward. Standalone access first uses HTTP Basic username `beacon` and password `BEACON_PASSWORD`, then the separate `BEACON_PARENT_PIN` unlocks privileged controls; HA service targets must appear in `allowed_entities`/`BEACON_ALLOWED_ENTITIES`. Never expose this endpoint on a direct plain-HTTP LAN port.
 
 ### Endpoint
 
@@ -117,113 +78,21 @@ Content-Type: application/json
 
 **Queries**: `what's on today` | `today's schedule` | `what's the weather`
 
-### Examples
+### Using the endpoint
 
-```bash
-# Add a grocery item
-curl -X POST http://<beacon-host>:8099/beacon-action/voice \
-  -H 'Content-Type: application/json' \
-  -d '{"text": "add eggs to the grocery list"}'
-
-# Control media
-curl -X POST http://<beacon-host>:8099/beacon-action/voice \
-  -H 'Content-Type: application/json' \
-  -d '{"text": "set volume to 40"}'
-
-# Check the calendar
-curl -X POST http://<beacon-host>:8099/beacon-action/voice \
-  -H 'Content-Type: application/json' \
-  -d '{"text": "what'\''s on my calendar"}'
-```
+Post the JSON payload to the same-origin `/beacon-action/voice` path **after** signing in and unlocking a parent session. The former unauthenticated `http://<beacon-host>:8099` curl examples do not apply to this fork. Do not place Basic credentials, the parent PIN, or an HA token in a script or public URL.
 
 The API resolves list names and media players by fuzzy-matching against available HA entities. For media commands, it automatically picks the active player (playing > paused > first available).
 
 ---
 
-## MCP Server (for LLM agents)
+## MCP Server (historical reference)
 
-The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server exposes Beacon's features as structured tools that LLM agents can call. This is the best approach for AI-powered automation where an LLM decides which actions to take.
+The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) details below describe a separate legacy process, **not** the Family web server. This plugin/MCP integration is **unsupported until `mcp-server.cjs` exists again**; the historical tools below cannot be called from this fork. Neither the add-on nor standalone Docker exposes an MCP port, and `SUPERVISOR_TOKEN` is never a standalone Family configuration option.
 
-The server supports **two transports**:
-- **stdio** (default) — for Claude Code, Claude Desktop, and other MCP clients that spawn a subprocess
-- **Streamable HTTP** — for web-based clients like Open Claw, Copilot Studio, and any remote MCP consumer
+The earlier stdio/HTTP setup examples are not installable from this repository. To run the Family server, use `HA_URL`, server-only `HA_TOKEN`, HTTP Basic (`BEACON_PASSWORD` with username `beacon`), a separate `BEACON_PARENT_PIN`, and the explicit `BEACON_ALLOWED_ENTITIES` CSV. Follow [Deployment](/docs/getting-started/deployment/) instead of a missing MCP command.
 
-### Option 1: stdio transport (Claude Code, Claude Desktop)
-
-For **Claude Code**:
-
-```bash
-claude mcp add beacon -- node /path/to/beacon/mcp-server.cjs
-```
-
-For **Claude Desktop** or other local MCP clients, add to your config file:
-
-```json
-{
-  "mcpServers": {
-    "beacon": {
-      "command": "node",
-      "args": ["beacon/mcp-server.cjs"],
-      "env": {
-        "SUPERVISOR_TOKEN": "your-long-lived-access-token",
-        "HA_URL": "http://your-ha-instance:8123"
-      }
-    }
-  }
-}
-```
-
-### Option 2: Streamable HTTP transport (Open Claw, Copilot Studio, remote clients)
-
-Start the server in HTTP mode:
-
-```bash
-MCP_TRANSPORT=http \
-MCP_PORT=3001 \
-MCP_API_KEY=your-secret-key \
-SUPERVISOR_TOKEN=your-ha-token \
-HA_URL=http://your-ha-instance:8123 \
-  node beacon/mcp-server.cjs
-```
-
-Or use the `--http` flag:
-
-```bash
-node beacon/mcp-server.cjs --http
-```
-
-The server exposes:
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/mcp` | POST | JSON-RPC request → response |
-| `/mcp` | GET | SSE stream (for clients that need server-sent events) |
-| `/health` | GET | Health check (`{"status": "ok"}`) |
-
-**Authentication:** When `MCP_API_KEY` is set, all requests must include either:
-- `Authorization: Bearer <key>` header, or
-- `X-API-Key: <key>` header
-
-**For Open Claw / other HTTP MCP clients**, point them at:
-
-```
-http://your-beacon-host:3001/mcp
-```
-
-**For the Beacon HA add-on**, the MCP HTTP server can be exposed alongside the web UI. Set `MCP_TRANSPORT=http` in the add-on configuration to enable it on port 3001.
-
-### Environment variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SUPERVISOR_TOKEN` | — | **Required.** HA long-lived access token |
-| `HA_URL` | `http://supervisor/core` | HA URL (change when running outside the add-on) |
-| `DATA_DIR` | `/data` | Beacon data directory (for chore/payout files) |
-| `MCP_TRANSPORT` | `stdio` | Set to `http` for Streamable HTTP transport |
-| `MCP_PORT` | `3001` | HTTP server port (only in HTTP mode) |
-| `MCP_API_KEY` | — | API key for HTTP auth (optional; open if unset) |
-
-### All 19 tools
+### Historical tool names (not currently bundled)
 
 #### Lists
 

@@ -1,231 +1,131 @@
 ---
 title: "Configuration"
-description: "Complete reference for all Beacon configuration options — add-on options, environment variables, runtime config, and advanced settings.
-Family command center for wall-mounted displays"
+description: "Family add-on options, standalone Docker credentials, development settings, and runtime configuration."
 order: 2
 ---
 
 # Configuration Reference
 
-Beacon can be configured through the Home Assistant add-on options panel, Docker environment variables, or Vite environment variables during development. All configuration is ultimately resolved at runtime through the `getConfig()` function.
+The **Family** add-on and the standalone Docker image use the same server, but obtain their Home Assistant credentials differently. Neither deployment sends an HA token to the browser. See [Installation](/docs/getting-started/installation/) for setup steps.
 
----
+## Home Assistant add-on
 
-## Complete add-on options reference
+Install **Family** from `https://github.com/f1f1f1f1f1f1/Family`, then edit **Settings > Add-ons > Family > Configuration**. Home Assistant builds the add-on from the repository root; it does not pull the standalone GHCR image.
 
-These options are set in **Settings > Add-ons > Beacon > Configuration** when running as an HA add-on.
+| Option | Default | Description |
+|--------|---------|-------------|
+| `parent_pin` | Required | Private 6–8 digit PIN for privileged actions; separate from Home Assistant's ingress login |
+| `theme` | `skylight` | Initial theme; a browser's theme selection can override it |
+| `auto_dark_mode` | `true` | Automatically switch themes when the UI is set to auto |
+| `weather_entity` | `weather.home` | HA weather entity ID |
+| `photo_directory` | `/media/beacon/photos` | Directory shown in the photo view |
+| `photo_interval` | `30` | Seconds between photos |
+| `screen_saver_timeout` | `5` | Minutes before dimming (clock screensaver follows later) |
+| `allowed_entities` | Empty (denies access) | Required for HA entity discovery and services: CSV of exact entity IDs, e.g. `calendar.family,todo.shopping_list,weather.home` |
 
-| Option | Type | Default | Description | Example |
-|--------|------|---------|-------------|---------|
-| `theme` | string | `"skylight"` | The color theme to use. Options: `skylight`, `midnight`, `nord`, `dracula`, `monokai`, `rose`, `forest`. The theme selector in the sidebar overrides this value. | `"midnight"` |
-| `auto_dark_mode` | boolean | `true` | When true and theme is set to `auto`, Beacon switches between Skylight (day) and Midnight (night) based on time of day. | `true` |
-| `weather_entity` | string | `"weather.home"` | The Home Assistant weather entity ID to use for temperature and forecast data. Leave empty to disable weather. | `"weather.forecast_home"` |
-| `photo_directory` | string | `"/media/beacon/photos"` | The path to the photo directory on the Home Assistant server. Photos in this directory are displayed in the Photo Frame view. | `"/media/family-photos"` |
-| `photo_interval` | integer | `30` | Seconds between automatic photo transitions in the Photo Frame slideshow. | `15` |
-| `screen_saver_timeout` | integer | `5` | Minutes of inactivity before the screen dimming phase activates. The clock screensaver activates at 2x this value. | `10` |
-
-### Example add-on configuration
+Example options:
 
 ```yaml
+parent_pin: "REPLACE_WITH_6_TO_8_DIGIT_PIN"
 theme: "midnight"
 auto_dark_mode: true
 weather_entity: "weather.home"
 photo_directory: "/media/beacon/photos"
 photo_interval: 30
 screen_saver_timeout: 5
+allowed_entities: "calendar.family,todo.shopping_list,weather.home,media_player.living_room"
 ```
 
----
+Replace sample entity IDs with those in your Home Assistant **Developer Tools > States** (also include the Google Tasks todo entity if syncing chores). An empty list blocks HA entity/service access; the allowlist does not accept wildcards or area/device targeting. Save and restart the add-on after changing options. Open it through **authenticated Home Assistant ingress**, not a direct exposed port. The server receives `SUPERVISOR_TOKEN` from Supervisor, uses it to proxy allowed HA API requests, and does not include it in `runtime-config.js`.
 
-## Environment variables (Docker and development)
+### Parent and display sessions
 
-When running Beacon as a standalone Docker container or in development mode, configuration is provided through environment variables.
+| Session | Lifetime | Renewal |
+|---------|----------|---------|
+| Parent | **10 minutes from PIN unlock** | Absolute: app activity and session polling do **not** extend it. Re-enter the configured 6–8 digit `parent_pin` (or standalone `BEACON_PARENT_PIN`) to unlock privileged actions again. |
+| Kid Display | **24 hours since last session poll** | Sliding: the active display refreshes its session during normal polling. After it expires, unlock again with that member's PIN if one is set. |
 
-### Docker environment variables
+These app sessions are separate from HA ingress authentication and standalone HTTP Basic. A server restart can also require re-authentication.
 
-| Variable | Maps To | Default |
-|----------|---------|---------|
-| `SUPERVISOR_TOKEN` | `ha_token` | (none) |
-| `HA_URL` | `ha_url` | `http://supervisor/core` |
-| `THEME` | `theme` | `skylight` |
-| `AUTO_DARK_MODE` | `auto_dark_mode` | `true` |
-| `WEATHER_ENTITY` | `weather_entity` | `weather.home` |
-| `PHOTO_DIRECTORY` | `photo_directory` | `/media/beacon/photos` |
-| `PHOTO_INTERVAL` | `photo_interval` | `30` |
-| `SCREEN_SAVER_TIMEOUT` | `screen_saver_timeout` | `5` |
+## Standalone Docker
 
-### Vite environment variables (development)
+Use a **published version tag** of `ghcr.io/f1f1f1f1f1f1/family:vX.Y.Z` (replace `vX.Y.Z` with an available version from the [fork's GHCR package](https://github.com/f1f1f1f1f1f1/Family/pkgs/container/family)). There is no `latest` tag and releases before GHCR publishing was added may not have an image.
 
-Create a `.env` file in the project root:
+Store the following in an environment file **outside the repository**, readable only by the Docker operator:
 
-| Variable | Maps To | Default |
-|----------|---------|---------|
-| `VITE_HA_URL` | `ha_url` | `http://supervisor/core` |
-| `VITE_HA_TOKEN` | `ha_token` | (none) |
-| `VITE_THEME` | `theme` | `skylight` |
-| `VITE_AUTO_DARK_MODE` | `auto_dark_mode` | `true` (set to `false` to disable) |
-| `VITE_HA_WEATHER_ENTITY` | `weather_entity` | `weather.home` |
-| `VITE_PHOTO_DIRECTORY` | `photo_directory` | `/media/beacon/photos` |
-| `VITE_PHOTO_INTERVAL` | `photo_interval` | `30` |
-| `VITE_SCREEN_SAVER_TIMEOUT` | `screen_saver_timeout` | `5` |
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `HA_URL` | Yes | HA base URL reachable **from the container**; not `localhost` unless HA runs inside it |
+| `HA_TOKEN` | Yes | HA long-lived access token used only by the server |
+| `BEACON_PASSWORD` | Yes | HTTP Basic password (at least 16 characters; username `beacon`) required to access the standalone app |
+| `BEACON_PARENT_PIN` | Yes | Private 6–8 digit PIN required for privileged actions |
+| `BEACON_HOST` | Set to `0.0.0.0` | Listen on the container interface so Docker port forwarding works; bind the **host** port to `127.0.0.1` |
+| `BEACON_PORT` | No | Server port (default `3000`) |
+| `BEACON_DATA` | No | Persistent data directory (default `/data`); mount a volume here |
+| `BEACON_ALLOWED_ENTITIES` | For HA access | CSV of exact HA entity IDs; empty denies entity discovery and services |
 
-### Example `.env` file
+Standalone display defaults are read **at container startup**, not baked into Vite assets:
 
-```bash
-VITE_HA_URL=http://192.168.1.100:8123
-VITE_HA_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-VITE_THEME=midnight
-VITE_AUTO_DARK_MODE=true
-VITE_HA_WEATHER_ENTITY=weather.home
-VITE_PHOTO_DIRECTORY=/media/beacon/photos
-VITE_PHOTO_INTERVAL=30
-VITE_SCREEN_SAVER_TIMEOUT=5
+| Variable | Default | Display setting |
+|----------|---------|-----------------|
+| `THEME` | `skylight` | Initial theme; a saved theme selection in the browser can override it |
+| `AUTO_DARK_MODE` | `true` | Whether auto dark mode is enabled |
+| `WEATHER_ENTITY` | `weather.home` | HA weather entity ID (also include it in `BEACON_ALLOWED_ENTITIES`) |
+| `PHOTO_DIRECTORY` | `/media/beacon/photos` | Photo directory available to HA |
+| `PHOTO_INTERVAL` | `30` | Seconds between photos |
+| `SCREEN_SAVER_TIMEOUT` | `5` | Minutes before dimming |
+
+For example:
+
+```dotenv
+HA_URL=http://homeassistant.local:8123
+HA_TOKEN=replace-with-a-dedicated-HA-long-lived-access-token
+BEACON_PASSWORD=replace-with-a-strong-unique-password
+BEACON_PARENT_PIN=REPLACE_WITH_6_TO_8_DIGIT_PIN
+BEACON_ALLOWED_ENTITIES=calendar.family,todo.shopping_list,weather.home,media_player.living_room
+BEACON_HOST=0.0.0.0
+THEME=midnight
+AUTO_DARK_MODE=true
+WEATHER_ENTITY=weather.home
+PHOTO_DIRECTORY=/media/beacon/photos
+PHOTO_INTERVAL=30
+SCREEN_SAVER_TIMEOUT=5
 ```
 
----
+Replace every sample entity ID with one present in your HA instance (add all calendars, todo lists, weather and media players you want Family to use). Run with `-p 127.0.0.1:3000:3000 --env-file /secure/path/family.env -v family-data:/data`. Log in with Basic username `beacon` and password `BEACON_PASSWORD`, then unlock privileged controls separately using `BEACON_PARENT_PIN`. HTTP Basic does not encrypt credentials: use an **HTTPS reverse proxy** for other devices, never a publicly or LAN-bound plain-HTTP container port. See [Deployment](/docs/getting-started/deployment/) for complete run, Compose, and proxy examples.
 
-## Runtime config system
+Do not use `SUPERVISOR_TOKEN` as a standalone long-lived token; that variable is reserved for Supervisor-managed add-ons. Standalone display defaults can be set with the Docker variables above or changed in the app (a browser's saved settings may take precedence). In add-on mode, Supervisor options take precedence over these environment variables. Recreate the standalone container to pick up edited env values. These variables configure runtime behavior, **not** Vite's browser bundle.
 
-Beacon uses a runtime configuration injection system that works across all deployment methods.
+## Development and native app
 
-### How it works
+Run `npm ci` and `npm run dev -- --host 127.0.0.1` from the source checkout, then open `http://127.0.0.1:3000`. The Vite server is for development; `npm run build` alone produces browser assets, **not** the production proxy, authentication, and persistent data API. Do not publish `dist/` with a generic static server as a replacement for the add-on or Docker.
 
-1. **Add-on mode**: The `run.sh` script reads options from `/data/options.json` (populated by HA Supervisor) and generates a `runtime-config.js` file that sets `window.__BEACON_CONFIG__`. This script tag is injected into `index.html`.
+Never set `VITE_HA_TOKEN` or put an HA token in any `VITE_*` variable. Vite embeds those values into assets that every browser can read. When testing a direct browser/native connection to HA, use the app's onboarding login instead; on the web that login is stored on that device, while the native app uses secure device storage. In add-on and Docker deployments, credentials stay on the server. The server-backed app removes HA login tokens previously stored in the browser when it starts, but **you must still revoke/rotate any previously bundled or browser-stored long-lived HA token** in Home Assistant: an old bundle or device may already have exposed it.
 
-2. **Development mode**: Vite reads `VITE_*` variables from `.env` and makes them available via `import.meta.env.*`.
+Non-secret development display defaults can be set using `VITE_THEME`, `VITE_AUTO_DARK_MODE`, `VITE_HA_WEATHER_ENTITY`, `VITE_PHOTO_DIRECTORY`, `VITE_PHOTO_INTERVAL`, or `VITE_SCREEN_SAVER_TIMEOUT`. Restart Vite after changing them.
 
-3. **Resolution order**: For each config value, Beacon checks:
-   1. `window.__BEACON_CONFIG__` (runtime injection, highest priority)
-   2. `import.meta.env.VITE_*` (build-time environment variables)
-   3. Hard-coded defaults
+## Runtime configuration
 
-### The `getConfig()` function
-
-```typescript
-import { getConfig } from './config';
-
-const config = getConfig();
-// config.ha_url       - Home Assistant URL
-// config.ha_token     - Access token
-// config.theme        - Theme ID
-// config.auto_dark_mode - Auto dark mode flag
-// config.weather_entity - Weather entity ID
-// config.photo_directory - Photo directory path
-// config.photo_interval  - Photo interval in seconds
-// config.screen_saver_timeout - Screen saver timeout in minutes
-```
-
-The config is cached after the first call — subsequent calls return the same object.
-
-### `window.__BEACON_CONFIG__`
-
-In add-on mode, `run.sh` generates this JavaScript object:
+`run.sh` writes `/app/dist/runtime-config.js` at container startup for display defaults and injects it into `index.html`:
 
 ```javascript
 window.__BEACON_CONFIG__ = {
-  ha_url: "http://supervisor/core",
-  ha_token: "SUPERVISOR_TOKEN_VALUE",
-  theme: "midnight",
-  auto_dark_mode: true,
+  ha_url: "",
+  ha_token: "",
+  ha_available: true, // whether server-side HA credentials are configured
+  theme: "skylight",
   weather_entity: "weather.home",
-  photo_directory: "/media/beacon/photos",
-  photo_interval: 30,
-  screen_saver_timeout: 5
+  // Other non-secret display settings and the add-on slug
 };
 ```
 
-This is injected as a `<script>` tag in `index.html` before the main application bundle loads.
+In add-on and Docker mode, requests for HA data go to the **same-origin server**, which attaches its token server-side. `ha_available` is a Boolean indicator, not an HA credential or a readiness probe; `/beacon-action/health` performs the local-only readiness check. Browser code must not use `SUPERVISOR_TOKEN`, `HA_TOKEN`, or a value from `runtime-config.js` to authenticate to HA. Direct development/native onboarding is a separate browser-login path.
 
----
-
-## Advanced: Custom CSS injection
-
-You can inject custom CSS to override any Beacon styles by adding a `<style>` tag to the `runtime-config.js` mechanism or through a browser extension.
-
-### Example: Override the clock font size
-
-```css
-.dashboard-clock {
-  font-size: 120px !important;
-}
-```
-
-### Example: Hide the weather widget
-
-```css
-.dashboard-weather {
-  display: none !important;
-}
-```
-
-### Example: Change the sidebar width
-
-```css
-.sidebar--desktop {
-  width: 80px !important;
-}
-```
-
-All Beacon styles use CSS custom properties (see [Themes](/docs/customization/themes/) for the complete list), so most visual customizations can be achieved by overriding the `--*` properties on `:root` rather than targeting specific class names.
-
----
-
-## config.yaml reference (add-on manifest)
-
-The `config.yaml` file in the repository root defines the add-on metadata for Home Assistant:
-
-```yaml
-name: Beacon
-version: "1.0.0"
-slug: beacon
-description: "Family command center for wall-mounted displays"
-url: "https://github.com/asachs01/beacon"
-arch:
-  - amd64
-  - aarch64
-  - armv7
-startup: application
-boot: auto
-ingress: true
-ingress_port: 3000
-panel_icon: mdi:calendar-clock
-panel_title: Beacon
-homeassistant_api: true
-auth_api: true
-```
-
-| Field | Description |
-|-------|-------------|
-| `arch` | Supported CPU architectures (AMD64, ARM64, ARMv7) |
-| `ingress: true` | Beacon is accessible through HA's ingress proxy (sidebar panel) |
-| `ingress_port: 3000` | The internal port Beacon listens on |
-| `panel_icon` | The icon shown in HA's sidebar (`mdi:calendar-clock`) |
-| `panel_title` | The label shown in HA's sidebar ("Beacon") |
-| `homeassistant_api: true` | Beacon has access to the HA API |
-| `auth_api: true` | Beacon uses HA's authentication system |
-
----
+The root `config.yaml` defines **Family** (`slug: family`, `ingress: true`, `ingress_port: 3000`, `homeassistant_api: true`) and links to this fork. `homeassistant_api: true` permits the server's Core API proxy; `hassio_api` and `auth_api` are **not** requested. The base Supervisor token is sufficient for `/addons/self/info`. The manifest has no `image:` field, so Supervisor builds from the repository root. Its version is set by semantic-release; do not bump it by hand. Standalone GHCR images are separately published from the release tag by GitHub Actions.
 
 ## Troubleshooting
 
-### Configuration changes do not take effect
-
-1. **Add-on**: After changing configuration, click **Save** and then **Restart** the add-on. Some changes require a container restart to regenerate `runtime-config.js`.
-2. **Development**: After changing `.env`, restart the Vite dev server (`npm run dev`)
-3. **Theme changes**: The theme selector saves to localStorage, which overrides the config value. Clear the `beacon-theme` localStorage key to revert to the configured theme.
-
-### "No HA token configured" warning
-
-This appears in the browser console when:
-1. No `VITE_HA_TOKEN` is set in `.env` (development mode)
-2. The `SUPERVISOR_TOKEN` environment variable is missing (Docker mode)
-3. The runtime-config.js script did not generate correctly (add-on mode)
-
-Without a token, Beacon runs in demo mode — no data is fetched from Home Assistant.
-
-### Weather entity not found
-
-If the weather widget does not appear:
-1. Verify the entity ID in your configuration matches exactly (case-sensitive)
-2. Check that the entity exists in **Developer Tools > States**
-3. Some weather integrations create entities with different naming patterns (e.g., `weather.forecast_home` vs `weather.home`)
+- **Changed add-on options?** Save and restart the add-on so `runtime-config.js` is regenerated. A browser's saved theme choice can override the configured initial theme.
+- **Changed standalone environment variables?** Recreate the container; restarting it without recreating will not pick up changes to its env file.
+- **401 or locked controls?** Check the standalone `BEACON_PASSWORD` or the deployment's parent PIN. Add-on access also requires an active Home Assistant ingress session.
+- **Missing HA data or unhealthy container?** Check HA connectivity from the container and its server-side token. The health check calls `GET /beacon-action/health` on `127.0.0.1` inside the container; never try to fix HA authentication by embedding a token in frontend assets.

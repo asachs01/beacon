@@ -1,6 +1,10 @@
 # Beacon — Claude Code Plugin
 
-Control your [Beacon](https://github.com/asachs01/beacon) family dashboard from Claude Code.
+This directory contains legacy plugin templates from upstream. The MCP
+executable referenced by `.mcp.json` (`beacon/mcp-server.cjs`) is not included
+in this fork, so the commands and advertised MCP tools cannot control Family.
+Do not install another account's marketplace plugin as a substitute or create
+an HA token for this nonfunctional integration.
 
 ## What you get
 
@@ -12,27 +16,11 @@ Control your [Beacon](https://github.com/asachs01/beacon) family dashboard from 
 - `/whats-for-dinner` — Today's meal plan
 - `/chore-status` — Chore completion status and earnings
 
-**17 MCP tools** for lists, calendar, media, weather, chores, family members, and meal plans.
-
-## Setup
-
-1. Install the plugin:
-   ```
-   /plugin marketplace add asachs01/beacon
-   ```
-
-2. Set environment variables (or create `.env` from `.env.example`):
-   ```bash
-   export BEACON_HA_TOKEN="your-ha-long-lived-access-token"
-   export BEACON_HA_URL="http://homeassistant.local:8123"
-   export BEACON_DATA_DIR="/path/to/beacon/data"
-   ```
-
-3. Generate an HA token: **Profile > Security > Long-Lived Access Tokens > Create Token**
+**MCP integration is unavailable** until the missing server is implemented.
+To install the supported Family application, use the [fork's installation
+guide](../docs/getting-started.md) instead.
 
 ## Documentation
 
-- [Dashboard](https://beacon-family-docs.netlify.app/docs/features/dashboard/)
-- [Chores](https://beacon-family-docs.netlify.app/docs/features/chores/)
-- [Calendar](https://beacon-family-docs.netlify.app/docs/features/calendar/)
-- [AI Integration](https://beacon-family-docs.netlify.app/docs/reference/ai-integration/)
+- [Getting started](../docs/getting-started.md)
+- [AI integration status](../docs/ai-integration.md)

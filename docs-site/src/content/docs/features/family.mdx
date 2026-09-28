@@ -82,23 +82,18 @@ Each family member has one of two roles:
 
 | Role | Description |
 |------|-------------|
-| **Parent** | Full access. The presence of at least one parent enables the "Add Chore" button in the Chores panel. |
-| **Child** | Standard access. Can complete and uncomplete chores. |
+| **Parent** | Can unlock privileged actions using the deployment's parent PIN or an enrolled parent member PIN. |
+| **Child** | Can use an authorized Kid Display for their own chores and routine. |
 
-Roles are currently informational and used to control UI visibility (e.g., showing the chore creation form). There is no access control enforced by roles at this time.
+The secured Family server enforces parent versus display sessions and restricts sensitive writes. A client-side role label alone does not grant access.
 
 ---
 
 ## PIN setup
 
-PINs are optional 4-6 digit numeric codes. When a PIN is set:
+The add-on requires a private 6–8 digit `parent_pin` option; standalone Docker requires `BEACON_PARENT_PIN` (also 6–8 digits). Unlocking the parent session is needed for privileged actions. A parent member can also have an optional PIN to unlock the parent session, while a Kid Display may require that member's own PIN. Set member PINs through the secured Family server; it stores PIN hashes, not plaintext in browser localStorage. Do not share the parent PIN with kiosk devices.
 
-- It is stored in the browser's localStorage
-- Only digits are accepted (letters and symbols are stripped during entry)
-- The maximum length is 6 digits
-- PINs are stored as plain text locally (not hashed)
-
-PINs are reserved for future features like parental controls and per-member authentication. They are not currently enforced for any action.
+Parent unlock expires **10 minutes after PIN entry**, even if you are still using the app: polling does not renew that cookie. Enter the configured 6–8 digit parent PIN again to manage Family or HA. Kid Display sessions are different: they have a **24-hour sliding** lifetime refreshed by normal display session polling.
 
 ---
 
@@ -149,25 +144,17 @@ Removing a member does not delete their chore completions or streak history. How
 
 ## Data storage
 
-Family member data is stored in the browser's localStorage under the key `beacon_family_members`. When a Home Assistant client is connected, Beacon attempts to sync the data to an `input_text.beacon_family_members` helper entity (for payloads under 255 characters).
+In the Family add-on and standalone Docker, the server's `/beacon-collection/*` API is the source of truth for family members, chores, and completions, persisted under `/data`. Browser localStorage is a cache for quick initial rendering. Mount a `/data` volume in Docker and back up add-on data through Home Assistant. With server enforcement enabled, member PIN values stay on the server as hashes rather than being sent to the browser.
 
-For larger families, the data may exceed the HA input_text limit. In that case, localStorage is the sole storage location. This means:
-
-- Family members are tied to the specific browser/device where they were created
-- Clearing browser data will remove family members
-- To use the same family on multiple displays, set up members on each device separately
-
-> **Tip**: For a production setup, consider using a dedicated tablet that is always on, with browser data persistence enabled.
+Clearing a browser's cache/preferences does **not** erase the server's collection; the next read refreshes it. Direct development/native installations without the server may keep local-only data on that device instead.
 
 ---
 
 ## Troubleshooting
 
-### Family members disappear after clearing browser data
+### Family members do not appear after clearing browser data
 
-Family data is stored in localStorage. If you clear browser data (cache, cookies, site data), family members will be lost. To avoid this:
-- Use a kiosk browser (like Fully Kiosk) that does not clear data
-- Avoid clearing site data for your Beacon URL
+In the add-on/Docker deployment, check that the server is reachable and its `/data` storage is intact. Browser localStorage should refill from the server. In direct development mode, local-only data can be lost when clearing site data.
 
 ### The "Add Chore" button does not appear
 
@@ -175,4 +162,4 @@ The Add Chore button appears when there is at least one family member defined. I
 
 ### Changes do not sync across devices
 
-Each device has its own localStorage. Family members added on one tablet will not appear on another. This is a known limitation of the localStorage-based storage approach.
+Make sure both displays use the same Family server (authenticated HA ingress for the add-on, or the same HTTPS standalone URL). If changes still differ, check the server logs and persistence volume rather than manually copying localStorage between devices.

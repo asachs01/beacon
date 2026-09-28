@@ -1,23 +1,21 @@
 /** Shared environment detection helpers for HA add-on context */
 
-/** Is this running as an HA add-on? (runtime config injected by run.sh) */
+/** Is this running behind the Family server (runtime config from run.sh)? */
 export function isAddOn(): boolean {
   return !!window.__BEACON_CONFIG__;
 }
 
-/** Are we running inside HA's ingress proxy? */
+/** HA ingress is identified by its URL, not by an arbitrary parent frame. */
 export function isIngress(): boolean {
-  return window.location.pathname.includes('/ingress/') || (window !== window.parent);
+  return /^\/api\/hassio_ingress\/[^/]+(?:\/|$)/.test(window.location.pathname);
 }
 
 /**
  * Get the base URL for API calls routed through the ingress proxy.
- * In add-on mode: uses the ingress base path.
- * In standalone mode: uses configured ha_url or current origin.
+ * In ingress: uses the HA-assigned ingress path.
+ * In standalone proxy mode: API paths are relative to the current origin.
  */
 export function getIngressBasePath(): string {
-  if (isAddOn()) {
-    return window.location.pathname.replace(/\/$/, '');
-  }
-  return '';
+  if (!isAddOn()) return '';
+  return /^\/api\/hassio_ingress\/[^/]+/.exec(window.location.pathname)?.[0] || '';
 }

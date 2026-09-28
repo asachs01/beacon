@@ -1,0 +1,40 @@
+# Keep the build context to the inputs explicitly copied by Dockerfile.
+*
+!Dockerfile
+!.dockerignore
+!package.json
+!package-lock.json
+!index.html
+!config.yaml
+!tsconfig.json
+!vite.config.ts
+!src/
+!src/**
+!public/
+!public/**
+!run.sh
+!server.js
+!server-guards.cjs
+!chores-sync.cjs
+
+# Never send local credentials, repository history, or generated output,
+# including files placed inside src/ or public/.
+**/.env*
+**/.git
+**/.git/**
+**/.npmrc
+**/node_modules
+**/node_modules/**
+**/dist
+**/dist/**
+**/coverage
+**/coverage/**
+**/.npm-cache
+**/.npm-cache/**
+**/.scratch
+**/.scratch/**
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/id_rsa*

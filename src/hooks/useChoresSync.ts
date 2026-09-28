@@ -5,7 +5,7 @@ import { getIngressBasePath, isAddOn } from '../utils/ha-env';
 import { refreshWhileAwake } from '../utils/display-sleep';
 
 /**
- * The Google Tasks chores sync runs in the add-on server (chores-sync.cjs),
+ * The Google Tasks chores sync runs in the Family server (chores-sync.cjs),
  * once for the whole family, whether or not any screen is open. It used to
  * run here, in every open browser, where passes on different devices could
  * overlap and import a new Google task as two chores.
@@ -15,7 +15,7 @@ import { refreshWhileAwake } from '../utils/display-sleep';
  * completions (e.g. imported a task, or pulled a tick made in Google); when
  * that moves on, this screen's chore data is refreshed.
  *
- * Outside the add-on (standalone mode) there's no server to run the sync.
+ * Without the Family server (Vite development or native), there's no sync.
  */
 
 export interface ChoresSyncStatus {
@@ -69,8 +69,8 @@ export function useChoresSync(enabled: boolean) {
   }, [enabled, available, apply]);
 
   /**
-   * Run a pass now and wait for it. The add-on writes a report of every
-   * decision to its log (HA → Settings → Add-ons → Family → Log).
+   * Run a pass now and wait for it. The server writes a report to its log
+   * (the add-on Log tab or `docker logs` in standalone mode).
    */
   const runSync = useCallback(async () => {
     apply((await callBeaconAction(SYNC_PATH, {})) as ChoresSyncStatus);

@@ -14,8 +14,8 @@ Beacon is open source and contributions are welcome. This guide covers the archi
 
 ### Prerequisites
 
-- **Node.js** 20 or later
-- **npm** 9 or later
+- **Node.js** 22
+- **npm** (bundled with Node.js 22)
 - **Git**
 - **Docker** (for building the HA add-on container)
 - **A Home Assistant instance** (recommended for testing)
@@ -23,28 +23,22 @@ Beacon is open source and contributions are welcome. This guide covers the archi
 ### Clone and install
 
 ```bash
-git clone https://github.com/asachs01/beacon.git
-cd beacon
-npm install
+git clone https://github.com/f1f1f1f1f1f1/Family.git
+cd Family
+npm ci
 ```
 
 ### Configure for development
 
-Create a `.env` file in the project root (see [Configuration](/docs/customization/configuration/) for all options):
-
-```bash
-VITE_HA_URL=http://YOUR_HA_IP:8123
-VITE_HA_TOKEN=YOUR_LONG_LIVED_ACCESS_TOKEN
-VITE_THEME=skylight
-```
+No HA token is needed in a project `.env` file. **Never set `VITE_HA_TOKEN`**: Vite bundles it into public JavaScript. For a direct development/native login, use the app's onboarding flow with a test HA account when appropriate. For add-on/Docker integration, use the server-side credentials described in [Configuration](/docs/customization/configuration/).
 
 ### Run the development server
 
 ```bash
-npm run dev
+npm run dev -- --host 127.0.0.1
 ```
 
-Open `http://localhost:5173`. The dev server supports hot module replacement — changes to components, hooks, and styles apply without a full page reload.
+Open `http://127.0.0.1:3000`. The dev server supports hot module replacement — changes to components, hooks, and styles apply without a full page reload.
 
 ### Run tests
 
@@ -58,21 +52,17 @@ npm test
 npm run build
 ```
 
-Output goes to `dist/`. To test the production build locally:
-
-```bash
-npx serve dist -l 3000 -s
-```
+Output goes to `dist/`. The static build alone does not supply the HA proxy, authentication, or persistent data API; test production behavior with the add-on or the Docker image, not a generic static file server.
 
 ### Build the Docker container
 
 ```bash
 docker build -t beacon-dev .
-docker run -d -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="..." \
-  -e HA_URL="..." \
-  beacon-dev
+docker run -d --name family-dev -p 127.0.0.1:3000:3000 \
+  --env-file /secure/path/family.env -v family-dev-data:/data beacon-dev
 ```
+
+The private env file must define `HA_URL`, `HA_TOKEN`, `BEACON_PASSWORD`, `BEACON_PARENT_PIN`, `BEACON_ALLOWED_ENTITIES` (CSV of exact HA IDs you use), and `BEACON_HOST=0.0.0.0`; see [Deployment](/docs/getting-started/deployment/). Empty `BEACON_ALLOWED_ENTITIES` denies HA entity/service access. The add-on instead obtains its HA token from Supervisor and is ingress-only.
 
 ---
 
@@ -82,22 +72,25 @@ docker run -d -p 3000:3000 \
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| UI Framework | React 18 | Component model, hooks, large ecosystem |
+| UI Framework | React 19 | Component model, hooks, large ecosystem |
 | Language | TypeScript | Type safety, better IDE support |
 | Build tool | Vite | Fast HMR, optimized production builds |
 | Styling | CSS (no framework) | Custom properties for theming, minimal bundle |
 | Icons | Lucide React | Consistent icon set, tree-shakeable |
 | Date handling | date-fns | Modular, lightweight date utilities |
-| HA Communication | WebSocket API | Real-time bidirectional communication |
-| Container | Alpine Linux + serve | Minimal image size, static file serving |
+| HA Communication | Server-side REST proxy in add-on/Docker; direct onboarding for development/native | Keeps HA tokens out of hosted browser assets |
+| Container | HA base image + Node.js server | Serves the app, proxies HA, and persists `/data` |
 
 ### Directory structure
 
 ```
-beacon/
+Family/
   config.yaml               # HA add-on manifest
   Dockerfile                 # Multi-stage Docker build
-  run.sh                     # Container entry point (runtime config injection)
+  run.sh                     # Container entry point (non-secret runtime config)
+  server.js                  # Static app, HA REST proxy, and persistent data API
+  server-guards.cjs          # Request restrictions
+  chores-sync.cjs            # Server-side Google Tasks sync
   package.json               # Dependencies and scripts
   vite.config.ts             # Vite build configuration
   src/
@@ -112,7 +105,7 @@ beacon/
       photos.ts              # Photo, photo config types
     api/
       homeassistant.ts       # WebSocket client for HA API
-      family.ts              # Family data store (localStorage + HA sync)
+      family.ts              # Family data store (server collections + local cache)
       grocy.ts               # Grocy REST API client
       anylist.ts             # AnyList REST API client
       music.ts               # Media player API (play, pause, volume, etc.)
@@ -191,29 +184,26 @@ beacon/
                     | grocy, anylist)  |
                     +--------+---------+
                              |
-                    WebSocket API + REST API
+                   REST + server-side HA token
                              |
                              v
                     +------------------+
-                    |  Beacon (React)   |
-                    |                  |
-                    |  useHomeAssistant |
-                    |      |           |
-                    |  +---+---+       |
-                    |  |       |       |
-                    |  Hooks   API     |
-                    |  |       Clients |
-                    |  v       |       |
-                    |  Components      |
-                    |      |           |
-                    |  +---+---+       |
-                    |  |       |       |
-                    |  Views  Modals   |
-                    |  |       |       |
-                    +--+-------+-------+
+                    | Family Node.js   |
+                    | API proxy + /data|
+                    +--------+---------+
                              |
-                    localStorage (family, chores, theme)
+                      same-origin API
+                             |
+                             v
+                    +------------------+
+                    | Beacon (React)   |
+                    | hooks, views, UI |
+                    +--------+---------+
+                             |
+                 localStorage (cache, preferences)
 ```
+
+In direct development/native onboarding, the user can supply an HA login on the device instead. Do not substitute a `VITE_*` token for the production server-side flow.
 
 ### Component tree
 
@@ -314,8 +304,8 @@ Example: Adding a new data source (e.g., a task manager).
 
 ### Manual testing
 
-1. Run `npm run dev`
-2. Open `http://localhost:5173` in multiple browser windows to test different viewport sizes
+1. Run `npm run dev -- --host 127.0.0.1`
+2. Open `http://127.0.0.1:3000` in multiple browser windows to test different viewport sizes
 3. Test these viewports:
    - 1280x800 (standard landscape tablet)
    - 1920x1080 (full HD monitor)
@@ -327,7 +317,7 @@ Example: Adding a new data source (e.g., a task manager).
 1. Set up a development HA instance (HA Core in a venv, or HA OS in a VM)
 2. Install the Google Calendar integration and/or Local Calendar
 3. Create some test events
-4. Point Beacon at the dev HA instance via `.env`
+4. For a direct development/native login, connect to the dev HA instance through onboarding; for server behavior, run Docker with server-side credentials in a private env file
 
 ---
 

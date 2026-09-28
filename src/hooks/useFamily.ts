@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { FamilyStore, notifyFamilyDataChanged, onFamilyDataChanged } from '../api/family';
 import { saveThen } from '../utils/save-errors';
 import { unlessUnchanged } from '../utils/same-data';
-import { FamilyMember } from '../types/family';
+import { FamilyMember, FamilyMemberInput } from '../types/family';
 
 export function useFamily() {
   const store = useMemo(() => new FamilyStore(), []);
@@ -20,7 +20,7 @@ export function useFamily() {
   }, [refresh, store]);
 
   const addMember = useCallback(
-    async (member: Omit<FamilyMember, 'id'>) => {
+    async (member: FamilyMemberInput) => {
       await saveThen(() => store.addMember(member), async () => {
         await refresh();
         notifyFamilyDataChanged(store);
@@ -30,7 +30,7 @@ export function useFamily() {
   );
 
   const updateMember = useCallback(
-    async (id: string, data: Partial<Omit<FamilyMember, 'id'>>) => {
+    async (id: string, data: Partial<FamilyMemberInput>) => {
       await saveThen(() => store.updateMember(id, data), async () => {
         await refresh();
         notifyFamilyDataChanged(store);

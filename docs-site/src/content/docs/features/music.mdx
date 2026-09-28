@@ -164,8 +164,8 @@ This means:
 ### Album art does not load
 
 1. Album art URLs from HA are often relative paths (e.g., `/api/media_player_proxy/...`)
-2. Beacon prepends the HA URL to relative paths, so `ha_url` must be correctly configured
-3. If running Beacon on a different domain/port than HA, CORS restrictions may block the image
+2. In the add-on/Docker deployment, HA credentials stay on the server. Check whether the image URL resolves through the same-origin app proxy and whether the HA media player can serve it.
+3. For an external provider's image URL, check the browser network panel and server logs for blocked or missing resources without exposing your HA token.
 
 ### Controls do not respond
 

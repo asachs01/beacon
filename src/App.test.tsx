@@ -130,3 +130,17 @@ describe('App: event reminders', () => {
     expect(mocks.reminded.map((e) => e.id)).toEqual(['swim']);
   });
 });
+
+describe('App: malformed stored settings', () => {
+  it('renders when a chores sync import contains a null member-list map', async () => {
+    localStorage.setItem('beacon-settings', JSON.stringify({
+      choresSyncEnabled: true,
+      choresSyncListByMember: null,
+    }));
+
+    render(<App />);
+    await settle();
+
+    expect(screen.getAllByRole('button', { name: 'Dashboard' }).length).toBeGreaterThan(0);
+  });
+});

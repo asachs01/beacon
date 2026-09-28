@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { loadData, loadDataSync, loadServerData, saveData, saveDataNow } from '../api/beacon-store';
+import { loadData, loadDataSync, loadServerData, saveData, saveDataPatch } from '../api/beacon-store';
 import { isAddOn } from '../utils/ha-env';
 import { onDataChanged } from '../api/data-changes';
+import { SaveFailedError, reportSaveFailed } from '../utils/save-errors';
 
 /**
  * This display's current value of each key, shared by every hook using it.
@@ -13,6 +14,7 @@ const shared = new Map<string, { value: unknown; listeners: Set<(value: unknown)
 /** Server saves in progress per key, one after another. */
 const saveQueues = new Map<string, Promise<void>>();
 const queuedSaves = new Map<string, number>();
+const failedSaves = new Set<string>();
 /** Reloads in progress per key, shared by every hook showing it. */
 const reloads = new Map<string, Promise<void>>();
 /** How many changes this display has made to each key, to spot one made during a reload. */
@@ -39,6 +41,7 @@ export function resetStoredData(): void {
   shared.clear();
   saveQueues.clear();
   queuedSaves.clear();
+  failedSaves.clear();
   reloads.clear();
   changesMade.clear();
 }
@@ -112,18 +115,35 @@ export function useStoredData<T>(key: string, fallback: T, normalize: (value: T)
     };
   }, [refresh, key]);
 
+  /** Restore the latest stored value after a rejected save, not the optimistic one. */
+  const reconcile = useCallback(async () => {
+    const changesBefore = changesMade.get(key) ?? 0;
+    try {
+      const loaded = await loadData(key, fallbackRef.current);
+      if ((changesMade.get(key) ?? 0) !== changesBefore || queuedSaves.get(key)) return;
+      publish(key, normalizeRef.current(loaded));
+    } catch (err) {
+      console.error(`Beacon: Couldn't reload ${key} after a failed save`, err);
+    }
+  }, [key]);
+
   /**
    * Apply a change and save the result. Pass `save: false` when the caller
-   * persists the change itself (e.g. as a partial update).
+   * persists the change itself. `patch` makes an object update merge on the
+   * server rather than replacing fields another display may have changed.
    */
-  const update = useCallback((updater: (prev: T) => T, save = true): T => {
+  const update = useCallback((updater: (prev: T) => T, save = true, patch?: Partial<T>): T => {
     const current = entry(key, () => normalizeRef.current(loadDataSync(key, fallbackRef.current)));
     const next = updater(current.value as T);
-    changesMade.set(key, (changesMade.get(key) ?? 0) + 1);
+    const change = (changesMade.get(key) ?? 0) + 1;
+    changesMade.set(key, change);
     publish(key, next);
     if (!save) return next;
     if (!isAddOn()) {
-      void saveData(key, next);
+      void saveData(key, next).catch(async (err) => {
+        if (!(err instanceof SaveFailedError)) console.error(`Beacon: Couldn't save ${key}`, err);
+        if ((changesMade.get(key) ?? 0) === change) await reconcile();
+      });
       return next;
     }
 
@@ -132,20 +152,30 @@ export function useStoredData<T>(key: string, fallback: T, normalize: (value: T)
       try {
         const server = await loadServerData<T>(key);
         if (!server.ok) {
-          void saveData(key, entry(key, () => next).value);
-          return;
+          const err = new SaveFailedError(`a change to ${key}`);
+          reportSaveFailed(err);
+          throw err;
         }
         const merged = updater(normalizeRef.current(server.data ?? fallbackRef.current));
-        // Show it unless a later change is still waiting (it'll show then).
+        if (patch) await saveDataPatch(key, patch, merged);
+        else await saveData(key, merged);
+        // Show the server-based result unless a later change is still waiting.
         if (queuedSaves.get(key) === 1) publish(key, merged);
-        if (!(await saveDataNow(key, merged))) void saveData(key, merged);
+      } catch (err) {
+        failedSaves.add(key);
+        if (!(err instanceof SaveFailedError)) console.error(`Beacon: Couldn't save ${key}`, err);
       } finally {
-        queuedSaves.set(key, (queuedSaves.get(key) ?? 1) - 1);
+        const remaining = (queuedSaves.get(key) ?? 1) - 1;
+        if (remaining) queuedSaves.set(key, remaining);
+        else {
+          queuedSaves.delete(key);
+          if (failedSaves.delete(key)) await reconcile();
+        }
       }
     };
     saveQueues.set(key, (saveQueues.get(key) ?? Promise.resolve()).then(run, run));
     return next;
-  }, [key]);
+  }, [key, reconcile]);
 
   return [value, update, refresh] as const;
 }

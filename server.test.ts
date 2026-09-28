@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { spawn, type ChildProcess } from 'node:child_process';
-import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { connect, createServer } from 'node:net';
 import { createServer as createHttpServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
@@ -21,6 +21,24 @@ let dir: string;
 let server: ChildProcess;
 let base: string;
 let output = '';
+let parentCookie = '';
+const browserPassword = 'long-test-browser-password-123';
+const basicAuth = `Basic ${Buffer.from(`beacon:${browserPassword}`).toString('base64')}`;
+const haToken = 'server-test-ha-token';
+
+function fetch(input: string | URL, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  headers.set('Authorization', basicAuth);
+  if (parentCookie) headers.set('Cookie', parentCookie);
+  return globalThis.fetch(input, { ...init, headers });
+}
+
+function withCookie(cookie: string, input: string, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  headers.set('Authorization', basicAuth);
+  headers.set('Cookie', cookie);
+  return globalThis.fetch(input, { ...init, headers });
+}
 
 /*
  * A small stand-in for Home Assistant's REST API, answering like HA where
@@ -45,7 +63,10 @@ function startFakeHa(): Promise<string> {
       haCalls.push(`${req.method} ${req.url} ${body}`);
       const [path, query = ''] = (req.url ?? '').split('?');
       const json = (status: number, data: unknown) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)); };
+      if (req.headers.authorization !== `Bearer ${haToken}`) return json(401, { message: 'Unauthorized' });
+      if (path === '/api/config') return json(200, { time_zone: 'Pacific/Auckland' });
       if (path === '/api/states') return json(200, states);
+      if (path === '/api/services/switch/toggle') return json(200, []);
       if (path === '/api/services/todo/get_items') {
         const id = JSON.parse(body).entity_id;
         return json(200, { changed_states: [], service_response: { [id]: { items: items[id] ?? [] } } });
@@ -89,7 +110,11 @@ beforeAll(async () => {
       BEACON_PORT: String(port),
       BEACON_DIST: join(dir, 'dist'),
       BEACON_DATA: join(dir, 'data'),
-      HA_API_BASE_OVERRIDE: haBase,
+      HA_URL: haBase,
+      HA_TOKEN: haToken,
+      BEACON_PASSWORD: browserPassword,
+      BEACON_PARENT_PIN: '654321',
+      BEACON_ALLOWED_ENTITIES: 'todo.grocery,todo.chores,calendar.family,light.kitchen,switch.lamp',
     },
   });
   server.stdout!.on('data', (chunk) => { output += chunk; });
@@ -105,6 +130,14 @@ beforeAll(async () => {
     });
     server.once('exit', (code) => reject(new Error(`server exited (${code}):\n${output}`)));
   });
+  const login = await globalThis.fetch(`${base}/beacon-auth/parent`, {
+    method: 'POST',
+    headers: { Authorization: basicAuth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin: '654321' }),
+  });
+  if (!login.ok) throw new Error(`Parent login failed: ${login.status} ${await login.text()}`);
+  parentCookie = login.headers.get('set-cookie')?.split(';')[0] ?? '';
+  if (!parentCookie) throw new Error('No parent session cookie');
 });
 
 afterAll(() => {
@@ -231,6 +264,7 @@ describe('add-on server', () => {
     const answer = await new Promise<string>((resolve) => {
       const socket = connect(Number(new URL(base).port), '127.0.0.1', () => {
         socket.write('GET /api/websocket HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n'
+          + `Authorization: ${basicAuth}\r\n`
           + 'Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n');
       });
       let data = '';
@@ -254,6 +288,15 @@ describe('add-on server', () => {
     expect([add.status, merge.status]).toEqual([500, 500]);
     expect(readFileSync(join(dir, 'data', 'test_broken.json'), 'utf8')).toBe('[{"id":"a"},');
     expect(readFileSync(join(dir, 'data', 'test_broken_settings.json'), 'utf8')).toBe('{"theme":');
+  });
+
+  it('reports a failed disk write as a server error rather than a bad request', async () => {
+    mkdirSync(join(dir, 'data', 'test_write_error.json'));
+    const response = await fetch(`${base}/beacon-data/test_write_error`, {
+      method: 'PUT', body: '{"theme":"dark"}',
+    });
+    expect(response.status).toBe(500);
+    expect(await response.json()).toMatchObject({ error: expect.any(String) });
   });
 
   // Displays ask for these counts to notice changes made on another display.
@@ -307,6 +350,237 @@ describe('add-on server', () => {
     // The collection is untouched and still reads back as an array.
     const read = await fetch(`${base}/beacon-collection/beacon_family_members`);
     expect(read.status).toBe(200);
-    expect(await read.json()).toContainEqual({ id: 'm1', name: 'Alex' });
+    expect(await read.json()).toContainEqual(expect.objectContaining({ id: 'm1', name: 'Alex', has_pin: false }));
+  });
+
+  it('rejects headerless and password-only HA actions; authorizes a scoped parent session', async () => {
+    const body = JSON.stringify({ domain: 'switch', service: 'toggle', data: { entity_id: 'switch.lamp' } });
+    const noPassword = await globalThis.fetch(`${base}/beacon-action/service`, { method: 'POST', body });
+    expect(noPassword.status).toBe(401);
+    const passwordOnly = await globalThis.fetch(`${base}/beacon-action/service`, {
+      method: 'POST', headers: { Authorization: basicAuth }, body,
+    });
+    expect(passwordOnly.status).toBe(401);
+
+    const allowed = await fetch(`${base}/beacon-action/service`, { method: 'POST', body });
+    expect(allowed.status).toBe(200);
+    const sessionCheck = await fetch(`${base}/beacon-auth/session`);
+    expect(await sessionCheck.json()).toMatchObject({ role: 'parent' });
+    expect(sessionCheck.headers.get('set-cookie')).toBeNull();
+    expect(haCalls.some((call) => call.startsWith('POST /api/services/switch/toggle'))).toBe(true);
+    const otherEntity = await fetch(`${base}/beacon-action/service`, {
+      method: 'POST',
+      body: JSON.stringify({ domain: 'switch', service: 'toggle', data: { entity_id: 'switch.other' } }),
+    });
+    expect(otherEntity.status).toBe(403);
+    expect(haCalls.some((call) => call.includes('switch.other'))).toBe(false);
+    const broadenedTarget = await fetch(`${base}/beacon-action/service`, {
+      method: 'POST',
+      body: JSON.stringify({ domain: 'switch', service: 'toggle',
+        data: { entity_id: 'switch.lamp', area_id: 'entire_house' } }),
+    });
+    expect(broadenedTarget.status).toBe(403);
+    expect(haCalls.some((call) => call.includes('entire_house'))).toBe(false);
+  });
+
+  it('filters HA discovery and blocks direct access to unlisted entities', async () => {
+    const states = await fetch(`${base}/api/states`).then((res) => res.json());
+    expect(states).toEqual([
+      expect.objectContaining({ entity_id: 'todo.grocery' }),
+      expect.objectContaining({ entity_id: 'todo.chores' }),
+    ]);
+    expect((await fetch(`${base}/api/states/todo.private`)).status).toBe(403);
+    expect((await fetch(`${base}/api/services/todo/get_items?return_response`, {
+      method: 'POST', body: JSON.stringify({ entity_id: 'todo.private' }),
+    })).status).toBe(403);
+    expect((await fetch(`${base}/beacon-action/calendar-event`, {
+      method: 'POST', body: JSON.stringify({ op: 'delete', entity_id: 'calendar.private', uid: '1' }),
+    })).status).toBe(403);
+  });
+
+  it('hashes member PINs on disk and never returns or exposes them in general DTOs', async () => {
+    const created = await fetch(`${base}/beacon-collection/beacon_family_members`, {
+      method: 'POST',
+      body: JSON.stringify({ id: 'parent-pin', name: 'Pat', role: 'parent', pin: '123456' }),
+    });
+    expect(created.status).toBe(200);
+    expect(await created.json()).toEqual({ id: 'parent-pin', name: 'Pat', role: 'parent', has_pin: true });
+    const raw = readFileSync(join(dir, 'data', 'beacon_family_members.json'), 'utf8');
+    expect(raw).not.toContain('123456');
+    expect(raw).toMatch(/"pin_hash":"[a-f0-9]{32}:[a-f0-9]{64}"/);
+    const memberResponse = await fetch(`${base}/beacon-collection/beacon_family_members`);
+    expect(memberResponse.headers.get('cache-control')).toBe('no-store');
+    const members = await memberResponse.json();
+    expect(members).toContainEqual(expect.objectContaining({ id: 'parent-pin', has_pin: true }));
+    expect(JSON.stringify(members)).not.toContain('pin_hash');
+    expect((await fetch(`${base}/beacon-data/beacon_family_members`)).status).toBe(409);
+
+    const login = await globalThis.fetch(`${base}/beacon-auth/parent`, {
+      method: 'POST', headers: { Authorization: basicAuth },
+      body: JSON.stringify({ member_id: 'parent-pin', pin: '123456' }),
+    });
+    expect(login.status).toBe(200);
+    expect(login.headers.get('set-cookie')).toContain('HttpOnly');
+
+    const removed = await fetch(`${base}/beacon-collection/beacon_family_members/parent-pin`, {
+      method: 'PUT', body: JSON.stringify({ pin: '' }),
+    });
+    expect(await removed.json()).toMatchObject({ id: 'parent-pin', has_pin: false });
+    expect(readFileSync(join(dir, 'data', 'beacon_family_members.json'), 'utf8')).not.toContain('pin_hash');
+    const memberSession = login.headers.get('set-cookie')?.split(';')[0] ?? '';
+    expect((await withCookie(memberSession, `${base}/beacon-collection/beacon_family_members`)).status).toBe(401);
+    expect((await globalThis.fetch(`${base}/beacon-auth/parent`, {
+      method: 'POST', headers: { Authorization: basicAuth },
+      body: JSON.stringify({ member_id: 'parent-pin', pin: '123456' }),
+    })).status).toBe(401);
+  });
+
+  it('limits Kid Display to its own chores, routines and completions', async () => {
+    await fetch(`${base}/beacon-collection/beacon_family_members`, {
+      method: 'POST', body: JSON.stringify({ id: 'kid-pin', name: 'Kai', role: 'child', pin: '2468' }),
+    });
+    await fetch(`${base}/beacon-collection/beacon_chores`, {
+      method: 'POST', body: JSON.stringify({ id: 'kid-chore', name: 'Feed pet', frequency: 'daily', assigned_to: ['kid-pin'] }),
+    });
+    await fetch(`${base}/beacon-collection/beacon_chores`, {
+      method: 'POST', body: JSON.stringify({ id: 'other-chore', name: 'Other', assigned_to: ['someone-else'] }),
+    });
+    await fetch(`${base}/beacon-collection/beacon_routines`, {
+      method: 'POST', body: JSON.stringify({ id: 'kid-routine', member_id: 'kid-pin', tasks: [{ id: 'tidy' }] }),
+    });
+    const noPin = await globalThis.fetch(`${base}/beacon-auth/session?display=kid-pin`, {
+      headers: { Authorization: basicAuth },
+    });
+    expect(await noPin.json()).toMatchObject({ role: 'none', requiresPin: true });
+    const unlock = await globalThis.fetch(`${base}/beacon-auth/child`, {
+      method: 'POST', headers: { Authorization: basicAuth },
+      body: JSON.stringify({ member_id: 'kid-pin', pin: '2468' }),
+    });
+    expect(unlock.status).toBe(200);
+    const kidCookie = unlock.headers.get('set-cookie')?.split(';')[0];
+    expect(kidCookie).toBeTruthy();
+    const kid = (path: string, init?: RequestInit) => withCookie(kidCookie!, `${base}${path}`, init);
+    expect((await kid('/beacon-action/service', {
+      method: 'POST', body: JSON.stringify({ domain: 'switch', service: 'toggle', data: { entity_id: 'switch.lamp' } }),
+    })).status).toBe(403);
+    expect((await kid('/beacon-data/beacon-settings', { method: 'PUT', body: '{"theme":"dark"}' })).status).toBe(403);
+    expect(await (await kid('/beacon-collection/beacon_chores')).json()).toEqual([
+      expect.objectContaining({ id: 'kid-chore' }),
+    ]);
+    expect(await (await kid('/beacon-collection/beacon_family_members')).json()).toEqual([
+      expect.objectContaining({ id: 'kid-pin', has_pin: true }),
+    ]);
+    const forged = await kid('/beacon-collection/beacon_completions', {
+      method: 'POST', body: JSON.stringify({ chore_id: 'other-chore', member_id: 'kid-pin' }),
+    });
+    expect(forged.status).toBe(403);
+    const otherMember = await kid('/beacon-collection/beacon_completions', {
+      method: 'POST', body: JSON.stringify({ chore_id: 'kid-chore', member_id: 'someone-else' }),
+    });
+    expect(otherMember.status).toBe(403);
+    const completion = await kid('/beacon-collection/beacon_completions', {
+      method: 'POST', body: JSON.stringify({ chore_id: 'kid-chore', member_id: 'kid-pin', completed_at: '2000-01-01T00:00:00Z' }),
+    });
+    expect(completion.status).toBe(200);
+    expect((await completion.json()).completed_at).not.toBe('2000-01-01T00:00:00Z');
+    expect(await (await kid('/beacon-collection/beacon_streaks')).json()).toEqual([
+      expect.objectContaining({ member_id: 'kid-pin', current: 1 }),
+    ]);
+
+    const rotated = await fetch(`${base}/beacon-collection/beacon_family_members/kid-pin`, {
+      method: 'PUT', body: JSON.stringify({ pin: '8642' }),
+    });
+    expect(rotated.status).toBe(200);
+    expect((await kid('/beacon-collection/beacon_chores')).status).toBe(401);
+    expect((await globalThis.fetch(`${base}/beacon-auth/child`, {
+      method: 'POST', headers: { Authorization: basicAuth },
+      body: JSON.stringify({ member_id: 'kid-pin', pin: '2468' }),
+    })).status).toBe(401);
+    expect((await globalThis.fetch(`${base}/beacon-auth/child`, {
+      method: 'POST', headers: { Authorization: basicAuth },
+      body: JSON.stringify({ member_id: 'kid-pin', pin: '8642' }),
+    })).status).toBe(200);
+  });
+
+  it('enforces the 512-key quota under concurrent first writes', async () => {
+    const existing = readdirSync(join(dir, 'data')).filter((name) => name.endsWith('.json')).length;
+    const results: Response[] = [];
+    for (let start = 0; start < 520; start += 50) {
+      const batch = await Promise.all(Array.from({ length: Math.min(50, 520 - start) }, (_, offset) =>
+        fetch(`${base}/beacon-data/quota_${start + offset}`, { method: 'PUT', body: '{"saved":true}' })));
+      results.push(...batch);
+    }
+    expect(results.filter((res) => res.ok)).toHaveLength(512 - existing);
+    expect(results.filter((res) => res.status === 400)).toHaveLength(520 - (512 - existing));
+    expect(readdirSync(join(dir, 'data')).filter((name) => name.endsWith('.json'))).toHaveLength(512);
+  }, 30_000);
+
+  it('reports HA availability via a local health probe, not just static HTML', async () => {
+    const response = await globalThis.fetch(`${base}/beacon-action/health`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: 'ok' });
+    expect(haCalls.some((call) => call.startsWith('GET /api/config'))).toBe(true);
+    expect((await fetch(`${base}/`)).headers.get('content-security-policy')).toBe("frame-ancestors 'none'");
+    expect((await fetch(`${base}/`)).headers.get('x-frame-options')).toBe('DENY');
+  });
+
+  it('accepts add-on requests only from the actual HA ingress address, not forged headers', async () => {
+    const port = await freePort();
+    const ingressData = join(dir, 'ingress-data');
+    mkdirSync(ingressData, { recursive: true });
+    writeFileSync(join(ingressData, 'beacon_family_members.json'),
+      JSON.stringify([{ id: 'legacy', name: 'Lee', role: 'parent', pin: '4455' }]));
+    const addOn = spawn(process.execPath, [join(dir, 'server.cjs')], {
+      env: {
+        PATH: process.env.PATH,
+        NODE_PATH: join(repo, 'node_modules'),
+        BEACON_PORT: String(port),
+        BEACON_DIST: join(dir, 'dist'),
+        BEACON_DATA: ingressData,
+        BEACON_PARENT_PIN: '654321',
+        SUPERVISOR_TOKEN: haToken,
+        BEACON_ALLOWED_ENTITIES: 'switch.lamp',
+      },
+    });
+    let startup = '';
+    addOn.stdout!.on('data', (chunk) => { startup += chunk; });
+    addOn.stderr!.on('data', (chunk) => { startup += chunk; });
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error(`Add-on failed to start: ${startup}`)), 10_000);
+        addOn.stdout!.on('data', () => {
+          if (startup.includes('listening on port')) {
+            clearTimeout(timeout);
+            resolve();
+          }
+        });
+        addOn.once('exit', (code) => reject(new Error(`Add-on exited (${code}): ${startup}`)));
+      });
+      let migrated = '';
+      for (let attempt = 0; attempt < 50; attempt++) {
+        migrated = readFileSync(join(ingressData, 'beacon_family_members.json'), 'utf8');
+        if (migrated.includes('"pin_hash"')) break;
+        await new Promise<void>((resolve) => setTimeout(resolve, 50));
+      }
+      expect(migrated).not.toContain('4455');
+      expect(migrated).toMatch(/"pin_hash":"[a-f0-9]{32}:[a-f0-9]{64}"/);
+      const spoofed = {
+        'X-Remote-User-ID': 'admin',
+        'X-Ingress-Path': '/api/hassio_ingress/fake-session',
+        'X-Forwarded-For': '172.30.32.2',
+        'Sec-Fetch-Site': 'same-origin',
+      };
+      const direct = await globalThis.fetch(`http://127.0.0.1:${port}/beacon-action/service`, {
+        method: 'POST',
+        headers: spoofed,
+        body: JSON.stringify({ domain: 'switch', service: 'toggle', data: { entity_id: 'switch.lamp' } }),
+      });
+      expect(direct.status).toBe(403);
+      expect((await globalThis.fetch(`http://127.0.0.1:${port}/`, { headers: spoofed })).status).toBe(403);
+    } finally {
+      if (addOn.exitCode === null && addOn.signalCode === null) {
+        await new Promise<void>((resolve) => { addOn.once('exit', () => resolve()); addOn.kill(); });
+      }
+    }
   });
 });

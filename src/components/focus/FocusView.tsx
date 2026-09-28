@@ -12,6 +12,8 @@ import { FocusChores } from './FocusChores';
 import { pickRoutine, getTimeOfDay } from './period';
 import '../../styles/focus.css';
 import { SaveFailedNotice } from '../SaveFailedNotice';
+import { getParentPinMembers, unlockParent } from '../../api/beacon-auth';
+import { isAddOn } from '../../utils/ha-env';
 
 interface FocusViewProps {
   memberId: string;
@@ -62,6 +64,44 @@ export function FocusView({ memberId, settings, onExit }: FocusViewProps) {
   // Exit gesture: 5 taps on the clock within 3 seconds
   const taps = useRef<number[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [exitPin, setExitPin] = useState('');
+  const [exitError, setExitError] = useState('');
+  const [checkingPin, setCheckingPin] = useState(false);
+  const [parentId, setParentId] = useState('');
+  const [parents, setParents] = useState<Array<{ id: string; name: string }>>([]);
+  useEffect(() => {
+    if (!showExitConfirm || !isAddOn()) return;
+    let active = true;
+    getParentPinMembers().then((list) => {
+      if (active) setParents(list);
+    }).catch((err: unknown) => {
+      if (active) setExitError(err instanceof Error ? err.message : 'Could not load parent profiles');
+    });
+    return () => { active = false; };
+  }, [showExitConfirm]);
+  const cancelExit = () => {
+    setExitPin('');
+    setExitError('');
+    setParentId('');
+    setShowExitConfirm(false);
+  };
+  const confirmExit = async () => {
+    if (!isAddOn()) {
+      onExit();
+      return;
+    }
+    setCheckingPin(true);
+    setExitError('');
+    try {
+      const session = await unlockParent(exitPin, parentId || undefined);
+      if (session.role !== 'parent') throw new Error('Parent access was not granted');
+      onExit();
+    } catch (err) {
+      setExitError(err instanceof Error ? err.message : 'Could not verify parent PIN');
+    } finally {
+      setCheckingPin(false);
+    }
+  };
   const handleClockTap = () => {
     const t = Date.now();
     taps.current = [...taps.current.filter((prev) => t - prev < 3000), t];
@@ -155,14 +195,44 @@ export function FocusView({ memberId, settings, onExit }: FocusViewProps) {
       </main>
 
       {showExitConfirm && (
-        <div className="focus-exit-backdrop" onClick={() => setShowExitConfirm(false)}>
+        <div className="focus-exit-backdrop" onClick={cancelExit}>
           <div className="focus-exit-dialog" onClick={(e) => e.stopPropagation()}>
             <p>Exit {member.name}&rsquo;s display?</p>
+            {isAddOn() && parents.length > 0 && (
+              <label className="focus-exit-pin">
+                Parent profile
+                <select value={parentId} onChange={(e) => { setParentId(e.target.value); setExitError(''); }}>
+                  <option value="">Configured parent PIN</option>
+                  {parents.map((parent) => (
+                    <option key={parent.id} value={parent.id}>{parent.name}&rsquo;s PIN</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {isAddOn() && (
+              <label className="focus-exit-pin">
+                Parent PIN
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={exitPin}
+                  onChange={(e) => { setExitPin(e.target.value.replace(/\D/g, '').slice(0, 8)); setExitError(''); }}
+                  maxLength={8}
+                />
+              </label>
+            )}
+            {exitError && <p role="alert" className="focus-exit-error">{exitError}</p>}
             <div className="focus-exit-actions">
-              <button type="button" className="settings-btn" onClick={() => setShowExitConfirm(false)}>
+              <button type="button" className="settings-btn" onClick={cancelExit}>
                 Cancel
               </button>
-              <button type="button" className="settings-btn settings-btn--primary" onClick={onExit}>
+              <button
+                type="button"
+                className="settings-btn settings-btn--primary"
+                onClick={() => void confirmExit()}
+                disabled={checkingPin || (isAddOn() && exitPin.length < (parentId ? 4 : 6))}
+              >
                 Exit
               </button>
             </div>

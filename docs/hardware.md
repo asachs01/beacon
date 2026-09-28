@@ -31,40 +31,15 @@ Beacon runs on any screen with a web browser. Here are tested and recommended se
 
 ## Kiosk Setup (Raspberry Pi)
 
-Once you have a Pi + monitor, the kiosk setup is:
+1. Install Raspberry Pi OS with Desktop and install **Family** in Home Assistant from `https://github.com/f1f1f1f1f1f1/Family`.
+2. Sign in to Home Assistant on the Pi, open the Family sidebar panel, and keep that authenticated session on the kiosk device. The add-on is ingress-only: do **not** hardcode another installation's add-on slug, bookmark an expiring ingress token, or expose its internal port.
+3. Launch Chromium in kiosk mode at your Home Assistant URL, then open Family from its sidebar:
 
-```bash
-# 1. Install Raspberry Pi OS with Desktop
-# 2. Install Beacon add-on in Home Assistant
-# 3. Create kiosk script:
+   ```bash
+   chromium-browser --kiosk --noerrdialogs 'https://YOUR-HA-HOST/'
+   ```
 
-cat > ~/beacon-kiosk.sh << 'EOF'
-#!/bin/bash
-sleep 5
-unclutter -idle 3 -root &
-xset s off && xset -dpms && xset s noblank
-pkill lxpanel 2>/dev/null
-pkill pcmanfm 2>/dev/null
-chromium-browser \
-  --kiosk \
-  --noerrdialogs \
-  --disable-infobars \
-  --no-first-run \
-  --start-fullscreen \
-  --disable-pinch \
-  'http://YOUR-HA-URL/bc015843_beacon'
-EOF
-chmod +x ~/beacon-kiosk.sh
-
-# 4. Auto-start on boot:
-mkdir -p ~/.config/autostart
-cat > ~/.config/autostart/beacon-kiosk.desktop << EOF
-[Desktop Entry]
-Type=Application
-Name=Beacon Kiosk
-Exec=/home/$USER/beacon-kiosk.sh
-EOF
-```
+For a separately managed [standalone Docker deployment](https://beacon-family-docs.netlify.app/docs/getting-started/deployment/), use its HTTPS reverse-proxy URL instead. Docker requires server-side HA credentials, HTTP Basic, a parent PIN, and a loopback-bound host port; do not use an unauthenticated plain-HTTP kiosk URL.
 
 ## Display Recommendations by Size
 

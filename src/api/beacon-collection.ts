@@ -31,12 +31,28 @@ interface HasId {
   id?: string;
 }
 
+function withoutMemberPin<T>(item: T): T {
+  if (!item || typeof item !== 'object') return item;
+  const safe = { ...item } as Record<string, unknown>;
+  delete safe.pin;
+  delete safe.pin_hash;
+  return safe as T;
+}
+
 function readLocal<T>(name: string): T[] {
   try {
     const raw = localStorage.getItem(name);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed as T[];
+      if (Array.isArray(parsed)) {
+        if (name === 'beacon_family_members' && parsed.some((item) =>
+          item && typeof item === 'object' && ('pin' in item || 'pin_hash' in item))) {
+          const safe = parsed.map(withoutMemberPin) as T[];
+          writeLocal(name, safe);
+          return safe;
+        }
+        return parsed as T[];
+      }
     }
   } catch {
     /* ignore */
@@ -46,9 +62,19 @@ function readLocal<T>(name: string): T[] {
 
 function writeLocal<T>(name: string, items: T[]): void {
   try {
-    localStorage.setItem(name, JSON.stringify(items));
-  } catch {
-    /* localStorage unavailable */
+    const safe = name === 'beacon_family_members'
+      ? items.map(withoutMemberPin)
+      : items;
+    localStorage.setItem(name, JSON.stringify(safe));
+  } catch (err) {
+    console.error(`Could not update local cache for ${name}:`, err);
+    if (name === 'beacon_family_members') {
+      try {
+        localStorage.removeItem(name);
+      } catch (removeErr) {
+        console.error('Could not clear a legacy member PIN from the local cache:', removeErr);
+      }
+    }
   }
 }
 
@@ -102,23 +128,24 @@ function completedSince<T>(items: T[], since: Date, choreIds: string[] = []): T[
 export async function getCollection<T>(name: string, options: { since?: Date; onceChoreIds?: string[] } = {}): Promise<T[]> {
   const { since, onceChoreIds = [] } = options;
   if (isAddOn()) {
+    let res: Response;
     try {
       const base = getIngressBasePath();
       const query = since
         ? `?since=${encodeURIComponent(since.toISOString())}${onceChoreIds.length ? '&once_chores' : ''}`
         : '';
-      const res = await fetch(`${base}/beacon-collection/${name}${query}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          if (since) cacheRecent(name, data as T[], since);
-          else writeLocal(name, data);
-          return data as T[];
-        }
-      }
-    } catch {
-      /* fall through to localStorage */
+      res = await fetch(`${base}/beacon-collection/${name}${query}`);
+    } catch (err) {
+      console.error(`Could not reach Family collection ${name}; using the local cache:`, err);
+      const local = readLocal<T>(name);
+      return since ? completedSince(local, since, onceChoreIds) : local;
     }
+    if (!res.ok) throw new Error(`Family collection ${name} could not be read (HTTP ${res.status})`);
+    const data: unknown = await res.json();
+    if (!Array.isArray(data)) throw new Error(`Family collection ${name} was not a list`);
+    if (since) cacheRecent(name, data as T[], since);
+    else writeLocal(name, data);
+    return data as T[];
   }
   const local = readLocal<T>(name);
   return since ? completedSince(local, since, onceChoreIds) : local;

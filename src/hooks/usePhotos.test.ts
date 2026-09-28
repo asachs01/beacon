@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { media, resetMedia, addPhotos } from '../test/fake-media-source';
+import { media, resetMedia, addPhotos, PHOTO_FOLDER } from '../test/fake-media-source';
 import { clearPhotoCaches } from '../api/photos';
 import { usePhotos } from './usePhotos';
 
@@ -54,7 +54,7 @@ describe('usePhotos', () => {
     const saver = renderHook(() => usePhotos());
     await waitFor(() => expect(frame.result.current.currentPhoto).not.toBeNull());
     await waitFor(() => expect(saver.result.current.currentPhoto).not.toBeNull());
-    expect(media.browses).toHaveLength(2); // photo folder + media root, once each
+    expect(media.browses).toEqual([PHOTO_FOLDER]);
   });
 
   it("asks HA for nothing while it isn't enabled", async () => {
@@ -164,7 +164,7 @@ describe('usePhotos timers', () => {
     await settle();
     const onScreen = result.current.currentPhoto!.url;
 
-    addPhotos(2, 'media-source://media_source/local');
+    media.folders.get(PHOTO_FOLDER)!.push(`${PHOTO_FOLDER}/new-1.jpg`, `${PHOTO_FOLDER}/new-2.jpg`);
     await act(() => vi.advanceTimersByTimeAsync(HOUR));
     await settle();
     expect(result.current.photoCount).toBe(6);

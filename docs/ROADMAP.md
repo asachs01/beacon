@@ -27,7 +27,7 @@ Make Beacon the free, open-source family command center that anyone can set up o
 
 - [ ] **Android APK** — Play Store via Capacitor (already scaffolded)
 - [ ] **iOS app** — App Store via Capacitor (already scaffolded)
-- [ ] **Docker one-liner** — `docker run -p 3000:3000 beacon` for self-hosting
+- [ ] **Versioned standalone Docker distribution** — publish signed GHCR release images, then deploy with server-side HA credentials, HTTP Basic, a parent PIN, and a loopback-bound port
 - [ ] **Raspberry Pi image** — flash SD card, plug in monitor, boot to Beacon
 - [ ] **HA Add-on Store** — submit to official HA add-on repository (currently custom repo)
 

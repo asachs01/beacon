@@ -45,7 +45,7 @@ Browser push notifications and Home Assistant mobile app notifications fire 15 m
 After 5 minutes of inactivity the screen dims. After 10 minutes a clock screensaver appears with the time and date, repositioning every 30 seconds to prevent burn-in. Any touch or movement wakes the display.
 
 ### Self-hosted and private
-Your family's data stays on your local network. No accounts, no cloud services, no telemetry. Calendar data flows from Google/CalDAV through Home Assistant to Beacon — never to an external server.
+Beacon does not require a Beacon account or send telemetry. The add-on and Docker server keep HA credentials out of the browser; any Home Assistant integrations you configure (such as Google Calendar) may contact their own external services.
 
 ### Free forever
 Beacon is open source under the MIT license. No subscriptions, no premium tiers, no "free trial" that expires.

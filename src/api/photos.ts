@@ -10,7 +10,8 @@ import { loadDataSync } from './beacon-store';
  * be ignored: the option was read once, at startup.
  */
 function photoDirectory(): string {
-  const chosen = loadDataSync<{ photoDirectory?: string } | null>('beacon-settings', null)?.photoDirectory?.trim();
+  const value = loadDataSync<{ photoDirectory?: unknown } | null>('beacon-settings', null)?.photoDirectory;
+  const chosen = typeof value === 'string' ? value.trim() : '';
   return chosen || getConfig().photo_directory;
 }
 
@@ -159,10 +160,12 @@ async function browseFolder(folder: string): Promise<PhotoEntry[]> {
 let listCache: { key: string; at: number; entries: Promise<PhotoEntry[]> } | null = null;
 
 /**
- * Every photo in the configured sources (HA's local media root and the
- * photo folder, see photoDirectory), in folder order. Browsed once and shared for
- * PHOTO_LIST_TTL_MS; a list that came back empty or incomplete because a
- * browse failed isn't kept, so the next call tries again.
+ * Photos in the configured folder (see photoDirectory). An explicit
+ * ha_media-only request browses the entire media root; the usual combined
+ * sources must not add unrelated photos outside the chosen folder.
+ * Browsed once and shared for PHOTO_LIST_TTL_MS; a list that came back
+ * empty or incomplete because a browse failed isn't kept, so the next
+ * call tries again.
  */
 export function listPhotos(sources: PhotoSource[] = ['ha_media', 'local']): Promise<PhotoEntry[]> {
   const folder = photoDirectory();
@@ -173,11 +176,10 @@ export function listPhotos(sources: PhotoSource[] = ['ha_media', 'local']): Prom
   }
 
   const browses: Promise<PhotoEntry[]>[] = [];
-  if (sources.includes('ha_media')) {
-    browses.push(browsePhotos(MEDIA_ROOT_ID, 'ha_media'));
-  }
   if (sources.includes('local')) {
     browses.push(browseFolder(folder));
+  } else if (sources.includes('ha_media')) {
+    browses.push(browsePhotos(MEDIA_ROOT_ID, 'ha_media'));
   }
   // google_photos would require OAuth — not implemented yet
 
@@ -191,8 +193,7 @@ export function listPhotos(sources: PhotoSource[] = ['ha_media', 'local']): Prom
       for (const result of results) {
         if (result.status === 'rejected') { failed = true; continue; }
         for (const photo of result.value) {
-          // Both sources point at the same folder when photo_directory is
-          // the media root; list each photo once.
+          // Multiple folder interpretations may point at the same photo.
           if (seen.has(photo.id)) continue;
           seen.add(photo.id);
           entries.push(photo);

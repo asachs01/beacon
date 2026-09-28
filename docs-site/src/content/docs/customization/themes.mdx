@@ -23,10 +23,10 @@ Beacon ships with 7 built-in themes plus an automatic day/night switching mode. 
 
 Set the `theme` option:
 - **Add-on**: Configuration tab > `theme: "midnight"`
-- **Docker**: Environment variable in the container config
-- **Development**: `VITE_THEME=midnight` in `.env`
+- **Docker**: Set non-secret `THEME=midnight` in the container environment for the initial theme, or pick one in the Beacon UI
+- **Development**: Use the theme selector or a non-secret `VITE_THEME=midnight` setting
 
-The theme selector in the sidebar overrides the configuration value (since it saves to localStorage).
+The theme selector in the sidebar overrides the add-on/Docker initial configuration value on that browser (since it saves to localStorage). Docker also accepts `AUTO_DARK_MODE=true` as a runtime display default.
 
 ---
 

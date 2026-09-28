@@ -33,7 +33,9 @@ There are two ways to put a device into Kid Display Mode.
 
 ### URL parameter
 
-Append `?display=<memberId>` to Beacon's URL. This is bookmarkable and is the best option for kiosk browsers (like Fully Kiosk Browser) or Home Assistant wallpanel apps, since it survives reboots and takes precedence over any device-level setting.
+Append `?display=<memberId>` to Beacon's URL. On standalone Docker, bookmark your **HTTPS reverse-proxy URL**; on the add-on, first open Family from an authenticated Home Assistant session on the kiosk device, since session-specific ingress links can expire. A Kid Display URL is not an authentication bypass: a member's PIN may be required before their display session starts.
+
+An active Kid Display session lasts **24 hours from its latest session poll**; normal display polling renews it. After a long offline period or a server restart, the display may need that member's PIN again. A parent's separate unlock expires absolutely after **10 minutes** regardless of polling, so exiting or changing the display later requires re-entering the configured 6–8 digit parent PIN.
 
 ### Settings > Display
 
@@ -41,7 +43,7 @@ Append `?display=<memberId>` to Beacon's URL. This is bookmarkable and is the be
 2. Under **Kid Display**, choose a family member
 3. Choose how to apply it:
    - **Use on This Device** — persists the assignment for this browser/device via localStorage
-   - **Copy URL** — copies the bookmarkable `?display=<memberId>` URL for kiosk setups
+   - **Copy URL** — copies a `?display=<memberId>` URL for kiosk setups (open it through the kiosk's own authenticated HA ingress session, or through your standalone HTTPS proxy)
 
 > **Note**: If both are present, the URL parameter takes precedence over the device-level (localStorage) assignment.
 
@@ -78,9 +80,9 @@ Routine task completions **reset every day** automatically. Chore completions fe
 Kid Display Mode is intentionally hard to exit by accident:
 
 1. Tap the **clock** 5 times within 3 seconds
-2. Confirm the exit in the dialog that appears
+2. Confirm with the private parent PIN in the dialog that appears
 
-Exiting clears the device's Kid Display assignment and strips the `?display=` parameter from the URL, returning the device to the full Beacon app.
+Exiting clears the device's Kid Display assignment and strips the `?display=` parameter from the URL. Privileged dashboard controls still require a parent session; do not share the parent PIN with a child display.
 
 ---
 
@@ -93,7 +95,7 @@ Exiting clears the device's Kid Display assignment and strips the `?display=` pa
 
 ## Using ingress URLs for kiosk setups
 
-If you copy a Kid Display URL while accessing Beacon through Home Assistant ingress, the kiosk device will need an authenticated HA session for that URL to keep working. For dedicated kiosk browsers, it's simpler to use a direct (non-ingress) Beacon URL instead of the ingress path.
+The Family add-on is **ingress-only**. A kiosk opening a Kid Display URL needs its own authenticated Home Assistant session; a copied session-specific ingress URL may expire. Open Family from the HA sidebar on that device, then create or bookmark its Kid Display view. Do not expose the add-on's internal port as a "direct" URL. For a separate deployment, use standalone Docker through an HTTPS reverse proxy with HTTP Basic authentication.
 
 ---
 

@@ -11,6 +11,9 @@
  * - isProxyRequestAllowed: the /api/* paths the app reads (entity states,
  *   calendars), plus allowed service calls.
  * - isCrossOriginWrite: refuses writes sent by another website (CSRF).
+ * - isTrustedIngressAddress: only the HA ingress proxy may reach the add-on.
+ * - isServiceTargetAllowed: the configured entity allowlist applies to
+ *   every service, including the server-side chores sync.
  *
  * Kept out of server.js so they can be unit-tested
  * (src/server-guards.test.ts). The .cjs extension keeps this CommonJS
@@ -55,6 +58,7 @@ function isServiceAllowed(domain, service) {
 // dot. Matching the raw path this strictly also rules out "..", "%2e" and
 // other tricks that could steer the proxied URL to a different HA endpoint.
 const ENTITY_ID = '[a-z0-9_]+\\.[a-z0-9_]+';
+const ENTITY_ID_PATTERN = new RegExp(`^${ENTITY_ID}$`);
 const PROXY_READ_PATHS = [
   /^\/api\/states$/,
   new RegExp(`^/api/states/${ENTITY_ID}$`),
@@ -79,6 +83,33 @@ function isProxyRequestAllowed(method, url) {
   return false;
 }
 
+function isTrustedIngressAddress(address) {
+  return address === '172.30.32.2' || address === '::ffff:172.30.32.2';
+}
+
+function parseAllowedEntities(value) {
+  const ids = (value || '').split(',').map((id) => id.trim()).filter(Boolean);
+  if (ids.some((id) => !ENTITY_ID_PATTERN.test(id))) {
+    throw new Error('BEACON_ALLOWED_ENTITIES must contain comma-separated HA entity IDs');
+  }
+  return new Set(ids);
+}
+
+function isEntityAllowed(id, allowedEntities, domain) {
+  return typeof id === 'string' && ENTITY_ID_PATTERN.test(id)
+    && (!domain || id.startsWith(`${domain}.`)) && allowedEntities.has(id);
+}
+
+function isServiceTargetAllowed(domain, data, allowedEntities) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)
+      || ['area_id', 'device_id', 'floor_id', 'label_id', 'target']
+        .some((selector) => Object.hasOwn(data, selector))) return false;
+  const entityIds = data?.entity_id;
+  const ids = Array.isArray(entityIds) ? entityIds : [entityIds];
+  return ids.length > 0 && ids.every((id) =>
+    isEntityAllowed(id, allowedEntities, domain === 'homeassistant' ? undefined : domain));
+}
+
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 /** "host:443" and "host" are the same address; so are "host:80" and "host". */
@@ -97,9 +128,10 @@ function normalizeHost(host) {
  * 2. Older browsers (e.g. an old wall tablet) send only Origin. It must
  *    match the address the browser used, which HA ingress passes on as
  *    X-Forwarded-Host (Host is accepted as well).
- * 3. With neither header the request isn't from a web page (curl, HA's
- *    rest_command, another add-on) and passes: browsers from recent years
- *    send at least one of the two on every cross-origin write.
+ * 3. With neither header the CSRF check passes: browsers from recent years
+ *    send at least one of the two on every cross-origin write. This is NOT
+ *    authentication; server.js first checks the ingress source or browser
+ *    password, then checks a parent/display session on protected routes.
  *
  * Family's own fetch() and sendBeacon() calls carry Sec-Fetch-Site:
  * same-origin (or a matching Origin), so saving still works. HA's
@@ -142,6 +174,10 @@ module.exports = {
   TOGGLE_DOMAINS,
   isServiceAllowed,
   isProxyRequestAllowed,
+  isTrustedIngressAddress,
+  parseAllowedEntities,
+  isEntityAllowed,
+  isServiceTargetAllowed,
   isCrossOriginWrite,
   describeRequester,
 };

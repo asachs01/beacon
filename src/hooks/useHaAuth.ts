@@ -42,11 +42,16 @@ async function readSavedLogin(): Promise<Omit<HaAuthState, 'loading'>> {
 /**
  * Puts the login saved by onboarding into the config, where the HA client
  * and REST calls read it. Call before the app renders: onboarding reloads
- * the page once it has saved the login. Skipped when the add-on or the
- * build supplies the connection.
+ * the page once it has saved the login. Server-backed deployments erase
+ * any old browser token instead of loading it into the client.
  */
 export async function applySavedLogin(): Promise<void> {
-  if (window.__BEACON_CONFIG__ || getConfig().ha_token) return;
+  if (window.__BEACON_CONFIG__) {
+    await removeSecureItem(StorageKeys.HA_TOKEN);
+    localStorage.removeItem('beacon_family_members');
+    return;
+  }
+  if (getConfig().ha_token) return;
   const { isOnboarded, haUrl, haToken } = await readSavedLogin();
   if (!isOnboarded) return;
   patchConfig(haUrl ? { ha_url: haUrl, ha_token: haToken } : { ha_token: haToken });

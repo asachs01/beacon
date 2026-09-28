@@ -1,13 +1,25 @@
 #!/usr/bin/with-contenv bashio
 # Beacon -- Home Assistant Add-on entry point
 
-# Read options from /data/options.json (populated by HA Supervisor)
-THEME="$(bashio::config 'theme' 2>/dev/null || echo 'skylight')"
-AUTO_DARK_MODE="$(bashio::config 'auto_dark_mode' 2>/dev/null || echo 'true')"
-WEATHER_ENTITY="$(bashio::config 'weather_entity' 2>/dev/null || echo 'weather.home')"
-PHOTO_DIRECTORY="$(bashio::config 'photo_directory' 2>/dev/null || echo '/media/beacon/photos')"
-PHOTO_INTERVAL="$(bashio::config 'photo_interval' 2>/dev/null || echo '30')"
-SCREEN_SAVER_TIMEOUT="$(bashio::config 'screen_saver_timeout' 2>/dev/null || echo '5')"
+if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
+  # Supervisor options take precedence in the add-on.
+  THEME="$(bashio::config 'theme' 2>/dev/null || echo 'skylight')"
+  AUTO_DARK_MODE="$(bashio::config 'auto_dark_mode' 2>/dev/null || echo 'true')"
+  WEATHER_ENTITY="$(bashio::config 'weather_entity' 2>/dev/null || echo 'weather.home')"
+  PHOTO_DIRECTORY="$(bashio::config 'photo_directory' 2>/dev/null || echo '/media/beacon/photos')"
+  PHOTO_INTERVAL="$(bashio::config 'photo_interval' 2>/dev/null || echo '30')"
+  SCREEN_SAVER_TIMEOUT="$(bashio::config 'screen_saver_timeout' 2>/dev/null || echo '5')"
+  export BEACON_PARENT_PIN="$(bashio::config 'parent_pin' 2>/dev/null || true)"
+  export BEACON_ALLOWED_ENTITIES="$(bashio::config 'allowed_entities' 2>/dev/null || true)"
+  export BEACON_HOST="0.0.0.0"
+else
+  THEME="${THEME:-skylight}"
+  AUTO_DARK_MODE="${AUTO_DARK_MODE:-true}"
+  WEATHER_ENTITY="${WEATHER_ENTITY:-weather.home}"
+  PHOTO_DIRECTORY="${PHOTO_DIRECTORY:-/media/beacon/photos}"
+  PHOTO_INTERVAL="${PHOTO_INTERVAL:-30}"
+  SCREEN_SAVER_TIMEOUT="${SCREEN_SAVER_TIMEOUT:-5}"
+fi
 
 # Fetch this add-on's own slug from the Supervisor API. /addons/self/* is
 # callable with just the base SUPERVISOR_TOKEN, no extra permissions
@@ -24,12 +36,12 @@ if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
   if [ "${ADDON_SELF_STATUS}" = "200" ]; then
     ADDON_SLUG="$(echo "${ADDON_SELF_BODY}" | jq -r '.data.slug // empty' 2>/dev/null || echo '')"
   fi
-  if [ -z "${ADDON_SLUG}" ]; then
+  if [ -z "${ADDON_SLUG}" ] && [ -n "${SUPERVISOR_TOKEN:-}" ]; then
     bashio::log.warning "Supervisor /addons/self/info returned status ${ADDON_SELF_STATUS}: ${ADDON_SELF_BODY}"
   fi
 fi
 if [ -z "${ADDON_SLUG}" ]; then
-  bashio::log.warning "Could not determine add-on slug from Supervisor — Kid Display links will fall back to the current page URL."
+  bashio::log.warning "Could not determine add-on slug from Supervisor — Kid Display links cannot be shared."
 else
   bashio::log.info "Add-on slug resolved: ${ADDON_SLUG}"
 fi
@@ -38,30 +50,29 @@ fi
 # never holds one; see server.js).
 if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
   bashio::log.info "Using the API proxy with the Supervisor token."
+elif [ -n "${HA_TOKEN:-}" ] && [ -n "${HA_URL:-}" ]; then
+  bashio::log.info "Using the API proxy with standalone Home Assistant credentials."
 else
-  bashio::log.warning "No Supervisor token. Calendar/list integrations will not work."
+  bashio::log.warning "No Home Assistant credentials. Running in local-only mode."
 fi
 
 # The proxy server handles /api/* requests — the browser always uses same-origin.
-# ha_url stays empty so the frontend uses window.location.origin (the proxy).
-# ha_token is cleared in the runtime config — the proxy injects auth server-side.
-# This means zero config needed from the user for HA connectivity.
-HA_URL=""
-HA_BROWSER_TOKEN=""
+# ha_url stays empty in the browser even when standalone HA_URL is set.
+# The server alone reads HA_URL and HA_TOKEN; neither is sent to the page.
 
 # Generate runtime-config.js using node for proper JSON escaping (prevents injection)
 CONFIG_JS="/app/dist/runtime-config.js"
 # The options go before `node` so they're in its environment. (They used to
 # follow the script, where node only sees them as arguments: every add-on
 # option was ignored and runtime-config.js always had the defaults.)
-HA_URL="${HA_URL}" HA_BROWSER_TOKEN="${HA_BROWSER_TOKEN}" \
-  THEME="${THEME}" AUTO_DARK_MODE="${AUTO_DARK_MODE}" WEATHER_ENTITY="${WEATHER_ENTITY}" \
+THEME="${THEME}" AUTO_DARK_MODE="${AUTO_DARK_MODE}" WEATHER_ENTITY="${WEATHER_ENTITY}" \
   PHOTO_DIRECTORY="${PHOTO_DIRECTORY}" PHOTO_INTERVAL="${PHOTO_INTERVAL}" \
   SCREEN_SAVER_TIMEOUT="${SCREEN_SAVER_TIMEOUT}" ADDON_SLUG="${ADDON_SLUG}" \
   node -e "
   const config = {
-    ha_url: process.env.HA_URL || '',
-    ha_token: process.env.HA_BROWSER_TOKEN || '',
+    ha_url: '',
+    ha_token: '',
+    ha_available: Boolean(process.env.SUPERVISOR_TOKEN || (process.env.HA_URL && process.env.HA_TOKEN)),
     theme: process.env.THEME || 'skylight',
     auto_dark_mode: process.env.AUTO_DARK_MODE !== 'false',
     weather_entity: process.env.WEATHER_ENTITY || 'weather.home',
@@ -82,5 +93,5 @@ if ! grep -q 'runtime-config.js' "${INDEX_HTML}"; then
   sed -i 's|</head>|<script src="./runtime-config.js"></script></head>|' "${INDEX_HTML}"
 fi
 
-bashio::log.info "Starting Family server on port 3000 (API proxy enabled)..."
+bashio::log.info "Starting Family server on port 3000..."
 exec node /app/server.js

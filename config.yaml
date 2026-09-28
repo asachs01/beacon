@@ -15,8 +15,6 @@ ingress_port: 3000
 panel_icon: mdi:calendar-clock
 panel_title: Family
 homeassistant_api: true
-hassio_api: true
-auth_api: true
 options:
   theme: "skylight"
   auto_dark_mode: true
@@ -24,6 +22,8 @@ options:
   photo_directory: "/media/beacon/photos"
   photo_interval: 30
   screen_saver_timeout: 5
+  allowed_entities: ""
+  parent_pin: null
 schema:
   theme: str
   auto_dark_mode: bool
@@ -31,3 +31,5 @@ schema:
   photo_directory: str
   photo_interval: int
   screen_saver_timeout: int
+  allowed_entities: str
+  parent_pin: password

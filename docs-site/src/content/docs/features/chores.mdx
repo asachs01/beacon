@@ -160,7 +160,7 @@ Members with zero earnings still appear on the leaderboard (at the bottom).
 
 ## Data storage
 
-Chore data is stored in the browser's localStorage:
+In the Family add-on and standalone Docker, chore data is stored by the server under `/data` using the atomic `/beacon-collection/*` API. Browser localStorage is an offline/initial-render cache, not the authoritative source:
 
 | Key | Contents |
 |-----|----------|
@@ -168,7 +168,7 @@ Chore data is stored in the browser's localStorage:
 | `beacon_completions` | Log of all chore completions with timestamps |
 | `beacon_streaks` | Streak records per member |
 
-This data persists across page reloads but is tied to the specific browser/device.
+All displays using the same server read the same collections. The add-on retains `/data` across upgrades; for Docker, mount and back up a volume at `/data`. Direct development/native use without that server may be local-only.
 
 ---
 

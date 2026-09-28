@@ -3,7 +3,7 @@ export interface FamilyMember {
   name: string;
   avatar: string; // emoji or image URL
   color: string; // hex color
-  pin?: string; // 4-6 digit PIN
+  has_pin?: boolean; // server reports whether a PIN is set, never its value
   role: 'parent' | 'child';
   calendar_entity?: string; // HA calendar entity_id (primary calendar)
   /** Additional HA calendar entity_ids linked to this member (e.g. a
@@ -12,6 +12,8 @@ export interface FamilyMember {
    *  remains the primary/back-compat single-calendar field. */
   additional_calendar_entities?: string[];
 }
+
+export type FamilyMemberInput = Omit<FamilyMember, 'id' | 'has_pin'> & { pin?: string };
 
 export interface Chore {
   id: string;
