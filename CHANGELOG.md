@@ -1,3 +1,10 @@
+## [1.59.3](https://github.com/f1f1f1f1f1f1/Family/compare/v1.59.2...v1.59.3) (2026-09-28)
+
+
+### Bug Fixes
+
+* correctness and robustness fixes from a full code review ([f966e27](https://github.com/f1f1f1f1f1f1/Family/commit/f966e27b89fef9a8ea5562200eb9ac15105fc7da))
+
 ## [1.59.2](https://github.com/f1f1f1f1f1f1/Family/compare/v1.59.1...v1.59.2) (2026-09-27)
 
 
