@@ -14,6 +14,9 @@ function loadEntityOptions(): Promise<EntityOption[]> {
   if (!entityOptionsRequest) {
     entityOptionsRequest = getAllEntityStates()
       .then((states) => states
+        // Skip unavailable entities: they can't be controlled, and picking a
+        // todo one makes get_items answer HTTP 500 (see CLAUDE.md).
+        .filter((state) => state.state !== 'unavailable')
         .map((state) => ({
           entity_id: state.entity_id,
           label: typeof state.attributes.friendly_name === 'string'

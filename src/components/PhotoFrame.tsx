@@ -34,6 +34,7 @@ interface PhotoFrameProps {
   onMusicNext?: () => void;
   onMusicPrevious?: () => void;
   onMusicSetVolume?: (level: number) => void;
+  onMusicToggleMute?: (muted: boolean) => void;
   onBack?: () => void;
 }
 
@@ -58,6 +59,7 @@ export function PhotoFrame({
   onMusicNext,
   onMusicPrevious,
   onMusicSetVolume,
+  onMusicToggleMute,
   onBack,
 }: PhotoFrameProps) {
   const {
@@ -249,7 +251,7 @@ export function PhotoFrame({
       )}
 
       {/* Music bar overlay */}
-      {musicPlayer && onMusicPlay && onMusicPause && onMusicNext && onMusicPrevious && onMusicSetVolume && (
+      {musicPlayer && onMusicPlay && onMusicPause && onMusicNext && onMusicPrevious && onMusicSetVolume && onMusicToggleMute && (
         <div className="photo-frame-music">
           <NowPlayingBar
             player={musicPlayer}
@@ -258,6 +260,7 @@ export function PhotoFrame({
             onNext={onMusicNext}
             onPrevious={onMusicPrevious}
             onSetVolume={onMusicSetVolume}
+            onToggleMute={onMusicToggleMute}
           />
         </div>
       )}

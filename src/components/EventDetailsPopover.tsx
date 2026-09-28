@@ -32,9 +32,15 @@ export function EventDetailsPopover({ event, anchor, onClose, onEdit, timeFormat
   useEffect(() => {
     const handlePointerDown = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node;
-      if (ref.current && !ref.current.contains(target)) {
-        onClose();
+      if (ref.current && ref.current.contains(target)) return;
+      // A tap on this event's own block is handled by that block's click,
+      // which toggles the popover closed; closing here first would let the
+      // click reopen it, so the popover could never be dismissed by re-tapping.
+      if (target instanceof Element) {
+        const block = target.closest('[data-event-id]');
+        if (block && block.getAttribute('data-event-id') === event.id) return;
       }
+      onClose();
     };
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -47,7 +53,7 @@ export function EventDetailsPopover({ event, anchor, onClose, onEdit, timeFormat
       document.removeEventListener('touchstart', handlePointerDown);
       document.removeEventListener('keydown', handleKey);
     };
-  }, [onClose]);
+  }, [onClose, event.id]);
 
   const accent = getFullColor(event.color);
 

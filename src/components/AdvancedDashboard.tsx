@@ -5,7 +5,7 @@ import { DashboardGridStack } from './cards/DashboardGridStack';
 import { DashboardViewTabs } from './cards/DashboardViewTabs';
 import { LazyBoundary } from './LazyBoundary';
 import { lazyNamed } from '../utils/lazy-screen';
-import { DashboardCard, DashboardCardContext, DashboardRegionLayout } from '../types/dashboard-cards';
+import { DashboardCard, DashboardCardContext } from '../types/dashboard-cards';
 
 // Only used while editing the classic layout; brings dnd-kit along.
 const DashboardRegionEditor = lazyNamed(() => import('./cards/DashboardRegionEditor'), 'DashboardRegionEditor');
@@ -29,11 +29,7 @@ function renderCard(card: DashboardCard, context: DashboardCardContext) {
  */
 export function AdvancedDashboard({ layout, context }: AdvancedDashboardProps) {
   const [editMode, setEditMode] = useState(false);
-  const { layout: regions, updateLayout, views, activeViewId, setActiveViewId, addView, renameView, removeView } = useDashboardLayout(layout);
-
-  const updateRegion = (region: keyof DashboardRegionLayout, cards: DashboardCard[]) => {
-    updateLayout({ ...regions, [region]: cards });
-  };
+  const { layout: regions, updateRegion, views, activeViewId, setActiveViewId, addView, renameView, removeView } = useDashboardLayout(layout);
 
   // ─── Classic: clock + three agenda columns (Today | This Week | Tasks) ───
   if (layout === 'classic') {

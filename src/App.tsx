@@ -295,12 +295,14 @@ export function App() {
     : startOfWeek(dashboardDate, { weekStartsOn: settings.weekStartsOn })).getTime();
   const fetchWeekStart = useMemo(() => new Date(fetchWeekStartMs), [fetchWeekStartMs]);
 
-  // Helper: refetch events for a given week, with one extra day on either side
-  // so multi-day events that bleed in/out of the visible week still render.
+  // Helper: refetch events for a given week, with one extra day before and a
+  // second week after. The extra day catches multi-day events bleeding in; the
+  // extra week covers the dashboard's "This Week" column, which runs 7 days
+  // past the viewed day and so can reach the day after next week's start.
   const refetchEventsForWeek = useCallback(
     async (weekStart: Date) => {
       const rangeStart = addDays(weekStart, -1);
-      const rangeEnd = addDays(weekStart, 8);
+      const rangeEnd = addDays(weekStart, 15);
       await fetchEvents(rangeStart.toISOString(), rangeEnd.toISOString());
     },
     [fetchEvents],
@@ -713,6 +715,7 @@ export function App() {
               onMusicNext={() => music.activePlayer && music.next(music.activePlayer.entity_id)}
               onMusicPrevious={() => music.activePlayer && music.previous(music.activePlayer.entity_id)}
               onMusicSetVolume={(v) => music.activePlayer && music.setVolume(v, music.activePlayer.entity_id)}
+              onMusicToggleMute={(m) => music.activePlayer && music.setMuted(m, music.activePlayer.entity_id)}
               onBack={() => setActiveView('dashboard')}
             />
           </LazyBoundary>
@@ -813,6 +816,7 @@ export function App() {
           onNext={() => music.next(music.activePlayer!.entity_id)}
           onPrevious={() => music.previous(music.activePlayer!.entity_id)}
           onSetVolume={(v) => music.setVolume(v, music.activePlayer!.entity_id)}
+          onToggleMute={(m) => music.setMuted(m, music.activePlayer!.entity_id)}
           onExpand={() => setActiveView('music')}
         />
       )}

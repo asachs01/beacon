@@ -224,12 +224,13 @@ describe('useDashboardLayout across displays', () => {
     const kitchen = await openDisplay();
     const clock = [card('clock-weather', { x: 0, y: 0, w: 24, h: 2 })];
 
-    act(() => kitchen.current.updateLayout(regions({ topbar: clock })));
+    act(() => kitchen.current.updateRegion('topbar', clock));
     await waitFor(() => expect(server.views[0]).toMatchObject({ customized: true }));
 
     act(() => hallway.current.renameView('default-view', 'Home'));
     await waitFor(() => expect(server.views[0]).toMatchObject({ name: 'Home' }));
-    expect(server.views[0]).toMatchObject({ customized: true, regions: regions({ topbar: clock }) });
+    expect(server.views[0]).toMatchObject({ customized: true });
+    expect(server.views[0].regions.topbar).toEqual(clock);
   });
 
   it('shows the tab chosen on this display only, without saving it', async () => {
@@ -266,7 +267,7 @@ describe('useDashboardLayout across displays', () => {
   it('follows the preset until the primary view is edited', async () => {
     const display = await openDisplay();
     act(() => display.current.addView('Kitchen'));
-    act(() => display.current.updateLayout(regions({ main: [card('agenda-week')] })));
+    act(() => display.current.updateRegion('main', [card('agenda-week')]));
     act(() => display.current.setActiveViewId('default-view'));
 
     expect(display.current.customized).toBe(false);

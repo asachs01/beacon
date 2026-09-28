@@ -20,6 +20,7 @@ const handlers = () => ({
   onNext: vi.fn(),
   onPrevious: vi.fn(),
   onSetVolume: vi.fn(),
+  onToggleMute: vi.fn(),
 });
 
 beforeEach(() => {
@@ -61,5 +62,20 @@ describe('NowPlayingBar', () => {
     // A report from before the player changed
     rerender(<NowPlayingBar player={{ ...livingRoom, volume_level: 0.42 }} {...on} />);
     expect(slider()).toHaveValue('0.7');
+  });
+
+  // The button used to route through onSetVolume, which always unmutes, so it
+  // could only zero the volume and never actually mute.
+  it('mutes and unmutes through onToggleMute', () => {
+    const on = handlers();
+    const { rerender } = render(<NowPlayingBar player={livingRoom} {...on} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mute' }));
+    expect(on.onToggleMute).toHaveBeenLastCalledWith(true);
+    expect(on.onSetVolume).not.toHaveBeenCalled();
+
+    rerender(<NowPlayingBar player={{ ...livingRoom, is_volume_muted: true }} {...on} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Unmute' }));
+    expect(on.onToggleMute).toHaveBeenLastCalledWith(false);
   });
 });

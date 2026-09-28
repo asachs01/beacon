@@ -44,7 +44,15 @@ export function Leaderboard({ open, onClose }: LeaderboardProps) {
   const [start, end] = period === 'week' ? getWeekRange(settings.weekStartsOn) : getMonthRange();
 
   useEffect(() => {
-    getEarningsForPeriod(start, end).then(setEarnings);
+    // Ignore a resolve from a period we've since switched away from, so a
+    // slower earlier fetch can't overwrite the current period's totals.
+    let cancelled = false;
+    getEarningsForPeriod(start, end).then((e) => {
+      if (!cancelled) setEarnings(e);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [start, end, getEarningsForPeriod]);
 
   // Build ranked list — include members with zero earnings too
