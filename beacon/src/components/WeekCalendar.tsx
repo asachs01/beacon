@@ -24,6 +24,7 @@ interface WeekCalendarProps {
   onSlotClick: (date: string, hour: number) => void;
   onEventReschedule?: (event: CalendarEvent, newDate: string, newHour: number) => void;
   onVisibleWeekChange?: (weekStart: Date) => void;
+  weekStartsOn: 0 | 1;
 }
 
 const START_HOUR = 7;
@@ -67,9 +68,9 @@ interface MultiDaySpan {
   lane: number;
 }
 
-export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule, onVisibleWeekChange }: WeekCalendarProps) {
+export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule, onVisibleWeekChange, weekStartsOn }: WeekCalendarProps) {
   const today = new Date();
-  const todayWeekStart = startOfWeek(today, { weekStartsOn: 0 });
+  const todayWeekStart = startOfWeek(today, { weekStartsOn });
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const forecast = useWeatherForecast();
@@ -77,9 +78,9 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
   // Week navigation: offset in weeks from today's week (0 = current, +1 = next, -1 = prev)
   const [weekOffset, setWeekOffset] = useState(0);
   const weekStart = useMemo(
-    () => startOfWeek(addWeeks(today, weekOffset), { weekStartsOn: 0 }),
+    () => startOfWeek(addWeeks(today, weekOffset), { weekStartsOn }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [weekOffset],
+    [weekOffset, weekStartsOn],
   );
 
   // Notify parent so it can refetch events for the visible week if needed
