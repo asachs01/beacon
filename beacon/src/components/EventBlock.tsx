@@ -1,5 +1,6 @@
 import { format, parseISO } from 'date-fns';
 import { CalendarEvent, getPastelColor, getFullColor } from '../types';
+import { useTranslation } from '../i18n';
 
 interface EventBlockProps {
   event: CalendarEvent;
@@ -14,13 +15,14 @@ interface EventBlockProps {
 }
 
 export function EventBlock({ event, onClick, style, allDay, multiDay, draggable, expanded, onDragStart, onDragEnd }: EventBlockProps) {
+  const { t, dateLocale } = useTranslation();
   const pastel = getPastelColor(event.color);
   const full = getFullColor(event.color);
   const isPast = parseISO(event.end).getTime() < Date.now();
 
   const timeLabel = event.allDay
-    ? 'All day'
-    : `${format(parseISO(event.start), 'h:mm')} - ${format(parseISO(event.end), 'h:mm a')}`;
+    ? t('common.allDay')
+    : `${format(parseISO(event.start), 'h:mm', { locale: dateLocale })} - ${format(parseISO(event.end), 'h:mm a', { locale: dateLocale })}`;
 
   // For multi-day bars rendered inside the spanning container,
   // we just render content (the outer button is handled by WeekCalendar)

@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import beaconIcon from '../assets/beacon-app-icon.svg';
+import { useTranslation, type TranslationKey } from '../i18n';
 
 export type SidebarView = 'dashboard' | 'calendar' | 'chores' | 'grocery' | 'tasks' | 'leaderboard' | 'music' | 'photos' | 'timer' | 'weather' | 'settings';
 
@@ -30,20 +31,20 @@ const STROKE_WIDTH = 1.5;
 interface NavItem {
   id: SidebarView;
   icon: React.ReactNode;
-  label: string;
+  labelKey: TranslationKey;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', icon: <LayoutDashboard size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Dashboard' },
-  { id: 'calendar', icon: <Calendar size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Calendar' },
-  { id: 'chores', icon: <ListChecks size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Chores' },
-  { id: 'grocery', icon: <ShoppingCart size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Lists' },
-  { id: 'tasks', icon: <ClipboardList size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Tasks' },
-  { id: 'leaderboard', icon: <Trophy size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Leaderboard' },
-  { id: 'music', icon: <Music size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Music' },
-  { id: 'photos', icon: <Image size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Photos' },
-  { id: 'timer', icon: <TimerIcon size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Timer' },
-  { id: 'weather', icon: <CloudSun size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, label: 'Weather' },
+  { id: 'dashboard', icon: <LayoutDashboard size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, labelKey: 'nav.dashboard' },
+  { id: 'calendar', icon: <Calendar size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, labelKey: 'nav.calendar' },
+  { id: 'chores', icon: <ListChecks size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, labelKey: 'nav.chores' },
+  { id: 'grocery', icon: <ShoppingCart size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, labelKey: 'nav.grocery' },
+  { id: 'tasks', icon: <ClipboardList size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, labelKey: 'nav.tasks' },
+  { id: 'leaderboard', icon: <Trophy size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, labelKey: 'nav.leaderboard' },
+  { id: 'music', icon: <Music size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, labelKey: 'nav.music' },
+  { id: 'photos', icon: <Image size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, labelKey: 'nav.photos' },
+  { id: 'timer', icon: <TimerIcon size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, labelKey: 'nav.timer' },
+  { id: 'weather', icon: <CloudSun size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />, labelKey: 'nav.weather' },
 ];
 
 /** Items shown directly in the mobile bottom tab bar */
@@ -54,6 +55,7 @@ export function Sidebar({
   onChangeView,
   position = 'left',
 }: SidebarProps) {
+  const { t } = useTranslation();
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
 
   const mobileTabItems = NAV_ITEMS.filter((item) => MOBILE_TAB_IDS.includes(item.id));
@@ -69,7 +71,7 @@ export function Sidebar({
       {/* Desktop sidebar */}
       <nav
         className={`sidebar sidebar--desktop sidebar--${position}`}
-        aria-label="Main navigation"
+        aria-label={t('nav.mainNavigation')}
         style={position === 'bottom' ? { display: 'none' } : undefined}
       >
         {/* Beacon logo */}
@@ -85,8 +87,8 @@ export function Sidebar({
               type="button"
               className={`sidebar-icon ${activeView === item.id ? 'sidebar-icon--active' : ''}`}
               onClick={() => onChangeView(item.id)}
-              title={item.label}
-              aria-label={item.label}
+              title={t(item.labelKey)}
+              aria-label={t(item.labelKey)}
             >
               {item.icon}
             </button>
@@ -102,8 +104,8 @@ export function Sidebar({
             type="button"
             className={`sidebar-icon ${activeView === 'settings' ? 'sidebar-icon--active' : ''}`}
             onClick={() => onChangeView('settings')}
-            title="Settings"
-            aria-label="Settings"
+            title={t('nav.settings')}
+            aria-label={t('nav.settings')}
           >
             <Settings size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
           </button>
@@ -111,17 +113,17 @@ export function Sidebar({
       </nav>
 
       {/* Mobile bottom tab bar (hidden on desktop via CSS) */}
-      <nav className="mobile-tab-bar" aria-label="Main navigation">
+      <nav className="mobile-tab-bar" aria-label={t('nav.mainNavigation')}>
         {mobileTabItems.map((item) => (
           <button
             key={item.id}
             type="button"
             className={`mobile-tab ${activeView === item.id ? 'mobile-tab--active' : ''}`}
             onClick={() => handleMobileNav(item.id)}
-            aria-label={item.label}
+            aria-label={t(item.labelKey)}
           >
             {item.icon}
-            <span className="mobile-tab-label">{item.label}</span>
+            <span className="mobile-tab-label">{t(item.labelKey)}</span>
           </button>
         ))}
         {/* More button */}
@@ -129,10 +131,10 @@ export function Sidebar({
           type="button"
           className={`mobile-tab ${mobileMoreOpen ? 'mobile-tab--active' : ''}`}
           onClick={() => setMobileMoreOpen((prev) => !prev)}
-          aria-label="More"
+          aria-label={t('nav.more')}
         >
           <MoreHorizontal size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-          <span className="mobile-tab-label">More</span>
+          <span className="mobile-tab-label">{t('nav.more')}</span>
         </button>
 
         {/* Overflow menu */}
@@ -144,12 +146,12 @@ export function Sidebar({
             />
             <div className="mobile-more-menu">
               <div className="mobile-more-header">
-                <span className="mobile-more-title">More</span>
+                <span className="mobile-more-title">{t('nav.more')}</span>
                 <button
                   type="button"
                   className="mobile-more-close"
                   onClick={() => setMobileMoreOpen(false)}
-                  aria-label="Close menu"
+                  aria-label={t('nav.closeMenu')}
                 >
                   <X size={20} strokeWidth={2} />
                 </button>
@@ -162,7 +164,7 @@ export function Sidebar({
                   onClick={() => handleMobileNav(item.id)}
                 >
                   {item.icon}
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </button>
               ))}
               <button
@@ -171,7 +173,7 @@ export function Sidebar({
                 onClick={() => handleMobileNav('settings')}
               >
                 <Settings size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-                <span>Settings</span>
+                <span>{t('nav.settings')}</span>
               </button>
             </div>
           </>

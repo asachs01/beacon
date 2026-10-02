@@ -36,6 +36,7 @@ import { FocusView } from './components/focus/FocusView';
 import { getFocusMemberId, clearFocusMode, setDeviceFocusMember } from './focus';
 import { CalendarEvent, resolveCalendarColor } from './types';
 import { getConfig, patchConfig } from './config';
+import { I18nContext, createI18n } from './i18n';
 
 const config = getConfig();
 
@@ -51,6 +52,9 @@ export function App() {
     importSettings,
     clearLocalStorage,
   } = useSettings();
+
+  const i18n = useMemo(() => createI18n(settings.locale), [settings.locale]);
+  const { t } = i18n;
 
   const {
     members,
@@ -561,12 +565,13 @@ export function App() {
   }
 
   return (
+    <I18nContext.Provider value={i18n}>
     <div className={`beacon beacon--sidebar-${sidebarPos} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
       {focusInvalid && (
         <div className="focus-invalid-banner">
-          Kid display member not found — showing the full app.
+          {t('app.kidDisplayNotFound')}
           <button type="button" className="settings-btn" onClick={handleExitFocus}>
-            Dismiss
+            {t('app.dismiss')}
           </button>
         </div>
       )}
@@ -612,7 +617,7 @@ export function App() {
             <ChoresView />
           ) : (
             <div className="chores-empty" style={{ padding: 48 }}>
-              Chores are disabled. Enable them in Settings → Chores to use this screen.
+              {t('app.choresDisabled')}
             </div>
           )
         ) : activeView === 'music' ? (
@@ -671,11 +676,11 @@ export function App() {
               <div className="header-left">
                 <span className="header-family-name">{settings.familyName}</span>
                 <span className="header-separator" />
-                <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
+                <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy', { locale: i18n.dateLocale })}</span>
                 {!connected && (
                   <div className="connection-status">
                     <span className="connection-dot" />
-                    Connecting...
+                    {t('app.connecting')}
                   </div>
                 )}
               </div>
@@ -779,8 +784,9 @@ export function App() {
 
       {/* Demo indicator — only show outside of add-on ingress */}
       {!connected && !isHaManaged && (
-        <div className="demo-badge">Demo Mode</div>
+        <div className="demo-badge">{t('app.demoMode')}</div>
       )}
     </div>
+    </I18nContext.Provider>
   );
 }

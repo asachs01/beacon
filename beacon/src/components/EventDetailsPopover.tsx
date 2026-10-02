@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { format, parseISO } from 'date-fns';
 import { CalendarEvent, getFullColor } from '../types';
+import { useTranslation } from '../i18n';
 
 interface EventDetailsPopoverProps {
   event: CalendarEvent;
@@ -15,7 +16,14 @@ const POPOVER_MARGIN = 8;
 const VIEWPORT_PAD = 16;
 const ESTIMATED_HEIGHT = 240;
 
+const RECURRENCE_LABEL_KEYS = {
+  daily: 'eventModal.repeatDaily',
+  weekly: 'eventModal.repeatWeekly',
+  monthly: 'eventModal.repeatMonthly',
+} as const;
+
 export function EventDetailsPopover({ event, anchor, onClose, onEdit }: EventDetailsPopoverProps) {
+  const { t, dateLocale } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number }>(() => computePosition(anchor, ESTIMATED_HEIGHT));
 
@@ -51,13 +59,14 @@ export function EventDetailsPopover({ event, anchor, onClose, onEdit }: EventDet
   const startD = parseISO(event.start);
   const endD = parseISO(event.end);
   const sameDay = format(startD, 'yyyy-MM-dd') === format(endD, 'yyyy-MM-dd');
+  const fmt = (date: Date, pattern: string) => format(date, pattern, { locale: dateLocale });
   const fullTime = event.allDay
     ? sameDay
-      ? `${format(startD, 'EEE, MMM d')} · All day`
-      : `${format(startD, 'MMM d')} – ${format(endD, 'MMM d')} · All day`
+      ? t('eventDetails.sameDayAllDay', { date: fmt(startD, 'EEE, MMM d') })
+      : t('eventDetails.rangeAllDay', { startDate: fmt(startD, 'MMM d'), endDate: fmt(endD, 'MMM d') })
     : sameDay
-      ? `${format(startD, 'EEE, MMM d')} · ${format(startD, 'h:mm a')} – ${format(endD, 'h:mm a')}`
-      : `${format(startD, 'MMM d, h:mm a')} – ${format(endD, 'MMM d, h:mm a')}`;
+      ? t('eventDetails.sameDayTimed', { date: fmt(startD, 'EEE, MMM d'), startTime: fmt(startD, 'h:mm a'), endTime: fmt(endD, 'h:mm a') })
+      : t('eventDetails.rangeTimed', { startDateTime: fmt(startD, 'MMM d, h:mm a'), endDateTime: fmt(endD, 'MMM d, h:mm a') });
 
   return createPortal(
     <div
@@ -70,7 +79,7 @@ export function EventDetailsPopover({ event, anchor, onClose, onEdit }: EventDet
         width: POPOVER_WIDTH,
       }}
       role="dialog"
-      aria-label={`Event details: ${event.title}`}
+      aria-label={t('eventDetails.detailsAria', { title: event.title })}
     >
       <div className="event-details-popover-stripe" style={{ backgroundColor: accent }} />
       <div className="event-details-popover-body">
@@ -80,7 +89,7 @@ export function EventDetailsPopover({ event, anchor, onClose, onEdit }: EventDet
             type="button"
             className="event-details-popover-close"
             onClick={onClose}
-            aria-label="Close details"
+            aria-label={t('eventDetails.closeAria')}
           >
             ×
           </button>
@@ -97,7 +106,7 @@ export function EventDetailsPopover({ event, anchor, onClose, onEdit }: EventDet
           </div>
           {event.recurrence && event.recurrence !== 'none' && (
             <div className="event-details-popover-recurrence">
-              Repeats {event.recurrence}
+              {t('eventDetails.repeats', { frequency: t(RECURRENCE_LABEL_KEYS[event.recurrence]) })}
             </div>
           )}
         </div>
@@ -114,7 +123,7 @@ export function EventDetailsPopover({ event, anchor, onClose, onEdit }: EventDet
             className="event-details-popover-btn event-details-popover-btn--primary"
             onClick={onEdit}
           >
-            Open / edit
+            {t('eventDetails.openEdit')}
           </button>
         </div>
       </div>

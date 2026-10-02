@@ -2,14 +2,16 @@ import { DashboardCardProps, TodoItem } from '../../types/dashboard-cards';
 import { TaskChecklist } from '../TaskChecklist';
 import { MEMBER_COLORS } from '../../types/family';
 import type { TaskmateUser } from '../../types/taskmate';
+import { useTranslation } from '../../i18n';
 
 /** Sidebar "Tasks" section — HA todo items (optionally grouped by TaskMate user), or chores checklist fallback. */
 export function TasksCard({ context }: DashboardCardProps) {
+  const { t } = useTranslation();
   const { todoItems, onToggleTodo, taskmateUsers, filteredChores, completedChoreIds, onToggleChore, members } = context;
 
   return (
     <section className="dash-sidebar-section">
-      <h3 className="dash-sidebar-heading">Tasks</h3>
+      <h3 className="dash-sidebar-heading">{t('dashboard.tasks')}</h3>
       {todoItems.length > 0 ? (
         <TaskGroups items={todoItems} users={taskmateUsers} onToggleTodo={onToggleTodo} />
       ) : (
@@ -31,6 +33,7 @@ function TaskRow({
   item: TodoItem;
   onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
 }) {
+  const { t } = useTranslation();
   const done = item.status === 'completed';
   return (
     <li className={`task-checklist-item${done ? ' task-checklist-item--done' : ''}`}>
@@ -39,7 +42,7 @@ function TaskRow({
         className={`task-checkbox${done ? ' task-checkbox--checked' : ''}`}
         disabled={done}
         onClick={() => onToggleTodo?.(item.uid, item.status, item.listId)}
-        aria-label={done ? `Completed ${item.summary}` : `Complete ${item.summary}`}
+        aria-label={done ? t('dashboard.completedItem', { name: item.summary }) : t('dashboard.completeItem', { name: item.summary })}
       >
         <span className="task-checkbox-box">
           {done && (
@@ -70,6 +73,7 @@ function TaskGroups({
   users: TaskmateUser[];
   onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
 }) {
+  const { t } = useTranslation();
   const sorted = [...items].sort(
     (a, b) => (a.status === 'completed' ? 1 : 0) - (b.status === 'completed' ? 1 : 0),
   );
@@ -87,7 +91,7 @@ function TaskGroups({
   const groups: TaskGroup[] = users.map(
     (u, i) => ({ key: u.childId, label: u.name, color: MEMBER_COLORS[i % MEMBER_COLORS.length], items: [] }),
   );
-  const shared: TaskGroup = { key: '__shared', label: 'Shared', items: [] };
+  const shared: TaskGroup = { key: '__shared', label: t('dashboard.shared'), items: [] };
 
   for (const item of sorted) {
     const bucket = item.userId ? groups.find((g) => g.key === item.userId) : undefined;

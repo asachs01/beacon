@@ -1,9 +1,11 @@
 import { DashboardCardProps } from '../../types/dashboard-cards';
 import { EventCard } from '../EventCard';
 import { readBoolean } from './card-config';
+import { useTranslation } from '../../i18n';
 
 /** Per-member calendar grid (default layout's main content). */
 export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
+  const { t } = useTranslation();
   const { members, byMember, other, todayEvents, onEventClick, selectedMemberFilter, toggleMemberFilter, isViewingToday } = context;
   const showOther = readBoolean(config, 'show_other', true);
 
@@ -17,7 +19,7 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
       <div className="dash-events-fallback">
         <div className="dashboard-events-scroll">
           {todayEvents.length === 0 ? (
-            <div className="dashboard-empty">Nothing scheduled — your day is wide open</div>
+            <div className="dashboard-empty">{t('dashboard.nothingScheduledOpen')}</div>
           ) : (
             <div className="dashboard-events-list">
               {todayEvents.map((event) => (
@@ -42,7 +44,7 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
               className="dash-member-header dash-member-header--clickable"
               onClick={() => toggleMemberFilter(member.id)}
               aria-pressed={isSelected}
-              aria-label={`Filter chores for ${member.name}`}
+              aria-label={t('dashboard.filterChoresFor', { name: member.name })}
             >
               <span
                 className="dash-member-avatar"
@@ -56,7 +58,9 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
             </button>
             <div className="dash-member-events">
               {memberEvents.length === 0 ? (
-                <div className="dash-member-empty">Nothing scheduled {isViewingToday ? 'today' : 'this day'}</div>
+                <div className="dash-member-empty">
+                  {isViewingToday ? t('dashboard.nothingScheduledToday') : t('dashboard.nothingScheduledThisDay')}
+                </div>
               ) : (
                 memberEvents.map((event) => (
                   <EventCard key={event.id} event={event} onClick={onEventClick} />
@@ -72,7 +76,7 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
             <span className="dash-member-avatar" style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border)' }}>
               📅
             </span>
-            <span className="dash-member-name">Other</span>
+            <span className="dash-member-name">{t('dashboard.other')}</span>
           </div>
           <div className="dash-member-events">
             {other.map((event) => (

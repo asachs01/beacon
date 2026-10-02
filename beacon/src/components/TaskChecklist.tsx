@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Chore, FamilyMember } from '../types/family';
 import { hapticMedium, hapticSuccess } from '../hooks/useHaptics';
+import { useTranslation } from '../i18n';
 
 interface TaskChecklistProps {
   chores: Chore[];
@@ -36,6 +37,7 @@ function AssigneeBadges({ chore, members }: { chore: Chore; members: FamilyMembe
 }
 
 export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: TaskChecklistProps) {
+  const { t } = useTranslation();
   const [animatingId, setAnimatingId] = useState<string | null>(null);
 
   const handleToggle = (choreId: string) => {
@@ -55,7 +57,7 @@ export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: 
   if (chores.length === 0) {
     return (
       <div className="task-checklist-empty">
-        No tasks for today — enjoy the free time
+        {t('taskChecklist.empty')}
       </div>
     );
   }
@@ -63,7 +65,7 @@ export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: 
   if (incomplete.length === 0) {
     return (
       <div className="task-checklist-done">
-        All done — great job!
+        {t('taskChecklist.allDone')}
       </div>
     );
   }
@@ -76,7 +78,7 @@ export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: 
             type="button"
             className={`task-checkbox ${animatingId === chore.id ? 'task-checkbox--completing' : ''}`}
             onClick={() => handleToggle(chore.id)}
-            aria-label={`Complete ${chore.name}`}
+            aria-label={t('taskChecklist.complete', { name: chore.name })}
           >
             <span className="task-checkbox-box" />
           </button>
@@ -93,7 +95,7 @@ export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: 
             type="button"
             className="task-checkbox task-checkbox--checked"
             onClick={() => handleToggle(chore.id)}
-            aria-label={`Undo ${chore.name}`}
+            aria-label={t('taskChecklist.undo', { name: chore.name })}
           >
             <span className="task-checkbox-box">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
