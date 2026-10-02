@@ -1,3 +1,15 @@
+# [1.37.0](https://github.com/asachs01/beacon/compare/v1.36.0...v1.37.0) (2026-10-02)
+
+
+### Bug Fixes
+
+* respect Week Starts On setting in week calendar ([0815b24](https://github.com/asachs01/beacon/commit/0815b24e721d7a24529c6a987290f84b7b9c74b8))
+
+
+### Features
+
+* add i18n so the Language setting translates the UI ([d334f78](https://github.com/asachs01/beacon/commit/d334f78f3f91b75db969a87bb7ca31be44d68c5d))
+
 # [1.36.0](https://github.com/asachs01/beacon/compare/v1.35.0...v1.36.0) (2026-09-19)
 
 
