@@ -4,6 +4,7 @@ import { RefreshCw, ChevronDown, Droplets, Wind } from 'lucide-react';
 import { weatherIcon, conditionLabel } from '../types/weather-icons';
 import { haFetch, callHaService, hasToken } from '../api/ha-rest';
 import { getConfig } from '../config';
+import { useTranslation } from '../i18n';
 
 interface ForecastItem {
   datetime: string;
@@ -37,6 +38,7 @@ interface CurrentWeather {
 }
 
 export function WeatherView() {
+  const { t } = useTranslation();
   const [current, setCurrent] = useState<CurrentWeather | null>(null);
   const [forecast, setForecast] = useState<ForecastItem[]>([]);
   const [hourly, setHourly] = useState<HourlyItem[]>([]);
@@ -192,7 +194,7 @@ export function WeatherView() {
               {Math.round(current.temperature)}°{unit}
             </span>
             <span className="weather-current-condition">
-              {conditionLabel(current.state)}
+              {conditionLabel(current.state, t)}
             </span>
           </div>
         </div>

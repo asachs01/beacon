@@ -4,6 +4,7 @@ import { CalendarEvent } from '../types';
 import { Chore, FamilyMember } from '../types/family';
 import { TaskChecklist } from './TaskChecklist';
 import { DashboardTodoItem } from '../hooks/useDashboardTasks';
+import { useTranslation } from '../i18n';
 
 interface CalendarSidebarProps {
   events: CalendarEvent[];
@@ -24,6 +25,7 @@ export function CalendarSidebar({
   onToggleTodo,
   members = [],
 }: CalendarSidebarProps) {
+  const { t, dateLocale } = useTranslation();
   const today = startOfDay(new Date());
 
   const todayEvents = useMemo(() => {
@@ -38,9 +40,9 @@ export function CalendarSidebar({
     <aside className="calendar-sidebar">
       {/* Today's Schedule */}
       <section className="cal-sidebar-section">
-        <h3 className="cal-sidebar-heading">Today</h3>
+        <h3 className="cal-sidebar-heading">{t('calendarSidebar.today')}</h3>
         {todayEvents.length === 0 ? (
-          <p className="cal-sidebar-empty">Nothing scheduled</p>
+          <p className="cal-sidebar-empty">{t('calendarSidebar.nothingScheduled')}</p>
         ) : (
           <ul className="cal-sidebar-events">
             {todayEvents.map((event) => (
@@ -53,7 +55,7 @@ export function CalendarSidebar({
                   <span className="cal-sidebar-event-title">{event.title}</span>
                   {event.start.includes('T') && (
                     <span className="cal-sidebar-event-time">
-                      {format(parseISO(event.start), 'h:mm a')}
+                      {format(parseISO(event.start), 'h:mm a', { locale: dateLocale })}
                     </span>
                   )}
                 </div>
@@ -65,7 +67,7 @@ export function CalendarSidebar({
 
       {/* Tasks / Chores */}
       <section className="cal-sidebar-section">
-        <h3 className="cal-sidebar-heading">Tasks</h3>
+        <h3 className="cal-sidebar-heading">{t('calendarSidebar.tasks')}</h3>
         {pendingTodos.length > 0 && onToggleTodo ? (
           <ul className="cal-sidebar-todos">
             {pendingTodos.slice(0, 8).map((item) => (
@@ -74,7 +76,7 @@ export function CalendarSidebar({
                   type="button"
                   className="cal-sidebar-todo-check"
                   onClick={() => onToggleTodo(item.uid, item.status)}
-                  aria-label={`Complete ${item.summary}`}
+                  aria-label={t('calendarSidebar.completeItem', { name: item.summary })}
                 >
                   <span className="task-checkbox-box" />
                 </button>
@@ -90,7 +92,7 @@ export function CalendarSidebar({
             members={members}
           />
         ) : (
-          <p className="cal-sidebar-empty">All clear</p>
+          <p className="cal-sidebar-empty">{t('calendarSidebar.allClear')}</p>
         )}
       </section>
     </aside>

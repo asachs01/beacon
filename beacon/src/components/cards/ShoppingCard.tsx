@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { DashboardCardProps } from '../../types/dashboard-cards';
 import { AnyListClient } from '../../api/anylist';
 import { callHaService } from '../../api/ha-rest';
+import { useTranslation } from '../../i18n';
 
 interface TodoItem {
   uid: string;
@@ -12,6 +13,7 @@ interface TodoItem {
 
 /** Sidebar "Shopping" section — configurable HA todo entity for shopping lists. */
 export function ShoppingCard({ config }: DashboardCardProps) {
+  const { t } = useTranslation();
   const shoppingEntity = (config?.shoppingEntity as string) || '';
   const [items, setItems] = useState<TodoItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -101,9 +103,9 @@ export function ShoppingCard({ config }: DashboardCardProps) {
   if (!shoppingEntity) {
     return (
       <section className="dash-sidebar-section">
-        <h3 className="dash-sidebar-heading">Shopping</h3>
+        <h3 className="dash-sidebar-heading">{t('dashboard.shopping')}</h3>
         <div className="dash-sidebar-empty">
-          Configure a shopping list in Settings → Integrations
+          {t('dashboard.shoppingNotConfigured')}
         </div>
       </section>
     );
@@ -111,7 +113,7 @@ export function ShoppingCard({ config }: DashboardCardProps) {
 
   return (
     <section className="dash-sidebar-section">
-      <h3 className="dash-sidebar-heading">Shopping</h3>
+      <h3 className="dash-sidebar-heading">{t('dashboard.shopping')}</h3>
 
       {/* Quick-add input */}
       <form className="dash-shopping-add" onSubmit={handleAdd} style={{ marginBottom: 12 }}>
@@ -119,7 +121,7 @@ export function ShoppingCard({ config }: DashboardCardProps) {
           ref={inputRef}
           type="text"
           className="dash-shopping-input"
-          placeholder="Add item..."
+          placeholder={t('dashboard.shoppingAddItemPlaceholder')}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           disabled={submitting}
@@ -137,7 +139,7 @@ export function ShoppingCard({ config }: DashboardCardProps) {
           type="submit"
           className="dash-shopping-add-btn"
           disabled={!inputValue.trim() || submitting}
-          aria-label="Add item"
+          aria-label={t('dashboard.shoppingAddItem')}
           style={{
             padding: '6px 10px',
             border: 'none',
@@ -157,11 +159,11 @@ export function ShoppingCard({ config }: DashboardCardProps) {
       {/* Items list */}
       {loading && items.length === 0 ? (
         <div style={{ padding: '12px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          Loading items...
+          {t('dashboard.shoppingLoading')}
         </div>
       ) : uncheckedItems.length === 0 ? (
         <div style={{ padding: '12px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          No items yet — add one above
+          {t('dashboard.shoppingEmpty')}
         </div>
       ) : (
         <ul className="task-checklist">
@@ -171,7 +173,7 @@ export function ShoppingCard({ config }: DashboardCardProps) {
                 type="button"
                 className="task-checkbox"
                 onClick={() => handleToggle(item)}
-                aria-label={`Check ${item.summary}`}
+                aria-label={t('dashboard.shoppingCheckItem', { name: item.summary })}
               >
                 <span className="task-checkbox-box" />
               </button>

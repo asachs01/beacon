@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { format, parseISO, addMonths } from 'date-fns';
 import { CalendarEvent, CalendarInfo, RecurrenceFrequency } from '../types';
+import { useTranslation } from '../i18n';
 
 interface EventModalProps {
   event: CalendarEvent | null;
@@ -97,6 +98,7 @@ export function EventModal({
   prefillDate,
   prefillTime,
 }: EventModalProps) {
+  const { t } = useTranslation();
   const isEditing = !!event;
   const isValidDefault = !!defaultCalendarId && calendars.some((c) => c.id === defaultCalendarId);
   const defaultCalendar = (isValidDefault ? defaultCalendarId : calendars[0]?.id) || '';
@@ -203,13 +205,13 @@ export function EventModal({
     if (f.allDay) {
       // All-day events: end date must not be before the start date.
       if (f.endDate < f.startDate) {
-        return 'End date cannot be before the start date.';
+        return t('eventModal.errorEndDateBeforeStart');
       }
     } else {
       const start = combineDateTime(f.startDate, f.startTime);
       const end = combineDateTime(f.endDate, f.endTime);
       if (!(end.getTime() > start.getTime())) {
-        return 'End time must be after the start time.';
+        return t('eventModal.errorEndBeforeStart');
       }
     }
     return null;
@@ -218,7 +220,7 @@ export function EventModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.summary.trim()) {
-      setError('Title is required.');
+      setError(t('eventModal.errorTitleRequired'));
       return;
     }
 
@@ -229,7 +231,7 @@ export function EventModal({
     }
 
     if (isEditing && event && event.hasStableId === false) {
-      setError("This event can't be edited — it has no stable ID from its calendar provider.");
+      setError(t('eventModal.errorNoStableIdEdit'));
       return;
     }
 
@@ -238,7 +240,7 @@ export function EventModal({
     try {
       await onSave(form.calendarId, form);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save event. Please try again.');
+      setError(err instanceof Error ? err.message : t('eventModal.errorSaveFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -247,7 +249,7 @@ export function EventModal({
   const handleDelete = async () => {
     if (!event) return;
     if (event.hasStableId === false) {
-      setError("This event can't be deleted — it has no stable ID from its calendar provider.");
+      setError(t('eventModal.errorNoStableIdDelete'));
       return;
     }
     setError(null);
@@ -255,7 +257,7 @@ export function EventModal({
     try {
       await onDelete(event.calendarId, event.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete event. Please try again.');
+      setError(err instanceof Error ? err.message : t('eventModal.errorDeleteFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -267,7 +269,7 @@ export function EventModal({
         <form onSubmit={handleSubmit}>
           <div className="modal-header">
             <h2 className="modal-title">
-              {isEditing ? 'Event Details' : 'New Event'}
+              {isEditing ? t('eventModal.editTitle') : t('eventModal.newTitle')}
             </h2>
             <button type="button" className="modal-close" onClick={onClose}>
               &#x2715;
@@ -276,20 +278,20 @@ export function EventModal({
 
           <div className="modal-body">
             <div className="form-field">
-              <label className="form-label" htmlFor="event-title">Title</label>
+              <label className="form-label" htmlFor="event-title">{t('eventModal.titleLabel')}</label>
               <input
                 id="event-title"
                 className="form-input"
                 type="text"
                 value={form.summary}
                 onChange={(e) => updateField('summary', e.target.value)}
-                placeholder="Event title"
+                placeholder={t('eventModal.titlePlaceholder')}
                 autoFocus
               />
             </div>
 
             <div className="form-field">
-              <label className="form-label" htmlFor="event-calendar">Calendar</label>
+              <label className="form-label" htmlFor="event-calendar">{t('eventModal.calendarLabel')}</label>
               <select
                 id="event-calendar"
                 className="form-select"
@@ -303,7 +305,7 @@ export function EventModal({
             </div>
 
             <div className="form-field form-field--toggle">
-              <label className="form-label" htmlFor="event-allday">All day</label>
+              <label className="form-label" htmlFor="event-allday">{t('common.allDay')}</label>
               <button
                 id="event-allday"
                 type="button"
@@ -318,7 +320,7 @@ export function EventModal({
 
             <div className="form-row">
               <div className="form-field">
-                <label className="form-label" htmlFor="event-start-date">Start</label>
+                <label className="form-label" htmlFor="event-start-date">{t('eventModal.startLabel')}</label>
                 <input
                   id="event-start-date"
                   className="form-input"
@@ -343,7 +345,7 @@ export function EventModal({
 
             <div className="form-row">
               <div className="form-field">
-                <label className="form-label" htmlFor="event-end-date">End</label>
+                <label className="form-label" htmlFor="event-end-date">{t('eventModal.endLabel')}</label>
                 <input
                   id="event-end-date"
                   className="form-input"
@@ -367,23 +369,23 @@ export function EventModal({
             </div>
 
             <div className="form-field">
-              <label className="form-label" htmlFor="event-recurrence">Repeats</label>
+              <label className="form-label" htmlFor="event-recurrence">{t('eventModal.repeatsLabel')}</label>
               <select
                 id="event-recurrence"
                 className="form-select"
                 value={form.recurrence}
                 onChange={(e) => updateField('recurrence', e.target.value as RecurrenceFrequency)}
               >
-                <option value="none">Does not repeat</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
+                <option value="none">{t('eventModal.repeatNone')}</option>
+                <option value="daily">{t('eventModal.repeatDaily')}</option>
+                <option value="weekly">{t('eventModal.repeatWeekly')}</option>
+                <option value="monthly">{t('eventModal.repeatMonthly')}</option>
               </select>
             </div>
 
             {form.recurrence !== 'none' && (
               <div className="form-field">
-                <label className="form-label" htmlFor="event-recurrence-end">Repeat until</label>
+                <label className="form-label" htmlFor="event-recurrence-end">{t('eventModal.repeatUntilLabel')}</label>
                 <input
                   id="event-recurrence-end"
                   className="form-input"
@@ -395,13 +397,13 @@ export function EventModal({
             )}
 
             <div className="form-field">
-              <label className="form-label" htmlFor="event-desc">Description</label>
+              <label className="form-label" htmlFor="event-desc">{t('eventModal.descriptionLabel')}</label>
               <textarea
                 id="event-desc"
                 className="form-textarea"
                 value={form.description}
                 onChange={(e) => updateField('description', e.target.value)}
-                placeholder="Add a description..."
+                placeholder={t('eventModal.descriptionPlaceholder')}
                 rows={3}
               />
             </div>
@@ -416,15 +418,15 @@ export function EventModal({
           <div className="modal-footer">
             {isEditing && (
               <button type="button" className="btn btn--danger" onClick={handleDelete} disabled={submitting}>
-                Delete
+                {t('common.delete')}
               </button>
             )}
             <div className="modal-footer-right">
               <button type="button" className="btn btn--secondary" onClick={onClose} disabled={submitting}>
-                Cancel
+                {t('common.cancel')}
               </button>
               <button type="submit" className="btn btn--primary" disabled={submitting}>
-                {isEditing ? 'Save' : 'Create'}
+                {isEditing ? t('common.save') : t('common.create')}
               </button>
             </div>
           </div>

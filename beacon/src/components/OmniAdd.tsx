@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { CalendarPlus, ShoppingCart, CheckSquare, Timer } from 'lucide-react';
 import { hapticTap } from '../hooks/useHaptics';
+import { useTranslation } from '../i18n';
 
 interface OmniAddProps {
   onAddEvent: () => void;
@@ -24,14 +25,15 @@ export function OmniAdd({
   onNavigateTimer,
   sidebarPosition = 'left',
 }: OmniAddProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const actions: ActionDef[] = [
-    { id: 'timer', label: 'Timer', icon: <Timer size={22} />, handler: onNavigateTimer },
-    { id: 'chore', label: 'Chore', icon: <CheckSquare size={22} />, handler: onAddChore },
-    { id: 'grocery', label: 'Grocery', icon: <ShoppingCart size={22} />, handler: onAddGroceryItem },
-    { id: 'event', label: 'Event', icon: <CalendarPlus size={22} />, handler: onAddEvent },
+    { id: 'timer', label: t('nav.timer'), icon: <Timer size={22} />, handler: onNavigateTimer },
+    { id: 'chore', label: t('omniAdd.chore'), icon: <CheckSquare size={22} />, handler: onAddChore },
+    { id: 'grocery', label: t('omniAdd.grocery'), icon: <ShoppingCart size={22} />, handler: onAddGroceryItem },
+    { id: 'event', label: t('omniAdd.event'), icon: <CalendarPlus size={22} />, handler: onAddEvent },
   ];
 
   const toggle = useCallback(() => {
@@ -106,7 +108,7 @@ export function OmniAdd({
         type="button"
         className="omni-add-fab"
         onClick={toggle}
-        aria-label={expanded ? 'Close quick add' : 'Quick add'}
+        aria-label={expanded ? t('omniAdd.closeQuickAdd') : t('omniAdd.quickAdd')}
         aria-expanded={expanded}
       >
         <span className={`omni-add-fab-icon ${expanded ? 'omni-add-fab-icon--open' : ''}`}>+</span>

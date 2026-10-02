@@ -1,5 +1,6 @@
 import { format, parseISO } from 'date-fns';
 import { CalendarEvent, getPastelColor, getFullColor } from '../types';
+import { useTranslation } from '../i18n';
 
 interface EventCardProps {
   event: CalendarEvent;
@@ -7,13 +8,14 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, onClick }: EventCardProps) {
+  const { t, dateLocale } = useTranslation();
   const pastel = getPastelColor(event.color);
   const full = getFullColor(event.color);
   const isPast = parseISO(event.end).getTime() < Date.now();
 
   const timeLabel = event.allDay
-    ? 'All day'
-    : `${format(parseISO(event.start), 'h:mm a')} - ${format(parseISO(event.end), 'h:mm a')}`;
+    ? t('common.allDay')
+    : `${format(parseISO(event.start), 'h:mm a', { locale: dateLocale })} - ${format(parseISO(event.end), 'h:mm a', { locale: dateLocale })}`;
 
   return (
     <div

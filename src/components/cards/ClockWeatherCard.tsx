@@ -1,8 +1,10 @@
 import { format } from 'date-fns';
 import { DashboardCardProps } from '../../types/dashboard-cards';
 import { weatherIcon, conditionLabel } from '../../types/weather-icons';
+import { useTranslation } from '../../i18n';
 
 export function ClockWeatherCard({ context }: DashboardCardProps) {
+  const { t, dateLocale } = useTranslation();
   const {
     now,
     timeFormat,
@@ -14,8 +16,8 @@ export function ClockWeatherCard({ context }: DashboardCardProps) {
     goToNextDay,
     goToToday,
   } = context;
-  const timeString = format(now, timeFormat === '24h' ? 'HH:mm' : 'h:mm a');
-  const dateString = format(now, 'EEEE, MMMM d');
+  const timeString = format(now, timeFormat === '24h' ? 'HH:mm' : 'h:mm a', { locale: dateLocale });
+  const dateString = format(now, 'EEEE, MMMM d', { locale: dateLocale });
 
   return (
     <header className="dash-topbar">
@@ -26,24 +28,24 @@ export function ClockWeatherCard({ context }: DashboardCardProps) {
             type="button"
             className="dash-day-nav-btn"
             onClick={goToPreviousDay}
-            aria-label="Previous day"
+            aria-label={t('dashboard.previousDay')}
           >
             ‹
           </button>
           <span className="dash-topbar-date">
-            {isViewingToday ? dateString : format(selectedDate, 'EEEE, MMMM d')}
+            {isViewingToday ? dateString : format(selectedDate, 'EEEE, MMMM d', { locale: dateLocale })}
           </span>
           <button
             type="button"
             className="dash-day-nav-btn"
             onClick={goToNextDay}
-            aria-label="Next day"
+            aria-label={t('dashboard.nextDay')}
           >
             ›
           </button>
           {!isViewingToday && (
             <button type="button" className="dash-day-nav-today" onClick={goToToday}>
-              Today
+              {t('common.today')}
             </button>
           )}
         </div>
@@ -58,7 +60,7 @@ export function ClockWeatherCard({ context }: DashboardCardProps) {
         >
           <span className="dash-topbar-weather-icon">{weatherIcon(weather.condition)}</span>
           <span className="dash-topbar-weather-temp">{Math.round(weather.temperature)}°</span>
-          <span className="dash-topbar-weather-cond">{conditionLabel(weather.condition)}</span>
+          <span className="dash-topbar-weather-cond">{conditionLabel(weather.condition, t)}</span>
         </div>
       )}
     </header>

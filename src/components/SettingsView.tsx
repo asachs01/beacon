@@ -27,6 +27,7 @@ import type { BeaconSettings } from '../hooks/useSettings';
 import { buildFocusUrl } from '../focus';
 import { useRoutines } from '../hooks/useRoutines';
 import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
+import { useTranslation, type TranslationKey } from '../i18n';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -67,15 +68,15 @@ interface SettingsViewProps {
 // Nav items
 // ---------------------------------------------------------------------------
 
-const NAV_ITEMS: Array<{ id: SettingsSection; label: string; icon: React.ReactNode }> = [
-  { id: 'general', label: 'General', icon: <SettingsIcon size={18} /> },
-  { id: 'appearance', label: 'Appearance', icon: <Palette size={18} /> },
-  { id: 'family', label: 'Family Members', icon: <Users size={18} /> },
-  { id: 'calendar', label: 'Calendar', icon: <CalendarDays size={18} /> },
-  { id: 'integrations', label: 'Integrations', icon: <Plug size={18} /> },
-  { id: 'display', label: 'Display', icon: <Monitor size={18} /> },
-  { id: 'chores', label: 'Chores', icon: <ListChecks size={18} /> },
-  { id: 'about', label: 'About', icon: <Info size={18} /> },
+const NAV_ITEMS: Array<{ id: SettingsSection; labelKey: TranslationKey; icon: React.ReactNode }> = [
+  { id: 'general', labelKey: 'settings.nav.general', icon: <SettingsIcon size={18} /> },
+  { id: 'appearance', labelKey: 'settings.nav.appearance', icon: <Palette size={18} /> },
+  { id: 'family', labelKey: 'settings.nav.family', icon: <Users size={18} /> },
+  { id: 'calendar', labelKey: 'settings.nav.calendar', icon: <CalendarDays size={18} /> },
+  { id: 'integrations', labelKey: 'settings.nav.integrations', icon: <Plug size={18} /> },
+  { id: 'display', labelKey: 'settings.nav.display', icon: <Monitor size={18} /> },
+  { id: 'chores', labelKey: 'settings.nav.chores', icon: <ListChecks size={18} /> },
+  { id: 'about', labelKey: 'settings.nav.about', icon: <Info size={18} /> },
 ];
 
 // ---------------------------------------------------------------------------
@@ -204,6 +205,7 @@ export function SettingsView({
   calendars,
   onEnterFocusMode,
 }: SettingsViewProps) {
+  const { t } = useTranslation();
   const { setTheme: applyTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
   const [editingMember, setEditingMember] = useState<string | null>(null);
@@ -357,7 +359,7 @@ export function SettingsView({
   const themeEntries = [
     {
       id: 'auto',
-      name: 'Auto (time-based)',
+      name: t('settings.appearance.themeAuto'),
       colors: ['#faf9f6', '#0f172a', '#3b82f6'],
     },
     ...themes.map((t) => ({
@@ -392,14 +394,14 @@ export function SettingsView({
   // ==== GENERAL ====
   const renderGeneral = () => (
     <>
-      <h2 className="settings-section-title">General</h2>
-      <p className="settings-section-desc">Basic preferences for your Beacon display.</p>
+      <h2 className="settings-section-title">{t('settings.general.title')}</h2>
+      <p className="settings-section-desc">{t('settings.general.desc')}</p>
 
       <div className="settings-group">
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Family Name</div>
-            <div className="settings-row-sublabel">Shown in the calendar header</div>
+            <div className="settings-row-label">{t('settings.general.familyNameLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.general.familyNameSublabel')}</div>
           </div>
           <input
             type="text"
@@ -410,8 +412,8 @@ export function SettingsView({
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Default View</div>
-            <div className="settings-row-sublabel">Screen shown at startup</div>
+            <div className="settings-row-label">{t('settings.general.defaultViewLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.general.defaultViewSublabel')}</div>
           </div>
           <select
             className="form-select"
@@ -419,16 +421,16 @@ export function SettingsView({
             onChange={(e) => onUpdateSettings({ defaultView: e.target.value as BeaconSettings['defaultView'] })}
             style={{ maxWidth: 180 }}
           >
-            <option value="dashboard">Dashboard</option>
-            <option value="calendar">Calendar</option>
-            <option value="grocery">Lists</option>
-            <option value="tasks">Tasks</option>
-            <option value="music">Music</option>
-            <option value="photos">Photos</option>
+            <option value="dashboard">{t('nav.dashboard')}</option>
+            <option value="calendar">{t('nav.calendar')}</option>
+            <option value="grocery">{t('nav.grocery')}</option>
+            <option value="tasks">{t('nav.tasks')}</option>
+            <option value="music">{t('nav.music')}</option>
+            <option value="photos">{t('nav.photos')}</option>
           </select>
         </div>
         <div className="settings-row">
-          <div className="settings-row-label">Time Format</div>
+          <div className="settings-row-label">{t('settings.general.timeFormatLabel')}</div>
           <Segment
             value={settings.timeFormat}
             options={[
@@ -439,18 +441,18 @@ export function SettingsView({
           />
         </div>
         <div className="settings-row">
-          <div className="settings-row-label">Week Starts On</div>
+          <div className="settings-row-label">{t('settings.general.weekStartsOnLabel')}</div>
           <Segment
             value={String(settings.weekStartsOn) as '0' | '1'}
             options={[
-              { value: '0', label: 'Sunday' },
-              { value: '1', label: 'Monday' },
+              { value: '0', label: t('settings.general.sunday') },
+              { value: '1', label: t('settings.general.monday') },
             ]}
             onChange={(v) => onUpdateSettings({ weekStartsOn: Number(v) as 0 | 1 })}
           />
         </div>
         <div className="settings-row">
-          <div className="settings-row-label">Language / Locale</div>
+          <div className="settings-row-label">{t('settings.general.languageLabel')}</div>
           <select
             className="settings-select"
             value={settings.locale}
@@ -464,25 +466,25 @@ export function SettingsView({
             <option value="it">Italiano</option>
             <option value="pt">Portugu&#234;s</option>
             <option value="nl">Nederlands</option>
-            <option value="ja">Japanese</option>
-            <option value="ko">Korean</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
           </select>
         </div>
       </div>
 
-      <h2 className="settings-section-title" style={{ marginTop: 32 }}>Dashboard Layout</h2>
-      <p className="settings-section-desc">Choose how your dashboard is organized.</p>
+      <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.general.dashboardLayoutTitle')}</h2>
+      <p className="settings-section-desc">{t('settings.general.dashboardLayoutDesc')}</p>
       <div className="settings-group">
         <div className="settings-row" style={{ alignItems: 'flex-start' }}>
           <div>
-            <div className="settings-row-label">Layout</div>
-            <div className="settings-row-sublabel">Pick a preset layout</div>
+            <div className="settings-row-label">{t('settings.general.layoutLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.general.layoutSublabel')}</div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {([
-              { id: 'default', label: 'Family', desc: 'Per-member calendar columns' },
-              { id: 'classic', label: 'Classic', desc: 'Original 3-column view' },
-              { id: 'compact', label: 'Compact', desc: 'Single column, scrollable' },
+              { id: 'default', label: t('settings.general.layoutFamilyLabel'), desc: t('settings.general.layoutFamilyDesc') },
+              { id: 'classic', label: t('settings.general.layoutClassicLabel'), desc: t('settings.general.layoutClassicDesc') },
+              { id: 'compact', label: t('settings.general.layoutCompactLabel'), desc: t('settings.general.layoutCompactDesc') },
             ] as const).map((preset) => (
               <button
                 key={preset.id}
@@ -520,11 +522,11 @@ export function SettingsView({
   // ==== APPEARANCE ====
   const renderAppearance = () => (
     <>
-      <h2 className="settings-section-title">Appearance</h2>
-      <p className="settings-section-desc">Customize the look and feel of your display.</p>
+      <h2 className="settings-section-title">{t('settings.appearance.title')}</h2>
+      <p className="settings-section-desc">{t('settings.appearance.desc')}</p>
 
       <div className="settings-group">
-        <div className="settings-group-title">Theme</div>
+        <div className="settings-group-title">{t('settings.appearance.themeTitle')}</div>
         <div className="settings-theme-grid">
           {themeEntries.map((entry) => {
             const isActive = entry.id === settings.themeId;
@@ -559,8 +561,8 @@ export function SettingsView({
       <div className="settings-group">
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Auto Dark Mode</div>
-            <div className="settings-row-sublabel">Switch themes based on time of day</div>
+            <div className="settings-row-label">{t('settings.appearance.autoDarkModeLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.appearance.autoDarkModeSublabel')}</div>
           </div>
           <Toggle
             checked={settings.autoDarkMode}
@@ -570,7 +572,7 @@ export function SettingsView({
         {settings.autoDarkMode && (
           <>
             <div className="settings-row">
-              <div className="settings-row-label">Dark Mode Starts</div>
+              <div className="settings-row-label">{t('settings.appearance.darkModeStartLabel')}</div>
               <input
                 type="time"
                 className="settings-time-input"
@@ -579,7 +581,7 @@ export function SettingsView({
               />
             </div>
             <div className="settings-row">
-              <div className="settings-row-label">Dark Mode Ends</div>
+              <div className="settings-row-label">{t('settings.appearance.darkModeEndLabel')}</div>
               <input
                 type="time"
                 className="settings-time-input"
@@ -594,27 +596,27 @@ export function SettingsView({
       <div className="settings-group">
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Font Size</div>
-            <div className="settings-row-sublabel">Adjust for viewing distance on wall displays</div>
+            <div className="settings-row-label">{t('settings.appearance.fontSizeLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.appearance.fontSizeSublabel')}</div>
           </div>
           <Segment
             value={settings.fontScale}
             options={[
-              { value: 'normal', label: 'Normal' },
-              { value: 'large', label: 'Large' },
-              { value: 'extra-large', label: 'XL' },
+              { value: 'normal', label: t('settings.appearance.fontNormal') },
+              { value: 'large', label: t('settings.appearance.fontLarge') },
+              { value: 'extra-large', label: t('settings.appearance.fontXL') },
             ]}
             onChange={(v) => onUpdateSettings({ fontScale: v })}
           />
         </div>
         <div className="settings-row">
-          <div className="settings-row-label">Sidebar Position</div>
+          <div className="settings-row-label">{t('settings.appearance.sidebarPositionLabel')}</div>
           <Segment
             value={settings.sidebarPosition}
             options={[
-              { value: 'left', label: 'Left' },
-              { value: 'right', label: 'Right' },
-              { value: 'bottom', label: 'Bottom' },
+              { value: 'left', label: t('settings.appearance.left') },
+              { value: 'right', label: t('settings.appearance.right') },
+              { value: 'bottom', label: t('settings.appearance.bottom') },
             ]}
             onChange={(v) => onUpdateSettings({ sidebarPosition: v })}
           />
@@ -624,8 +626,8 @@ export function SettingsView({
       <div className="settings-group">
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Advanced Dashboard</div>
-            <div className="settings-row-sublabel">Enable customizable dashboard widgets and layouts</div>
+            <div className="settings-row-label">{t('settings.appearance.advancedDashboardLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.appearance.advancedDashboardSublabel')}</div>
           </div>
           <Toggle
             checked={settings.advancedDashboard}
@@ -643,10 +645,10 @@ export function SettingsView({
       return (
         <>
           <h2 className="settings-section-title">
-            {routinesFor.avatar} {routinesFor.name} — Routines
+            {routinesFor.avatar} {routinesFor.name} {t('settings.family.routinesTitleSuffix')}
           </h2>
           <p className="settings-section-desc">
-            Morning and night checklists shown on their kid display.
+            {t('settings.family.routinesDesc')}
           </p>
           <div className="settings-group">
             <div style={{ padding: '12px 20px 4px' }}>
@@ -659,7 +661,7 @@ export function SettingsView({
                 }}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 12 }}
               >
-                <ChevronLeft size={16} /> Back
+                <ChevronLeft size={16} /> {t('common.back')}
               </button>
             </div>
             {routineForm === null ? (
@@ -667,7 +669,7 @@ export function SettingsView({
                 <div className="settings-fm-list">
                   {memberRoutines.length === 0 && (
                     <div className="settings-fm-empty">
-                      No routines yet. Add a morning or bedtime checklist.
+                      {t('settings.family.routinesEmpty')}
                     </div>
                   )}
                   {memberRoutines.map((routine) => (
@@ -675,7 +677,12 @@ export function SettingsView({
                       <div className="settings-fm-info">
                         <div className="settings-fm-name">{routine.name}</div>
                         <div className="settings-fm-role">
-                          {routine.time_of_day} · {routine.tasks.length} task{routine.tasks.length === 1 ? '' : 's'}
+                          {routine.time_of_day} · {t(
+                            routine.tasks.length === 1
+                              ? 'settings.family.routineTaskCountSingular'
+                              : 'settings.family.routineTaskCountPlural',
+                            { n: routine.tasks.length },
+                          )}
                         </div>
                       </div>
                       <div className="settings-fm-actions">
@@ -692,7 +699,7 @@ export function SettingsView({
                                 .map((t) => ({ id: t.id, name: t.name })),
                             })
                           }
-                          aria-label={`Edit ${routine.name}`}
+                          aria-label={t('settings.family.editRoutine', { name: routine.name })}
                         >
                           <Pencil size={16} />
                         </button>
@@ -708,10 +715,10 @@ export function SettingsView({
                               setTimeout(() => setConfirmDeleteRoutine(null), 3000);
                             }
                           }}
-                          aria-label={`Delete ${routine.name}`}
+                          aria-label={t('settings.family.deleteRoutine', { name: routine.name })}
                         >
                           {confirmDeleteRoutine === routine.id ? (
-                            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#ef4444' }}>Sure?</span>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#ef4444' }}>{t('common.sure')}</span>
                           ) : (
                             <Trash2 size={16} />
                           )}
@@ -733,37 +740,37 @@ export function SettingsView({
                       })
                     }
                   >
-                    + Add Routine
+                    {t('settings.family.addRoutine')}
                   </button>
                 </div>
               </>
             ) : (
               <>
                 <div className="settings-row">
-                  <div className="settings-row-label">Name</div>
+                  <div className="settings-row-label">{t('settings.family.routineNameLabel')}</div>
                   <input
                     type="text"
                     className="settings-input"
                     value={routineForm.name}
                     onChange={(e) => setRoutineForm((f) => f && { ...f, name: e.target.value })}
-                    placeholder="Morning Routine"
+                    placeholder={t('settings.family.routineNamePlaceholder')}
                     autoFocus
                   />
                 </div>
                 <div className="settings-row">
-                  <div className="settings-row-label">Time of Day</div>
+                  <div className="settings-row-label">{t('settings.family.timeOfDayLabel')}</div>
                   <Segment
                     value={routineForm.time_of_day}
                     options={[
-                      { value: 'morning', label: 'Morning' },
-                      { value: 'afternoon', label: 'Afternoon' },
-                      { value: 'evening', label: 'Evening' },
+                      { value: 'morning', label: t('settings.family.morning') },
+                      { value: 'afternoon', label: t('settings.family.afternoon') },
+                      { value: 'evening', label: t('settings.family.evening') },
                     ]}
                     onChange={(v) => setRoutineForm((f) => f && { ...f, time_of_day: v })}
                   />
                 </div>
                 <div className="settings-row" style={{ alignItems: 'flex-start' }}>
-                  <div className="settings-row-label" style={{ paddingTop: 4 }}>Tasks</div>
+                  <div className="settings-row-label" style={{ paddingTop: 4 }}>{t('settings.family.tasksLabel')}</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, maxWidth: 340 }}>
                     {routineForm.tasks.map((task, i) => (
                       <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -771,7 +778,7 @@ export function SettingsView({
                           type="text"
                           className="settings-input"
                           value={task.name}
-                          placeholder={`Task ${i + 1} (e.g. Brush teeth)`}
+                          placeholder={t('settings.family.taskPlaceholder', { n: i + 1 })}
                           onChange={(e) =>
                             setRoutineForm((f) => {
                               if (!f) return f;
@@ -785,7 +792,7 @@ export function SettingsView({
                           type="button"
                           className="settings-fm-btn"
                           disabled={i === 0}
-                          aria-label="Move up"
+                          aria-label={t('settings.family.moveUp')}
                           onClick={() =>
                             setRoutineForm((f) => {
                               if (!f || i === 0) return f;
@@ -801,7 +808,7 @@ export function SettingsView({
                           type="button"
                           className="settings-fm-btn"
                           disabled={i === routineForm.tasks.length - 1}
-                          aria-label="Move down"
+                          aria-label={t('settings.family.moveDown')}
                           onClick={() =>
                             setRoutineForm((f) => {
                               if (!f || i === f.tasks.length - 1) return f;
@@ -816,7 +823,7 @@ export function SettingsView({
                         <button
                           type="button"
                           className="settings-fm-btn settings-fm-btn--danger"
-                          aria-label="Remove task"
+                          aria-label={t('settings.family.removeTask')}
                           onClick={() =>
                             setRoutineForm((f) => {
                               if (!f) return f;
@@ -836,16 +843,16 @@ export function SettingsView({
                         setRoutineForm((f) => f && { ...f, tasks: [...f.tasks, { id: null, name: '' }] })
                       }
                     >
-                      + Add Task
+                      {t('settings.family.addTask')}
                     </button>
                   </div>
                 </div>
                 <div style={{ padding: '12px 20px 16px', display: 'flex', gap: 8 }}>
                   <button type="button" className="settings-btn settings-btn--primary" onClick={handleSaveRoutine}>
-                    Save Routine
+                    {t('settings.family.saveRoutine')}
                   </button>
                   <button type="button" className="settings-btn" onClick={() => setRoutineForm(null)}>
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                 </div>
               </>
@@ -857,15 +864,15 @@ export function SettingsView({
 
     return (
     <>
-      <h2 className="settings-section-title">Family Members</h2>
-      <p className="settings-section-desc">Manage who appears on your family display.</p>
+      <h2 className="settings-section-title">{t('settings.family.title')}</h2>
+      <p className="settings-section-desc">{t('settings.family.desc')}</p>
 
       {memberFormMode === 'list' ? (
         <div className="settings-group">
           <div className="settings-fm-list">
             {members.length === 0 && (
               <div className="settings-fm-empty">
-                No family members yet. Add someone to get started.
+                {t('settings.family.empty')}
               </div>
             )}
             {members.map((member) => (
@@ -881,14 +888,14 @@ export function SettingsView({
                 </div>
                 <div className="settings-fm-info">
                   <div className="settings-fm-name">{member.name}</div>
-                  <div className="settings-fm-role">{member.role}</div>
+                  <div className="settings-fm-role">{member.role === 'parent' ? t('settings.family.parent') : t('settings.family.child')}</div>
                 </div>
                 <div className="settings-fm-actions">
                   <button
                     type="button"
                     className="settings-fm-btn"
                     onClick={() => setRoutinesFor(member)}
-                    aria-label={`Routines for ${member.name}`}
+                    aria-label={t('settings.family.routinesFor', { name: member.name })}
                   >
                     <ListChecks size={16} />
                   </button>
@@ -896,7 +903,7 @@ export function SettingsView({
                     type="button"
                     className="settings-fm-btn"
                     onClick={() => handleStartEdit(member)}
-                    aria-label={`Edit ${member.name}`}
+                    aria-label={t('settings.family.editMember', { name: member.name })}
                   >
                     <Pencil size={16} />
                   </button>
@@ -904,11 +911,11 @@ export function SettingsView({
                     type="button"
                     className={`settings-fm-btn settings-fm-btn--danger`}
                     onClick={() => handleDeleteMember(member.id)}
-                    aria-label={`Delete ${member.name}`}
+                    aria-label={t('settings.family.deleteMember', { name: member.name })}
                   >
                     {confirmDelete === member.id ? (
                       <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#ef4444' }}>
-                        Sure?
+                        {t('common.sure')}
                       </span>
                     ) : (
                       <Trash2 size={16} />
@@ -924,7 +931,7 @@ export function SettingsView({
               className="settings-btn settings-btn--primary"
               onClick={handleStartAdd}
             >
-              + Add Member
+              {t('settings.family.addMember')}
             </button>
           </div>
         </div>
@@ -937,33 +944,33 @@ export function SettingsView({
               onClick={handleCancelMemberForm}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 12 }}
             >
-              <ChevronLeft size={16} /> Back
+              <ChevronLeft size={16} /> {t('common.back')}
             </button>
           </div>
           <div className="settings-row">
-            <div className="settings-row-label">Name</div>
+            <div className="settings-row-label">{t('settings.family.nameLabel')}</div>
             <input
               type="text"
               className="settings-input"
               value={memberForm.name}
               onChange={(e) => setMemberForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="Family member name"
+              placeholder={t('settings.family.namePlaceholder')}
               autoFocus
             />
           </div>
           <div className="settings-row">
-            <div className="settings-row-label">Role</div>
+            <div className="settings-row-label">{t('settings.family.roleLabel')}</div>
             <Segment
               value={memberForm.role}
               options={[
-                { value: 'parent', label: 'Parent' },
-                { value: 'child', label: 'Child' },
+                { value: 'parent', label: t('settings.family.parent') },
+                { value: 'child', label: t('settings.family.child') },
               ]}
               onChange={(v) => setMemberForm((f) => ({ ...f, role: v }))}
             />
           </div>
           <div className="settings-row" style={{ alignItems: 'flex-start' }}>
-            <div className="settings-row-label" style={{ paddingTop: 4 }}>Avatar</div>
+            <div className="settings-row-label" style={{ paddingTop: 4 }}>{t('settings.family.avatarLabel')}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxWidth: 300 }}>
               {AVATAR_CATEGORIES.flatMap((cat) => cat.emojis).map((emoji) => (
                 <button
@@ -987,7 +994,7 @@ export function SettingsView({
             </div>
           </div>
           <div className="settings-row" style={{ alignItems: 'flex-start' }}>
-            <div className="settings-row-label" style={{ paddingTop: 4 }}>Color</div>
+            <div className="settings-row-label" style={{ paddingTop: 4 }}>{t('settings.family.colorLabel')}</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {MEMBER_COLORS.map((color) => (
                 <button
@@ -996,15 +1003,15 @@ export function SettingsView({
                   className={`settings-color-circle ${memberForm.color === color ? 'settings-color-circle--selected' : ''}`}
                   style={{ backgroundColor: color }}
                   onClick={() => setMemberForm((f) => ({ ...f, color }))}
-                  aria-label={`Select color ${color}`}
+                  aria-label={t('settings.family.selectColor', { color })}
                 />
               ))}
             </div>
           </div>
           <div className="settings-row">
             <div>
-              <div className="settings-row-label">PIN</div>
-              <div className="settings-row-sublabel">Optional, 4-6 digits</div>
+              <div className="settings-row-label">{t('settings.family.pinLabel')}</div>
+              <div className="settings-row-sublabel">{t('settings.family.pinSublabel')}</div>
             </div>
             <input
               type="password"
@@ -1022,15 +1029,15 @@ export function SettingsView({
           </div>
           <div className="settings-row">
             <div>
-              <div className="settings-row-label">Calendar</div>
-              <div className="settings-row-sublabel">Link to their HA calendar</div>
+              <div className="settings-row-label">{t('settings.family.calendarLabel')}</div>
+              <div className="settings-row-sublabel">{t('settings.family.calendarSublabel')}</div>
             </div>
             <select
               className="settings-select"
               value={memberForm.calendar_entity}
               onChange={(e) => setMemberForm((f) => ({ ...f, calendar_entity: e.target.value }))}
             >
-              <option value="">None</option>
+              <option value="">{t('common.none')}</option>
               {calendars.map((cal) => (
                 <option key={cal.id} value={cal.id}>
                   {cal.name}
@@ -1040,9 +1047,9 @@ export function SettingsView({
           </div>
           <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
             <div>
-              <div className="settings-row-label">Additional Calendars</div>
+              <div className="settings-row-label">{t('settings.family.additionalCalendarsLabel')}</div>
               <div className="settings-row-sublabel">
-                Group other calendars (e.g. a sports team) under this member too
+                {t('settings.family.additionalCalendarsSublabel')}
               </div>
             </div>
             {memberForm.additional_calendar_entities.length > 0 && (
@@ -1067,7 +1074,7 @@ export function SettingsView({
                           }))
                         }
                       >
-                        Remove
+                        {t('common.remove')}
                       </button>
                     </div>
                   );
@@ -1087,7 +1094,7 @@ export function SettingsView({
                 );
               }}
             >
-              <option value="">+ Add another calendar…</option>
+              <option value="">{t('settings.family.addAnotherCalendar')}</option>
               {calendars
                 .filter(
                   (cal) =>
@@ -1103,7 +1110,7 @@ export function SettingsView({
           </div>
           <div style={{ padding: '12px 20px 16px', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button type="button" className="settings-btn" onClick={handleCancelMemberForm}>
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -1111,7 +1118,7 @@ export function SettingsView({
               onClick={handleSaveMember}
               disabled={!memberForm.name.trim()}
             >
-              {memberFormMode === 'edit' ? 'Save Changes' : 'Add Member'}
+              {memberFormMode === 'edit' ? t('settings.family.saveChanges') : t('settings.family.addMemberBtn')}
             </button>
           </div>
         </div>
@@ -1123,15 +1130,15 @@ export function SettingsView({
   // ==== CALENDAR ====
   const renderCalendar = () => (
     <>
-      <h2 className="settings-section-title">Calendar</h2>
-      <p className="settings-section-desc">Configure calendar display and defaults.</p>
+      <h2 className="settings-section-title">{t('settings.calendar.title')}</h2>
+      <p className="settings-section-desc">{t('settings.calendar.desc')}</p>
 
       <div className="settings-group">
-        <div className="settings-group-title">Connected Calendars</div>
+        <div className="settings-group-title">{t('settings.calendar.connectedCalendarsTitle')}</div>
         {calendars.length === 0 ? (
           <div className="settings-row">
             <div className="settings-row-label" style={{ color: 'var(--text-secondary)' }}>
-              No calendars found. Connect Home Assistant to see calendars.
+              {t('settings.calendar.noCalendars')}
             </div>
           </div>
         ) : (
@@ -1173,8 +1180,8 @@ export function SettingsView({
                       className="settings-calendar-color-swatch"
                       style={{ backgroundColor: resolvedColor }}
                       onClick={() => setColorEditId(open ? null : cal.id)}
-                      title="Edit calendar color"
-                      aria-label={`Edit color for ${cal.name}`}
+                      title={t('settings.calendar.editColor')}
+                      aria-label={t('settings.calendar.editColorFor', { name: cal.name })}
                       aria-expanded={open}
                     />
                     <div style={{ minWidth: 0 }}>
@@ -1203,7 +1210,7 @@ export function SettingsView({
                           className={`settings-color-circle ${customColor === preset ? 'settings-color-circle--selected' : ''}`}
                           style={{ backgroundColor: preset }}
                           onClick={() => setColor(preset)}
-                          aria-label={`Set ${cal.name} to ${preset}`}
+                          aria-label={t('settings.calendar.setColorTo', { name: cal.name, color: preset })}
                         />
                       ))}
                     </div>
@@ -1213,9 +1220,9 @@ export function SettingsView({
                           type="color"
                           value={customColor || resolvedColor}
                           onChange={(e) => setColor(e.target.value)}
-                          aria-label={`Choose a custom color for ${cal.name}`}
+                          aria-label={t('settings.calendar.chooseCustomColorFor', { name: cal.name })}
                         />
-                        <span>Custom…</span>
+                        <span>{t('common.custom')}</span>
                       </label>
                       <button
                         type="button"
@@ -1223,7 +1230,7 @@ export function SettingsView({
                         onClick={resetColor}
                         disabled={!customColor}
                       >
-                        Reset to auto
+                        {t('settings.calendar.resetToAuto')}
                       </button>
                     </div>
                   </div>
@@ -1236,13 +1243,13 @@ export function SettingsView({
 
       <div className="settings-group">
         <div className="settings-row">
-          <div className="settings-row-label">Default Calendar</div>
+          <div className="settings-row-label">{t('settings.calendar.defaultCalendarLabel')}</div>
           <select
             className="settings-select"
             value={settings.defaultCalendar}
             onChange={(e) => onUpdateSettings({ defaultCalendar: e.target.value })}
           >
-            <option value="">Select...</option>
+            <option value="">{t('common.selectEllipsis')}</option>
             {calendars.map((cal) => (
               <option key={cal.id} value={cal.id}>
                 {cal.name}
@@ -1251,26 +1258,26 @@ export function SettingsView({
           </select>
         </div>
         <div className="settings-row">
-          <div className="settings-row-label">Default Event Duration</div>
+          <div className="settings-row-label">{t('settings.calendar.defaultEventDurationLabel')}</div>
           <Segment
             value={String(settings.defaultEventDuration)}
             options={[
-              { value: '30', label: '30 min' },
-              { value: '60', label: '1 hr' },
-              { value: '120', label: '2 hr' },
+              { value: '30', label: t('settings.calendar.min30') },
+              { value: '60', label: t('settings.calendar.hr1') },
+              { value: '120', label: t('settings.calendar.hr2') },
             ]}
             onChange={(v) => onUpdateSettings({ defaultEventDuration: Number(v) as 30 | 60 | 120 })}
           />
         </div>
         <div className="settings-row">
-          <div className="settings-row-label">Notification Timing</div>
+          <div className="settings-row-label">{t('settings.calendar.notificationTimingLabel')}</div>
           <Segment
             value={String(settings.notificationMinutes)}
             options={[
-              { value: '5', label: '5 min' },
-              { value: '10', label: '10 min' },
-              { value: '15', label: '15 min' },
-              { value: '30', label: '30 min' },
+              { value: '5', label: t('settings.calendar.min5') },
+              { value: '10', label: t('settings.calendar.min10') },
+              { value: '15', label: t('settings.calendar.min15') },
+              { value: '30', label: t('settings.calendar.min30') },
             ]}
             onChange={(v) => onUpdateSettings({ notificationMinutes: Number(v) as 5 | 10 | 15 | 30 })}
           />
@@ -1282,28 +1289,28 @@ export function SettingsView({
   // ==== INTEGRATIONS ====
   const renderIntegrations = () => (
     <>
-      <h2 className="settings-section-title">Integrations</h2>
-      <p className="settings-section-desc">Manage connections to Home Assistant and other services.</p>
+      <h2 className="settings-section-title">{t('settings.integrations.title')}</h2>
+      <p className="settings-section-desc">{t('settings.integrations.desc')}</p>
 
       <div className="settings-group">
-        <div className="settings-group-title">Home Assistant</div>
+        <div className="settings-group-title">{t('settings.integrations.homeAssistantTitle')}</div>
         <div className="settings-row">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span
               className={`settings-status-dot ${connected ? 'settings-status-dot--connected' : 'settings-status-dot--disconnected'}`}
             />
             <div>
-              <div className="settings-row-label">Connection Status</div>
+              <div className="settings-row-label">{t('settings.integrations.connectionStatusLabel')}</div>
               <div className="settings-row-sublabel">
-                {connected ? 'Connected' : 'Disconnected'} &middot; {haUrl}
+                {connected ? t('settings.integrations.connected') : t('settings.integrations.disconnected')} &middot; {haUrl}
               </div>
             </div>
           </div>
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Weather Entity</div>
-            <div className="settings-row-sublabel">Entity used for weather display</div>
+            <div className="settings-row-label">{t('settings.integrations.weatherEntityLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.integrations.weatherEntitySublabel')}</div>
           </div>
           <input
             type="text"
@@ -1316,15 +1323,15 @@ export function SettingsView({
       </div>
 
       <div className="settings-group">
-        <div className="settings-group-title">Grocy</div>
+        <div className="settings-group-title">{t('settings.integrations.grocyTitle')}</div>
         <div className="settings-row">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span
               className={`settings-status-dot ${settings.grocyEnabled ? 'settings-status-dot--connected' : 'settings-status-dot--disconnected'}`}
             />
             <div>
-              <div className="settings-row-label">Grocy Integration</div>
-              <div className="settings-row-sublabel">Grocery and meal planning</div>
+              <div className="settings-row-label">{t('settings.integrations.grocyLabel')}</div>
+              <div className="settings-row-sublabel">{t('settings.integrations.grocySublabel')}</div>
             </div>
           </div>
           <Toggle
@@ -1335,15 +1342,15 @@ export function SettingsView({
       </div>
 
       <div className="settings-group">
-        <div className="settings-group-title">AnyList</div>
+        <div className="settings-group-title">{t('settings.integrations.anylistTitle')}</div>
         <div className="settings-row">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span
               className={`settings-status-dot ${settings.anylistEnabled ? 'settings-status-dot--connected' : 'settings-status-dot--disconnected'}`}
             />
             <div>
-              <div className="settings-row-label">AnyList Integration</div>
-              <div className="settings-row-sublabel">Shared shopping lists</div>
+              <div className="settings-row-label">{t('settings.integrations.anylistLabel')}</div>
+              <div className="settings-row-sublabel">{t('settings.integrations.anylistSublabel')}</div>
             </div>
           </div>
           <Toggle
@@ -1354,17 +1361,17 @@ export function SettingsView({
       </div>
 
       <div className="settings-group">
-        <div className="settings-group-title">Grocery</div>
+        <div className="settings-group-title">{t('settings.integrations.groceryTitle')}</div>
         <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12 }}>
           <div>
-            <div className="settings-row-label">Grocery Lists</div>
+            <div className="settings-row-label">{t('settings.integrations.groceryListsLabel')}</div>
             <div className="settings-row-sublabel">
-              Select which HA todo entities are grocery/shopping lists
+              {t('settings.integrations.groceryListsSublabel')}
             </div>
           </div>
           {todoLists.length === 0 ? (
             <div className="settings-row-sublabel">
-              No HA todo lists found. Connect Home Assistant to see lists.
+              {t('settings.integrations.noTodoListsFound')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -1407,15 +1414,15 @@ export function SettingsView({
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Default Grocery List</div>
-            <div className="settings-row-sublabel">List shown when opening grocery view</div>
+            <div className="settings-row-label">{t('settings.integrations.defaultGroceryListLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.integrations.defaultGroceryListSublabel')}</div>
           </div>
           <select
             className="settings-input"
             value={settings.defaultGroceryList}
             onChange={(e) => onUpdateSettings({ defaultGroceryList: e.target.value })}
           >
-            <option value="">Auto (first available)</option>
+            <option value="">{t('settings.integrations.autoFirstAvailable')}</option>
             {todoLists.map(list => (
               <option key={list.id} value={list.id}>{list.name}</option>
             ))}
@@ -1423,15 +1430,15 @@ export function SettingsView({
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Shopping Card Entity</div>
-            <div className="settings-row-sublabel">HA todo list for sidebar shopping card</div>
+            <div className="settings-row-label">{t('settings.integrations.shoppingEntityLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.integrations.shoppingEntitySublabel')}</div>
           </div>
           <select
             className="settings-input"
             value={settings.shoppingEntity}
             onChange={(e) => onUpdateSettings({ shoppingEntity: e.target.value })}
           >
-            <option value="">None</option>
+            <option value="">{t('common.none')}</option>
             {todoLists.map(list => (
               <option key={list.id} value={list.id}>{list.name}</option>
             ))}
@@ -1440,11 +1447,11 @@ export function SettingsView({
       </div>
 
       <div className="settings-group">
-        <div className="settings-group-title">Music Assistant</div>
+        <div className="settings-group-title">{t('settings.integrations.musicAssistantTitle')}</div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Default Player</div>
-            <div className="settings-row-sublabel">Media player used by default</div>
+            <div className="settings-row-label">{t('settings.integrations.defaultPlayerLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.integrations.defaultPlayerSublabel')}</div>
           </div>
           <input
             type="text"
@@ -1457,11 +1464,11 @@ export function SettingsView({
       </div>
 
       <div className="settings-group">
-        <div className="settings-group-title">Photos</div>
+        <div className="settings-group-title">{t('settings.integrations.photosTitle')}</div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Source Directory</div>
-            <div className="settings-row-sublabel">Path to photo directory on HA</div>
+            <div className="settings-row-label">{t('settings.integrations.sourceDirectoryLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.integrations.sourceDirectorySublabel')}</div>
           </div>
           <input
             type="text"
@@ -1473,8 +1480,8 @@ export function SettingsView({
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Slideshow Interval</div>
-            <div className="settings-row-sublabel">Seconds between photo changes</div>
+            <div className="settings-row-label">{t('settings.integrations.slideshowIntervalLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.integrations.slideshowIntervalSublabel')}</div>
           </div>
           <Slider
             value={settings.photoInterval}
@@ -1486,12 +1493,12 @@ export function SettingsView({
           />
         </div>
         <div className="settings-row">
-          <div className="settings-row-label">Transition Style</div>
+          <div className="settings-row-label">{t('settings.integrations.transitionStyleLabel')}</div>
           <Segment
             value={settings.photoTransition}
             options={[
-              { value: 'fade', label: 'Fade' },
-              { value: 'slide', label: 'Slide' },
+              { value: 'fade', label: t('settings.integrations.fade') },
+              { value: 'slide', label: t('settings.integrations.slide') },
             ]}
             onChange={(v) => onUpdateSettings({ photoTransition: v })}
           />
@@ -1503,14 +1510,14 @@ export function SettingsView({
   // ==== DISPLAY ====
   const renderDisplay = () => (
     <>
-      <h2 className="settings-section-title">Display</h2>
-      <p className="settings-section-desc">Screen saver, brightness, and kiosk settings.</p>
+      <h2 className="settings-section-title">{t('settings.display.title')}</h2>
+      <p className="settings-section-desc">{t('settings.display.desc')}</p>
 
       <div className="settings-group">
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Screen Saver</div>
-            <div className="settings-row-sublabel">Shows a floating clock after idle</div>
+            <div className="settings-row-label">{t('settings.display.screenSaverLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.screenSaverSublabel')}</div>
           </div>
           <Toggle
             checked={settings.screenSaverEnabled}
@@ -1521,8 +1528,8 @@ export function SettingsView({
           <>
             <div className="settings-row">
               <div>
-                <div className="settings-row-label">Dim After</div>
-                <div className="settings-row-sublabel">Minutes of inactivity before dimming</div>
+                <div className="settings-row-label">{t('settings.display.dimAfterLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.display.dimAfterSublabel')}</div>
               </div>
               <Slider
                 value={settings.dimTimeout}
@@ -1534,8 +1541,8 @@ export function SettingsView({
             </div>
             <div className="settings-row">
               <div>
-                <div className="settings-row-label">Screen Saver After</div>
-                <div className="settings-row-sublabel">Minutes before screen saver activates</div>
+                <div className="settings-row-label">{t('settings.display.screenSaverAfterLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.display.screenSaverAfterSublabel')}</div>
               </div>
               <Slider
                 value={settings.screenSaverTimeout}
@@ -1553,8 +1560,8 @@ export function SettingsView({
       <div className="settings-group">
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Always-On Display</div>
-            <div className="settings-row-sublabel">Prevent screen from sleeping</div>
+            <div className="settings-row-label">{t('settings.display.alwaysOnLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.alwaysOnSublabel')}</div>
           </div>
           <Toggle
             checked={settings.alwaysOnDisplay}
@@ -1563,8 +1570,8 @@ export function SettingsView({
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Show Seconds on Clock</div>
-            <div className="settings-row-sublabel">Display seconds in the header clock</div>
+            <div className="settings-row-label">{t('settings.display.showSecondsLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.showSecondsSublabel')}</div>
           </div>
           <Toggle
             checked={settings.showSeconds}
@@ -1573,8 +1580,8 @@ export function SettingsView({
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Kiosk Mode</div>
-            <div className="settings-row-sublabel">Hide the sidebar for a cleaner display</div>
+            <div className="settings-row-label">{t('settings.display.kioskModeLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.kioskModeSublabel')}</div>
           </div>
           <Toggle
             checked={settings.kioskMode}
@@ -1583,15 +1590,15 @@ export function SettingsView({
         </div>
       </div>
 
-      <h2 className="settings-section-title" style={{ marginTop: 32 }}>Kid Display</h2>
+      <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.display.kidDisplayTitle')}</h2>
       <p className="settings-section-desc">
-        Lock a wall-mounted screen to one family member — shows only their routines and chores.
+        {t('settings.display.kidDisplayDesc')}
       </p>
       <div className="settings-group">
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Family Member</div>
-            <div className="settings-row-sublabel">Who this display belongs to</div>
+            <div className="settings-row-label">{t('settings.display.familyMemberLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.familyMemberSublabel')}</div>
           </div>
           <select
             className="settings-select"
@@ -1601,7 +1608,7 @@ export function SettingsView({
               setCopiedFocusUrl(false);
             }}
           >
-            <option value="">Choose a member…</option>
+            <option value="">{t('settings.display.chooseAMember')}</option>
             {members.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.avatar} {m.name}
@@ -1613,9 +1620,9 @@ export function SettingsView({
           <>
             <div className="settings-row">
               <div>
-                <div className="settings-row-label">Use on This Device</div>
+                <div className="settings-row-label">{t('settings.display.useOnDeviceLabel')}</div>
                 <div className="settings-row-sublabel">
-                  Locks this screen now. Exit later with 5 taps on the clock.
+                  {t('settings.display.useOnDeviceSublabel')}
                 </div>
               </div>
               <button
@@ -1623,14 +1630,14 @@ export function SettingsView({
                 className="settings-btn settings-btn--primary"
                 onClick={() => onEnterFocusMode(kidDisplayMemberId)}
               >
-                Start
+                {t('common.start')}
               </button>
             </div>
             <div className="settings-row">
               <div>
-                <div className="settings-row-label">Display URL</div>
+                <div className="settings-row-label">{t('settings.display.displayUrlLabel')}</div>
                 <div className="settings-row-sublabel">
-                  For kiosk browsers and wall panels — bookmark or set as home page.
+                  {t('settings.display.displayUrlSublabel')}
                 </div>
               </div>
               <button
@@ -1639,18 +1646,18 @@ export function SettingsView({
                 onClick={() => {
                   const url = buildFocusUrl(kidDisplayMemberId);
                   if (!navigator.clipboard) {
-                    window.prompt('Copy this URL:', url);
+                    window.prompt(t('settings.display.copyUrlPrompt'), url);
                     return;
                   }
                   navigator.clipboard
                     .writeText(url)
                     .then(() => setCopiedFocusUrl(true))
                     .catch(() => {
-                      window.prompt('Copy this URL:', url);
+                      window.prompt(t('settings.display.copyUrlPrompt'), url);
                     });
                 }}
               >
-                {copiedFocusUrl ? 'Copied!' : 'Copy URL'}
+                {copiedFocusUrl ? t('settings.display.copied') : t('settings.display.copyUrl')}
               </button>
             </div>
           </>
@@ -1662,14 +1669,14 @@ export function SettingsView({
   // ==== CHORES ====
   const renderChores = () => (
     <>
-      <h2 className="settings-section-title">Chores</h2>
-      <p className="settings-section-desc">Manage chore tracking and reward settings.</p>
+      <h2 className="settings-section-title">{t('settings.chores.title')}</h2>
+      <p className="settings-section-desc">{t('settings.chores.desc')}</p>
 
       <div className="settings-group">
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">Enable Chores</div>
-            <div className="settings-row-sublabel">Show chore tracking and rewards</div>
+            <div className="settings-row-label">{t('settings.chores.enableLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.chores.enableSublabel')}</div>
           </div>
           <Toggle
             checked={settings.choresEnabled}
@@ -1683,8 +1690,8 @@ export function SettingsView({
           <div className="settings-group">
             <div className="settings-row">
               <div>
-                <div className="settings-row-label">Daily Reset Time</div>
-                <div className="settings-row-sublabel">When daily chores reset</div>
+                <div className="settings-row-label">{t('settings.chores.dailyResetTimeLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.chores.dailyResetTimeSublabel')}</div>
               </div>
               <input
                 type="time"
@@ -1695,8 +1702,8 @@ export function SettingsView({
             </div>
             <div className="settings-row">
               <div>
-                <div className="settings-row-label">Streak Duration</div>
-                <div className="settings-row-sublabel">Days needed to maintain a streak</div>
+                <div className="settings-row-label">{t('settings.chores.streakDurationLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.chores.streakDurationSublabel')}</div>
               </div>
               <Slider
                 value={settings.streakDays}
@@ -1709,9 +1716,9 @@ export function SettingsView({
           </div>
 
           <div className="settings-group">
-            <div className="settings-group-title">Rewards</div>
+            <div className="settings-group-title">{t('settings.chores.rewardsTitle')}</div>
             <div className="settings-row">
-              <div className="settings-row-label">Currency Symbol</div>
+              <div className="settings-row-label">{t('settings.chores.currencySymbolLabel')}</div>
               <Segment
                 value={settings.currencySymbol}
                 options={[
@@ -1724,12 +1731,12 @@ export function SettingsView({
               />
             </div>
             <div className="settings-row">
-              <div className="settings-row-label">Payout Schedule</div>
+              <div className="settings-row-label">{t('settings.chores.payoutScheduleLabel')}</div>
               <Segment
                 value={settings.payoutSchedule}
                 options={[
-                  { value: 'weekly', label: 'Weekly' },
-                  { value: 'monthly', label: 'Monthly' },
+                  { value: 'weekly', label: t('settings.chores.weekly') },
+                  { value: 'monthly', label: t('settings.chores.monthly') },
                 ]}
                 onChange={(v) => onUpdateSettings({ payoutSchedule: v })}
               />
@@ -1743,65 +1750,65 @@ export function SettingsView({
   // ==== ABOUT ====
   const renderAbout = () => (
     <>
-      <h2 className="settings-section-title">About</h2>
-      <p className="settings-section-desc">Version info, debug tools, and links.</p>
+      <h2 className="settings-section-title">{t('settings.about.title')}</h2>
+      <p className="settings-section-desc">{t('settings.about.desc')}</p>
 
       <div className="settings-group">
         <div className="settings-about-row">
-          <span className="settings-about-label">Version</span>
+          <span className="settings-about-label">{t('settings.about.version')}</span>
           <span className="settings-about-value">{__APP_VERSION__}</span>
         </div>
         <div className="settings-about-row">
-          <span className="settings-about-label">Home Assistant</span>
+          <span className="settings-about-label">{t('settings.about.homeAssistant')}</span>
           <span className="settings-about-value">
             <span
               className={`settings-status-dot ${connected ? 'settings-status-dot--connected' : 'settings-status-dot--disconnected'}`}
               style={{ display: 'inline-block', marginRight: 6, verticalAlign: 'middle' }}
             />
-            {connected ? 'Connected' : 'Disconnected'}
+            {connected ? t('settings.integrations.connected') : t('settings.integrations.disconnected')}
           </span>
         </div>
         <div className="settings-about-row">
-          <span className="settings-about-label">HA URL</span>
+          <span className="settings-about-label">{t('settings.about.haUrl')}</span>
           <span className="settings-about-value">{haUrl}</span>
         </div>
         <div className="settings-about-row">
-          <span className="settings-about-label">Source Code</span>
+          <span className="settings-about-label">{t('settings.about.sourceCode')}</span>
           <span className="settings-about-value">
             <a href="https://github.com/asachs01/beacon" target="_blank" rel="noopener noreferrer">
-              GitHub
+              {t('settings.about.github')}
             </a>
           </span>
         </div>
         <div className="settings-about-row">
-          <span className="settings-about-label">License</span>
+          <span className="settings-about-label">{t('settings.about.license')}</span>
           <span className="settings-about-value">MIT</span>
         </div>
       </div>
 
       <div className="settings-group">
-        <div className="settings-group-title">Debug</div>
+        <div className="settings-group-title">{t('settings.about.debugTitle')}</div>
         <div style={{ padding: '12px 20px 16px' }}>
           <div className="settings-btn-group">
             <button type="button" className="settings-btn" onClick={handleExport}>
-              Export Settings
+              {t('settings.about.exportSettings')}
             </button>
             <button type="button" className="settings-btn" onClick={handleImport}>
-              Import Settings
+              {t('settings.about.importSettings')}
             </button>
             <button
               type="button"
               className="settings-btn settings-btn--danger"
               onClick={onClearLocalStorage}
             >
-              Clear localStorage
+              {t('settings.about.clearLocalStorage')}
             </button>
             <button
               type="button"
               className="settings-btn settings-btn--danger"
               onClick={onResetSettings}
             >
-              Reset to Defaults
+              {t('settings.about.resetToDefaults')}
             </button>
           </div>
         </div>
@@ -1812,7 +1819,7 @@ export function SettingsView({
   return (
     <div className="settings-view">
       <nav className="settings-nav">
-        <div className="settings-nav-header">Settings</div>
+        <div className="settings-nav-header">{t('settings.title')}</div>
         {NAV_ITEMS.map((item) => (
           <button
             key={item.id}
@@ -1821,7 +1828,7 @@ export function SettingsView({
             onClick={() => setActiveSection(item.id)}
           >
             {item.icon}
-            {item.label}
+            {t(item.labelKey)}
           </button>
         ))}
       </nav>

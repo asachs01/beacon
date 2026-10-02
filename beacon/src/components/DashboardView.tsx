@@ -17,6 +17,7 @@ import { MenuCard } from './cards/MenuCard';
 import { TasksCard } from './cards/TasksCard';
 import type { TaskmateUser } from '../types/taskmate';
 import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
+import { useTranslation } from '../i18n';
 
 export type { TodoItem } from '../types/dashboard-cards';
 
@@ -64,6 +65,7 @@ export function DashboardView({
   selectedDate,
   onSelectedDateChange,
 }: DashboardViewProps) {
+  const { t } = useTranslation();
   const [now, setNow] = useState(new Date());
   const [selectedMemberFilter, setSelectedMemberFilter] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -181,7 +183,7 @@ export function DashboardView({
     return (
       <div className="dashboard dashboard--classic dashboard--advanced">
         <button type="button" className="dash-edit-toggle" onClick={() => setEditMode((v) => !v)}>
-          {editMode ? 'Done' : '✎ Edit Dashboard'}
+          {editMode ? t('common.done') : t('dashboard.editDashboard')}
         </button>
         <div className="dash-topbar-region">
           {(views.length > 1 || editMode) && (
@@ -227,7 +229,7 @@ export function DashboardView({
     <div className={`dashboard dashboard--${layout} dashboard--advanced`}>
       {/* ─── TOP BAR: Time + Date + Weather ─── */}
       <button type="button" className="dash-edit-toggle" onClick={() => setEditMode((v) => !v)}>
-        {editMode ? 'Done' : '✎ Edit Dashboard'}
+        {editMode ? t('common.done') : t('dashboard.editDashboard')}
       </button>
       <div className="dash-topbar-region">
         {(views.length > 1 || editMode) && (
