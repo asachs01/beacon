@@ -19,6 +19,7 @@ auth_api: true
 options:
   family_name: "My Family"
   ha_token: ""
+  save_config_in_browser: true
   theme: "skylight"
   auto_dark_mode: true
   weather_entity: "weather.home"
@@ -28,6 +29,7 @@ options:
 schema:
   family_name: str
   ha_token: password
+  save_config_in_browser: bool
   theme: str
   auto_dark_mode: bool
   weather_entity: str

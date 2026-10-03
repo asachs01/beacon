@@ -59,15 +59,31 @@ export function loadDataSync<T>(key: string, fallback: T): T {
   return fallback;
 }
 
+/** Read from the add-on server without consulting or updating localStorage. */
+export async function loadServerData<T>(key: string): Promise<T | null> {
+  if (!isAddOn()) return null;
+  try {
+    const base = getIngressBasePath();
+    const res = await fetch(`${base}/beacon-data/${key}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data === null ? null : data as T;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Write to localStorage AND server (fire-and-forget).
  */
-export async function saveData<T>(key: string, data: T): Promise<void> {
+export async function saveData<T>(key: string, data: T, options: { browserStorage?: boolean } = {}): Promise<void> {
   const json = JSON.stringify(data);
-  try {
-    localStorage.setItem(key, json);
-  } catch {
-    /* localStorage unavailable */
+  if (options.browserStorage !== false) {
+    try {
+      localStorage.setItem(key, json);
+    } catch {
+      /* localStorage unavailable */
+    }
   }
   if (isAddOn()) {
     const base = getIngressBasePath();

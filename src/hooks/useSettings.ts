@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getConfig } from '../config';
-import { loadData, loadDataSync, saveData } from '../api/beacon-store';
+import { loadDataSync, loadServerData, saveData } from '../api/beacon-store';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -9,6 +9,7 @@ import { loadData, loadDataSync, saveData } from '../api/beacon-store';
 export interface BeaconSettings {
   // General
   familyName: string;
+  saveConfigInBrowser: boolean;
   defaultView: 'dashboard' | 'calendar' | 'grocery' | 'tasks' | 'music' | 'photos';
   timeFormat: '12h' | '24h';
   weekStartsOn: 0 | 1; // 0 = Sunday, 1 = Monday
@@ -72,6 +73,7 @@ function buildDefaults(): BeaconSettings {
 
   return {
     familyName: config.family_name,
+    saveConfigInBrowser: config.save_config_in_browser,
     defaultView: 'dashboard',
     timeFormat: '12h',
     weekStartsOn: 0,
@@ -123,20 +125,28 @@ function buildDefaults(): BeaconSettings {
 // Persistence helpers
 // ---------------------------------------------------------------------------
 
-function loadSettingsSync(): BeaconSettings {
-  const defaults = buildDefaults();
-  const stored = loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {});
-  return { ...defaults, ...stored };
-}
-
 async function loadSettingsAsync(): Promise<BeaconSettings> {
   const defaults = buildDefaults();
-  const stored = await loadData<Partial<BeaconSettings>>(STORAGE_KEY, {});
-  return { ...defaults, ...stored };
+  const configAllowsBrowserStorage = getConfig().save_config_in_browser;
+  const serverStored = await loadServerData<Partial<BeaconSettings>>(STORAGE_KEY);
+  const stored = serverStored ?? (configAllowsBrowserStorage
+    ? loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {})
+    : {});
+  return {
+    ...defaults,
+    ...stored,
+    // The add-on configuration is authoritative: it can disable browser
+    // storage, while the user preference can opt out when config allows it.
+    saveConfigInBrowser: configAllowsBrowserStorage && (stored.saveConfigInBrowser ?? true),
+  };
 }
 
 function persistSettings(settings: BeaconSettings): void {
-  saveData(STORAGE_KEY, settings);
+  const browserStorage = getConfig().save_config_in_browser && settings.saveConfigInBrowser;
+  if (!browserStorage) {
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+  }
+  saveData(STORAGE_KEY, settings, { browserStorage });
 }
 
 // ---------------------------------------------------------------------------
@@ -144,13 +154,14 @@ function persistSettings(settings: BeaconSettings): void {
 // ---------------------------------------------------------------------------
 
 export function useSettings() {
-  // Initialize with localStorage data immediately
-  const [settings, setSettingsState] = useState<BeaconSettings>(loadSettingsSync);
+  const [settings, setSettingsState] = useState<BeaconSettings>(buildDefaults);
+  const [loaded, setLoaded] = useState(false);
 
   /** Re-fetch settings from server. */
   const refresh = useCallback(async () => {
     const serverSettings = await loadSettingsAsync();
     setSettingsState(serverSettings);
+    setLoaded(true);
   }, []);
 
   // Fetch from server on mount, update if server has newer data
@@ -173,8 +184,8 @@ export function useSettings() {
 
   // Persist whenever settings change
   useEffect(() => {
-    persistSettings(settings);
-  }, [settings]);
+    if (loaded) persistSettings(settings);
+  }, [settings, loaded]);
 
   /** Update one or more settings fields. Changes apply immediately. */
   const updateSettings = useCallback(

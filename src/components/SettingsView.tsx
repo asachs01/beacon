@@ -24,6 +24,8 @@ import {
   Routine,
 } from '../types/family';
 import type { BeaconSettings } from '../hooks/useSettings';
+import { getConfig } from '../config';
+import { isAddOn } from '../utils/ha-env';
 import { buildFocusUrl } from '../focus';
 import { useRoutines } from '../hooks/useRoutines';
 import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
@@ -86,15 +88,18 @@ const NAV_ITEMS: Array<{ id: SettingsSection; labelKey: TranslationKey; icon: Re
 function Toggle({
   checked,
   onChange,
+  disabled = false,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <label className="settings-toggle">
       <input
         type="checkbox"
         checked={checked}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
       />
       <span className="settings-toggle-track" />
@@ -470,6 +475,23 @@ export function SettingsView({
             <option value="ko">한국어</option>
           </select>
         </div>
+        {isAddOn() && (
+          <div className="settings-row">
+            <div>
+              <div className="settings-row-label">Save Configuration in Browser</div>
+              <div className="settings-row-sublabel">
+                {getConfig().save_config_in_browser
+                  ? 'Keep a local browser copy; Home Assistant remains the shared source.'
+                  : 'Disabled by the Home Assistant add-on configuration.'}
+              </div>
+            </div>
+            <Toggle
+              checked={settings.saveConfigInBrowser}
+              disabled={!getConfig().save_config_in_browser}
+              onChange={(v) => onUpdateSettings({ saveConfigInBrowser: v })}
+            />
+          </div>
+        )}
       </div>
 
       <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.general.dashboardLayoutTitle')}</h2>

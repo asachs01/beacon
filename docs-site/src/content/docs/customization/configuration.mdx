@@ -18,6 +18,7 @@ These options are set in **Settings > Add-ons > Beacon > Configuration** when ru
 | Option | Type | Default | Description | Example |
 |--------|------|---------|-------------|---------|
 | `family_name` | string | `"My Family"` | Your family name. Appears in the dashboard greeting ("Good morning, Sachs") and the calendar header. | `"Sachs"` |
+| `save_config_in_browser` | boolean | `true` | Allows the General settings option to keep a local browser copy of Beacon settings. Set to `false` to disable browser storage; add-on server storage remains available. This configuration takes precedence over the in-app option. | `false` |
 | `theme` | string | `"skylight"` | The color theme to use. Options: `skylight`, `midnight`, `nord`, `dracula`, `monokai`, `rose`, `forest`. The theme selector in the sidebar overrides this value. | `"midnight"` |
 | `auto_dark_mode` | boolean | `true` | When true and theme is set to `auto`, Beacon switches between Skylight (day) and Midnight (night) based on time of day. | `true` |
 | `weather_entity` | string | `"weather.home"` | The Home Assistant weather entity ID to use for temperature and forecast data. Leave empty to disable weather. | `"weather.forecast_home"` |
@@ -29,6 +30,7 @@ These options are set in **Settings > Add-ons > Beacon > Configuration** when ru
 
 ```yaml
 family_name: "Sachs"
+save_config_in_browser: true
 theme: "midnight"
 auto_dark_mode: true
 weather_entity: "weather.home"
@@ -50,6 +52,7 @@ When running Beacon as a standalone Docker container or in development mode, con
 | `SUPERVISOR_TOKEN` | `ha_token` | (none) |
 | `HA_URL` | `ha_url` | `http://supervisor/core` |
 | `FAMILY_NAME` | `family_name` | `My Family` |
+| `SAVE_CONFIG_IN_BROWSER` | `save_config_in_browser` | `true` |
 | `THEME` | `theme` | `skylight` |
 | `AUTO_DARK_MODE` | `auto_dark_mode` | `true` |
 | `WEATHER_ENTITY` | `weather_entity` | `weather.home` |
