@@ -1,3 +1,10 @@
+# [1.38.0](https://github.com/asachs01/beacon/compare/v1.37.0...v1.38.0) (2026-10-03)
+
+
+### Features
+
+* add browser configuration persistence toggle ([691d337](https://github.com/asachs01/beacon/commit/691d3377f0d1f9200ab3600a29b48a35381b19fa))
+
 # [1.37.0](https://github.com/asachs01/beacon/compare/v1.36.0...v1.37.0) (2026-10-02)
 
 
