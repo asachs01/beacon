@@ -93,7 +93,7 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 ### Does it send notifications?
 
-**Yes.** Beacon sends browser push notifications and HA mobile app notifications 15 minutes before calendar events. See [Notifications](/docs/features/notifications/).
+**Not yet.** Push notifications and in-app notifications are not currently shipped. The closest available feature today is the on-device screen saver and kid display mode. Contributions are welcome — if you're interested in implementing notification support, please see our [Contributing guide](/docs/reference/contributing/).
 
 ### Does it prevent screen burn-in?
 
@@ -122,6 +122,17 @@ Add multiple calendar integrations in Home Assistant (Google Calendar, CalDAV, L
 ### How do I set up family members?
 
 Click the gear icon in the sidebar to open the Family Members modal. Click "+ Add Member" and fill in the name, avatar, color, role, and optional PIN. See [Family Members](/docs/features/family/).
+
+### How do I hide the Home Assistant sidebar for wall tablets?
+
+**Beacon cannot hide HA's sidebar when running inside Home Assistant ingress** — that chrome is controlled by Home Assistant itself. For dedicated wall tablets or Windows kiosk setups, open Beacon's own URL directly in full-screen mode instead:
+
+1. **Find the direct URL**: In HA, click "Open Web UI" on the Beacon add-on page, or use the direct ingress URL (typically `http://YOUR_HA_IP:8123/api/hassio_ingress/<addon-token>`)
+2. **For Android tablets**: Use [Fully Kiosk Browser](/docs/getting-started/installation/#mounting-and-displaying-on-a-tablet) with "Hide Navigation Bar" and "Hide Status Bar" enabled
+3. **For desktop/Pi kiosk**: Launch Chrome/Chromium with `--kiosk` flag pointed at the Beacon URL
+4. **For standalone Docker**: Use the container's direct URL (e.g., `http://YOUR_DOCKER_HOST:3000`)
+
+See the [Installation guide](/docs/getting-started/installation/#mounting-and-displaying-on-a-tablet) for detailed kiosk setup instructions. There is no SPA code setting to hide HA's sidebar — this is a browser/display-level configuration.
 
 ---
 
