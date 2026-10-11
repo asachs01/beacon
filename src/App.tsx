@@ -213,7 +213,7 @@ export function App() {
   );
 
   // Event notifications (browser + HA mobile_app)
-  useNotifications(events, client, !focusMemberId);
+  useNotifications(events, client, !focusMemberId, settings.notificationMinutes);
 
   // Leaderboard is still a slide-over panel (not a full view); Chores is now
   // a real full-screen activeView (see PRD: dedicated chores screen).

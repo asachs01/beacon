@@ -4,18 +4,22 @@ import { HomeAssistantClient } from '../api/homeassistant';
 import beaconIcon from '../assets/beacon-app-icon.svg';
 
 const CHECK_INTERVAL = 60 * 1000; // 1 minute
-const NOTIFY_BEFORE_MS = 15 * 60 * 1000; // 15 minutes
+const DEFAULT_NOTIFY_BEFORE_MINUTES = 15;
 
 /**
  * Checks upcoming events every minute and fires browser notifications
- * 15 minutes before each event. Also sends HA mobile_app notifications
- * if the client is connected.
+ * notifyBeforeMinutes before each event (Settings > Calendar >
+ * notificationTimingLabel — previously this was hardcoded to 15 minutes
+ * regardless of that setting). Also sends HA mobile_app notifications if
+ * the client is connected.
  */
 export function useNotifications(
   events: CalendarEvent[],
   getClient: () => HomeAssistantClient | null,
   enabled = true,
+  notifyBeforeMinutes: number = DEFAULT_NOTIFY_BEFORE_MINUTES,
 ) {
+  const notifyBeforeMs = notifyBeforeMinutes * 60 * 1000;
   // Track which event IDs we've already notified about to avoid duplicates
   const notifiedRef = useRef<Set<string>>(new Set());
 
@@ -37,7 +41,7 @@ export function useNotifications(
       const diff = eventStart - now;
 
       // Event is within 15 minutes but hasn't started yet, and we haven't notified
-      if (diff > 0 && diff <= NOTIFY_BEFORE_MS && !notifiedRef.current.has(event.id)) {
+      if (diff > 0 && diff <= notifyBeforeMs && !notifiedRef.current.has(event.id)) {
         notifiedRef.current.add(event.id);
 
         const minutesUntil = Math.round(diff / 60_000);
@@ -69,7 +73,7 @@ export function useNotifications(
         notifiedRef.current.delete(id);
       }
     }
-  }, [events, getClient]);
+  }, [events, getClient, notifyBeforeMs]);
 
   useEffect(() => {
     if (!enabled) return;
