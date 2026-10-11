@@ -181,6 +181,12 @@ a:focus:not(:focus-visible) {
   display: flex;
 }
 
+/* Kiosk Mode (Settings > Display): no Sidebar is rendered at all, so no
+   column needs to be reserved for it — single full-width column. */
+.beacon--kiosk {
+  grid-template-columns: 1fr;
+}
+
 .beacon-main {
   display: flex;
   flex-direction: column;
