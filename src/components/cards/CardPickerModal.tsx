@@ -1,5 +1,6 @@
 import { cardRegistry } from './registry';
 import { DashboardRegion } from '../../types/dashboard-cards';
+import { useTranslation } from '../../i18n';
 
 interface CardPickerModalProps {
   region: DashboardRegion;
@@ -9,6 +10,7 @@ interface CardPickerModalProps {
 
 /** Modal listing card types addable to a given dashboard region. */
 export function CardPickerModal({ region, onPick, onClose }: CardPickerModalProps) {
+  const { t } = useTranslation();
   const options = Object.values(cardRegistry).filter((def) => def.allowedRegions.includes(region));
 
   return (
@@ -28,7 +30,7 @@ export function CardPickerModal({ region, onPick, onClose }: CardPickerModalProp
                 onClick={() => onPick(def.type)}
               >
                 <span className="dash-card-picker-icon">{def.icon}</span>
-                <span className="dash-card-picker-name">{def.displayName}</span>
+                <span className="dash-card-picker-name">{t(def.displayNameKey)}</span>
               </button>
             ))}
             {options.length === 0 && (

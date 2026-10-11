@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Flag, X, Plus, Volume2, BellOff } from 'lucide-react';
+import { useTranslation } from '../i18n';
+import type { TranslationKey } from '../i18n/translations/en';
 
 const PRESETS = [
   { label: '1m', seconds: 60 },
@@ -14,12 +16,12 @@ type TimerMode = 'stopwatch' | 'timers';
 
 type SoundName = 'beep' | 'chime' | 'alarm' | 'kitchen' | 'gentle';
 
-const SOUND_OPTIONS: { key: SoundName; label: string }[] = [
-  { key: 'chime', label: 'Chime' },
-  { key: 'beep', label: 'Beep' },
-  { key: 'alarm', label: 'Alarm' },
-  { key: 'kitchen', label: 'Kitchen' },
-  { key: 'gentle', label: 'Gentle' },
+const SOUND_OPTIONS: { key: SoundName; labelKey: TranslationKey }[] = [
+  { key: 'chime', labelKey: 'timer.soundChime' },
+  { key: 'beep', labelKey: 'timer.soundBeep' },
+  { key: 'alarm', labelKey: 'timer.soundAlarm' },
+  { key: 'kitchen', labelKey: 'timer.soundKitchen' },
+  { key: 'gentle', labelKey: 'timer.soundGentle' },
 ];
 
 const STORAGE_KEY = 'beacon-timer-sound';
@@ -146,6 +148,7 @@ function formatTime(totalMs: number): string {
 let nextTimerId = 1;
 
 export function Timer({ compact = false }: TimerProps) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<TimerMode>('timers');
   const [sound, setSound] = useState<SoundName>(getStoredSound);
 
@@ -342,14 +345,14 @@ export function Timer({ compact = false }: TimerProps) {
           className={`timer-mode-btn ${mode === 'timers' ? 'timer-mode-btn--active' : ''}`}
           onClick={() => setMode('timers')}
         >
-          Timers
+          {t('timer.modeTimers')}
         </button>
         <button
           type="button"
           className={`timer-mode-btn ${mode === 'stopwatch' ? 'timer-mode-btn--active' : ''}`}
           onClick={() => setMode('stopwatch')}
         >
-          Stopwatch
+          {t('timer.modeStopwatch')}
         </button>
       </div>
 
@@ -367,9 +370,9 @@ export function Timer({ compact = false }: TimerProps) {
                   changeSound(opt.key);
                   playSoundOnce(opt.key);
                 }}
-                title={`Preview ${opt.label}`}
+                title={t('timer.previewSound', { name: t(opt.labelKey) })}
               >
-                {opt.label}
+                {t(opt.labelKey)}
               </button>
             ))}
           </div>
@@ -379,7 +382,7 @@ export function Timer({ compact = false }: TimerProps) {
             <input
               type="text"
               className="timer-name-input"
-              placeholder="Timer name (optional)"
+              placeholder={t('timer.namePlaceholder')}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') addTimer(); }}
@@ -400,45 +403,45 @@ export function Timer({ compact = false }: TimerProps) {
               type="button"
               className="timer-btn timer-btn--play timer-start-btn"
               onClick={addTimer}
-              title="Start timer"
+              title={t('timer.startTimer')}
             >
               <Plus size={compact ? 14 : 16} />
-              <span>Start</span>
+              <span>{t('timer.start')}</span>
             </button>
           </div>
 
           {/* Active timers list */}
           {timers.length > 0 && (
             <div className="timer-list">
-              {timers.map((t) => {
-                const remaining = getRemaining(t);
+              {timers.map((timerItem) => {
+                const remaining = getRemaining(timerItem);
                 return (
                   <div
-                    key={t.id}
-                    className={`timer-card ${t.finished ? 'timer-card--finished' : ''}`}
+                    key={timerItem.id}
+                    className={`timer-card ${timerItem.finished ? 'timer-card--finished' : ''}`}
                   >
-                    <div className="timer-card-name">{t.name}</div>
-                    <div className={`timer-card-time ${t.finished ? 'timer-display--finished' : ''}`}>
+                    <div className="timer-card-name">{timerItem.name}</div>
+                    <div className={`timer-card-time ${timerItem.finished ? 'timer-display--finished' : ''}`}>
                       {formatTime(remaining)}
                     </div>
                     <div className="timer-card-controls">
-                      {t.finished && (
+                      {timerItem.finished && (
                         <button
                           type="button"
                           className="timer-btn timer-btn--dismiss timer-btn--sm"
-                          onClick={() => dismissTimer(t.id)}
-                          title="Dismiss alarm"
+                          onClick={() => dismissTimer(timerItem.id)}
+                          title={t('timer.dismissAlarm')}
                         >
                           <BellOff size={14} />
                         </button>
                       )}
-                      {!t.finished && (
-                        t.running ? (
+                      {!timerItem.finished && (
+                        timerItem.running ? (
                           <button
                             type="button"
                             className="timer-btn timer-btn--pause timer-btn--sm"
-                            onClick={() => pauseTimer(t.id)}
-                            title="Pause"
+                            onClick={() => pauseTimer(timerItem.id)}
+                            title={t('timer.pause')}
                           >
                             <Pause size={14} />
                           </button>
@@ -446,8 +449,8 @@ export function Timer({ compact = false }: TimerProps) {
                           <button
                             type="button"
                             className="timer-btn timer-btn--play timer-btn--sm"
-                            onClick={() => resumeTimer(t.id)}
-                            title="Resume"
+                            onClick={() => resumeTimer(timerItem.id)}
+                            title={t('timer.resume')}
                           >
                             <Play size={14} />
                           </button>
@@ -456,8 +459,8 @@ export function Timer({ compact = false }: TimerProps) {
                       <button
                         type="button"
                         className="timer-btn timer-btn--sm"
-                        onClick={() => cancelTimer(t.id)}
-                        title="Remove"
+                        onClick={() => cancelTimer(timerItem.id)}
+                        title={t('timer.remove')}
                       >
                         <X size={14} />
                       </button>
@@ -482,7 +485,7 @@ export function Timer({ compact = false }: TimerProps) {
                 type="button"
                 className="timer-btn timer-btn--play"
                 onClick={swStart}
-                title="Start"
+                title={t('timer.start')}
               >
                 <Play size={compact ? 16 : 20} />
               </button>
@@ -491,7 +494,7 @@ export function Timer({ compact = false }: TimerProps) {
                 type="button"
                 className="timer-btn timer-btn--pause"
                 onClick={swPause}
-                title="Pause"
+                title={t('timer.pause')}
               >
                 <Pause size={compact ? 16 : 20} />
               </button>
@@ -502,7 +505,7 @@ export function Timer({ compact = false }: TimerProps) {
                 type="button"
                 className="timer-btn"
                 onClick={swLap}
-                title="Lap"
+                title={t('timer.lap')}
               >
                 <Flag size={compact ? 16 : 20} />
               </button>
@@ -513,7 +516,7 @@ export function Timer({ compact = false }: TimerProps) {
                 type="button"
                 className="timer-btn"
                 onClick={swReset}
-                title="Reset"
+                title={t('timer.reset')}
               >
                 <RotateCcw size={compact ? 16 : 20} />
               </button>
@@ -524,7 +527,7 @@ export function Timer({ compact = false }: TimerProps) {
             <div className="timer-laps">
               {laps.map((lap, i) => (
                 <div key={i} className="timer-lap">
-                  <span className="timer-lap-label">Lap {i + 1}</span>
+                  <span className="timer-lap-label">{t('timer.lapN', { n: i + 1 })}</span>
                   <span className="timer-lap-time">{formatTime(lap)}</span>
                 </div>
               ))}

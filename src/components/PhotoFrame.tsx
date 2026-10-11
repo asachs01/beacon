@@ -7,6 +7,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { usePhotos } from '../hooks/usePhotos';
+import { useTranslation } from '../i18n';
 import { NowPlayingBar } from './NowPlayingBar';
 import { MediaPlayer } from '../types/music';
 
@@ -52,6 +53,7 @@ export function PhotoFrame({
   onMusicSetVolume,
   onBack,
 }: PhotoFrameProps) {
+  const { t } = useTranslation();
   const {
     currentPhoto,
     nextPhoto,
@@ -117,9 +119,9 @@ export function PhotoFrame({
     return (
       <div className="photo-frame" onClick={handleTap}>
         <div className="photo-frame-empty">
-          <p>No photos available</p>
+          <p>{t('photoFrame.noPhotos')}</p>
           <p className="photo-frame-empty-hint">
-            Add photos to your Home Assistant media directory
+            {t('photoFrame.addPhotosHint')}
           </p>
         </div>
         {onBack && (
@@ -127,7 +129,7 @@ export function PhotoFrame({
             type="button"
             className="photo-frame-back"
             onClick={(e) => { e.stopPropagation(); onBack(); }}
-            aria-label="Back to dashboard"
+            aria-label={t('photoFrame.backToDashboard')}
           >
             <ArrowLeft size={24} />
           </button>
@@ -143,7 +145,7 @@ export function PhotoFrame({
         <img
           className="photo-frame-image"
           src={currentPhoto?.url}
-          alt={currentPhoto?.caption || 'Photo'}
+          alt={currentPhoto?.caption || t('photoFrame.photoAlt')}
         />
       </div>
 
@@ -164,7 +166,7 @@ export function PhotoFrame({
           type="button"
           className="photo-frame-control-btn"
           onClick={(e) => { e.stopPropagation(); previousPhoto(); scheduleHide(); }}
-          aria-label="Previous photo"
+          aria-label={t('photoFrame.previousPhoto')}
         >
           <ChevronLeft size={32} />
         </button>
@@ -172,7 +174,7 @@ export function PhotoFrame({
           type="button"
           className="photo-frame-control-btn photo-frame-control-btn--play"
           onClick={(e) => { e.stopPropagation(); handlePauseToggle(); }}
-          aria-label={isActive ? 'Pause slideshow' : 'Resume slideshow'}
+          aria-label={isActive ? t('photoFrame.pauseSlideshow') : t('photoFrame.resumeSlideshow')}
         >
           {isActive ? <Pause size={32} /> : <Play size={32} />}
         </button>
@@ -180,7 +182,7 @@ export function PhotoFrame({
           type="button"
           className="photo-frame-control-btn"
           onClick={(e) => { e.stopPropagation(); nextPhoto(); scheduleHide(); }}
-          aria-label="Next photo"
+          aria-label={t('photoFrame.nextPhoto')}
         >
           <ChevronRight size={32} />
         </button>
@@ -192,7 +194,7 @@ export function PhotoFrame({
           type="button"
           className="photo-frame-back"
           onClick={(e) => { e.stopPropagation(); onBack(); }}
-          aria-label="Back to dashboard"
+          aria-label={t('photoFrame.backToDashboard')}
         >
           <ArrowLeft size={24} />
         </button>
