@@ -12,10 +12,12 @@ Beacon sends notifications before upcoming calendar events through two channels:
 
 ## How notifications work
 
-Every 60 seconds, Beacon scans your calendar events and checks if any event is starting within the next 15 minutes. When it finds one:
+Every 60 seconds, Beacon scans your calendar events and checks if any upcoming event is starting within the configured notification window. When it finds one:
 
 1. A **browser notification** is sent (if permission is granted)
 2. A **Home Assistant mobile app notification** is sent (if the client is connected)
+
+The default notification timing is **10 minutes** before each event. You can customize this in **Settings > Calendar** to 5, 10, 15, or 30 minutes.
 
 Each event is only notified once — Beacon tracks which event IDs have already triggered notifications to avoid duplicates.
 
@@ -43,12 +45,14 @@ The first time Beacon loads, it checks the browser's notification permission:
 
 ### Notification timing
 
+The timing depends on your **Settings > Calendar** configuration (default: 10 minutes before each event, configurable to 5, 10, 15, or 30 minutes).
+
 | Time Before Event | Body Text |
 |-------------------|-----------|
-| 2-15 minutes | "Starts in X minutes" |
+| 2+ minutes | "Starts in X minutes" |
 | 0-1 minute | "Starting now" |
 
-The check runs every 60 seconds, so the actual notification may arrive anywhere within the 15-minute window, typically within 1 minute of the 15-minute mark.
+The check runs every 60 seconds, so the actual notification may arrive anywhere within the configured window, typically within 1 minute of reaching the threshold.
 
 ### All-day events
 
