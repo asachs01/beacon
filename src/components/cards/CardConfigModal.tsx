@@ -106,8 +106,8 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
           })}
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn--secondary" onClick={onClose}>Cancel</button>
-          <button type="button" className="btn btn--primary" onClick={() => onSave(config)}>Save</button>
+          <button type="button" className="btn btn--secondary" onClick={onClose}>{t('common.cancel')}</button>
+          <button type="button" className="btn btn--primary" onClick={() => onSave(config)}>{t('common.save')}</button>
         </div>
       </div>
     </div>
