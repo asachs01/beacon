@@ -376,7 +376,7 @@ export const ko: Record<TranslationKey, string> = {
   'cards.agendaWeek.displayName': '이번 주',
   'cards.menu.displayName': '메뉴',
   'cards.tasks.displayName': '할 일',
-  'cards.shopping.displayName': '쇼핑',
+  'cards.shopping.displayName': '장보기',
   'cards.shopping.entityLabel': '쇼핑 목록 엔티티',
   'cards.haEntity.displayName': 'HA 엔티티',
   'cards.haEntitiesList.displayName': 'HA 엔티티 목록',

@@ -425,7 +425,7 @@ export const it: Record<TranslationKey, string> = {
   'countdown.removeNamed': 'Rimuovi {name}',
   'photoFrame.noPhotos': 'Nessuna foto disponibile',
   'photoFrame.addPhotosHint': 'Aggiungi foto alla tua directory multimediale di Home Assistant',
-  'photoFrame.backToDashboard': 'Torna alla dashboard',
+  'photoFrame.backToDashboard': 'Torna alla bacheca',
   'photoFrame.photoAlt': 'Foto',
   'photoFrame.previousPhoto': 'Foto precedente',
   'photoFrame.pauseSlideshow': 'Metti in pausa la presentazione',
