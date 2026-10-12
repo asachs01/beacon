@@ -3,6 +3,7 @@ import { DashboardCard } from '../../types/dashboard-cards';
 import { EntityMultiPicker, EntityPicker } from './EntityPicker';
 import { getCardDefinition } from './registry';
 import { readString, readStringArray } from './card-config';
+import { useTranslation } from '../../i18n';
 
 interface CardConfigModalProps {
   card: DashboardCard;
@@ -26,6 +27,7 @@ function initialConfig(card: DashboardCard) {
 
 /** Generic per-card-type configuration form for advanced dashboard cards. */
 export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps) {
+  const { t } = useTranslation();
   const definition = getCardDefinition(card.type);
   const fields = definition?.configFields ?? [];
   const [config, setConfig] = useState<Record<string, unknown>>(() => initialConfig(card));
@@ -55,14 +57,14 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
               return (
                 <div key={field.key} className="settings-row">
                   <div>
-                    <div className="settings-row-label">{field.label}</div>
-                    {field.description && <div className="settings-row-sublabel">{field.description}</div>}
+                    <div className="settings-row-label">{t(field.labelKey)}</div>
+                    {field.descriptionKey && <div className="settings-row-sublabel">{t(field.descriptionKey)}</div>}
                   </div>
                   <input
                     type="checkbox"
                     checked={config[field.key] === true}
                     onChange={(event) => updateConfig(field.key, event.target.checked)}
-                    aria-label={field.label}
+                    aria-label={t(field.labelKey)}
                   />
                 </div>
               );
@@ -71,7 +73,7 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
               const entityIds = readStringArray(config, field.key);
               return (
                 <div key={field.key} className="form-field">
-                  <label className="form-label">{field.label}</label>
+                  <label className="form-label">{t(field.labelKey)}</label>
                   <EntityMultiPicker
                     selectedIds={entityIds}
                     onToggle={(entityId) => toggleEntity(field.key, entityId)}
@@ -83,7 +85,7 @@ export function CardConfigModal({ card, onSave, onClose }: CardConfigModalProps)
             const value = typeof rawValue === 'string' ? rawValue : '';
             return (
               <div key={field.key} className="form-field">
-                <label className="form-label" htmlFor={id}>{field.label}</label>
+                <label className="form-label" htmlFor={id}>{t(field.labelKey)}</label>
                 {field.type === 'entity' ? (
                   <EntityPicker
                     id={id}

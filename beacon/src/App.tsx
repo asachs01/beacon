@@ -213,7 +213,7 @@ export function App() {
   );
 
   // Event notifications (browser + HA mobile_app)
-  useNotifications(events, client, !focusMemberId);
+  useNotifications(events, client, !focusMemberId, settings.notificationMinutes);
 
   // Leaderboard is still a slide-over panel (not a full view); Chores is now
   // a real full-screen activeView (see PRD: dedicated chores screen).
@@ -566,7 +566,7 @@ export function App() {
 
   return (
     <I18nContext.Provider value={i18n}>
-    <div className={`beacon beacon--sidebar-${sidebarPos} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
+    <div className={`beacon ${settings.kioskMode ? 'beacon--kiosk' : `beacon--sidebar-${sidebarPos}`} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
       {focusInvalid && (
         <div className="focus-invalid-banner">
           {t('app.kidDisplayNotFound')}
@@ -575,12 +575,14 @@ export function App() {
           </button>
         </div>
       )}
-      {/* Sidebar */}
-      <Sidebar
-        activeView={activeView}
-        onChangeView={handleChangeView}
-        position={sidebarPos}
-      />
+      {/* Sidebar — hidden entirely in Kiosk Mode (Settings > Display) */}
+      {!settings.kioskMode && (
+        <Sidebar
+          activeView={activeView}
+          onChangeView={handleChangeView}
+          position={sidebarPos}
+        />
+      )}
 
       {/* Main content area */}
       <div className="beacon-main">

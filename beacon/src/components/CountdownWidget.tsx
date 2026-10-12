@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { differenceInDays, parseISO, startOfDay, format } from 'date-fns';
 import { CalendarEvent } from '../types';
+import { useTranslation } from '../i18n';
 
 const STORAGE_KEY = 'beacon-countdown-events';
 
@@ -29,6 +30,7 @@ function saveSavedCountdowns(items: CountdownEvent[]) {
 }
 
 export function CountdownWidget({ events = [] }: CountdownWidgetProps) {
+  const { t } = useTranslation();
   const [savedCountdowns, setSavedCountdowns] = useState<CountdownEvent[]>(loadSavedCountdowns);
   const [showAdd, setShowAdd] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -94,14 +96,14 @@ export function CountdownWidget({ events = [] }: CountdownWidgetProps) {
     <div className="countdown-widget">
       <div className="countdown-widget-header">
         <h3 className="dashboard-section-title" style={{ marginBottom: 0 }}>
-          Countdown
+          {t('countdown.title')}
         </h3>
         <button
           type="button"
           className="countdown-add-btn"
           onClick={() => setShowAdd(!showAdd)}
-          title="Add countdown"
-          aria-label="Add countdown"
+          title={t('countdown.add')}
+          aria-label={t('countdown.add')}
         >
           {showAdd ? '\u00D7' : '+'}
         </button>
@@ -112,7 +114,7 @@ export function CountdownWidget({ events = [] }: CountdownWidgetProps) {
           <input
             type="text"
             className="form-input"
-            placeholder="Event name"
+            placeholder={t('countdown.eventNamePlaceholder')}
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
@@ -125,7 +127,7 @@ export function CountdownWidget({ events = [] }: CountdownWidgetProps) {
             min={format(new Date(), 'yyyy-MM-dd')}
           />
           <button type="button" className="btn btn--primary" onClick={handleAdd}>
-            Add
+            {t('countdown.addBtn')}
           </button>
         </div>
       )}
@@ -140,7 +142,7 @@ export function CountdownWidget({ events = [] }: CountdownWidgetProps) {
               <div className="countdown-days">
                 <span className="countdown-days-number">{days}</span>
                 <span className="countdown-days-label">
-                  {days === 1 ? 'day' : 'days'}
+                  {days === 1 ? t('countdown.day') : t('countdown.days')}
                 </span>
               </div>
               <div className="countdown-info">
@@ -154,8 +156,8 @@ export function CountdownWidget({ events = [] }: CountdownWidgetProps) {
                   type="button"
                   className="countdown-remove-btn"
                   onClick={() => handleRemove(c.id)}
-                  title="Remove"
-                  aria-label={`Remove ${c.title}`}
+                  title={t('countdown.remove')}
+                  aria-label={t('countdown.removeNamed', { name: c.title })}
                 >
                   &times;
                 </button>

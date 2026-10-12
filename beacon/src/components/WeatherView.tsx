@@ -67,7 +67,7 @@ export function WeatherView() {
 
   const fetchData = useCallback(async () => {
     if (!hasToken()) {
-      setError('Not connected to Home Assistant');
+      setError(t('weatherView.notConnected'));
       setLoading(false);
       return;
     }
@@ -96,7 +96,7 @@ export function WeatherView() {
         }>;
         const found = states.find(s => s.entity_id.startsWith('weather.'));
         if (!found) {
-          setError('No weather entity found');
+          setError(t('weatherView.noEntityFound'));
           setLoading(false);
           return;
         }
@@ -136,7 +136,7 @@ export function WeatherView() {
       // Fetch hourly forecast
       await fetchHourly(entityId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch weather');
+      setError(err instanceof Error ? err.message : t('weatherView.fetchFailed'));
     } finally {
       setLoading(false);
     }
@@ -159,7 +159,7 @@ export function WeatherView() {
   if (loading && !current) {
     return (
       <div className="weather-view">
-        <div className="weather-loading">Loading weather data...</div>
+        <div className="weather-loading">{t('weatherView.loading')}</div>
       </div>
     );
   }
@@ -170,7 +170,7 @@ export function WeatherView() {
         <div className="weather-error">
           <p>{error}</p>
           <button type="button" className="weather-retry-btn" onClick={fetchData}>
-            Retry
+            {t('weatherView.retry')}
           </button>
         </div>
       </div>
@@ -202,25 +202,25 @@ export function WeatherView() {
         <div className="weather-current-details">
           {current.feelsLike != null && (
             <div className="weather-detail">
-              <span className="weather-detail-label">Feels like</span>
+              <span className="weather-detail-label">{t('weatherView.feelsLike')}</span>
               <span className="weather-detail-value">{Math.round(current.feelsLike)}°{unit}</span>
             </div>
           )}
           {current.humidity != null && (
             <div className="weather-detail">
-              <span className="weather-detail-label">Humidity</span>
+              <span className="weather-detail-label">{t('weatherView.humidity')}</span>
               <span className="weather-detail-value">{current.humidity}%</span>
             </div>
           )}
           {current.windSpeed != null && (
             <div className="weather-detail">
-              <span className="weather-detail-label">Wind</span>
+              <span className="weather-detail-label">{t('weatherView.wind')}</span>
               <span className="weather-detail-value">{Math.round(current.windSpeed)} mph</span>
             </div>
           )}
           {current.pressure != null && (
             <div className="weather-detail">
-              <span className="weather-detail-label">Pressure</span>
+              <span className="weather-detail-label">{t('weatherView.pressure')}</span>
               <span className="weather-detail-value">{Math.round(current.pressure)} hPa</span>
             </div>
           )}
@@ -230,8 +230,8 @@ export function WeatherView() {
           type="button"
           className="weather-refresh-btn"
           onClick={fetchData}
-          title="Refresh weather"
-          aria-label="Refresh weather"
+          title={t('weatherView.refreshWeather')}
+          aria-label={t('weatherView.refreshWeather')}
         >
           <RefreshCw size={18} strokeWidth={1.5} />
         </button>
@@ -240,7 +240,7 @@ export function WeatherView() {
       {/* 7-day forecast */}
       {forecast.length > 0 && (
         <section className="weather-forecast">
-          <h2 className="weather-forecast-title">7-Day Forecast</h2>
+          <h2 className="weather-forecast-title">{t('weatherView.sevenDayForecast')}</h2>
           <div className="weather-forecast-scroll">
             {forecast.map((day) => {
               const date = parseISO(day.datetime);
@@ -283,21 +283,21 @@ export function WeatherView() {
             <div className="weather-hourly">
               <div className="weather-hourly-header">
                 <h3 className="weather-hourly-title">
-                  Hourly — {format(parseISO(selectedDay), 'EEEE, MMM d')}
+                  {t('weatherView.hourlyForDay', { day: format(parseISO(selectedDay), 'EEEE, MMM d') })}
                 </h3>
                 <button
                   type="button"
                   className="weather-hourly-close"
                   onClick={() => setSelectedDay(null)}
-                  aria-label="Close hourly forecast"
+                  aria-label={t('weatherView.closeHourlyForecastAria')}
                 >
-                  Collapse
+                  {t('weatherView.collapse')}
                 </button>
               </div>
               {hourlyLoading ? (
-                <div className="weather-hourly-loading">Loading hourly data...</div>
+                <div className="weather-hourly-loading">{t('weatherView.loadingHourly')}</div>
               ) : hoursForSelectedDay.length === 0 ? (
-                <div className="weather-hourly-empty">No hourly data available for this day.</div>
+                <div className="weather-hourly-empty">{t('weatherView.noHourlyData')}</div>
               ) : (
                 <div className="weather-hourly-scroll">
                   {hoursForSelectedDay.map((hour) => {

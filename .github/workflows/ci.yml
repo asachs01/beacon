@@ -19,6 +19,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Check beacon/ sync
+        run: bash scripts/check-beacon-sync.sh
+
       - name: Type check
         run: npx tsc --noEmit
 

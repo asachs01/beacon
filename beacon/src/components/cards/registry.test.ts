@@ -44,7 +44,7 @@ describe('card registry contract', () => {
   });
 
   it('resolves known types and ignores unknown ones', () => {
-    expect(getCardDefinition('family-calendar')?.displayName).toBe('Family Calendar');
+    expect(getCardDefinition('family-calendar')?.displayNameKey).toBe('cards.familyCalendar.displayName');
     expect(getCardDefinition('nope')).toBeUndefined();
   });
 });
