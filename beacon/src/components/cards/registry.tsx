@@ -107,7 +107,7 @@ export const cardRegistry: Record<string, CardDefinition> = {
     defaultConfig: { title: '', subtitle: '', entity_ids: [] },
     defaultSize: 'sm',
     configFields: [
-      { type: 'text', key: 'title', labelKey: 'cards.common.titleLabel', placeholderKey: 'cardConfig.entitiesPlaceholder' },
+      { type: 'text', key: 'title', labelKey: 'cards.common.titleLabel' },
       { type: 'text', key: 'subtitle', labelKey: 'cards.common.subtitleLabel' },
       { type: 'entity-list', key: 'entity_ids', labelKey: 'cards.common.entitiesLabel' },
     ],
