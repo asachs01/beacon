@@ -27,7 +27,7 @@
 
   /* Semantic state colors — deliberately distinct from brand/category hues */
   --color-success: #22c55e;
-  --color-warning: #d97706; /* NOT #f59e0b — that's brand gold; warning needs
+  --color-warning: #d97706; /* NOT #f7a832 — that's brand gold; warning needs
                                 its own hue so a warning toast is never visually
                                 identical to the Beacon brand mark */
   --color-error: #ef4444;
