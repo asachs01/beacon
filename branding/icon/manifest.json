@@ -1,0 +1,138 @@
+{
+ "export/web/beacon-app-icon-192.png": [
+  "src/assets/beacon-app-icon-192.png",
+  "beacon/src/assets/beacon-app-icon-192.png"
+ ],
+ "export/web/beacon-app-icon-256.png": [
+  "src/assets/beacon-app-icon-256.png",
+  "beacon/src/assets/beacon-app-icon-256.png"
+ ],
+ "export/web/beacon-icon-256.png": [
+  "src/assets/beacon-icon-256.png",
+  "beacon/src/assets/beacon-icon-256.png"
+ ],
+ "export/web/beacon-app-icon-512.png": [
+  "src/assets/beacon-app-icon-512.png",
+  "beacon/src/assets/beacon-app-icon-512.png"
+ ],
+ "export/web/beacon-icon-512.png": [
+  "src/assets/beacon-icon-512.png",
+  "beacon/src/assets/beacon-icon-512.png"
+ ],
+ "export/web/beacon-app-icon-16.png": [
+  "src/assets/beacon-app-icon-16.png",
+  "beacon/src/assets/beacon-app-icon-16.png"
+ ],
+ "export/web/beacon-app-icon-32.png": [
+  "src/assets/beacon-app-icon-32.png",
+  "beacon/src/assets/beacon-app-icon-32.png"
+ ],
+ "export/web/beacon-app-icon-64.png": [
+  "src/assets/beacon-app-icon-64.png",
+  "beacon/src/assets/beacon-app-icon-64.png"
+ ],
+ "export/web/beacon-icon-64.png": [
+  "src/assets/beacon-icon-64.png",
+  "beacon/src/assets/beacon-icon-64.png"
+ ],
+ "export/web/beacon-favicon-32.png": [
+  "src/assets/beacon-favicon-32.png",
+  "beacon/src/assets/beacon-favicon-32.png"
+ ],
+ "export/web/beacon-app-icon-192-maskable.png": [
+  "src/assets/beacon-app-icon-192-maskable.png",
+  "beacon/src/assets/beacon-app-icon-192-maskable.png"
+ ],
+ "export/web/beacon-app-icon-512-maskable.png": [
+  "NEW: src/assets/beacon-app-icon-512-maskable.png (+beacon/ copy; add to manifest.json purpose:maskable)"
+ ],
+ "svg/app-icon-master.svg": [
+  "src/assets/beacon-app-icon.svg",
+  "beacon/src/assets/beacon-app-icon.svg"
+ ],
+ "svg/app-icon-maskable.svg": [
+  "src/assets/beacon-app-icon-maskable.svg",
+  "beacon/src/assets/beacon-app-icon-maskable.svg"
+ ],
+ "svg/favicon.svg": [
+  "docs-site/public/favicon.svg",
+  "NEW: public/favicon.svg (point index.html <link rel=icon> here instead of the full app icon)"
+ ],
+ "svg/wordmark.svg": [
+  "src/assets/beacon-wordmark.svg",
+  "beacon/src/assets/beacon-wordmark.svg"
+ ],
+ "svg/horizontal-lockup.svg": [
+  "src/assets/beacon-logo-horizontal.svg",
+  "beacon/src/assets/beacon-logo-horizontal.svg"
+ ],
+ "svg/og.svg": [
+  "src/assets/beacon-og.svg",
+  "beacon/src/assets/beacon-og.svg"
+ ],
+ "export/web/beacon-og.png": [
+  "src/assets/beacon-og.png",
+  "beacon/src/assets/beacon-og.png"
+ ],
+ "export/web/beacon-logo-horizontal.png": [
+  "src/assets/beacon-logo-horizontal.png",
+  "beacon/src/assets/beacon-logo-horizontal.png"
+ ],
+ "export/ha/icon.png": [
+  "beacon/icon.png"
+ ],
+ "export/ha/logo.png": [
+  "beacon/logo.png"
+ ],
+ "export/android/app/src/main/res/mipmap-mdpi/ic_launcher.png": [
+  "android/app/src/main/res/mipmap-mdpi/ic_launcher.png"
+ ],
+ "export/android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png": [
+  "android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png"
+ ],
+ "export/android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png": [
+  "android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png"
+ ],
+ "export/android/app/src/main/res/mipmap-hdpi/ic_launcher.png": [
+  "android/app/src/main/res/mipmap-hdpi/ic_launcher.png"
+ ],
+ "export/android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png": [
+  "android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png"
+ ],
+ "export/android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png": [
+  "android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png"
+ ],
+ "export/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png": [
+  "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png"
+ ],
+ "export/android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png": [
+  "android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png"
+ ],
+ "export/android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png": [
+  "android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png"
+ ],
+ "export/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png": [
+  "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png"
+ ],
+ "export/android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png": [
+  "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png"
+ ],
+ "export/android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png": [
+  "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png"
+ ],
+ "export/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": [
+  "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
+ ],
+ "export/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png": [
+  "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"
+ ],
+ "export/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png": [
+  "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png"
+ ],
+ "export/android/ic_launcher_background.png": [
+  "NEW: android/app/src/main/res/drawable/ic_launcher_background.png (or keep values/ic_launcher_background.xml color #101d3c; check mipmap-anydpi-v26/ic_launcher.xml)"
+ ],
+ "export/ios/AppIcon-512@2x.png": [
+  "ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png"
+ ]
+}

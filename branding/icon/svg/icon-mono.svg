@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Beacon"><title>Beacon</title><circle cx="32" cy="9" r="3" fill="currentColor"/>
+<path d="M18 25 C18 17 24 13 32 13 C40 13 46 17 46 25 Z" fill="currentColor"/>
+<rect x="20" y="27" width="24" height="15" rx="1.5" fill="currentColor"/>
+<path d="M16 30 L3 25 V44 L16 39 Z" fill="currentColor"/>
+<path d="M48 30 L61 25 V44 L48 39 Z" fill="currentColor"/>
+<rect x="15" y="44" width="34" height="5" rx="2" fill="currentColor"/>
+<path d="M22 51 H42 L40 59 H24 Z" fill="currentColor"/></svg>

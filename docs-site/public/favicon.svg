@@ -1,15 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <!-- Lighthouse base -->
-  <path d="M22 52 L18 56 Q18 58 20 58 L44 58 Q46 58 46 56 L42 52 Z" fill="#f8fafc"/>
-  <!-- Lighthouse tower -->
-  <path d="M24 52 L27 20 L37 20 L40 52 Z" fill="#f8fafc"/>
-  <!-- Lantern room -->
-  <rect x="25" y="16" width="14" height="6" rx="1" fill="#f8fafc"/>
-  <!-- Glow arcs -->
-  <path d="M20 14 A14 14 0 0 1 32 2" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-  <path d="M16 16 A20 20 0 0 1 32 -2" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <path d="M12 18 A26 26 0 0 1 32 -6" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.3"/>
-  <path d="M44 14 A14 14 0 0 0 32 2" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-  <path d="M48 16 A20 20 0 0 0 32 -2" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <path d="M52 18 A26 26 0 0 0 32 -6" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.3"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Beacon"><title>Beacon</title><rect width="64" height="64" rx="14" fill="#0f1a33"/><circle cx="32" cy="9" r="3" fill="#f7a92a"/>
+<path d="M18 25 C18 17 24 13 32 13 C40 13 46 17 46 25 Z" fill="#3a5eae"/>
+<rect x="20" y="27" width="24" height="15" rx="1.5" fill="#f7a92a"/>
+<path d="M16 30 L3 25 V44 L16 39 Z" fill="#ffd27a"/>
+<path d="M48 30 L61 25 V44 L48 39 Z" fill="#ffd27a"/>
+<rect x="15" y="44" width="34" height="5" rx="2" fill="#3a5eae"/>
+<path d="M22 51 H42 L40 59 H24 Z" fill="#3a5eae"/></svg>
