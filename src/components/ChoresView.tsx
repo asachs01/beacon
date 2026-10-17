@@ -6,6 +6,7 @@ import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
 import { useSettings } from '../hooks/useSettings';
+import { useTranslation } from '../i18n';
 
 const CHORE_ICONS = ['🧹', '🍽️', '🐕', '🛏️', '📚', '🗑️', '👕', '🧺', '🪥', '🚿', '🧼', '💪'];
 
@@ -36,6 +37,7 @@ function UnassignedChoreCard({
   onDelete,
   currencySymbol = '$',
 }: UnassignedChoreCardProps) {
+  const { t } = useTranslation();
   const [showMemberPicker, setShowMemberPicker] = useState(false);
   const [pickerAction, setPickerAction] = useState<'claim' | 'complete'>('claim');
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -80,7 +82,7 @@ function UnassignedChoreCard({
             setShowMemberPicker(true);
           }}
         >
-          Claim
+          {t('chores.claim')}
         </button>
         <button
           type="button"
@@ -90,13 +92,13 @@ function UnassignedChoreCard({
             setShowMemberPicker(true);
           }}
         >
-          Complete
+          {t('chores.complete')}
         </button>
         <button
           type="button"
           className="chore-card-action-btn"
           onClick={onEdit}
-          aria-label={`Edit ${chore.name}`}
+          aria-label={t('chores.editChoreAria', { name: chore.name })}
         >
           <Pencil size={15} />
         </button>
@@ -104,10 +106,10 @@ function UnassignedChoreCard({
           type="button"
           className="chore-card-action-btn chore-card-action-btn--danger"
           onClick={handleDeleteClick}
-          aria-label={`Delete ${chore.name}`}
+          aria-label={t('chores.deleteChoreAria', { name: chore.name })}
         >
           {confirmDelete ? (
-            <span className="chore-card-action-confirm">Sure?</span>
+            <span className="chore-card-action-confirm">{t('common.sure')}</span>
           ) : (
             <Trash2 size={15} />
           )}
@@ -119,7 +121,7 @@ function UnassignedChoreCard({
           <div className="modal modal--sm" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">
-                {pickerAction === 'claim' ? 'Who claims this?' : 'Who completed this?'}
+                {pickerAction === 'claim' ? t('chores.whoClaims') : t('chores.whoCompleted')}
               </h2>
               <button
                 type="button"
@@ -153,6 +155,7 @@ function UnassignedChoreCard({
 }
 
 export function ChoresView() {
+  const { t } = useTranslation();
   const { members } = useFamily();
   const { settings } = useSettings();
   const {
@@ -265,7 +268,7 @@ export function ChoresView() {
   return (
     <div className="chores-view">
       <header className="chores-view-header">
-        <h1 className="chores-view-title">Chores</h1>
+        <h1 className="chores-view-title">{t('chores.title')}</h1>
         {members.length > 0 && (
           <button
             type="button"
@@ -273,20 +276,20 @@ export function ChoresView() {
             onClick={() => openAddForm()}
           >
             <Plus size={16} strokeWidth={2} />
-            Add Chore
+            {t('chores.addChore')}
           </button>
         )}
       </header>
 
       {members.length === 0 ? (
         <div className="chores-empty">
-          Add family members first to assign chores.
+          {t('chores.addMembersFirst')}
         </div>
       ) : (
         <>
           {unassignedChores.length > 0 && (
             <section className="chores-unassigned-section">
-              <h2 className="chores-section-title">Open Chores</h2>
+              <h2 className="chores-section-title">{t('chores.openChores')}</h2>
               <div className="chores-unassigned-list">
                 {unassignedChores.map((chore) => (
                   <UnassignedChoreCard
@@ -342,7 +345,7 @@ export function ChoresView() {
 
               <div className="chores-member-col-list">
                 {memberChores.length === 0 ? (
-                  <div className="chores-member-empty">No chores assigned</div>
+                  <div className="chores-member-empty">{t('chores.noChoresAssigned')}</div>
                 ) : (
                   <div className="chores-list">
                     {memberChores.map((chore) => (
@@ -368,7 +371,7 @@ export function ChoresView() {
                 onClick={() => openAddForm(member.id)}
               >
                 <Plus size={14} strokeWidth={2} />
-                Add chore for {member.name}
+                {t('chores.addChoreFor', { name: member.name })}
               </button>
             </section>
           ))}
@@ -380,7 +383,7 @@ export function ChoresView() {
         <div className="modal-overlay" onClick={handleCloseForm}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{isEditing ? 'Edit Chore' : 'New Chore'}</h2>
+              <h2 className="modal-title">{isEditing ? t('chores.editChore') : t('chores.newChore')}</h2>
               <button type="button" className="modal-close" onClick={handleCloseForm}>
                 {'\u00D7'}
               </button>
@@ -389,7 +392,7 @@ export function ChoresView() {
             <div className="modal-body chores-add-form">
               {/* Icon picker */}
               <div className="form-field">
-                <label className="form-label">Icon</label>
+                <label className="form-label">{t('chores.icon')}</label>
                 <div className="fm-avatar-grid">
                   {CHORE_ICONS.map((icon) => (
                     <button
@@ -405,19 +408,19 @@ export function ChoresView() {
               </div>
 
               <div className="form-field">
-                <label className="form-label">Name</label>
+                <label className="form-label">{t('chores.name')}</label>
                 <input
                   type="text"
                   className="form-input"
                   value={newChore.name}
                   onChange={(e) => setNewChore((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="e.g., Vacuum living room"
+                  placeholder={t('chores.namePlaceholder')}
                   autoFocus
                 />
               </div>
 
               <div className="form-field">
-                <label className="form-label">Value</label>
+                <label className="form-label">{t('chores.value')}</label>
                 <div className="chores-value-input">
                   <span className="chores-value-prefix">
                     {settings.currencySymbol === STAR_CURRENCY ? STAR_CURRENCY : '$'}
@@ -446,7 +449,7 @@ export function ChoresView() {
               </div>
 
               <div className="form-field">
-                <label className="form-label">Frequency</label>
+                <label className="form-label">{t('chores.frequency')}</label>
                 <select
                   className="form-select"
                   value={newChore.frequency}
@@ -454,14 +457,14 @@ export function ChoresView() {
                     setNewChore((f) => ({ ...f, frequency: e.target.value as Chore['frequency'] }))
                   }
                 >
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="once">One-time</option>
+                  <option value="daily">{t('chores.daily')}</option>
+                  <option value="weekly">{t('chores.weekly')}</option>
+                  <option value="once">{t('chores.oneTime')}</option>
                 </select>
               </div>
 
               <div className="form-field">
-                <label className="form-label">Assign To</label>
+                <label className="form-label">{t('chores.assignTo')}</label>
                 <div className="chores-assign-grid">
                   {members.map((m: FamilyMember) => (
                     <button
@@ -490,12 +493,12 @@ export function ChoresView() {
                   className="btn btn--danger"
                   onClick={() => handleDeleteChore(editingChoreId)}
                 >
-                  Delete
+                  {t('common.delete')}
                 </button>
               )}
               <div className="modal-footer-right">
                 <button type="button" className="btn btn--secondary" onClick={handleCloseForm}>
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
@@ -503,7 +506,7 @@ export function ChoresView() {
                   onClick={handleSaveChore}
                   disabled={!newChore.name.trim()}
                 >
-                  {isEditing ? 'Save Changes' : 'Add Chore'}
+                  {isEditing ? t('chores.saveChanges') : t('chores.addChore')}
                 </button>
               </div>
             </div>

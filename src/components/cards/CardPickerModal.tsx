@@ -17,7 +17,7 @@ export function CardPickerModal({ region, onPick, onClose }: CardPickerModalProp
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">Add Card</h2>
+          <h2 className="modal-title">{t('cardPicker.title')}</h2>
           <button type="button" className="modal-close" onClick={onClose}>&#x2715;</button>
         </div>
         <div className="modal-body">
@@ -34,7 +34,7 @@ export function CardPickerModal({ region, onPick, onClose }: CardPickerModalProp
               </button>
             ))}
             {options.length === 0 && (
-              <div className="dash-ha-card-empty">No card types available for this area.</div>
+              <div className="dash-ha-card-empty">{t('cardPicker.empty')}</div>
             )}
           </div>
         </div>

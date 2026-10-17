@@ -10,6 +10,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { MediaPlayer } from '../types/music';
+import { useTranslation } from '../i18n';
 
 interface MusicViewProps {
   players: MediaPlayer[];
@@ -44,14 +45,15 @@ export function MusicView({
   onPrevious,
   onSetVolume,
 }: MusicViewProps) {
+  const { t } = useTranslation();
   // Empty state when no media players found
   if (players.length === 0) {
     return (
       <div className="music-view" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎵</div>
-          <h2 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: 8 }}>No Media Players</h2>
-          <p style={{ fontSize: '0.9rem' }}>Connect a media player in Home Assistant to control music from here.</p>
+          <h2 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: 8 }}>{t('music.noPlayers')}</h2>
+          <p style={{ fontSize: '0.9rem' }}>{t('music.noPlayersDesc')}</p>
         </div>
       </div>
     );
@@ -104,7 +106,7 @@ export function MusicView({
             className="music-player-selector-btn"
             onClick={() => setShowPlayerDropdown(!showPlayerDropdown)}
           >
-            <span>{player?.friendly_name || 'Select Player'}</span>
+            <span>{player?.friendly_name || t('music.selectPlayer')}</span>
             <ChevronDown size={16} />
           </button>
           {showPlayerDropdown && (
@@ -123,7 +125,7 @@ export function MusicView({
                 >
                   <span>{p.friendly_name}</span>
                   {p.state === 'playing' && (
-                    <span className="music-player-dropdown-playing">Playing</span>
+                    <span className="music-player-dropdown-playing">{t('music.nowPlaying')}</span>
                   )}
                 </button>
               ))}
@@ -138,7 +140,7 @@ export function MusicView({
           <img
             className="music-art"
             src={artSrc}
-            alt={player?.media_album_name || 'Album art'}
+            alt={player?.media_album_name || t('music.albumArt')}
           />
         ) : (
           <div className="music-art music-art--placeholder">
@@ -150,7 +152,7 @@ export function MusicView({
       {/* Track info */}
       <div className="music-track-info">
         <h2 className="music-track-title">
-          {player?.media_title || player?.app_name || 'Nothing Playing'}
+          {player?.media_title || player?.app_name || t('music.nowPlaying')}
         </h2>
         <p className="music-track-artist">
           {player?.media_artist || ''}
@@ -180,7 +182,7 @@ export function MusicView({
           type="button"
           className="music-control-btn"
           onClick={() => onPrevious(player?.entity_id)}
-          aria-label="Previous track"
+          aria-label={t('music.previousTrack')}
         >
           <SkipBack size={28} />
         </button>
@@ -188,7 +190,7 @@ export function MusicView({
           type="button"
           className="music-control-btn music-control-btn--play"
           onClick={() => (isPlaying ? onPause : onPlay)(player?.entity_id)}
-          aria-label={isPlaying ? 'Pause' : 'Play'}
+          aria-label={isPlaying ? t('music.pause') : t('music.play')}
         >
           {isPlaying ? <Pause size={32} /> : <Play size={32} />}
         </button>
@@ -196,7 +198,7 @@ export function MusicView({
           type="button"
           className="music-control-btn"
           onClick={() => onNext(player?.entity_id)}
-          aria-label="Next track"
+          aria-label={t('music.nextTrack')}
         >
           <SkipForward size={28} />
         </button>
@@ -213,7 +215,7 @@ export function MusicView({
               player?.entity_id,
             )
           }
-          aria-label={player?.is_volume_muted ? 'Unmute' : 'Mute'}
+          aria-label={player?.is_volume_muted ? t('music.unmute') : t('music.mute')}
         >
           {player?.is_volume_muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
         </button>
@@ -225,7 +227,7 @@ export function MusicView({
           step={0.02}
           value={player?.is_volume_muted ? 0 : (player?.volume_level ?? 0.5)}
           onChange={(e) => onSetVolume(parseFloat(e.target.value), player?.entity_id)}
-          aria-label="Volume"
+          aria-label={t('music.volume')}
         />
       </div>
     </div>

@@ -445,6 +445,110 @@ export const en = {
   'photoFrame.pauseSlideshow': 'Pause slideshow',
   'photoFrame.resumeSlideshow': 'Resume slideshow',
   'photoFrame.nextPhoto': 'Next photo',
+
+  // ---- chores view ----
+  'chores.title': 'Chores',
+  'chores.addChore': 'Add Chore',
+  'chores.editChore': 'Edit Chore',
+  'chores.newChore': 'New Chore',
+  'chores.claim': 'Claim',
+  'chores.complete': 'Complete',
+  'chores.whoClaims': 'Who claims this?',
+  'chores.whoCompleted': 'Who completed this?',
+  'chores.editChoreAria': 'Edit {name}',
+  'chores.deleteChoreAria': 'Delete {name}',
+  'chores.name': 'Name',
+  'chores.value': 'Value',
+  'chores.frequency': 'Frequency',
+  'chores.assignedTo': 'Assign To',
+  'chores.assignTo': 'Assign To',
+  'chores.icon': 'Icon',
+  'chores.daily': 'Daily',
+  'chores.weekly': 'Weekly',
+  'chores.monthly': 'Monthly',
+  'chores.oneTime': 'One-time',
+  'chores.namePlaceholder': 'e.g., Vacuum living room',
+  'chores.anyone': 'Anyone',
+  'chores.empty': 'No chores yet — add one to get started',
+  'chores.addMembersFirst': 'Add family members first to assign chores.',
+  'chores.openChores': 'Open Chores',
+  'chores.noChoresAssigned': 'No chores assigned',
+  'chores.addChoreFor': 'Add chore for {name}',
+  'chores.saveChanges': 'Save Changes',
+
+  // ---- leaderboard ----
+  'leaderboard.title': 'Leaderboard',
+  'leaderboard.thisWeek': 'This Week',
+  'leaderboard.thisMonth': 'This Month',
+  'leaderboard.empty': 'Add family members and chores to see the leaderboard.',
+  'leaderboard.choresCompleted': '{count} chores',
+  'leaderboard.choreCompletedSingular': '{count} chore',
+
+  // ---- streak badge ----
+  'streak.longestTooltip': 'Longest streak: {count} days',
+  'streak.best': 'Best:',
+
+  // ---- music view ----
+  'music.noPlayers': 'No Media Players',
+  'music.noPlayersDesc': 'Connect a media player in Home Assistant to control music from here.',
+  'music.selectPlayer': 'Select Player',
+  'music.nowPlaying': 'Now Playing',
+  'music.volume': 'Volume',
+  'music.openMusicView': 'Open music view',
+  'music.previousTrack': 'Previous track',
+  'music.nextTrack': 'Next track',
+  'music.play': 'Play',
+  'music.pause': 'Pause',
+  'music.mute': 'Mute',
+  'music.unmute': 'Unmute',
+  'music.albumArt': 'Album art',
+
+  // ---- grocery / lists view ----
+  'grocery.noListsAvailable': 'No lists available',
+  'grocery.addItem': 'Add item',
+  'grocery.addItemPlaceholder': 'Add an item...',
+  'grocery.loadingItems': 'Loading items...',
+  'grocery.empty': 'No items yet — add one above',
+  'grocery.items': 'Items ({count})',
+  'grocery.completed': 'Completed ({count})',
+  'grocery.deleteItem': 'Delete item',
+  'grocery.haList': '{name} (HA)',
+
+  // ---- card picker modal ----
+  'cardPicker.title': 'Add Card',
+  'cardPicker.empty': 'No card types available for this area.',
+
+  // ---- card config modal (common) ----
+  'cardConfig.entitiesPlaceholder': 'Entities',
+
+  // ---- view name modal ----
+  'viewName.name': 'Name',
+
+  // ---- onboarding ----
+  'onboarding.welcome': 'Welcome to Beacon',
+  'onboarding.welcomeDesc': 'Connect your Home Assistant to get started.',
+  'onboarding.getStarted': 'Get Started',
+  'onboarding.connectTitle': 'Connect to Home Assistant',
+  'onboarding.connectDesc': 'Enter the URL of your Home Assistant instance.',
+  'onboarding.haUrl': 'Home Assistant URL',
+  'onboarding.haUrlPlaceholder': 'https://homeassistant.local:8123',
+  'onboarding.connect': 'Connect',
+  'onboarding.connecting': 'Connecting...',
+  'onboarding.authTitle': 'Authentication',
+  'onboarding.authDesc': 'Choose how to authenticate with Home Assistant.',
+  'onboarding.tokenMethod': 'Long-lived Access Token',
+  'onboarding.tokenMethodDesc': 'Use a token generated from your Home Assistant profile.',
+  'onboarding.tokenPlaceholder': 'Paste your token here',
+  'onboarding.tokenHint': 'How to create a token:',
+  'onboarding.tokenHintDetail': 'Go to your HA Profile → Long-lived tokens → Create Token',
+  'onboarding.oauthMethod': 'Sign in with Home Assistant',
+  'onboarding.oauthMethodDesc': 'Authenticate using your Home Assistant credentials via OAuth2.',
+  'onboarding.openHA': 'Open Home Assistant',
+  'onboarding.completeSetup': 'Complete Setup',
+  'onboarding.urlError': 'URL must start with http:// or https://',
+  'onboarding.connectionFailed': 'Connection failed (HTTP {status}). Check the URL and try again.',
+  'onboarding.notReachable': 'Could not reach Home Assistant. Verify the URL and ensure it is accessible.',
+  'onboarding.tokenRequired': 'Please enter your access token.',
 } as const;
 
 export type TranslationKey = keyof typeof en;

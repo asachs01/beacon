@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { ArrowRight, Check, ExternalLink, Key, LogIn } from 'lucide-react';
 import beaconLogo from '../assets/beacon-app-icon.svg';
+import { useTranslation } from '../i18n';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -197,6 +198,7 @@ const styles = {
 // ---------------------------------------------------------------------------
 
 export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingViewProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>(1);
   const [haUrl, setHaUrl] = useState('');
   const [urlError, setUrlError] = useState('');
@@ -216,7 +218,7 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
   const testConnection = useCallback(async () => {
     const trimmed = haUrl.trim().replace(/\/+$/, '');
     if (!isValidUrl(trimmed)) {
-      setUrlError('URL must start with http:// or https://');
+      setUrlError(t('onboarding.urlError'));
       return;
     }
     setUrlError('');
@@ -228,24 +230,24 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
         setHaUrl(trimmed);
         setStep(3);
       } else {
-        setUrlError(`Connection failed (HTTP ${response.status}). Check the URL and try again.`);
+        setUrlError(t('onboarding.connectionFailed', { status: response.status }));
       }
     } catch {
-      setUrlError('Could not reach Home Assistant. Verify the URL and ensure it is accessible.');
+      setUrlError(t('onboarding.notReachable'));
     } finally {
       setConnecting(false);
     }
-  }, [haUrl, isValidUrl]);
+  }, [haUrl, isValidUrl, t]);
 
   // ---- Complete setup ----
   const handleComplete = useCallback(() => {
     if (!token.trim()) {
-      setTokenError('Please enter your access token.');
+      setTokenError(t('onboarding.tokenRequired'));
       return;
     }
     setTokenError('');
     onComplete(haUrl, token.trim());
-  }, [haUrl, token, onComplete]);
+  }, [haUrl, token, onComplete, t]);
 
   // ---- Render steps ----
 
@@ -263,13 +265,13 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
   const renderStep1 = () => (
     <div style={{ textAlign: 'center' }}>
       <img src={beaconLogo} alt="Beacon" style={styles.logo} />
-      <h1 style={styles.heading}>Welcome to Beacon</h1>
-      <p style={styles.subtext}>Connect your Home Assistant to get started.</p>
+      <h1 style={styles.heading}>{t('onboarding.welcome')}</h1>
+      <p style={styles.subtext}>{t('onboarding.welcomeDesc')}</p>
       <button
         style={styles.primaryButton}
         onClick={() => setStep(2)}
       >
-        Get Started
+        {t('onboarding.getStarted')}
         <ArrowRight size={18} />
       </button>
     </div>
@@ -277,16 +279,16 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
 
   const renderStep2 = () => (
     <div>
-      <h1 style={{ ...styles.heading, textAlign: 'center' }}>Connect to Home Assistant</h1>
+      <h1 style={{ ...styles.heading, textAlign: 'center' }}>{t('onboarding.connectTitle')}</h1>
       <p style={{ ...styles.subtext, textAlign: 'center' }}>
-        Enter the URL of your Home Assistant instance.
+        {t('onboarding.connectDesc')}
       </p>
 
       <div style={{ marginBottom: 24 }}>
-        <label style={styles.label}>Home Assistant URL</label>
+        <label style={styles.label}>{t('onboarding.haUrl')}</label>
         <input
           type="url"
-          placeholder="https://homeassistant.local:8123"
+          placeholder={t('onboarding.haUrlPlaceholder')}
           value={haUrl}
           onChange={(e) => {
             setHaUrl(e.target.value);
@@ -311,7 +313,7 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
         disabled={connecting || !haUrl.trim()}
         onClick={testConnection}
       >
-        {connecting ? 'Connecting...' : 'Connect'}
+        {connecting ? t('onboarding.connecting') : t('onboarding.connect')}
         {!connecting && <ArrowRight size={18} />}
       </button>
     </div>
@@ -319,9 +321,9 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
 
   const renderStep3 = () => (
     <div>
-      <h1 style={{ ...styles.heading, textAlign: 'center' }}>Authentication</h1>
+      <h1 style={{ ...styles.heading, textAlign: 'center' }}>{t('onboarding.authTitle')}</h1>
       <p style={{ ...styles.subtext, textAlign: 'center' }}>
-        Choose how to authenticate with Home Assistant.
+        {t('onboarding.authDesc')}
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
@@ -332,17 +334,17 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
         >
           <h3 style={styles.cardTitle}>
             <Key size={18} color="var(--accent)" />
-            Long-lived Access Token
+            {t('onboarding.tokenMethod')}
           </h3>
           <p style={styles.cardDesc}>
-            Use a token generated from your Home Assistant profile.
+            {t('onboarding.tokenMethodDesc')}
           </p>
 
           {authMethod === 'token' && (
             <div style={{ marginTop: 16 }}>
               <input
                 type="password"
-                placeholder="Paste your token here"
+                placeholder={t('onboarding.tokenPlaceholder')}
                 value={token}
                 onChange={(e) => {
                   setToken(e.target.value);
@@ -356,9 +358,9 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
               />
               {tokenError && <p style={styles.errorText}>{tokenError}</p>}
               <div style={styles.hint}>
-                <span style={{ fontWeight: 600 }}>How to create a token:</span>
+                <span style={{ fontWeight: 600 }}>{t('onboarding.tokenHint')}</span>
                 <br />
-                Go to your HA Profile &rarr; Long-lived tokens &rarr; Create Token
+                {t('onboarding.tokenHintDetail')}
               </div>
             </div>
           )}
@@ -371,10 +373,10 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
         >
           <h3 style={styles.cardTitle}>
             <LogIn size={18} color="var(--accent)" />
-            Sign in with Home Assistant
+            {t('onboarding.oauthMethod')}
           </h3>
           <p style={styles.cardDesc}>
-            Authenticate using your Home Assistant credentials via OAuth2.
+            {t('onboarding.oauthMethodDesc')}
           </p>
 
           {authMethod === 'oauth' && (
@@ -386,7 +388,7 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
                   onOAuthStart?.(haUrl);
                 }}
               >
-                Open Home Assistant
+                {t('onboarding.openHA')}
                 <ExternalLink size={16} />
               </button>
             </div>
@@ -403,7 +405,7 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
           disabled={!token.trim()}
           onClick={handleComplete}
         >
-          Complete Setup
+          {t('onboarding.completeSetup')}
           <Check size={18} />
         </button>
       )}

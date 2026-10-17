@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from '../../i18n';
 
 interface ViewNameModalProps {
   title: string;
@@ -9,6 +10,7 @@ interface ViewNameModalProps {
 
 /** Small text-input modal used for adding/renaming a dashboard view (tab). */
 export function ViewNameModal({ title, initialValue, onSave, onClose }: ViewNameModalProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState(initialValue);
 
   const handleSave = () => {
@@ -25,7 +27,7 @@ export function ViewNameModal({ title, initialValue, onSave, onClose }: ViewName
         </div>
         <div className="modal-body">
           <div className="form-field">
-            <label className="form-label" htmlFor="view-name-input">Name</label>
+            <label className="form-label" htmlFor="view-name-input">{t('viewName.name')}</label>
             <input
               id="view-name-input"
               className="form-input"
@@ -38,8 +40,8 @@ export function ViewNameModal({ title, initialValue, onSave, onClose }: ViewName
           </div>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn--secondary" onClick={onClose}>Cancel</button>
-          <button type="button" className="btn btn--primary" onClick={handleSave}>Save</button>
+          <button type="button" className="btn btn--secondary" onClick={onClose}>{t('common.cancel')}</button>
+          <button type="button" className="btn btn--primary" onClick={handleSave}>{t('common.save')}</button>
         </div>
       </div>
     </div>

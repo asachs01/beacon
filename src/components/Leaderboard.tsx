@@ -5,6 +5,7 @@ import { useFamily } from '../hooks/useFamily';
 import { useSettings } from '../hooks/useSettings';
 import { MemberEarnings, formatChoreValue } from '../types/family';
 import { localDayKey } from '../api/date-keys';
+import { useTranslation } from '../i18n';
 
 interface LeaderboardProps {
   open: boolean;
@@ -34,6 +35,7 @@ function getMonthRange(): [string, string] {
 const RANK_DECORATIONS = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
 
 export function Leaderboard({ open, onClose }: LeaderboardProps) {
+  const { t } = useTranslation();
   const { members } = useFamily();
   const { settings } = useSettings();
   const { getEarningsForPeriod, getStreakForMember } = useChores();
@@ -61,7 +63,7 @@ export function Leaderboard({ open, onClose }: LeaderboardProps) {
   return (
     <div className={`slide-panel slide-panel--right ${open ? 'slide-panel--open' : ''}`}>
       <div className="slide-panel-header">
-        <h2 className="slide-panel-title">Leaderboard</h2>
+        <h2 className="slide-panel-title">{t('leaderboard.title')}</h2>
         <button type="button" className="modal-close" onClick={onClose}>
           {'\u00D7'}
         </button>
@@ -74,20 +76,20 @@ export function Leaderboard({ open, onClose }: LeaderboardProps) {
           className={`lb-period-btn ${period === 'week' ? 'lb-period-btn--active' : ''}`}
           onClick={() => setPeriod('week')}
         >
-          This Week
+          {t('leaderboard.thisWeek')}
         </button>
         <button
           type="button"
           className={`lb-period-btn ${period === 'month' ? 'lb-period-btn--active' : ''}`}
           onClick={() => setPeriod('month')}
         >
-          This Month
+          {t('leaderboard.thisMonth')}
         </button>
       </div>
 
       <div className="slide-panel-body">
         {ranked.length === 0 && (
-          <div className="chores-empty">Add family members and chores to see the leaderboard.</div>
+          <div className="chores-empty">{t('leaderboard.empty')}</div>
         )}
 
         <div className="lb-list">
@@ -109,7 +111,10 @@ export function Leaderboard({ open, onClose }: LeaderboardProps) {
               <div className="lb-info">
                 <span className="lb-name">{entry.member.name}</span>
                 <span className="lb-stats">
-                  {entry.earnings.chore_count} chore{entry.earnings.chore_count !== 1 ? 's' : ''}
+                  {entry.earnings.chore_count === 1 
+                    ? t('leaderboard.choreCompletedSingular', { count: entry.earnings.chore_count })
+                    : t('leaderboard.choresCompleted', { count: entry.earnings.chore_count })
+                  }
                 </span>
               </div>
               <StreakBadge streak={entry.streak} size="sm" />

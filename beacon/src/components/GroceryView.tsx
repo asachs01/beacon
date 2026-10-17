@@ -4,6 +4,7 @@ import { GroceryList } from '../types/grocery';
 import { AnyListClient } from '../api/anylist';
 import { callHaService, hasToken } from '../api/ha-rest';
 import { useLocalTasks } from '../hooks/useLocalTasks';
+import { useTranslation } from '../i18n';
 
 interface TodoItem {
   uid: string;
@@ -40,6 +41,7 @@ interface GroceryViewProps {
 }
 
 export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = [] }: GroceryViewProps) {
+  const { t } = useTranslation();
   const [haLists, setHaLists] = useState<GroceryList[]>([]);
   const [selectedListId, setSelectedListId] = useState<string>(defaultListId || '');
   const [haItems, setHaItems] = useState<TodoItem[]>([]);
@@ -249,11 +251,11 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
             onChange={(e) => setSelectedListId(e.target.value)}
           >
             {allLists.length === 0 && (
-              <option value="">No lists available</option>
+              <option value="">{t('grocery.noListsAvailable')}</option>
             )}
             {allLists.map(list => (
               <option key={list.id} value={list.id}>
-                {list.name}{list.source === 'ha' ? ' (HA)' : ''}
+                {list.source === 'ha' ? t('grocery.haList', { name: list.name }) : list.name}
               </option>
             ))}
           </select>
@@ -267,7 +269,7 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
           ref={inputRef}
           type="text"
           className="grocery-view-input"
-          placeholder="Add an item..."
+          placeholder={t('grocery.addItemPlaceholder')}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           disabled={submitting || !selectedListId}
@@ -276,7 +278,7 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
           type="submit"
           className="grocery-view-add-btn"
           disabled={!inputValue.trim() || submitting}
-          aria-label="Add item"
+          aria-label={t('grocery.addItem')}
         >
           <Plus size={20} />
         </button>
@@ -285,7 +287,7 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
       {/* Items list */}
       <div className="grocery-view-list">
         {loading && items.length === 0 ? (
-          <div className="grocery-view-loading">Loading items...</div>
+          <div className="grocery-view-loading">{t('grocery.loadingItems')}</div>
         ) : items.length === 0 && !loading ? (
           <div className="grocery-view-empty">
             <div className="grocery-view-empty-icon">
@@ -296,7 +298,7 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
                 <circle cx="20" cy="40" r="2" fill="var(--border)" />
               </svg>
             </div>
-            <p>No items yet — add one above</p>
+            <p>{t('grocery.empty')}</p>
           </div>
         ) : (
           <>
@@ -304,7 +306,7 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
             {uncheckedItems.length > 0 && (
               <div className="grocery-view-section">
                 <div className="grocery-view-section-header">
-                  Items ({uncheckedItems.length})
+                  {t('grocery.items', { count: uncheckedItems.length })}
                 </div>
                 {uncheckedItems.map(item => (
                   <div key={item.uid} className="grocery-view-item-row">
@@ -321,7 +323,7 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
                         type="button"
                         className="grocery-view-delete"
                         onClick={() => handleDelete(item)}
-                        aria-label="Delete item"
+                        aria-label={t('grocery.deleteItem')}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -340,7 +342,7 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
                   onClick={() => setCompletedCollapsed(prev => !prev)}
                 >
                   {completedCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                  Completed ({checkedItems.length})
+                  {t('grocery.completed', { count: checkedItems.length })}
                 </button>
                 {!completedCollapsed && checkedItems.map(item => (
                   <div key={item.uid} className="grocery-view-item-row">
@@ -367,7 +369,7 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
                         type="button"
                         className="grocery-view-delete"
                         onClick={() => handleDelete(item)}
-                        aria-label="Delete item"
+                        aria-label={t('grocery.deleteItem')}
                       >
                         <Trash2 size={14} />
                       </button>

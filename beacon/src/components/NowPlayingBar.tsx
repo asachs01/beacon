@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { MediaPlayer } from '../types/music';
 import { getConfig } from '../config';
+import { useTranslation } from '../i18n';
 
 interface NowPlayingBarProps {
   player: MediaPlayer | null;
@@ -29,6 +30,7 @@ export function NowPlayingBar({
   onSetVolume,
   onExpand,
 }: NowPlayingBarProps) {
+  const { t } = useTranslation();
   // Local progress tracking
   const [position, setPosition] = useState(player?.media_position ?? 0);
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -59,7 +61,7 @@ export function NowPlayingBar({
     : null;
 
   return (
-    <div className="now-playing-bar" role="region" aria-label="Now playing">
+    <div className="now-playing-bar" role="region" aria-label={t('music.nowPlaying')}>
       {/* Thin progress bar across the top */}
       {duration > 0 && (
         <div className="now-playing-progress">
@@ -71,13 +73,13 @@ export function NowPlayingBar({
         type="button"
         className="now-playing-info"
         onClick={onExpand}
-        aria-label="Open music view"
+        aria-label={t('music.openMusicView')}
       >
         {artSrc ? (
           <img
             className="now-playing-art"
             src={artSrc}
-            alt={player.media_album_name || 'Album art'}
+            alt={player.media_album_name || t('music.albumArt')}
           />
         ) : (
           <div className="now-playing-art now-playing-art--placeholder" />
@@ -98,7 +100,7 @@ export function NowPlayingBar({
           type="button"
           className="now-playing-btn"
           onClick={onPrevious}
-          aria-label="Previous track"
+          aria-label={t('music.previousTrack')}
         >
           <SkipBack size={18} />
         </button>
@@ -106,7 +108,7 @@ export function NowPlayingBar({
           type="button"
           className="now-playing-btn now-playing-btn--play"
           onClick={isPlaying ? onPause : onPlay}
-          aria-label={isPlaying ? 'Pause' : 'Play'}
+          aria-label={isPlaying ? t('music.pause') : t('music.play')}
         >
           {isPlaying ? <Pause size={20} /> : <Play size={20} />}
         </button>
@@ -114,7 +116,7 @@ export function NowPlayingBar({
           type="button"
           className="now-playing-btn"
           onClick={onNext}
-          aria-label="Next track"
+          aria-label={t('music.nextTrack')}
         >
           <SkipForward size={18} />
         </button>
@@ -126,7 +128,7 @@ export function NowPlayingBar({
           type="button"
           className="now-playing-btn"
           onClick={() => onSetVolume(player.is_volume_muted ? (player.volume_level || 0.5) : 0)}
-          aria-label={player.is_volume_muted ? 'Unmute' : 'Mute'}
+          aria-label={player.is_volume_muted ? t('music.unmute') : t('music.mute')}
         >
           {player.is_volume_muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
         </button>
@@ -138,7 +140,7 @@ export function NowPlayingBar({
           step={0.02}
           value={player.is_volume_muted ? 0 : (player.volume_level ?? 0.5)}
           onChange={(e) => onSetVolume(parseFloat(e.target.value))}
-          aria-label="Volume"
+          aria-label={t('music.volume')}
         />
       </div>
     </div>
