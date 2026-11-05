@@ -1,3 +1,10 @@
+# [1.42.0](https://github.com/nyabb/beacon/compare/v1.41.0...v1.42.0) (2026-11-05)
+
+
+### Features
+
+* **settings:** group avatar emoji picker under translated category headings ([fb9aad8](https://github.com/nyabb/beacon/commit/fb9aad82a2ce2e63ed7a97ef2497fffab52d7a78))
+
 # 1.0.0 (2026-11-05)
 
 
