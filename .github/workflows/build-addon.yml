@@ -6,11 +6,14 @@ on:
     types: [published]
   push:
     tags:
-      - "v*"
+      - 'v*'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: asachs01/beacon
+  # Derived from the repo owner so forks publish to their own namespace.
+  # GHCR requires a lowercase repository path; GitHub usernames with
+  # uppercase letters would need to be written out in lowercase instead.
+  IMAGE_NAME: ${{ github.repository_owner }}/beacon
 
 jobs:
   build:

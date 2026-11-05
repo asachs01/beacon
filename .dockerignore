@@ -1,0 +1,26 @@
+# Keep secrets and build-time env files out of the image build context.
+# Vite inlines VITE_* variables at build time, so .env must never be copied.
+.env
+.env.*
+*.log
+
+# Version control / editor state
+.git
+.gitignore
+.github
+.vscode
+
+# Installed deps and build output (rebuilt inside the image)
+node_modules
+dist
+
+# Duplicated add-on mirror of src/ (the root tree is authoritative)
+beacon
+
+# Not needed at image build time
+android
+ios
+docs
+docs-site
+branding
+claude-plugin
