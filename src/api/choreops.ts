@@ -100,10 +100,25 @@ function normalizeChore(item: unknown, fallbackAssignee: string | null): ChoreOp
     icon: str(item, 'icon'),
     status: str(item, 'status') ?? str(item, 'state') ?? 'unknown',
     assignee,
+    points: pointsOf(item),
     canClaim: flag(item, 'can_claim'),
     canApprove: flag(item, 'can_approve'),
     actions: discoverActions(item),
   };
+}
+
+/**
+ * Optional per-chore reward. ChoreOps does not publish a points field on every
+ * `chores` item shape, so probe the keys seen in practice and return null when
+ * none is present — the card then hides the reward badge instead of inventing
+ * a number.
+ */
+function pointsOf(source: Record<string, unknown>): number | null {
+  for (const key of ['points', 'points_value', 'chore_points', 'punten']) {
+    const value = num(source, key);
+    if (value !== null) return value;
+  }
+  return null;
 }
 
 function normalizeReward(entity: ChoreOpsEntityState): ChoreOpsReward | null {
@@ -234,4 +249,20 @@ export function resolveMemberForUser<T extends { name: string; choreops_user?: s
     members.find((member) => member.choreops_user?.trim().toLowerCase() === target) ??
     matchMemberByName(userName, members)
   );
+}
+
+/**
+ * Inverse of `resolveMemberForUser`: find the ChoreOps user behind a member.
+ * An explicit `choreops_user` link wins, a name match is the fallback.
+ */
+export function findUserForMember<T extends { name: string; choreops_user?: string }>(
+  member: T,
+  users: ChoreOpsUser[],
+): ChoreOpsUser | null {
+  const link = member.choreops_user?.trim().toLowerCase();
+  const byLink = link ? users.find((user) => user.name.trim().toLowerCase() === link) : undefined;
+  if (byLink) return byLink;
+
+  const name = member.name.trim().toLowerCase();
+  return users.find((user) => user.name.trim().toLowerCase() === name) ?? null;
 }

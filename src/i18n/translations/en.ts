@@ -138,8 +138,10 @@ export const en = {
   'eventModal.errorEndDateBeforeStart': 'End date cannot be before the start date.',
   'eventModal.errorEndBeforeStart': 'End time must be after the start time.',
   'eventModal.errorTitleRequired': 'Title is required.',
-  'eventModal.errorNoStableIdEdit': "This event can't be edited — it has no stable ID from its calendar provider.",
-  'eventModal.errorNoStableIdDelete': "This event can't be deleted — it has no stable ID from its calendar provider.",
+  'eventModal.errorNoStableIdEdit':
+    "This event can't be edited — it has no stable ID from its calendar provider.",
+  'eventModal.errorNoStableIdDelete':
+    "This event can't be deleted — it has no stable ID from its calendar provider.",
   'eventModal.errorSaveFailed': 'Failed to save event. Please try again.',
   'eventModal.errorDeleteFailed': 'Failed to delete event. Please try again.',
 
@@ -206,7 +208,8 @@ export const en = {
   'settings.appearance.right': 'Right',
   'settings.appearance.bottom': 'Bottom',
   'settings.appearance.advancedDashboardLabel': 'Advanced Dashboard',
-  'settings.appearance.advancedDashboardSublabel': 'Enable customizable dashboard widgets and layouts',
+  'settings.appearance.advancedDashboardSublabel':
+    'Enable customizable dashboard widgets and layouts',
 
   // ---- settings: family ----
   'settings.family.title': 'Family Members',
@@ -232,7 +235,8 @@ export const en = {
   'settings.family.calendarLabel': 'Calendar',
   'settings.family.calendarSublabel': 'Link to their HA calendar',
   'settings.family.additionalCalendarsLabel': 'Additional Calendars',
-  'settings.family.additionalCalendarsSublabel': 'Group other calendars (e.g. a sports team) under this member too',
+  'settings.family.additionalCalendarsSublabel':
+    'Group other calendars (e.g. a sports team) under this member too',
   'settings.family.addAnotherCalendar': '+ Add another calendar…',
   'settings.family.namePlaceholder': 'Family member name',
   'settings.family.saveChanges': 'Save Changes',
@@ -303,8 +307,10 @@ export const en = {
   'settings.integrations.defaultGroceryListSublabel': 'List shown when opening grocery view',
   'settings.integrations.autoFirstAvailable': 'Auto (first available)',
   'settings.integrations.groceryListsLabel': 'Grocery Lists',
-  'settings.integrations.groceryListsSublabel': 'Select which HA todo entities are grocery/shopping lists',
-  'settings.integrations.noTodoListsFound': 'No HA todo lists found. Connect Home Assistant to see lists.',
+  'settings.integrations.groceryListsSublabel':
+    'Select which HA todo entities are grocery/shopping lists',
+  'settings.integrations.noTodoListsFound':
+    'No HA todo lists found. Connect Home Assistant to see lists.',
   'settings.integrations.shoppingEntityLabel': 'Shopping Card Entity',
   'settings.integrations.shoppingEntitySublabel': 'HA todo list for sidebar shopping card',
   'settings.integrations.musicAssistantTitle': 'Music Assistant',
@@ -335,21 +341,25 @@ export const en = {
   'settings.display.kioskModeLabel': 'Kiosk Mode',
   'settings.display.kioskModeSublabel': 'Hide the sidebar for a cleaner display',
   'settings.display.kidDisplayTitle': 'Kid Display',
-  'settings.display.kidDisplayDesc': 'Lock a wall-mounted screen to one family member — shows only their routines and chores.',
+  'settings.display.kidDisplayDesc':
+    'Lock a wall-mounted screen to one family member — shows only their routines and chores.',
   'settings.display.familyMemberLabel': 'Family Member',
   'settings.display.familyMemberSublabel': 'Who this display belongs to',
   'settings.display.chooseAMember': 'Choose a member…',
   'settings.display.useOnDeviceLabel': 'Use on This Device',
-  'settings.display.useOnDeviceSublabel': 'Locks this screen now. Exit later with 5 taps on the clock.',
+  'settings.display.useOnDeviceSublabel':
+    'Locks this screen now. Exit later with 5 taps on the clock.',
   'settings.display.displayUrlLabel': 'Display URL',
-  'settings.display.displayUrlSublabel': 'For kiosk browsers and wall panels — bookmark or set as home page.',
+  'settings.display.displayUrlSublabel':
+    'For kiosk browsers and wall panels — bookmark or set as home page.',
   'settings.display.copyUrl': 'Copy URL',
   'settings.display.copied': 'Copied!',
   'settings.display.copyUrlPrompt': 'Copy this URL:',
 
   // ---- settings: chores ----
   'settings.chores.title': 'Chores',
-  'settings.chores.desc': 'Manage chore tracking and reward settings.',
+  'settings.chores.desc':
+    'Chores and points are managed in Home Assistant by the ChoreOps integration.',
   'settings.chores.enableLabel': 'Enable Chores',
   'settings.chores.enableSublabel': 'Show chore tracking and rewards',
   'settings.chores.dailyResetTimeLabel': 'Daily Reset Time',
@@ -460,6 +470,18 @@ export const en = {
   'chores.editChore': 'Edit Chore',
   'chores.newChore': 'New Chore',
   'chores.claim': 'Claim',
+  'chores.approve': 'Approve',
+  'chores.decline': 'Decline',
+  'chores.refresh': 'Refresh',
+  'chores.everyone': 'Everyone',
+  'chores.noChoresToday': 'Nothing to do right now.',
+  'chores.wellDone': 'Well done!',
+  'chores.missing':
+    'ChoreOps was not found in Home Assistant. Install and configure the ChoreOps integration to see chores here.',
+  'chores.stat.due': 'Due today',
+  'chores.stat.claimed': 'Claimed',
+  'chores.stat.approved': 'Approved',
+  'chores.stat.done': 'Done today',
   'chores.complete': 'Complete',
   'chores.whoClaims': 'Who claims this?',
   'chores.whoCompleted': 'Who completed this?',
@@ -488,7 +510,7 @@ export const en = {
   'leaderboard.title': 'Leaderboard',
   'leaderboard.thisWeek': 'This Week',
   'leaderboard.thisMonth': 'This Month',
-  'leaderboard.empty': 'Add family members and chores to see the leaderboard.',
+  'leaderboard.empty': 'Link family members to ChoreOps users in Settings to see the leaderboard.',
   'leaderboard.choresCompleted': '{count} chores',
   'leaderboard.choreCompletedSingular': '{count} chore',
 
@@ -555,7 +577,8 @@ export const en = {
   'onboarding.completeSetup': 'Complete Setup',
   'onboarding.urlError': 'URL must start with http:// or https://',
   'onboarding.connectionFailed': 'Connection failed (HTTP {status}). Check the URL and try again.',
-  'onboarding.notReachable': 'Could not reach Home Assistant. Verify the URL and ensure it is accessible.',
+  'onboarding.notReachable':
+    'Could not reach Home Assistant. Verify the URL and ensure it is accessible.',
   'onboarding.tokenRequired': 'Please enter your access token.',
 } as const;
 

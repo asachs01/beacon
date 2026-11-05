@@ -358,7 +358,8 @@ export const pt: Record<TranslationKey, string> = {
 
   // ---- settings: chores ----
   'settings.chores.title': 'Tarefas',
-  'settings.chores.desc': 'Faça a gestão do registo de tarefas e das definições de recompensas.',
+  'settings.chores.desc':
+    'As tarefas e os pontos são geridos no Home Assistant pela integração ChoreOps.',
   'settings.chores.enableLabel': 'Ativar tarefas',
   'settings.chores.enableSublabel': 'Mostra o registo de tarefas e recompensas',
   'settings.chores.dailyResetTimeLabel': 'Hora de reinício diário',
@@ -461,6 +462,18 @@ export const pt: Record<TranslationKey, string> = {
   'chores.editChore': 'Editar tarefa',
   'chores.newChore': 'Nova tarefa',
   'chores.claim': 'Reivindicar',
+  'chores.approve': 'Aprovar',
+  'chores.decline': 'Recusar',
+  'chores.refresh': 'Atualizar',
+  'chores.everyone': 'Todos',
+  'chores.noChoresToday': 'Nada para fazer agora.',
+  'chores.wellDone': 'Muito bem!',
+  'chores.missing':
+    'O ChoreOps não foi encontrado no Home Assistant. Instale e configure a integração ChoreOps para ver as tarefas aqui.',
+  'chores.stat.due': 'Para hoje',
+  'chores.stat.claimed': 'Reivindicadas',
+  'chores.stat.approved': 'Aprovadas',
+  'chores.stat.done': 'Feitas hoje',
   'chores.complete': 'Concluir',
   'chores.whoClaims': 'Quem reivindica isto?',
   'chores.whoCompleted': 'Quem concluiu isto?',
@@ -489,7 +502,8 @@ export const pt: Record<TranslationKey, string> = {
   'leaderboard.title': 'Classificação',
   'leaderboard.thisWeek': 'Esta semana',
   'leaderboard.thisMonth': 'Este mês',
-  'leaderboard.empty': 'Adicione membros da família e tarefas para ver a classificação.',
+  'leaderboard.empty':
+    'Vincule os membros da família aos usuários do ChoreOps nas configurações para ver a classificação.',
   'leaderboard.choresCompleted': '{count} tarefas',
   'leaderboard.choreCompletedSingular': '{count} tarefa',
 

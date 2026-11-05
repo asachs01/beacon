@@ -1,404 +1,260 @@
 /**
- * ChoreOps panel: read-only data plus claim/approve/decline actions.
+ * Chores screen for the ChoreOps backend.
  *
- * Renders points, the rewards strip and chore totals from ChoreOps. Actions are
- * performed by pressing the `button.*` entities that ChoreOps advertises in the
- * parent sensor's attributes, so nothing is hardcoded. Per-chore cards appear
- * once ChoreOps populates the dashboard helper's `chores` attribute; until then
- * the aggregate counters from `sensor.*_choreops_chores` are shown.
+ * ChoreOps owns the data: chores are created and edited in Home Assistant and
+ * Beacon only reads them and presses the `button.*` entities ChoreOps
+ * advertises for claim/approve/decline. No entity ids or attribute names are
+ * assumed here — everything arrives through `useChoreOps`' normalisation.
+ *
+ * The layout follows the Qudoo family planner: member point chips, a row of
+ * stat tiles, then one card grid per family member and goal cards for rewards.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFamily } from '../hooks/useFamily';
 import { useChoreOps } from '../hooks/useChoreOps';
 import { resolveMemberForUser } from '../api/choreops';
-import type { ChoreOpsReward, ChoreOpsUser } from '../types/choreops';
-import { STAR_CURRENCY } from '../types/family';
+import { useTranslation } from '../i18n';
+import type { ChoreOpsChore } from '../types/choreops';
+import type { FamilyMember } from '../types/family';
+import { ChoreTaskCard, RewardGoalCard, memberColorVars } from './choreops/ChoreOpsCards';
 
-const REWARD_STATUS_COLORS: Record<string, string> = {
-  available: 'var(--accent)',
-  locked: 'var(--text-muted)',
-  pending: '#f59e0b',
-  approved: '#22c55e',
-};
+const CELEBRATION_MS = 2600;
 
-interface ActionButtonProps {
+interface ChoreGroup {
+  key: string;
+  member: FamilyMember | null;
   label: string;
-  disabled?: boolean;
-  pending?: boolean;
-  onClick: () => void;
+  chores: ChoreOpsChore[];
 }
 
-/** Touch-friendly (≥44px) action button for wall tablets. */
-function ActionButton({ label, disabled, pending, onClick }: ActionButtonProps) {
-  const inactive = Boolean(disabled) || Boolean(pending);
-
-  return (
-    <button
-      type="button"
-      disabled={inactive}
-      onClick={onClick}
-      style={{
-        minHeight: 44,
-        minWidth: 88,
-        padding: '0 14px',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--border)',
-        background: inactive ? 'var(--bg-page)' : 'var(--accent)',
-        color: inactive ? 'var(--text-muted)' : '#fff',
-        fontWeight: 600,
-        fontSize: '0.85rem',
-        cursor: inactive ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.5 : 1,
-      }}
-    >
-      {pending ? '…' : label}
-    </button>
-  );
-}
-
-interface RewardCardProps {
-  reward: ChoreOpsReward;
-  /** `entityId:action` currently in flight, or null. */
-  pendingAction: string | null;
-  onAction: (key: string, entityId: string) => void;
-}
-
-function RewardCard({ reward, pendingAction, onAction }: RewardCardProps) {
-  const status = reward.status.toLowerCase();
-  const color = REWARD_STATUS_COLORS[status] ?? 'var(--text-muted)';
-  const hasPendingClaim = reward.pendingClaims > 0;
-
-  const claimEid = reward.actions.claim;
-  const approveEid = reward.actions.approve;
-  const declineEid = reward.actions.disapprove;
-
-  // ChoreOps exposes no can_* flags on rewards: a locked reward cannot be
-  // claimed, and approve/decline only make sense while a claim is pending.
-  const canClaim = Boolean(claimEid) && status !== 'locked';
-  const canReview = hasPendingClaim;
-
-  const key = (kind: string) => `${reward.id}:${kind}`;
-  const busy = (kind: string) => pendingAction === key(kind);
-  const blocked = pendingAction !== null;
-
-  return (
-    <div
-      style={{
-        minWidth: 160,
-        padding: '10px 12px',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid var(--border)',
-        background: 'var(--bg-page)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4,
-      }}
-    >
-      <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>{reward.name}</span>
-      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-        {STAR_CURRENCY} {reward.cost}
-      </span>
-      <span style={{ fontSize: '0.75rem', fontWeight: 600, color, textTransform: 'capitalize' }}>
-        {reward.status}
-        {hasPendingClaim ? ` · ${reward.pendingClaims} pending` : ''}
-      </span>
-
-      {(canClaim || canReview) && (
-        <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-          {canClaim && claimEid && (
-            <ActionButton
-              label="Claim"
-              pending={busy('claim')}
-              disabled={blocked && !busy('claim')}
-              onClick={() => onAction(key('claim'), claimEid)}
-            />
-          )}
-          {canReview && approveEid && (
-            <ActionButton
-              label="Approve"
-              pending={busy('approve')}
-              disabled={blocked && !busy('approve')}
-              onClick={() => onAction(key('approve'), approveEid)}
-            />
-          )}
-          {canReview && declineEid && (
-            <ActionButton
-              label="Decline"
-              pending={busy('disapprove')}
-              disabled={blocked && !busy('disapprove')}
-              onClick={() => onAction(key('disapprove'), declineEid)}
-            />
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PointsChip({ user, avatar }: { user: ChoreOpsUser; avatar: string | null }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '8px 14px',
-        borderRadius: 999,
-        border: '1px solid var(--border)',
-        background: 'var(--bg-page)',
-        minHeight: 44,
-      }}
-    >
-      {avatar && <span style={{ fontSize: '1.25rem' }}>{avatar}</span>}
-      <span style={{ fontWeight: 600 }}>{user.name}</span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>
-        {STAR_CURRENCY} {user.points}
-      </span>
-    </div>
-  );
+interface Celebration {
+  title: string;
+  subtitle: string;
 }
 
 export function ChoreOpsPanel() {
+  const { t } = useTranslation();
   const { members } = useFamily();
   const { data, loading, error, available, refresh, pressButton } = useChoreOps();
 
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+
+  // Qudoo-style congratulation screen: shows briefly, then gets out of the way.
+  useEffect(() => {
+    if (!celebration) return;
+    const timer = setTimeout(() => setCelebration(null), CELEBRATION_MS);
+    return () => clearTimeout(timer);
+  }, [celebration]);
 
   /**
-   * Optimistic action: the button flips to "…" immediately and the whole set is
-   * blocked while one press is in flight; on failure we roll back by clearing
-   * the pending key and surfacing an inline error (no modals).
+   * Optimistic action: the pill flips to "…" immediately and every other action
+   * is blocked while a press is in flight; on failure we clear the pending key
+   * and surface an inline error.
    */
   const handleAction = useCallback(
-    async (key: string, entityId: string) => {
+    async (key: string, entityId: string, subtitle: string) => {
       if (pendingAction) return;
       setActionError(null);
       setPendingAction(key);
       try {
         await pressButton(entityId);
+        setCelebration({ title: t('chores.wellDone'), subtitle });
       } catch (err) {
         setActionError(err instanceof Error ? err.message : 'ChoreOps action failed');
       } finally {
         setPendingAction(null);
       }
     },
-    [pendingAction, pressButton],
+    [pendingAction, pressButton, t],
   );
 
-  const sectionTitle = (text: string) => (
-    <h3
-      style={{
-        margin: '20px 0 8px',
-        fontSize: '0.8rem',
-        fontWeight: 700,
-        letterSpacing: '0.04em',
-        textTransform: 'uppercase',
-        color: 'var(--text-muted)',
-      }}
-    >
-      {text}
-    </h3>
+  const users = useMemo(() => data?.users ?? [], [data]);
+  const chores = useMemo(() => data?.chores ?? [], [data]);
+  const rewards = useMemo(() => data?.rewards ?? [], [data]);
+
+  /** ChoreOps users joined to a Beacon family member for avatar/colour. */
+  const linkedUsers = useMemo(
+    () =>
+      users
+        .map((user) => ({ user, member: resolveMemberForUser(user.name, members) }))
+        .sort((a, b) => a.user.name.localeCompare(b.user.name)),
+    [users, members],
   );
 
-  if (loading) {
-    return <div style={{ padding: 24, color: 'var(--text-muted)' }}>Loading ChoreOps…</div>;
-  }
+  const groups = useMemo<ChoreGroup[]>(() => {
+    const map = new Map<string, ChoreGroup>();
 
-  if (error) {
-    return (
-      <div style={{ padding: 24 }}>
-        <div
-          style={{
-            padding: '12px 16px',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid #ef4444',
-            background: 'rgba(239, 68, 68, 0.08)',
-            color: '#ef4444',
-          }}
-        >
-          {error}
-        </div>
-        <button
-          type="button"
-          onClick={refresh}
-          style={{ marginTop: 12, minHeight: 44, padding: '0 16px', cursor: 'pointer' }}
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+    for (const chore of chores) {
+      const member = resolveMemberForUser(chore.assignee, members);
+      const key = member?.id ?? '__shared__';
+      const existing = map.get(key);
+      if (existing) {
+        existing.chores.push(chore);
+        continue;
+      }
+      map.set(key, {
+        key,
+        member,
+        label: member?.name ?? chore.assignee ?? t('chores.everyone'),
+        chores: [chore],
+      });
+    }
 
-  if (!available || !data) {
-    return (
-      <div style={{ padding: 24, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-        No ChoreOps entities were found. Confirm the ChoreOps integration is installed in Home
-        Assistant and that <code>chore_backend</code> is set to <code>choreops</code>.
-      </div>
-    );
-  }
+    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [chores, members, t]);
 
-  const users = data.users;
-  const totalDue = users.reduce((sum, u) => sum + u.dueToday, 0);
-  const totalClaimed = users.reduce((sum, u) => sum + u.claimed, 0);
-  const totalApproved = users.reduce((sum, u) => sum + u.approved, 0);
-  const totalCompleted = users.reduce((sum, u) => sum + u.completedToday, 0);
+  const totals = useMemo(
+    () => ({
+      due: users.reduce((sum, user) => sum + user.dueToday, 0),
+      claimed: users.reduce((sum, user) => sum + user.claimed, 0),
+      approved: users.reduce((sum, user) => sum + user.approved, 0),
+      done: users.reduce((sum, user) => sum + user.completedToday, 0),
+    }),
+    [users],
+  );
+
+  const stats: Array<{ label: string; value: number }> = [
+    { label: t('chores.stat.due'), value: totals.due },
+    { label: t('chores.stat.claimed'), value: totals.claimed },
+    { label: t('chores.stat.approved'), value: totals.approved },
+    { label: t('chores.stat.done'), value: totals.done },
+  ];
 
   return (
-    <div style={{ padding: '16px 20px 32px', overflowY: 'auto', height: '100%' }}>
+    <div className="choreops-screen">
+      <header className="choreops-header">
+        <h1 className="choreops-title">{t('nav.chores')}</h1>
+        <button type="button" className="choreops-refresh" onClick={refresh}>
+          {t('chores.refresh')}
+        </button>
+      </header>
+
       {actionError && (
-        <div
-          role="alert"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            marginBottom: 12,
-            padding: '10px 14px',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid #ef4444',
-            background: 'rgba(239, 68, 68, 0.08)',
-            color: '#ef4444',
-            fontSize: '0.85rem',
-          }}
-        >
-          <span style={{ flex: 1 }}>{actionError}</span>
+        <div className="choreops-alert" role="alert">
+          <span>{actionError}</span>
           <button
             type="button"
+            className="choreops-alert-dismiss"
             onClick={() => setActionError(null)}
-            aria-label="Dismiss error"
-            style={{
-              minHeight: 44,
-              minWidth: 44,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'inherit',
-              fontSize: '1.1rem',
-            }}
+            aria-label={t('app.dismiss')}
           >
-            ×
+            {'\u00D7'}
           </button>
         </div>
       )}
-      {sectionTitle('Points')}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-        {users.length === 0 && (
-          <span style={{ color: 'var(--text-muted)' }}>No ChoreOps users found.</span>
-        )}
-        {users.map((user) => (
-          <PointsChip
-            key={user.slug}
-            user={user}
-            avatar={resolveMemberForUser(user.name, members)?.avatar ?? null}
-          />
-        ))}
-      </div>
 
-      {data.rewards.length > 0 && (
+      {loading && <div className="choreops-empty">{'\u2026'}</div>}
+
+      {!loading && error && (
+        <div className="choreops-alert" role="alert">
+          <span>{error}</span>
+        </div>
+      )}
+
+      {!loading && !error && !available && (
+        <div className="choreops-empty">{t('chores.missing')}</div>
+      )}
+
+      {available && (
         <>
-          {sectionTitle('Rewards')}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-            {data.rewards.map((reward) => (
-              <RewardCard
-                key={reward.id}
-                reward={reward}
-                pendingAction={pendingAction}
-                onAction={(key, entityId) => void handleAction(key, entityId)}
-              />
+          {linkedUsers.length > 0 && (
+            <div className="choreops-people">
+              {linkedUsers.map(({ user, member }) => (
+                <div key={user.slug} className="choreops-person" style={memberColorVars(member)}>
+                  <span className="choreops-person-avatar" aria-hidden="true">
+                    {member?.avatar ?? '\u{1F464}'}
+                  </span>
+                  <span className="choreops-person-name">{user.name}</span>
+                  <span className="choreops-person-points">
+                    <span aria-hidden="true">{'\u{1F3C6}'}</span>
+                    {user.points}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="choreops-stats">
+            {stats.map((stat) => (
+              <div key={stat.label} className="choreops-stat">
+                <span className="choreops-stat-value">{stat.value}</span>
+                <span className="choreops-stat-label">{stat.label}</span>
+              </div>
             ))}
           </div>
+
+          <h2 className="choreops-section-title">{t('nav.chores')}</h2>
+
+          {groups.length === 0 ? (
+            <div className="choreops-empty">{t('chores.noChoresToday')}</div>
+          ) : (
+            groups.map((group) => (
+              <section key={group.key} className="choreops-group">
+                <div className="choreops-group-head" style={memberColorVars(group.member)}>
+                  <span className="choreops-group-avatar" aria-hidden="true">
+                    {group.member?.avatar ?? '\u{1F465}'}
+                  </span>
+                  <span className="choreops-group-name">{group.label}</span>
+                  <span className="choreops-group-count">{group.chores.length}</span>
+                </div>
+
+                <div className="choreops-grid">
+                  {group.chores.map((chore) => (
+                    <ChoreTaskCard
+                      key={chore.id}
+                      chore={chore}
+                      member={group.member}
+                      pending={pendingAction !== null && pendingAction.startsWith(`${chore.id}:`)}
+                      blocked={pendingAction !== null}
+                      onAction={(key, entityId) => {
+                        void handleAction(key, entityId, chore.name);
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))
+          )}
+
+          {rewards.length > 0 && (
+            <>
+              <h2 className="choreops-section-title">{t('settings.chores.rewardsTitle')}</h2>
+              <div className="choreops-goals">
+                {rewards.map((reward) => {
+                  const assignee = reward.assignee?.trim().toLowerCase() ?? null;
+                  const owner = assignee
+                    ? (users.find((user) => user.name.trim().toLowerCase() === assignee) ?? null)
+                    : null;
+
+                  return (
+                    <RewardGoalCard
+                      key={reward.id}
+                      reward={reward}
+                      owner={owner}
+                      member={resolveMemberForUser(reward.assignee, members)}
+                      pending={pendingAction !== null && pendingAction.startsWith(`${reward.id}:`)}
+                      blocked={pendingAction !== null}
+                      onAction={(key, entityId) => {
+                        void handleAction(key, entityId, reward.name);
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            </>
+          )}
         </>
       )}
 
-      {sectionTitle('Chores')}
-      {data.chores.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {data.chores.map((chore) => {
-            const claimEid = chore.actions.claim;
-            const approveEid = chore.actions.approve;
-            const claimKey = `${chore.id}:claim`;
-            const approveKey = `${chore.id}:approve`;
-
-            return (
-              <div
-                key={chore.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '12px 14px',
-                  minHeight: 56,
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-page)',
-                }}
-              >
-                {chore.icon && <span style={{ fontSize: '1.4rem' }}>{chore.icon}</span>}
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontWeight: 600 }}>{chore.name}</span>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    {chore.assignee ?? 'Everyone'} · {chore.status}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 6,
-                    marginLeft: 'auto',
-                    flexWrap: 'wrap',
-                    justifyContent: 'flex-end',
-                  }}
-                >
-                  {chore.canClaim && claimEid && (
-                    <ActionButton
-                      label="Claim"
-                      pending={pendingAction === claimKey}
-                      disabled={pendingAction !== null && pendingAction !== claimKey}
-                      onClick={() => void handleAction(claimKey, claimEid)}
-                    />
-                  )}
-                  {chore.canApprove && approveEid && (
-                    <ActionButton
-                      label="Approve"
-                      pending={pendingAction === approveKey}
-                      disabled={pendingAction !== null && pendingAction !== approveKey}
-                      onClick={() => void handleAction(approveKey, approveEid)}
-                    />
-                  )}
-                  {!chore.canClaim && !chore.canApprove && (
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      Nothing to do
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-          {[
-            { label: 'Due today', value: totalDue },
-            { label: 'Claimed', value: totalClaimed },
-            { label: 'Awaiting approval', value: totalApproved },
-            { label: 'Completed today', value: totalCompleted },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              style={{
-                minWidth: 130,
-                padding: '12px 14px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border)',
-                background: 'var(--bg-page)',
-              }}
-            >
-              <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stat.value}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stat.label}</div>
-            </div>
-          ))}
+      {celebration && (
+        <div className="choreops-celebration" role="status" aria-live="polite">
+          <span className="choreops-celebration-medallion" aria-hidden="true">
+            {'\u{1F3C6}'}
+          </span>
+          <p className="choreops-celebration-title">{celebration.title}</p>
+          <p className="choreops-celebration-sub">{celebration.subtitle}</p>
         </div>
       )}
     </div>

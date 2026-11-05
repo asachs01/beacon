@@ -1918,6 +1918,8 @@ export function SettingsView({
   );
 
   // ==== CHORES ====
+  // Chore data lives in the ChoreOps integration: Beacon has no local chore
+  // store, so streaks, values and payouts are configured in Home Assistant.
   const renderChores = () => (
     <>
       <h2 className="settings-section-title">{t('settings.chores.title')}</h2>
@@ -1935,70 +1937,6 @@ export function SettingsView({
           />
         </div>
       </div>
-
-      {settings.choresEnabled && (
-        <>
-          <div className="settings-group">
-            <div className="settings-row">
-              <div>
-                <div className="settings-row-label">{t('settings.chores.dailyResetTimeLabel')}</div>
-                <div className="settings-row-sublabel">
-                  {t('settings.chores.dailyResetTimeSublabel')}
-                </div>
-              </div>
-              <input
-                type="time"
-                className="settings-time-input"
-                value={settings.choresResetTime}
-                onChange={(e) => onUpdateSettings({ choresResetTime: e.target.value })}
-              />
-            </div>
-            <div className="settings-row">
-              <div>
-                <div className="settings-row-label">{t('settings.chores.streakDurationLabel')}</div>
-                <div className="settings-row-sublabel">
-                  {t('settings.chores.streakDurationSublabel')}
-                </div>
-              </div>
-              <Slider
-                value={settings.streakDays}
-                min={3}
-                max={30}
-                unit=" days"
-                onChange={(v) => onUpdateSettings({ streakDays: v })}
-              />
-            </div>
-          </div>
-
-          <div className="settings-group">
-            <div className="settings-group-title">{t('settings.chores.rewardsTitle')}</div>
-            <div className="settings-row">
-              <div className="settings-row-label">{t('settings.chores.currencySymbolLabel')}</div>
-              <Segment
-                value={settings.currencySymbol}
-                options={[
-                  { value: '$', label: '$' },
-                  { value: '\u20ac', label: '\u20ac' },
-                  { value: '\u00a3', label: '\u00a3' },
-                  { value: '\u2b50', label: '\u2b50' },
-                ]}
-                onChange={(v) => onUpdateSettings({ currencySymbol: v })}
-              />
-            </div>
-            <div className="settings-row">
-              <div className="settings-row-label">{t('settings.chores.payoutScheduleLabel')}</div>
-              <Segment
-                value={settings.payoutSchedule}
-                options={[
-                  { value: 'weekly', label: t('settings.chores.weekly') },
-                  { value: 'monthly', label: t('settings.chores.monthly') },
-                ]}
-                onChange={(v) => onUpdateSettings({ payoutSchedule: v })}
-              />
-            </div>
-          </div>
-        </>
-      )}
     </>
   );
 

@@ -357,7 +357,8 @@ export const nl: Record<TranslationKey, string> = {
 
   // ---- settings: chores ----
   'settings.chores.title': 'Klusjes',
-  'settings.chores.desc': 'Beheer het bijhouden van klusjes en beloningsinstellingen.',
+  'settings.chores.desc':
+    'Karweitjes en punten worden in Home Assistant beheerd door de ChoreOps-integratie.',
   'settings.chores.enableLabel': 'Klusjes inschakelen',
   'settings.chores.enableSublabel': 'Toont het bijhouden van klusjes en beloningen',
   'settings.chores.dailyResetTimeLabel': 'Dagelijkse reset-tijd',
@@ -460,6 +461,18 @@ export const nl: Record<TranslationKey, string> = {
   'chores.editChore': 'Karweitje bewerken',
   'chores.newChore': 'Nieuw karweitje',
   'chores.claim': 'Claimen',
+  'chores.approve': 'Goedkeuren',
+  'chores.decline': 'Afkeuren',
+  'chores.refresh': 'Vernieuwen',
+  'chores.everyone': 'Iedereen',
+  'chores.noChoresToday': 'Nu even niets te doen.',
+  'chores.wellDone': 'Goed gedaan!',
+  'chores.missing':
+    'ChoreOps is niet gevonden in Home Assistant. Installeer en configureer de ChoreOps-integratie om hier taken te zien.',
+  'chores.stat.due': 'Vandaag te doen',
+  'chores.stat.claimed': 'Geclaimd',
+  'chores.stat.approved': 'Goedgekeurd',
+  'chores.stat.done': 'Vandaag gedaan',
   'chores.complete': 'Voltooien',
   'chores.whoClaims': 'Wie claimt dit?',
   'chores.whoCompleted': 'Wie heeft dit voltooid?',
@@ -488,7 +501,8 @@ export const nl: Record<TranslationKey, string> = {
   'leaderboard.title': 'Klassement',
   'leaderboard.thisWeek': 'Deze week',
   'leaderboard.thisMonth': 'Deze maand',
-  'leaderboard.empty': 'Voeg gezinsleden en karweitjes toe om het klassement te zien.',
+  'leaderboard.empty':
+    'Koppel gezinsleden in de instellingen aan ChoreOps-gebruikers om het klassement te zien.',
   'leaderboard.choresCompleted': '{count} karweitjes',
   'leaderboard.choreCompletedSingular': '{count} karweitje',
 

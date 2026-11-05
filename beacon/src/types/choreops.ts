@@ -26,6 +26,8 @@ export interface ChoreOpsChore {
   icon: string | null;
   status: string;
   assignee: string | null;
+  /** Reward for completing it, when ChoreOps exposes one. */
+  points: number | null;
   canClaim: boolean;
   canApprove: boolean;
   actions: ChoreOpsActions;

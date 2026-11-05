@@ -355,7 +355,7 @@ export const ko: Record<TranslationKey, string> = {
 
   // ---- settings: chores ----
   'settings.chores.title': '집안일',
-  'settings.chores.desc': '집안일 추적과 보상 설정을 관리합니다.',
+  'settings.chores.desc': '집안일과 포인트는 Home Assistant의 ChoreOps 통합에서 관리됩니다.',
   'settings.chores.enableLabel': '집안일 활성화',
   'settings.chores.enableSublabel': '집안일 추적과 보상을 표시합니다',
   'settings.chores.dailyResetTimeLabel': '매일 초기화 시간',
@@ -457,6 +457,18 @@ export const ko: Record<TranslationKey, string> = {
   'chores.editChore': '집안일 수정',
   'chores.newChore': '새 집안일',
   'chores.claim': '맡기',
+  'chores.approve': '승인',
+  'chores.decline': '거절',
+  'chores.refresh': '새로고침',
+  'chores.everyone': '모두',
+  'chores.noChoresToday': '지금 할 일이 없습니다.',
+  'chores.wellDone': '잘했어요!',
+  'chores.missing':
+    'Home Assistant에서 ChoreOps를 찾을 수 없습니다. ChoreOps 통합을 설치하고 설정하면 여기에 집안일이 표시됩니다.',
+  'chores.stat.due': '오늘 마감',
+  'chores.stat.claimed': '맡은 일',
+  'chores.stat.approved': '승인됨',
+  'chores.stat.done': '오늘 완료',
   'chores.complete': '완료',
   'chores.whoClaims': '누가 이것을 맡나요?',
   'chores.whoCompleted': '누가 이것을 완료했나요?',
@@ -485,7 +497,7 @@ export const ko: Record<TranslationKey, string> = {
   'leaderboard.title': '리더보드',
   'leaderboard.thisWeek': '이번 주',
   'leaderboard.thisMonth': '이번 달',
-  'leaderboard.empty': '가족 구성원과 집안일을 추가하여 리더보드를 확인하세요.',
+  'leaderboard.empty': '설정에서 가족 구성원을 ChoreOps 사용자와 연결하면 순위표가 표시됩니다.',
   'leaderboard.choresCompleted': '{count}개 집안일',
   'leaderboard.choreCompletedSingular': '{count}개 집안일',
 

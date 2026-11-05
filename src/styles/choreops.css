@@ -1,0 +1,560 @@
+/* ============================================================
+   ChoreOps chores screen.
+
+   Visual language borrowed from the Qudoo family planner (the
+   24" kitchen touchscreen Beacon competes with): warm cream
+   surface, chunky rounded cards, a tinted icon medallion in the
+   middle, and a split action pill where the left half is the
+   verb and the right half is the reward. Everything is built on
+   the existing tokens so dark themes keep working.
+   ============================================================ */
+
+.choreops-screen {
+  position: relative;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px 24px 48px;
+  background:
+    radial-gradient(
+      circle at 88% -10%,
+      color-mix(in srgb, var(--color-brand) 12%, transparent),
+      transparent 60%
+    ),
+    var(--bg-primary);
+}
+
+.choreops-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.choreops-title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.choreops-refresh {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.choreops-refresh:hover {
+  background: var(--bg-hover);
+}
+
+/* ---- Member point chips (top strip) ---- */
+
+.choreops-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.choreops-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 18px 8px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.choreops-person-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--member-color, var(--border));
+  background: color-mix(in srgb, var(--member-color, var(--color-brand)) 20%, var(--bg-surface));
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.choreops-person-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.choreops-person-points {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-brand);
+}
+
+/* ---- Stat tiles ---- */
+
+.choreops-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.choreops-stat {
+  padding: 16px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.choreops-stat-value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+.choreops-stat-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ---- Section + member group headings ---- */
+
+.choreops-section-title {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.choreops-group {
+  margin-bottom: 24px;
+}
+
+.choreops-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.choreops-group-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--member-color, var(--border));
+  background: color-mix(in srgb, var(--member-color, var(--color-brand)) 20%, var(--bg-surface));
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.choreops-group-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.choreops-group-count {
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--member-color, var(--color-brand)) 16%, transparent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.choreops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+/* ---- Chore card ---- */
+
+.choreops-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition);
+}
+
+.choreops-card--done {
+  opacity: 0.72;
+}
+
+.choreops-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.choreops-pill {
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-brand) 18%, transparent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  color: var(--text-secondary);
+}
+
+.choreops-pill--done {
+  background: color-mix(in srgb, var(--color-success) 20%, transparent);
+}
+
+.choreops-pill--pending {
+  background: color-mix(in srgb, var(--color-warning) 22%, transparent);
+}
+
+.choreops-card-icon {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--member-color, var(--color-brand)) 22%, var(--bg-surface));
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--member-color, var(--color-brand)) 26%, transparent);
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.choreops-card-title {
+  margin: 0;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* Split action pill: verb on the left, reward on the right. */
+
+.choreops-action {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 52px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  overflow: hidden;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: box-shadow var(--transition);
+}
+
+.choreops-action:hover:not(:disabled) {
+  box-shadow: var(--shadow-md);
+}
+
+.choreops-action:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.choreops-action-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  background: color-mix(in srgb, var(--color-brand) 12%, var(--bg-surface));
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.choreops-action-reward {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 64px;
+  padding: 0 16px;
+  background: var(--color-brand);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-paper);
+}
+
+.choreops-action--done .choreops-action-main {
+  background: color-mix(in srgb, var(--color-success) 14%, var(--bg-surface));
+}
+
+.choreops-action--done .choreops-action-reward {
+  background: var(--color-success);
+}
+
+.choreops-secondary {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.choreops-secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.choreops-secondary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ---- Reward goal cards ---- */
+
+.choreops-goals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.choreops-goal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.choreops-goal-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.choreops-goal-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-brand) 16%, var(--bg-secondary));
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.choreops-goal-name {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.choreops-goal-cost {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-brand);
+  white-space: nowrap;
+}
+
+.choreops-goal-bar {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.choreops-goal-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    90deg,
+    var(--color-brand),
+    color-mix(in srgb, var(--color-brand) 60%, var(--color-success))
+  );
+  transition: width var(--transition);
+}
+
+.choreops-goal-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.choreops-goal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choreops-goal-actions .choreops-action {
+  min-height: 44px;
+  flex: 1 1 140px;
+}
+
+/* ---- Empty / error states ---- */
+
+.choreops-empty {
+  padding: 28px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.choreops-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-error) 10%, var(--bg-surface));
+  color: var(--color-error);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.choreops-alert-dismiss {
+  min-height: 44px;
+  min-width: 44px;
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+/* ---- Celebration overlay (Qudoo's congratulation screen) ---- */
+
+.choreops-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
+  animation: choreops-celebration-in 240ms ease-out;
+}
+
+.choreops-celebration-medallion {
+  display: grid;
+  place-items: center;
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-brand) 26%, transparent),
+    color-mix(in srgb, var(--color-brand) 8%, transparent)
+  );
+  font-size: 4.5rem;
+  line-height: 1;
+}
+
+.choreops-celebration-title {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  color: var(--color-brand);
+  text-align: center;
+}
+
+.choreops-celebration-sub {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+@keyframes choreops-celebration-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.choreops-action:focus-visible,
+.choreops-secondary:focus-visible,
+.choreops-refresh:focus-visible,
+.choreops-alert-dismiss:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choreops-celebration {
+    animation: none;
+  }
+
+  .choreops-goal-fill {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .choreops-screen {
+    padding: 16px 14px 40px;
+  }
+
+  .choreops-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}

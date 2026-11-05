@@ -4,7 +4,6 @@ import { useHomeAssistant } from './hooks/useHomeAssistant';
 import { useCalendarEvents, CalendarNotSupportedError } from './hooks/useCalendarEvents';
 import { useFamily } from './hooks/useFamily';
 import { useWeather } from './hooks/useWeather';
-import { useChores } from './hooks/useChores';
 import { useChoreOps } from './hooks/useChoreOps';
 import { Clock } from './components/Clock';
 import { WeekCalendar } from './components/WeekCalendar';
@@ -13,7 +12,6 @@ import { EventModal, EventFormData } from './components/EventModal';
 import { FamilyFilter } from './components/FamilyFilter';
 import { SettingsView } from './components/SettingsView';
 import { useSettings } from './hooks/useSettings';
-import { ChoresView } from './components/ChoresView';
 import { ChoreOpsPanel } from './components/ChoreOpsPanel';
 import { Leaderboard } from './components/Leaderboard';
 import { Sidebar, SidebarView } from './components/Sidebar';
@@ -134,7 +132,6 @@ export function App() {
 
   const { weather } = useWeather(client);
   const music = useMusic(client, connected);
-  const { chores, completionsToday, completeChore, uncompleteChore } = useChores();
 
   const dashboardTasks = useDashboardTasks(connected, settings.groceryListIds);
 
@@ -487,67 +484,41 @@ export function App() {
     setShowLeaderboard(false);
   }, []);
 
-  // Build a set of chore IDs completed today (for the dashboard checklist).
-  // We use the first member for now; a member-picker could be added later.
-  const firstMemberId = members.length > 0 ? members[0].id : '__none__';
-  const completedChoreIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const c of completionsToday) {
-      if (c.member_id === firstMemberId) {
-        ids.add(c.chore_id);
-      }
-    }
-    return ids;
-  }, [completionsToday, firstMemberId]);
-
-  const handleToggleChore = useCallback(
-    (choreId: string) => {
-      if (completedChoreIds.has(choreId)) {
-        uncompleteChore(choreId, firstMemberId);
-      } else {
-        completeChore(choreId, firstMemberId);
-      }
-    },
-    [completedChoreIds, completeChore, uncompleteChore, firstMemberId],
-  );
-
-  // ---- ChoreOps backend adapter (dashboard + calendar sidebar) ----
-  const choreOpsEnabled = getConfig().chore_backend === 'choreops';
+  // ---- Chore data ----
+  // ChoreOps owns all chore data: chores are created and edited in Home
+  // Assistant, so Beacon only reads them and presses the action buttons the
+  // integration advertises. There is no local chore store.
   const { data: choreOpsData, pressButton: pressChoreOpsButton } = useChoreOps();
 
-  const dashboardChores = useMemo(() => {
-    if (!choreOpsEnabled) return chores;
-    return (choreOpsData?.chores ?? []).map((chore) => ({
-      id: chore.id,
-      name: chore.name,
-      assigned_to: [] as string[],
-      frequency: 'once' as const,
-      value_cents: 0,
-      icon: chore.icon ?? undefined,
-    }));
-  }, [choreOpsEnabled, chores, choreOpsData]);
+  const dashboardChores = useMemo(
+    () =>
+      (choreOpsData?.chores ?? []).map((chore) => ({
+        id: chore.id,
+        name: chore.name,
+        assigned_to: [] as string[],
+        frequency: 'once' as const,
+        value_cents: 0,
+        icon: chore.icon ?? undefined,
+      })),
+    [choreOpsData],
+  );
 
   const dashboardCompletedChoreIds = useMemo(() => {
-    if (!choreOpsEnabled) return completedChoreIds;
     const ids = new Set<string>();
     for (const chore of choreOpsData?.chores ?? []) {
       if (/^(approved|completed|done)/i.test(chore.status)) ids.add(chore.id);
     }
     return ids;
-  }, [choreOpsEnabled, completedChoreIds, choreOpsData]);
+  }, [choreOpsData]);
 
   const handleDashboardToggleChore = useCallback(
     (choreId: string) => {
-      if (!choreOpsEnabled) {
-        handleToggleChore(choreId);
-        return;
-      }
       // ChoreOps has no "un-complete" action: ticking claims or approves.
       const chore = choreOpsData?.chores.find((c) => c.id === choreId);
       const buttonEid = chore?.actions.claim ?? chore?.actions.approve;
       if (buttonEid) void pressChoreOpsButton(buttonEid);
     },
-    [choreOpsEnabled, handleToggleChore, choreOpsData, pressChoreOpsButton],
+    [choreOpsData, pressChoreOpsButton],
   );
 
   // Handle onboarding completion
@@ -708,11 +679,7 @@ export function App() {
             </>
           ) : activeView === 'chores' ? (
             settings.choresEnabled ? (
-              getConfig().chore_backend === 'choreops' ? (
-                <ChoreOpsPanel />
-              ) : (
-                <ChoresView />
-              )
+              <ChoreOpsPanel />
             ) : (
               <div className="chores-empty" style={{ padding: 48 }}>
                 {t('app.choresDisabled')}

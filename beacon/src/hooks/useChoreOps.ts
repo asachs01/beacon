@@ -5,8 +5,15 @@
  * WebSocket connection). Reads an initial state snapshot, then refetches on
  * `state_changed` events for ChoreOps entities only, debounced to avoid a
  * refetch per entity during a burst of ChoreOps updates.
+ *
+ * The snapshot and the state_changed subscription are shared by every caller
+ * and ref-counted by mount/unmount: the dashboard, leaderboard, chores screen,
+ * settings and focus mode all read the same data. Without that sharing each
+ * caller would hold its own subscription and run its own full `get_states`
+ * whenever ChoreOps updates anything.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { HomeAssistantClient } from '../api/homeassistant';
 import { useHomeAssistant } from './useHomeAssistant';
 import { normalizeChoreOps, purposeOf } from '../api/choreops';
 import type { ChoreOpsEntityState, ChoreOpsState } from '../types/choreops';
@@ -56,56 +63,69 @@ export interface UseChoreOpsResult {
   pressButton: (entityId: string) => Promise<void>;
 }
 
-export function useChoreOps(): UseChoreOpsResult {
-  const { client, connected } = useHomeAssistant();
-  const [data, setData] = useState<ChoreOpsState | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface ChoreOpsSnapshot {
+  data: ChoreOpsState | null;
+  loading: boolean;
+  error: string | null;
+}
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountedRef = useRef(true);
+let snapshot: ChoreOpsSnapshot = { data: null, loading: true, error: null };
+const listeners = new Set<() => void>();
+let refCount = 0;
+let teardown: (() => void) | null = null;
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
+function emit(patch: Partial<ChoreOpsSnapshot>): void {
+  snapshot = { ...snapshot, ...patch };
+  for (const listener of listeners) listener();
+}
 
-  useEffect(() => {
-    const activeClient = client();
-    if (!activeClient || !connected) return;
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
 
+function getSnapshot(): ChoreOpsSnapshot {
+  return snapshot;
+}
+
+async function loadSnapshot(activeClient: HomeAssistantClient): Promise<void> {
+  try {
+    const states = (await activeClient.getStates()) as ChoreOpsEntityState[];
+    emit({ data: normalizeChoreOps(states), error: null, loading: false });
+  } catch (err) {
+    emit({
+      error: err instanceof Error ? err.message : 'Failed to read ChoreOps entities',
+      loading: false,
+    });
+  }
+}
+
+/**
+ * Register a consumer of the shared snapshot. The first consumer owns the
+ * subscription; the last one to unmount tears it down.
+ */
+function acquire(activeClient: HomeAssistantClient): () => void {
+  refCount += 1;
+
+  if (refCount === 1) {
+    // Only show the loading state when there is nothing cached to render.
+    emit({ loading: snapshot.data === null });
+    void loadSnapshot(activeClient);
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let subscriptionId: number | null = null;
     let cancelled = false;
 
-    const load = async () => {
-      try {
-        const states = (await activeClient.getStates()) as ChoreOpsEntityState[];
-        if (cancelled || !mountedRef.current) return;
-        setData(normalizeChoreOps(states));
-        setError(null);
-      } catch (err) {
-        if (cancelled || !mountedRef.current) return;
-        setError(err instanceof Error ? err.message : 'Failed to read ChoreOps entities');
-      } finally {
-        if (!cancelled && mountedRef.current) setLoading(false);
-      }
-    };
-
-    void load();
-
-    let subscriptionId: number | null = null;
-    const scheduleRefetch = (event: unknown) => {
-      if (!isChoreOpsEntity(event)) return;
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        if (!cancelled) void load();
-      }, REFETCH_DEBOUNCE_MS);
-    };
-
     activeClient
-      .subscribeStateChanges((event) => scheduleRefetch(event))
+      .subscribeStateChanges((event) => {
+        if (!isChoreOpsEntity(event)) return;
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+          if (!cancelled) void loadSnapshot(activeClient);
+        }, REFETCH_DEBOUNCE_MS);
+      })
       .then((id) => {
         if (cancelled) {
           activeClient.unsubscribe(id);
@@ -114,27 +134,39 @@ export function useChoreOps(): UseChoreOpsResult {
         subscriptionId = id;
       })
       .catch(() => {
-        /* subscription is an optimisation; the initial snapshot still works */
+        /* subscription is an optimisation; the snapshot still loads */
       });
 
-    return () => {
+    teardown = () => {
       cancelled = true;
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timer) clearTimeout(timer);
       if (subscriptionId !== null) activeClient.unsubscribe(subscriptionId);
     };
+  }
+
+  return () => {
+    refCount -= 1;
+    if (refCount > 0) return;
+    teardown?.();
+    teardown = null;
+  };
+}
+
+export function useChoreOps(): UseChoreOpsResult {
+  const { client, connected } = useHomeAssistant();
+  const state = useSyncExternalStore(subscribe, getSnapshot);
+
+  useEffect(() => {
+    const activeClient = client();
+    if (!activeClient || !connected) return;
+    return acquire(activeClient);
   }, [client, connected]);
 
   const refresh = useCallback(() => {
     const activeClient = client();
     if (!activeClient) return;
-    setLoading(true);
-    activeClient
-      .getStates()
-      .then((states) => setData(normalizeChoreOps(states as ChoreOpsEntityState[])))
-      .catch((err: unknown) =>
-        setError(err instanceof Error ? err.message : 'Failed to read ChoreOps entities'),
-      )
-      .finally(() => setLoading(false));
+    emit({ loading: true });
+    void loadSnapshot(activeClient);
   }, [client]);
 
   /**
@@ -156,13 +188,13 @@ export function useChoreOps(): UseChoreOpsResult {
 
   return useMemo(
     () => ({
-      data,
-      loading,
-      error,
-      available: Boolean(data?.available),
+      data: state.data,
+      loading: state.loading,
+      error: state.error,
+      available: Boolean(state.data?.available),
       refresh,
       pressButton,
     }),
-    [data, loading, error, refresh, pressButton],
+    [state, refresh, pressButton],
   );
 }

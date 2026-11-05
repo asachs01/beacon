@@ -361,7 +361,8 @@ export const de: Record<TranslationKey, string> = {
 
   // ---- settings: chores ----
   'settings.chores.title': 'Aufgaben',
-  'settings.chores.desc': 'Aufgabenverfolgung und Belohnungseinstellungen verwalten.',
+  'settings.chores.desc':
+    'Aufgaben und Punkte werden in Home Assistant von der ChoreOps-Integration verwaltet.',
   'settings.chores.enableLabel': 'Aufgaben aktivieren',
   'settings.chores.enableSublabel': 'Zeigt Aufgabenverfolgung und Belohnungen an',
   'settings.chores.dailyResetTimeLabel': 'Tägliche Rücksetzzeit',
@@ -464,6 +465,18 @@ export const de: Record<TranslationKey, string> = {
   'chores.editChore': 'Aufgabe bearbeiten',
   'chores.newChore': 'Neue Aufgabe',
   'chores.claim': 'Übernehmen',
+  'chores.approve': 'Genehmigen',
+  'chores.decline': 'Ablehnen',
+  'chores.refresh': 'Aktualisieren',
+  'chores.everyone': 'Alle',
+  'chores.noChoresToday': 'Gerade steht nichts an.',
+  'chores.wellDone': 'Super gemacht!',
+  'chores.missing':
+    'ChoreOps wurde in Home Assistant nicht gefunden. Installiere und konfiguriere die ChoreOps-Integration, um hier Aufgaben zu sehen.',
+  'chores.stat.due': 'Heute fällig',
+  'chores.stat.claimed': 'Übernommen',
+  'chores.stat.approved': 'Genehmigt',
+  'chores.stat.done': 'Heute erledigt',
   'chores.complete': 'Erledigen',
   'chores.whoClaims': 'Wer übernimmt dies?',
   'chores.whoCompleted': 'Wer hat das erledigt?',
@@ -492,7 +505,8 @@ export const de: Record<TranslationKey, string> = {
   'leaderboard.title': 'Bestenliste',
   'leaderboard.thisWeek': 'Diese Woche',
   'leaderboard.thisMonth': 'Dieser Monat',
-  'leaderboard.empty': 'Füge Familienmitglieder und Aufgaben hinzu, um die Bestenliste zu sehen.',
+  'leaderboard.empty':
+    'Verknüpfe Familienmitglieder in den Einstellungen mit ChoreOps-Benutzern, um die Bestenliste zu sehen.',
   'leaderboard.choresCompleted': '{count} Aufgaben',
   'leaderboard.choreCompletedSingular': '{count} Aufgabe',
 
