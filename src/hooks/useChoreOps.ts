@@ -52,6 +52,8 @@ export interface UseChoreOpsResult {
   /** True when HA is connected and at least one ChoreOps entity was found. */
   available: boolean;
   refresh: () => void;
+  /** Press a ChoreOps action button (claim/approve/disapprove). */
+  pressButton: (entityId: string) => Promise<void>;
 }
 
 export function useChoreOps(): UseChoreOpsResult {
@@ -135,6 +137,23 @@ export function useChoreOps(): UseChoreOpsResult {
       .finally(() => setLoading(false));
   }, [client]);
 
+  /**
+   * Invoke a ChoreOps action by pressing its button entity.
+   * ChoreOps exposes actions only as `button.*` entities, discovered from the
+   * parent sensor's attributes — never hardcoded.
+   */
+  const pressButton = useCallback(
+    async (entityId: string): Promise<void> => {
+      const activeClient = client();
+      if (!activeClient) throw new Error('Not connected to Home Assistant');
+      if (!entityId.startsWith('button.')) {
+        throw new Error(`Not a button entity: ${entityId}`);
+      }
+      await activeClient.callService('button', 'press', entityId);
+    },
+    [client],
+  );
+
   return useMemo(
     () => ({
       data,
@@ -142,7 +161,8 @@ export function useChoreOps(): UseChoreOpsResult {
       error,
       available: Boolean(data?.available),
       refresh,
+      pressButton,
     }),
-    [data, loading, error, refresh],
+    [data, loading, error, refresh, pressButton],
   );
 }
