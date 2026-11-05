@@ -1131,15 +1131,7 @@ export function SettingsView({
                       };
                     });
                   }}
-                  style={{
-                    minHeight: 44,
-                    padding: '8px 12px',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border)',
-                    background: 'var(--bg-page)',
-                    color: 'inherit',
-                    fontSize: '1rem',
-                  }}
+                  className="settings-select"
                 >
                   <option value="">Not linked</option>
                   {choreOpsUsers.map((user) => {
