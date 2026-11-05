@@ -217,6 +217,14 @@ export const nl: Record<TranslationKey, string> = {
   'settings.family.parent': 'Ouder',
   'settings.family.child': 'Kind',
   'settings.family.avatarLabel': 'Avatar',
+  'settings.family.photoLabel': 'Foto',
+  'settings.family.photoHint':
+    'Wordt getoond in plaats van de emoji op het dashboard, bij taken en in het klassement.',
+  'settings.family.photoUpload': 'Foto uploaden',
+  'settings.family.photoRemove': 'Foto verwijderen',
+  'settings.family.photoFromHa': 'Foto uit Home Assistant gebruiken',
+  'settings.family.photoError':
+    'Dat bestand kon niet worden gebruikt. Probeer een PNG-, JPEG- of WebP-afbeelding.',
   'settings.family.avatarCategory.people': 'Personen',
   'settings.family.avatarCategory.skinTones': 'Huidtinten',
   'settings.family.avatarCategory.faces': 'Gezichten',

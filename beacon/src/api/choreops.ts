@@ -169,7 +169,13 @@ export function normalizeChoreOps(states: ChoreOpsEntityState[]): ChoreOpsState 
     // chores) so collect them before the purpose check filters them out.
     if (entity.entity_id.startsWith('person.')) {
       const name = str(entity.attributes, 'friendly_name');
-      if (name) people.push({ entityId: entity.entity_id, name });
+      if (name) {
+        people.push({
+          entityId: entity.entity_id,
+          name,
+          picture: str(entity.attributes, 'entity_picture'),
+        });
+      }
       continue;
     }
 

@@ -1,12 +1,22 @@
 import { DashboardCardProps } from '../../types/dashboard-cards';
 import { EventCard } from '../EventCard';
 import { readBoolean } from './card-config';
+import { MemberAvatar } from '../MemberAvatar';
 import { useTranslation } from '../../i18n';
 
 /** Per-member calendar grid (default layout's main content). */
 export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
   const { t } = useTranslation();
-  const { members, byMember, other, todayEvents, onEventClick, selectedMemberFilter, toggleMemberFilter, isViewingToday } = context;
+  const {
+    members,
+    byMember,
+    other,
+    todayEvents,
+    onEventClick,
+    selectedMemberFilter,
+    toggleMemberFilter,
+    isViewingToday,
+  } = context;
   const showOther = readBoolean(config, 'show_other', true);
 
   const hasMemberCalendars = members.some(
@@ -33,12 +43,18 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
   }
 
   return (
-    <div className="dash-family-grid" style={{ '--member-count': members.length } as React.CSSProperties}>
+    <div
+      className="dash-family-grid"
+      style={{ '--member-count': members.length } as React.CSSProperties}
+    >
       {members.map((member) => {
         const memberEvents = byMember.get(member.id) || [];
         const isSelected = selectedMemberFilter === member.id;
         return (
-          <section key={member.id} className={`dash-member-col ${isSelected ? 'dash-member-col--selected' : ''}`}>
+          <section
+            key={member.id}
+            className={`dash-member-col ${isSelected ? 'dash-member-col--selected' : ''}`}
+          >
             <button
               type="button"
               className="dash-member-header dash-member-header--clickable"
@@ -50,7 +66,7 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
                 className="dash-member-avatar"
                 style={{ backgroundColor: member.color + '22', borderColor: member.color }}
               >
-                {member.avatar}
+                <MemberAvatar member={member} />
               </span>
               <span className="dash-member-name" style={{ color: member.color }}>
                 {member.name}
@@ -59,7 +75,9 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
             <div className="dash-member-events">
               {memberEvents.length === 0 ? (
                 <div className="dash-member-empty">
-                  {isViewingToday ? t('dashboard.nothingScheduledToday') : t('dashboard.nothingScheduledThisDay')}
+                  {isViewingToday
+                    ? t('dashboard.nothingScheduledToday')
+                    : t('dashboard.nothingScheduledThisDay')}
                 </div>
               ) : (
                 memberEvents.map((event) => (
@@ -73,7 +91,10 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
       {showOther && other.length > 0 && (
         <section className="dash-member-col dash-member-col--other">
           <div className="dash-member-header">
-            <span className="dash-member-avatar" style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border)' }}>
+            <span
+              className="dash-member-avatar"
+              style={{ backgroundColor: 'var(--bg-hover)', borderColor: 'var(--border)' }}
+            >
               📅
             </span>
             <span className="dash-member-name">{t('dashboard.other')}</span>

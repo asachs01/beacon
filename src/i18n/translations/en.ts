@@ -221,6 +221,13 @@ export const en = {
   'settings.family.parent': 'Parent',
   'settings.family.child': 'Child',
   'settings.family.avatarLabel': 'Avatar',
+  'settings.family.photoLabel': 'Photo',
+  'settings.family.photoHint':
+    'Shown instead of the emoji on the dashboard, chores and leaderboard.',
+  'settings.family.photoUpload': 'Upload photo',
+  'settings.family.photoRemove': 'Remove photo',
+  'settings.family.photoFromHa': 'Use Home Assistant photo',
+  'settings.family.photoError': 'That file could not be used. Try a PNG, JPEG or WebP image.',
   'settings.family.avatarCategory.people': 'People',
   'settings.family.avatarCategory.skinTones': 'Skin Tones',
   'settings.family.avatarCategory.faces': 'Faces',

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Chore, FamilyMember } from '../types/family';
 import { hapticMedium, hapticSuccess } from '../hooks/useHaptics';
 import { useTranslation } from '../i18n';
+import { MemberAvatar } from './MemberAvatar';
 
 interface TaskChecklistProps {
   chores: Chore[];
@@ -25,7 +26,7 @@ function AssigneeBadges({ chore, members }: { chore: Chore; members: FamilyMembe
           style={{ backgroundColor: m.color + '22', borderColor: m.color }}
         >
           <span className="task-checklist-avatar" aria-hidden="true">
-            {m.avatar}
+            <MemberAvatar member={m} />
           </span>
           <span className="task-checklist-assignee-name" style={{ color: m.color }}>
             {m.name}
@@ -36,7 +37,12 @@ function AssigneeBadges({ chore, members }: { chore: Chore; members: FamilyMembe
   );
 }
 
-export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: TaskChecklistProps) {
+export function TaskChecklist({
+  chores,
+  completedIds,
+  onToggle,
+  members = [],
+}: TaskChecklistProps) {
   const { t } = useTranslation();
   const [animatingId, setAnimatingId] = useState<string | null>(null);
 
@@ -55,19 +61,11 @@ export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: 
   const completed = chores.filter((c) => completedIds.has(c.id));
 
   if (chores.length === 0) {
-    return (
-      <div className="task-checklist-empty">
-        {t('taskChecklist.empty')}
-      </div>
-    );
+    return <div className="task-checklist-empty">{t('taskChecklist.empty')}</div>;
   }
 
   if (incomplete.length === 0) {
-    return (
-      <div className="task-checklist-done">
-        {t('taskChecklist.allDone')}
-      </div>
-    );
+    return <div className="task-checklist-done">{t('taskChecklist.allDone')}</div>;
   }
 
   return (
@@ -84,7 +82,9 @@ export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: 
           </button>
           <span className="task-checklist-label">
             {chore.icon && <span className="task-checklist-icon">{chore.icon}</span>}
-            <span className="task-checklist-name" title={chore.name}>{chore.name}</span>
+            <span className="task-checklist-name" title={chore.name}>
+              {chore.name}
+            </span>
           </span>
           <AssigneeBadges chore={chore} members={members} />
         </li>
@@ -98,14 +98,25 @@ export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: 
             aria-label={t('taskChecklist.undo', { name: chore.name })}
           >
             <span className="task-checkbox-box">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </span>
           </button>
           <span className="task-checklist-label task-checklist-label--done">
             {chore.icon && <span className="task-checklist-icon">{chore.icon}</span>}
-            <span className="task-checklist-name" title={chore.name}>{chore.name}</span>
+            <span className="task-checklist-name" title={chore.name}>
+              {chore.name}
+            </span>
           </span>
           <AssigneeBadges chore={chore} members={members} />
         </li>

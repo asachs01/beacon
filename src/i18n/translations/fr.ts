@@ -222,6 +222,14 @@ export const fr: Record<TranslationKey, string> = {
   'settings.family.parent': 'Parent',
   'settings.family.child': 'Enfant',
   'settings.family.avatarLabel': 'Avatar',
+  'settings.family.photoLabel': 'Photo',
+  'settings.family.photoHint':
+    'Affichée à la place de l’emoji sur le tableau de bord, les tâches et le classement.',
+  'settings.family.photoUpload': 'Importer une photo',
+  'settings.family.photoRemove': 'Supprimer la photo',
+  'settings.family.photoFromHa': 'Utiliser la photo Home Assistant',
+  'settings.family.photoError':
+    'Ce fichier n’a pas pu être utilisé. Essayez une image PNG, JPEG ou WebP.',
   'settings.family.avatarCategory.people': 'Personnes',
   'settings.family.avatarCategory.skinTones': 'Teints',
   'settings.family.avatarCategory.faces': 'Visages',

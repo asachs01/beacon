@@ -4,6 +4,7 @@ import { useFamily } from '../hooks/useFamily';
 import { findUserForMember } from '../api/choreops';
 import { STAR_CURRENCY } from '../types/family';
 import { useTranslation } from '../i18n';
+import { MemberAvatar } from './MemberAvatar';
 
 interface LeaderboardProps {
   open: boolean;
@@ -69,7 +70,7 @@ export function Leaderboard({ open, onClose }: LeaderboardProps) {
                     borderColor: entry.member.color,
                   }}
                 >
-                  {entry.member.avatar}
+                  <MemberAvatar member={entry.member} />
                 </span>
                 <div className="lb-info">
                   <span className="lb-name">{entry.member.name}</span>

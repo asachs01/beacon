@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import type { ChangeEvent } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import {
   Settings as SettingsIcon,
@@ -26,6 +27,8 @@ import { buildFocusUrl } from '../focus';
 import { useRoutines } from '../hooks/useRoutines';
 import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
 import { useTranslation, type TranslationKey } from '../i18n';
+import { MemberAvatar } from './MemberAvatar';
+import { imageFileToDataUrl, resolveMemberPhoto } from '../utils/member-photo';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -170,6 +173,7 @@ function Slider({
 interface MemberForm {
   name: string;
   avatar: string;
+  photo: string;
   color: string;
   role: 'parent' | 'child';
   pin: string;
@@ -181,6 +185,7 @@ interface MemberForm {
 const EMPTY_FORM: MemberForm = {
   name: '',
   avatar: '🧑',
+  photo: '',
   color: MEMBER_COLORS[0],
   role: 'child',
   pin: '',
@@ -218,12 +223,22 @@ export function SettingsView({
   const choreOpsUsers = choreOpsData?.users ?? [];
   const choreOpsNames = new Set(choreOpsUsers.map((u) => u.name.trim().toLowerCase()));
 
+  /** `entity_picture` published on an HA person entity, if they have one. */
+  const personPicture = (personName: string): string | null =>
+    (choreOpsData?.people ?? []).find(
+      (person) => person.name.trim().toLowerCase() === personName.trim().toLowerCase(),
+    )?.picture ?? null;
+
   /** HA people (incl. non-ChoreOps members such as parents) + ChoreOps users. */
-  const peopleOptions: Array<{ name: string; hasChoreOps: boolean }> = [
-    ...choreOpsUsers.map((u) => ({ name: u.name, hasChoreOps: true })),
+  const peopleOptions: Array<{ name: string; hasChoreOps: boolean; picture: string | null }> = [
+    ...choreOpsUsers.map((u) => ({
+      name: u.name,
+      hasChoreOps: true,
+      picture: personPicture(u.name),
+    })),
     ...(choreOpsData?.people ?? [])
       .filter((p) => !choreOpsNames.has(p.name.trim().toLowerCase()))
-      .map((p) => ({ name: p.name, hasChoreOps: false })),
+      .map((p) => ({ name: p.name, hasChoreOps: false, picture: p.picture })),
   ];
 
   /** True when a person is already attached to a different member. */
@@ -238,6 +253,7 @@ export function SettingsView({
   };
   const [memberForm, setMemberForm] = useState<MemberForm>(EMPTY_FORM);
   const [memberFormMode, setMemberFormMode] = useState<'list' | 'add' | 'edit'>('list');
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [kidDisplayMemberId, setKidDisplayMemberId] = useState('');
   const [copiedFocusUrl, setCopiedFocusUrl] = useState(false);
@@ -295,6 +311,7 @@ export function SettingsView({
   // ---- Family member handlers ----
   const handleStartAdd = useCallback(() => {
     setMemberForm(EMPTY_FORM);
+    setPhotoError(null);
     setEditingMember(null);
     setMemberFormMode('add');
   }, []);
@@ -303,6 +320,7 @@ export function SettingsView({
     setMemberForm({
       name: member.name,
       avatar: member.avatar,
+      photo: member.photo ?? '',
       color: member.color,
       role: member.role,
       pin: member.pin ?? '',
@@ -310,15 +328,36 @@ export function SettingsView({
       additional_calendar_entities: member.additional_calendar_entities ?? [],
       choreops_user: member.choreops_user ?? '',
     });
+    setPhotoError(null);
     setEditingMember(member.id);
     setMemberFormMode('edit');
   }, []);
+
+  /** Downscale an uploaded file to a small data URL so it survives offline. */
+  const handlePhotoUpload = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      // Reset so picking the same file twice still fires onChange.
+      event.target.value = '';
+      if (!file) return;
+
+      setPhotoError(null);
+      try {
+        const dataUrl = await imageFileToDataUrl(file);
+        setMemberForm((form) => ({ ...form, photo: dataUrl }));
+      } catch {
+        setPhotoError(t('settings.family.photoError'));
+      }
+    },
+    [t],
+  );
 
   const handleSaveMember = useCallback(() => {
     if (!memberForm.name.trim()) return;
     const data = {
       name: memberForm.name.trim(),
       avatar: memberForm.avatar,
+      photo: memberForm.photo || undefined,
       color: memberForm.color,
       role: memberForm.role,
       pin: memberForm.pin || undefined,
@@ -721,12 +760,16 @@ export function SettingsView({
 
   // ==== FAMILY ====
   const renderFamily = () => {
+    // A photo already published on the linked HA person, if any.
+    const linkedPhoto = personPicture(memberForm.choreops_user);
+
     if (routinesFor) {
       const memberRoutines = routinesApi.routines.filter((r) => r.member_id === routinesFor.id);
       return (
         <>
           <h2 className="settings-section-title">
-            {routinesFor.avatar} {routinesFor.name} {t('settings.family.routinesTitleSuffix')}
+            <MemberAvatar member={routinesFor} size={24} /> {routinesFor.name}{' '}
+            {t('settings.family.routinesTitleSuffix')}
           </h2>
           <p className="settings-section-desc">{t('settings.family.routinesDesc')}</p>
           <div className="settings-group">
@@ -982,7 +1025,7 @@ export function SettingsView({
                       border: `2px solid ${member.color}`,
                     }}
                   >
-                    {member.avatar}
+                    <MemberAvatar member={member} />
                   </div>
                   <div className="settings-fm-info">
                     <div className="settings-fm-name">{member.name}</div>
@@ -1127,6 +1170,61 @@ export function SettingsView({
                 ))}
               </div>
             </div>
+            <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+              <div>
+                <div className="settings-row-label">{t('settings.family.photoLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.family.photoHint')}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {memberForm.photo && (
+                  <img
+                    className="member-photo"
+                    src={resolveMemberPhoto(memberForm.photo)}
+                    alt=""
+                    style={{
+                      width: 48,
+                      height: 48,
+                      border: `2px solid ${memberForm.color}`,
+                      background: memberForm.color + '22',
+                    }}
+                  />
+                )}
+                <label className="settings-btn" style={{ cursor: 'pointer', margin: 0 }}>
+                  {t('settings.family.photoUpload')}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+                {linkedPhoto && memberForm.photo !== linkedPhoto && (
+                  <button
+                    type="button"
+                    className="settings-btn"
+                    onClick={() => setMemberForm((form) => ({ ...form, photo: linkedPhoto }))}
+                  >
+                    {t('settings.family.photoFromHa')}
+                  </button>
+                )}
+                {memberForm.photo && (
+                  <button
+                    type="button"
+                    className="settings-btn"
+                    onClick={() => setMemberForm((form) => ({ ...form, photo: '' }))}
+                  >
+                    {t('settings.family.photoRemove')}
+                  </button>
+                )}
+              </div>
+            </div>
+            {photoError && (
+              <div className="settings-row">
+                <span style={{ color: 'var(--color-error)', fontSize: '0.85rem' }}>
+                  {photoError}
+                </span>
+              </div>
+            )}
             {peopleOptions.length > 0 && (
               <div className="settings-row">
                 <div className="settings-row-label">From Home Assistant</div>

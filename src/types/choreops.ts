@@ -72,4 +72,6 @@ export interface ChoreOpsState {
 export interface HaPerson {
   entityId: string;
   name: string;
+  /** `entity_picture` when the person has a photo set in Home Assistant. */
+  picture: string | null;
 }

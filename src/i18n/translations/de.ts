@@ -219,6 +219,14 @@ export const de: Record<TranslationKey, string> = {
   'settings.family.parent': 'Erwachsener',
   'settings.family.child': 'Kind',
   'settings.family.avatarLabel': 'Avatar',
+  'settings.family.photoLabel': 'Foto',
+  'settings.family.photoHint':
+    'Wird anstelle des Emojis im Dashboard, bei Aufgaben und in der Bestenliste angezeigt.',
+  'settings.family.photoUpload': 'Foto hochladen',
+  'settings.family.photoRemove': 'Foto entfernen',
+  'settings.family.photoFromHa': 'Home-Assistant-Foto verwenden',
+  'settings.family.photoError':
+    'Diese Datei konnte nicht verwendet werden. Versuche ein PNG-, JPEG- oder WebP-Bild.',
   'settings.family.avatarCategory.people': 'Personen',
   'settings.family.avatarCategory.skinTones': 'Hauttöne',
   'settings.family.avatarCategory.faces': 'Gesichter',

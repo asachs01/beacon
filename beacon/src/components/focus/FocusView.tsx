@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { useFamily } from '../../hooks/useFamily';
 import { useChoreOps } from '../../hooks/useChoreOps';
 import { findUserForMember } from '../../api/choreops';
+import { MemberAvatar } from '../MemberAvatar';
 import { useRoutines } from '../../hooks/useRoutines';
 import { BeaconSettings } from '../../hooks/useSettings';
 import { ScreenSaver } from '../ScreenSaver';
@@ -115,7 +116,7 @@ export function FocusView({ memberId, settings, onExit }: FocusViewProps) {
             className="focus-avatar"
             style={{ borderColor: member.color, backgroundColor: member.color + '22' }}
           >
-            {member.avatar}
+            <MemberAvatar member={member} />
           </span>
           <div>
             <div className="focus-greeting">{GREETINGS[getTimeOfDay(now)]},</div>

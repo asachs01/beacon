@@ -217,6 +217,13 @@ export const ko: Record<TranslationKey, string> = {
   'settings.family.parent': '보호자',
   'settings.family.child': '자녀',
   'settings.family.avatarLabel': '아바타',
+  'settings.family.photoLabel': '사진',
+  'settings.family.photoHint': '대시보드, 집안일, 순위표에서 이모지 대신 표시됩니다.',
+  'settings.family.photoUpload': '사진 업로드',
+  'settings.family.photoRemove': '사진 삭제',
+  'settings.family.photoFromHa': 'Home Assistant 사진 사용',
+  'settings.family.photoError':
+    '이 파일을 사용할 수 없습니다. PNG, JPEG 또는 WebP 이미지를 사용해 보세요.',
   'settings.family.avatarCategory.people': '사람',
   'settings.family.avatarCategory.skinTones': '피부톤',
   'settings.family.avatarCategory.faces': '표정',

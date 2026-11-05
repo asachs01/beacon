@@ -17,6 +17,7 @@ import { useTranslation } from '../i18n';
 import type { ChoreOpsChore } from '../types/choreops';
 import type { FamilyMember } from '../types/family';
 import { ChoreTaskCard, RewardGoalCard, memberColorVars } from './choreops/ChoreOpsCards';
+import { MemberAvatar } from './MemberAvatar';
 
 const CELEBRATION_MS = 2600;
 
@@ -164,7 +165,7 @@ export function ChoreOpsPanel() {
               {linkedUsers.map(({ user, member }) => (
                 <div key={user.slug} className="choreops-person" style={memberColorVars(member)}>
                   <span className="choreops-person-avatar" aria-hidden="true">
-                    {member?.avatar ?? '\u{1F464}'}
+                    <MemberAvatar member={member} />
                   </span>
                   <span className="choreops-person-name">{user.name}</span>
                   <span className="choreops-person-points">
@@ -194,7 +195,7 @@ export function ChoreOpsPanel() {
               <section key={group.key} className="choreops-group">
                 <div className="choreops-group-head" style={memberColorVars(group.member)}>
                   <span className="choreops-group-avatar" aria-hidden="true">
-                    {group.member?.avatar ?? '\u{1F465}'}
+                    <MemberAvatar member={group.member} fallback="\u{1F465}" />
                   </span>
                   <span className="choreops-group-name">{group.label}</span>
                   <span className="choreops-group-count">{group.chores.length}</span>

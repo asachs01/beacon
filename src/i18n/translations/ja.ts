@@ -217,6 +217,13 @@ export const ja: Record<TranslationKey, string> = {
   'settings.family.parent': '保護者',
   'settings.family.child': '子供',
   'settings.family.avatarLabel': 'アバター',
+  'settings.family.photoLabel': '写真',
+  'settings.family.photoHint': 'ダッシュボード・家事・ランキングで絵文字の代わりに表示されます。',
+  'settings.family.photoUpload': '写真をアップロード',
+  'settings.family.photoRemove': '写真を削除',
+  'settings.family.photoFromHa': 'Home Assistant の写真を使う',
+  'settings.family.photoError':
+    'このファイルは使用できません。PNG・JPEG・WebP の画像をお試しください。',
   'settings.family.avatarCategory.people': '人々',
   'settings.family.avatarCategory.skinTones': '肌の色',
   'settings.family.avatarCategory.faces': '顔',

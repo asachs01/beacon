@@ -219,6 +219,14 @@ export const es: Record<TranslationKey, string> = {
   'settings.family.parent': 'Adulto',
   'settings.family.child': 'Niño/a',
   'settings.family.avatarLabel': 'Avatar',
+  'settings.family.photoLabel': 'Foto',
+  'settings.family.photoHint':
+    'Se muestra en lugar del emoji en el panel, las tareas y la clasificación.',
+  'settings.family.photoUpload': 'Subir foto',
+  'settings.family.photoRemove': 'Quitar foto',
+  'settings.family.photoFromHa': 'Usar foto de Home Assistant',
+  'settings.family.photoError':
+    'No se pudo usar ese archivo. Prueba con una imagen PNG, JPEG o WebP.',
   'settings.family.avatarCategory.people': 'Personas',
   'settings.family.avatarCategory.skinTones': 'Tonos de piel',
   'settings.family.avatarCategory.faces': 'Caras',
