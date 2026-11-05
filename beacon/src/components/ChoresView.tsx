@@ -11,25 +11,84 @@ import { useTranslation } from '../i18n';
 // Standard Unicode emoji that render reliably across iOS/Android/desktop.
 const CHORE_ICONS = [
   // Cleaning
-  '🧹', '🧽', '🧼', '🧴', '🧻', '🪣', '🚿', '🛁', '🪥', '🚽', '🗑️', '♻️', '🚮',
+  '🧹',
+  '🧽',
+  '🧼',
+  '🧴',
+  '🧻',
+  '🪣',
+  '🚿',
+  '🛁',
+  '🪥',
+  '🚽',
+  '🗑️',
+  '♻️',
+  '🚮',
   // Kitchen & food
-  '🍽️', '🍴', '🥄', '🍳', '🥘', '🍲', '🧊', '☕', '🥛', '🍎', '🥕', '🥦', '🍞', '🧃',
+  '🍽️',
+  '🍴',
+  '🥄',
+  '🍳',
+  '🥘',
+  '🍲',
+  '🧊',
+  '☕',
+  '🥛',
+  '🍎',
+  '🥕',
+  '🥦',
+  '🍞',
+  '🧃',
   // Laundry & clothes
-  '👕', '👖', '🧦', '👟', '🧥', '🧺', '🪡',
+  '👕',
+  '👖',
+  '🧦',
+  '👟',
+  '🧥',
+  '🧺',
+  '🪡',
   // Rooms & furniture
-  '🛏️', '🛋️', '🧸', '🪑',
+  '🛏️',
+  '🛋️',
+  '🧸',
+  '🪑',
   // Pets
-  '🐕', '🐈', '🐠', '🐹', '🦜', '🐾',
+  '🐕',
+  '🐈',
+  '🐠',
+  '🐹',
+  '🦜',
+  '🐾',
   // Garden & plants
-  '🌱', '🪴', '🌳', '🌷',
+  '🌱',
+  '🪴',
+  '🌳',
+  '🌷',
   // School & work
-  '📚', '📖', '✏️', '📝', '🎒', '🧮', '💻',
+  '📚',
+  '📖',
+  '✏️',
+  '📝',
+  '🎒',
+  '🧮',
+  '💻',
   // Errands & transport
-  '🚗', '🚲', '🛒', '🧾', '📦',
+  '🚗',
+  '🚲',
+  '🛒',
+  '🧾',
+  '📦',
   // Tools & repairs
-  '🔧', '🔨', '🪛', '🧰', '🧯',
+  '🔧',
+  '🔨',
+  '🪛',
+  '🧰',
+  '🧯',
   // Everyday
-  '💪', '⏰', '✅', '🎵',
+  '💪',
+  '⏰',
+  '✅',
+  '🎵',
 ];
 
 const EMPTY_CHORE_FORM = {
@@ -292,11 +351,7 @@ export function ChoresView() {
       <header className="chores-view-header">
         <h1 className="chores-view-title">{t('chores.title')}</h1>
         {members.length > 0 && (
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => openAddForm()}
-          >
+          <button type="button" className="btn btn--primary" onClick={() => openAddForm()}>
             <Plus size={16} strokeWidth={2} />
             {t('chores.addChore')}
           </button>
@@ -304,9 +359,7 @@ export function ChoresView() {
       </header>
 
       {members.length === 0 ? (
-        <div className="chores-empty">
-          {t('chores.addMembersFirst')}
-        </div>
+        <div className="chores-empty">{t('chores.addMembersFirst')}</div>
       ) : (
         <>
           {unassignedChores.length > 0 && (
@@ -333,71 +386,71 @@ export function ChoresView() {
             className="chores-family-grid"
             style={{ '--member-count': members.length } as React.CSSProperties}
           >
-          {memberChoreGroups.map(({ member, chores: memberChores, progress, streak }) => (
-            <section key={member.id} className="chores-member-col">
-              <div className="dash-member-header">
-                <span
-                  className="dash-member-avatar"
-                  style={{ backgroundColor: member.color + '22', borderColor: member.color }}
-                >
-                  {member.avatar}
-                </span>
-                <span className="dash-member-name" style={{ color: member.color }}>
-                  {member.name}
-                </span>
-                <StreakBadge streak={streak} size="sm" />
-              </div>
-
-              {memberChores.length > 0 && (
-                <div className="chores-progress">
-                  <div className="chores-progress-bar">
-                    <div
-                      className="chores-progress-fill"
-                      style={{
-                        width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%`,
-                        backgroundColor: member.color,
-                      }}
-                    />
-                  </div>
-                  <span className="chores-progress-text">
-                    {progress.completed}/{progress.total}
+            {memberChoreGroups.map(({ member, chores: memberChores, progress, streak }) => (
+              <section key={member.id} className="chores-member-col">
+                <div className="dash-member-header">
+                  <span
+                    className="dash-member-avatar"
+                    style={{ backgroundColor: member.color + '22', borderColor: member.color }}
+                  >
+                    {member.avatar}
                   </span>
+                  <span className="dash-member-name" style={{ color: member.color }}>
+                    {member.name}
+                  </span>
+                  <StreakBadge streak={streak} size="sm" />
                 </div>
-              )}
 
-              <div className="chores-member-col-list">
-                {memberChores.length === 0 ? (
-                  <div className="chores-member-empty">{t('chores.noChoresAssigned')}</div>
-                ) : (
-                  <div className="chores-list">
-                    {memberChores.map((chore) => (
-                      <ChoreCard
-                        key={`${chore.id}-${member.id}`}
-                        chore={chore}
-                        member={member}
-                        isCompleted={isChoreCompletedToday(chore.id, member.id)}
-                        onComplete={() => completeChore(chore.id, member.id)}
-                        onUncomplete={() => uncompleteChore(chore.id, member.id)}
-                        onEdit={() => handleStartEdit(chore)}
-                        onDelete={() => handleDeleteChore(chore.id)}
-                        currencySymbol={settings.currencySymbol}
+                {memberChores.length > 0 && (
+                  <div className="chores-progress">
+                    <div className="chores-progress-bar">
+                      <div
+                        className="chores-progress-fill"
+                        style={{
+                          width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%`,
+                          backgroundColor: member.color,
+                        }}
                       />
-                    ))}
+                    </div>
+                    <span className="chores-progress-text">
+                      {progress.completed}/{progress.total}
+                    </span>
                   </div>
                 )}
-              </div>
 
-              <button
-                type="button"
-                className="chores-member-add-btn"
-                onClick={() => openAddForm(member.id)}
-              >
-                <Plus size={14} strokeWidth={2} />
-                {t('chores.addChoreFor', { name: member.name })}
-              </button>
-            </section>
-          ))}
-        </div>
+                <div className="chores-member-col-list">
+                  {memberChores.length === 0 ? (
+                    <div className="chores-member-empty">{t('chores.noChoresAssigned')}</div>
+                  ) : (
+                    <div className="chores-list">
+                      {memberChores.map((chore) => (
+                        <ChoreCard
+                          key={`${chore.id}-${member.id}`}
+                          chore={chore}
+                          member={member}
+                          isCompleted={isChoreCompletedToday(chore.id, member.id)}
+                          onComplete={() => completeChore(chore.id, member.id)}
+                          onUncomplete={() => uncompleteChore(chore.id, member.id)}
+                          onEdit={() => handleStartEdit(chore)}
+                          onDelete={() => handleDeleteChore(chore.id)}
+                          currencySymbol={settings.currencySymbol}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="chores-member-add-btn"
+                  onClick={() => openAddForm(member.id)}
+                >
+                  <Plus size={14} strokeWidth={2} />
+                  {t('chores.addChoreFor', { name: member.name })}
+                </button>
+              </section>
+            ))}
+          </div>
         </>
       )}
 
@@ -405,7 +458,9 @@ export function ChoresView() {
         <div className="modal-overlay" onClick={handleCloseForm}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{isEditing ? t('chores.editChore') : t('chores.newChore')}</h2>
+              <h2 className="modal-title">
+                {isEditing ? t('chores.editChore') : t('chores.newChore')}
+              </h2>
               <button type="button" className="modal-close" onClick={handleCloseForm}>
                 {'\u00D7'}
               </button>
