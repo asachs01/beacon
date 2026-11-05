@@ -17,12 +17,7 @@ import {
 import { AnyListClient } from '../api/anylist';
 import { GroceryList } from '../types/grocery';
 import { themes } from '../styles/themes';
-import {
-  FamilyMember,
-  MEMBER_COLORS,
-  AVATAR_CATEGORIES,
-  Routine,
-} from '../types/family';
+import { FamilyMember, MEMBER_COLORS, AVATAR_CATEGORIES, Routine } from '../types/family';
 import type { BeaconSettings } from '../hooks/useSettings';
 import { getConfig } from '../config';
 import { isAddOn } from '../utils/ha-env';
@@ -160,7 +155,8 @@ function Slider({
         onChange={(e) => onChange(Number(e.target.value))}
       />
       <span className="settings-slider-value">
-        {value}{unit ?? ''}
+        {value}
+        {unit ?? ''}
       </span>
     </div>
   );
@@ -264,7 +260,10 @@ export function SettingsView({
   useEffect(() => {
     if (!connected) return;
     const client = new AnyListClient();
-    client.getLists().then(setTodoLists).catch(() => {});
+    client
+      .getLists()
+      .then(setTodoLists)
+      .catch(() => {});
   }, [connected]);
 
   // ---- Family member handlers ----
@@ -297,9 +296,10 @@ export function SettingsView({
       role: memberForm.role,
       pin: memberForm.pin || undefined,
       calendar_entity: memberForm.calendar_entity || undefined,
-      additional_calendar_entities: memberForm.additional_calendar_entities.length > 0
-        ? memberForm.additional_calendar_entities
-        : undefined,
+      additional_calendar_entities:
+        memberForm.additional_calendar_entities.length > 0
+          ? memberForm.additional_calendar_entities
+          : undefined,
     };
     if (memberFormMode === 'edit' && editingMember) {
       onUpdateMember(editingMember, data);
@@ -423,7 +423,9 @@ export function SettingsView({
           <select
             className="form-select"
             value={settings.defaultView}
-            onChange={(e) => onUpdateSettings({ defaultView: e.target.value as BeaconSettings['defaultView'] })}
+            onChange={(e) =>
+              onUpdateSettings({ defaultView: e.target.value as BeaconSettings['defaultView'] })
+            }
             style={{ maxWidth: 180 }}
           >
             <option value="dashboard">{t('nav.dashboard')}</option>
@@ -494,7 +496,9 @@ export function SettingsView({
         )}
       </div>
 
-      <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.general.dashboardLayoutTitle')}</h2>
+      <h2 className="settings-section-title" style={{ marginTop: 32 }}>
+        {t('settings.general.dashboardLayoutTitle')}
+      </h2>
       <p className="settings-section-desc">{t('settings.general.dashboardLayoutDesc')}</p>
       <div className="settings-group">
         <div className="settings-row" style={{ alignItems: 'flex-start' }}>
@@ -503,11 +507,25 @@ export function SettingsView({
             <div className="settings-row-sublabel">{t('settings.general.layoutSublabel')}</div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {([
-              { id: 'default', label: t('settings.general.layoutFamilyLabel'), desc: t('settings.general.layoutFamilyDesc') },
-              { id: 'classic', label: t('settings.general.layoutClassicLabel'), desc: t('settings.general.layoutClassicDesc') },
-              { id: 'compact', label: t('settings.general.layoutCompactLabel'), desc: t('settings.general.layoutCompactDesc') },
-            ] as const).map((preset) => (
+            {(
+              [
+                {
+                  id: 'default',
+                  label: t('settings.general.layoutFamilyLabel'),
+                  desc: t('settings.general.layoutFamilyDesc'),
+                },
+                {
+                  id: 'classic',
+                  label: t('settings.general.layoutClassicLabel'),
+                  desc: t('settings.general.layoutClassicDesc'),
+                },
+                {
+                  id: 'compact',
+                  label: t('settings.general.layoutCompactLabel'),
+                  desc: t('settings.general.layoutCompactDesc'),
+                },
+              ] as const
+            ).map((preset) => (
               <button
                 key={preset.id}
                 type="button"
@@ -515,12 +533,14 @@ export function SettingsView({
                 style={{
                   padding: '10px 14px',
                   borderRadius: 10,
-                  border: settings.dashboardLayout === preset.id
-                    ? '2px solid var(--accent)'
-                    : '1px solid var(--border)',
-                  background: settings.dashboardLayout === preset.id
-                    ? 'var(--bg-today)'
-                    : 'var(--bg-surface)',
+                  border:
+                    settings.dashboardLayout === preset.id
+                      ? '2px solid var(--accent)'
+                      : '1px solid var(--border)',
+                  background:
+                    settings.dashboardLayout === preset.id
+                      ? 'var(--bg-today)'
+                      : 'var(--bg-surface)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   minWidth: 100,
@@ -557,7 +577,10 @@ export function SettingsView({
                 key={entry.id}
                 type="button"
                 className={`settings-theme-card ${isActive ? 'settings-theme-card--active' : ''}`}
-                onClick={() => { onUpdateSettings({ themeId: entry.id }); applyTheme(entry.id); }}
+                onClick={() => {
+                  onUpdateSettings({ themeId: entry.id });
+                  applyTheme(entry.id);
+                }}
               >
                 <div className="settings-theme-preview">
                   {entry.colors.map((color, i) => (
@@ -584,7 +607,9 @@ export function SettingsView({
         <div className="settings-row">
           <div>
             <div className="settings-row-label">{t('settings.appearance.autoDarkModeLabel')}</div>
-            <div className="settings-row-sublabel">{t('settings.appearance.autoDarkModeSublabel')}</div>
+            <div className="settings-row-sublabel">
+              {t('settings.appearance.autoDarkModeSublabel')}
+            </div>
           </div>
           <Toggle
             checked={settings.autoDarkMode}
@@ -594,7 +619,9 @@ export function SettingsView({
         {settings.autoDarkMode && (
           <>
             <div className="settings-row">
-              <div className="settings-row-label">{t('settings.appearance.darkModeStartLabel')}</div>
+              <div className="settings-row-label">
+                {t('settings.appearance.darkModeStartLabel')}
+              </div>
               <input
                 type="time"
                 className="settings-time-input"
@@ -648,8 +675,12 @@ export function SettingsView({
       <div className="settings-group">
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">{t('settings.appearance.advancedDashboardLabel')}</div>
-            <div className="settings-row-sublabel">{t('settings.appearance.advancedDashboardSublabel')}</div>
+            <div className="settings-row-label">
+              {t('settings.appearance.advancedDashboardLabel')}
+            </div>
+            <div className="settings-row-sublabel">
+              {t('settings.appearance.advancedDashboardSublabel')}
+            </div>
           </div>
           <Toggle
             checked={settings.advancedDashboard}
@@ -669,9 +700,7 @@ export function SettingsView({
           <h2 className="settings-section-title">
             {routinesFor.avatar} {routinesFor.name} {t('settings.family.routinesTitleSuffix')}
           </h2>
-          <p className="settings-section-desc">
-            {t('settings.family.routinesDesc')}
-          </p>
+          <p className="settings-section-desc">{t('settings.family.routinesDesc')}</p>
           <div className="settings-group">
             <div style={{ padding: '12px 20px 4px' }}>
               <button
@@ -690,16 +719,15 @@ export function SettingsView({
               <>
                 <div className="settings-fm-list">
                   {memberRoutines.length === 0 && (
-                    <div className="settings-fm-empty">
-                      {t('settings.family.routinesEmpty')}
-                    </div>
+                    <div className="settings-fm-empty">{t('settings.family.routinesEmpty')}</div>
                   )}
                   {memberRoutines.map((routine) => (
                     <div key={routine.id} className="settings-fm-card">
                       <div className="settings-fm-info">
                         <div className="settings-fm-name">{routine.name}</div>
                         <div className="settings-fm-role">
-                          {routine.time_of_day} · {t(
+                          {routine.time_of_day} ·{' '}
+                          {t(
                             routine.tasks.length === 1
                               ? 'settings.family.routineTaskCountSingular'
                               : 'settings.family.routineTaskCountPlural',
@@ -740,7 +768,9 @@ export function SettingsView({
                           aria-label={t('settings.family.deleteRoutine', { name: routine.name })}
                         >
                           {confirmDeleteRoutine === routine.id ? (
-                            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#ef4444' }}>{t('common.sure')}</span>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#ef4444' }}>
+                              {t('common.sure')}
+                            </span>
                           ) : (
                             <Trash2 size={16} />
                           )}
@@ -792,8 +822,18 @@ export function SettingsView({
                   />
                 </div>
                 <div className="settings-row" style={{ alignItems: 'flex-start' }}>
-                  <div className="settings-row-label" style={{ paddingTop: 4 }}>{t('settings.family.tasksLabel')}</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, maxWidth: 340 }}>
+                  <div className="settings-row-label" style={{ paddingTop: 4 }}>
+                    {t('settings.family.tasksLabel')}
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 6,
+                      flex: 1,
+                      maxWidth: 340,
+                    }}
+                  >
                     {routineForm.tasks.map((task, i) => (
                       <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         <input
@@ -862,7 +902,9 @@ export function SettingsView({
                       className="settings-btn"
                       style={{ alignSelf: 'flex-start' }}
                       onClick={() =>
-                        setRoutineForm((f) => f && { ...f, tasks: [...f.tasks, { id: null, name: '' }] })
+                        setRoutineForm(
+                          (f) => f && { ...f, tasks: [...f.tasks, { id: null, name: '' }] },
+                        )
                       }
                     >
                       {t('settings.family.addTask')}
@@ -870,10 +912,18 @@ export function SettingsView({
                   </div>
                 </div>
                 <div style={{ padding: '12px 20px 16px', display: 'flex', gap: 8 }}>
-                  <button type="button" className="settings-btn settings-btn--primary" onClick={handleSaveRoutine}>
+                  <button
+                    type="button"
+                    className="settings-btn settings-btn--primary"
+                    onClick={handleSaveRoutine}
+                  >
                     {t('settings.family.saveRoutine')}
                   </button>
-                  <button type="button" className="settings-btn" onClick={() => setRoutineForm(null)}>
+                  <button
+                    type="button"
+                    className="settings-btn"
+                    onClick={() => setRoutineForm(null)}
+                  >
                     {t('common.cancel')}
                   </button>
                 </div>
@@ -885,267 +935,307 @@ export function SettingsView({
     }
 
     return (
-    <>
-      <h2 className="settings-section-title">{t('settings.family.title')}</h2>
-      <p className="settings-section-desc">{t('settings.family.desc')}</p>
+      <>
+        <h2 className="settings-section-title">{t('settings.family.title')}</h2>
+        <p className="settings-section-desc">{t('settings.family.desc')}</p>
 
-      {memberFormMode === 'list' ? (
-        <div className="settings-group">
-          <div className="settings-fm-list">
-            {members.length === 0 && (
-              <div className="settings-fm-empty">
-                {t('settings.family.empty')}
-              </div>
-            )}
-            {members.map((member) => (
-              <div key={member.id} className="settings-fm-card">
-                <div
-                  className="settings-fm-avatar"
-                  style={{
-                    backgroundColor: member.color + '22',
-                    border: `2px solid ${member.color}`,
-                  }}
-                >
-                  {member.avatar}
-                </div>
-                <div className="settings-fm-info">
-                  <div className="settings-fm-name">{member.name}</div>
-                  <div className="settings-fm-role">{member.role === 'parent' ? t('settings.family.parent') : t('settings.family.child')}</div>
-                </div>
-                <div className="settings-fm-actions">
-                  <button
-                    type="button"
-                    className="settings-fm-btn"
-                    onClick={() => setRoutinesFor(member)}
-                    aria-label={t('settings.family.routinesFor', { name: member.name })}
+        {memberFormMode === 'list' ? (
+          <div className="settings-group">
+            <div className="settings-fm-list">
+              {members.length === 0 && (
+                <div className="settings-fm-empty">{t('settings.family.empty')}</div>
+              )}
+              {members.map((member) => (
+                <div key={member.id} className="settings-fm-card">
+                  <div
+                    className="settings-fm-avatar"
+                    style={{
+                      backgroundColor: member.color + '22',
+                      border: `2px solid ${member.color}`,
+                    }}
                   >
-                    <ListChecks size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className="settings-fm-btn"
-                    onClick={() => handleStartEdit(member)}
-                    aria-label={t('settings.family.editMember', { name: member.name })}
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className={`settings-fm-btn settings-fm-btn--danger`}
-                    onClick={() => handleDeleteMember(member.id)}
-                    aria-label={t('settings.family.deleteMember', { name: member.name })}
-                  >
-                    {confirmDelete === member.id ? (
-                      <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#ef4444' }}>
-                        {t('common.sure')}
-                      </span>
-                    ) : (
-                      <Trash2 size={16} />
-                    )}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ padding: '8px 20px 16px' }}>
-            <button
-              type="button"
-              className="settings-btn settings-btn--primary"
-              onClick={handleStartAdd}
-            >
-              {t('settings.family.addMember')}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="settings-group">
-          <div style={{ padding: '12px 20px 4px' }}>
-            <button
-              type="button"
-              className="settings-btn"
-              onClick={handleCancelMemberForm}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 12 }}
-            >
-              <ChevronLeft size={16} /> {t('common.back')}
-            </button>
-          </div>
-          <div className="settings-row">
-            <div className="settings-row-label">{t('settings.family.nameLabel')}</div>
-            <input
-              type="text"
-              className="settings-input"
-              value={memberForm.name}
-              onChange={(e) => setMemberForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder={t('settings.family.namePlaceholder')}
-              autoFocus
-            />
-          </div>
-          <div className="settings-row">
-            <div className="settings-row-label">{t('settings.family.roleLabel')}</div>
-            <Segment
-              value={memberForm.role}
-              options={[
-                { value: 'parent', label: t('settings.family.parent') },
-                { value: 'child', label: t('settings.family.child') },
-              ]}
-              onChange={(v) => setMemberForm((f) => ({ ...f, role: v }))}
-            />
-          </div>
-          <div className="settings-row" style={{ alignItems: 'flex-start' }}>
-            <div className="settings-row-label" style={{ paddingTop: 4 }}>{t('settings.family.avatarLabel')}</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxWidth: 300 }}>
-              {AVATAR_CATEGORIES.flatMap((cat) => cat.emojis).map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 8,
-                    border: memberForm.avatar === emoji ? '2px solid var(--accent)' : '1px solid var(--border)',
-                    background: memberForm.avatar === emoji ? 'var(--bg-today)' : 'none',
-                    fontSize: '1.2rem',
-                    cursor: 'pointer',
-                    transition: 'all 150ms ease',
-                  }}
-                  onClick={() => setMemberForm((f) => ({ ...f, avatar: emoji }))}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="settings-row" style={{ alignItems: 'flex-start' }}>
-            <div className="settings-row-label" style={{ paddingTop: 4 }}>{t('settings.family.colorLabel')}</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {MEMBER_COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  className={`settings-color-circle ${memberForm.color === color ? 'settings-color-circle--selected' : ''}`}
-                  style={{ backgroundColor: color }}
-                  onClick={() => setMemberForm((f) => ({ ...f, color }))}
-                  aria-label={t('settings.family.selectColor', { color })}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="settings-row">
-            <div>
-              <div className="settings-row-label">{t('settings.family.pinLabel')}</div>
-              <div className="settings-row-sublabel">{t('settings.family.pinSublabel')}</div>
-            </div>
-            <input
-              type="password"
-              className="settings-input"
-              style={{ width: 120 }}
-              value={memberForm.pin}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                setMemberForm((f) => ({ ...f, pin: val }));
-              }}
-              placeholder="****"
-              inputMode="numeric"
-              maxLength={6}
-            />
-          </div>
-          <div className="settings-row">
-            <div>
-              <div className="settings-row-label">{t('settings.family.calendarLabel')}</div>
-              <div className="settings-row-sublabel">{t('settings.family.calendarSublabel')}</div>
-            </div>
-            <select
-              className="settings-select"
-              value={memberForm.calendar_entity}
-              onChange={(e) => setMemberForm((f) => ({ ...f, calendar_entity: e.target.value }))}
-            >
-              <option value="">{t('common.none')}</option>
-              {calendars.map((cal) => (
-                <option key={cal.id} value={cal.id}>
-                  {cal.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-            <div>
-              <div className="settings-row-label">{t('settings.family.additionalCalendarsLabel')}</div>
-              <div className="settings-row-sublabel">
-                {t('settings.family.additionalCalendarsSublabel')}
-              </div>
-            </div>
-            {memberForm.additional_calendar_entities.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {memberForm.additional_calendar_entities.map((entityId) => {
-                  const cal = calendars.find((c) => c.id === entityId);
-                  return (
-                    <div
-                      key={entityId}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}
-                    >
-                      <span className="settings-row-sublabel">{cal?.name ?? entityId}</span>
-                      <button
-                        type="button"
-                        className="settings-btn"
-                        onClick={() =>
-                          setMemberForm((f) => ({
-                            ...f,
-                            additional_calendar_entities: f.additional_calendar_entities.filter(
-                              (id) => id !== entityId,
-                            ),
-                          }))
-                        }
-                      >
-                        {t('common.remove')}
-                      </button>
+                    {member.avatar}
+                  </div>
+                  <div className="settings-fm-info">
+                    <div className="settings-fm-name">{member.name}</div>
+                    <div className="settings-fm-role">
+                      {member.role === 'parent'
+                        ? t('settings.family.parent')
+                        : t('settings.family.child')}
                     </div>
-                  );
-                })}
+                  </div>
+                  <div className="settings-fm-actions">
+                    <button
+                      type="button"
+                      className="settings-fm-btn"
+                      onClick={() => setRoutinesFor(member)}
+                      aria-label={t('settings.family.routinesFor', { name: member.name })}
+                    >
+                      <ListChecks size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className="settings-fm-btn"
+                      onClick={() => handleStartEdit(member)}
+                      aria-label={t('settings.family.editMember', { name: member.name })}
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className={`settings-fm-btn settings-fm-btn--danger`}
+                      onClick={() => handleDeleteMember(member.id)}
+                      aria-label={t('settings.family.deleteMember', { name: member.name })}
+                    >
+                      {confirmDelete === member.id ? (
+                        <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#ef4444' }}>
+                          {t('common.sure')}
+                        </span>
+                      ) : (
+                        <Trash2 size={16} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '8px 20px 16px' }}>
+              <button
+                type="button"
+                className="settings-btn settings-btn--primary"
+                onClick={handleStartAdd}
+              >
+                {t('settings.family.addMember')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="settings-group">
+            <div style={{ padding: '12px 20px 4px' }}>
+              <button
+                type="button"
+                className="settings-btn"
+                onClick={handleCancelMemberForm}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 12 }}
+              >
+                <ChevronLeft size={16} /> {t('common.back')}
+              </button>
+            </div>
+            <div className="settings-row">
+              <div className="settings-row-label">{t('settings.family.nameLabel')}</div>
+              <input
+                type="text"
+                className="settings-input"
+                value={memberForm.name}
+                onChange={(e) => setMemberForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder={t('settings.family.namePlaceholder')}
+                autoFocus
+              />
+            </div>
+            <div className="settings-row">
+              <div className="settings-row-label">{t('settings.family.roleLabel')}</div>
+              <Segment
+                value={memberForm.role}
+                options={[
+                  { value: 'parent', label: t('settings.family.parent') },
+                  { value: 'child', label: t('settings.family.child') },
+                ]}
+                onChange={(v) => setMemberForm((f) => ({ ...f, role: v }))}
+              />
+            </div>
+            <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+              <div className="settings-row-label" style={{ paddingTop: 4 }}>
+                {t('settings.family.avatarLabel')}
               </div>
-            )}
-            <select
-              className="settings-select"
-              value=""
-              onChange={(e) => {
-                const id = e.target.value;
-                if (!id) return;
-                setMemberForm((f) =>
-                  f.additional_calendar_entities.includes(id)
-                    ? f
-                    : { ...f, additional_calendar_entities: [...f.additional_calendar_entities, id] },
-                );
-              }}
-            >
-              <option value="">{t('settings.family.addAnotherCalendar')}</option>
-              {calendars
-                .filter(
-                  (cal) =>
-                    cal.id !== memberForm.calendar_entity &&
-                    !memberForm.additional_calendar_entities.includes(cal.id),
-                )
-                .map((cal) => (
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                  maxWidth: 300,
+                  maxHeight: 220,
+                  overflowY: 'auto',
+                }}
+              >
+                {AVATAR_CATEGORIES.flatMap((cat) => cat.emojis).map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 8,
+                      border:
+                        memberForm.avatar === emoji
+                          ? '2px solid var(--accent)'
+                          : '1px solid var(--border)',
+                      background: memberForm.avatar === emoji ? 'var(--bg-today)' : 'none',
+                      fontSize: '1.2rem',
+                      cursor: 'pointer',
+                      transition: 'all 150ms ease',
+                    }}
+                    onClick={() => setMemberForm((f) => ({ ...f, avatar: emoji }))}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+              <div className="settings-row-label" style={{ paddingTop: 4 }}>
+                {t('settings.family.colorLabel')}
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {MEMBER_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    className={`settings-color-circle ${memberForm.color === color ? 'settings-color-circle--selected' : ''}`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setMemberForm((f) => ({ ...f, color }))}
+                    aria-label={t('settings.family.selectColor', { color })}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">{t('settings.family.pinLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.family.pinSublabel')}</div>
+              </div>
+              <input
+                type="password"
+                className="settings-input"
+                style={{ width: 120 }}
+                value={memberForm.pin}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setMemberForm((f) => ({ ...f, pin: val }));
+                }}
+                placeholder="****"
+                inputMode="numeric"
+                maxLength={6}
+              />
+            </div>
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">{t('settings.family.calendarLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.family.calendarSublabel')}</div>
+              </div>
+              <select
+                className="settings-select"
+                value={memberForm.calendar_entity}
+                onChange={(e) => setMemberForm((f) => ({ ...f, calendar_entity: e.target.value }))}
+              >
+                <option value="">{t('common.none')}</option>
+                {calendars.map((cal) => (
                   <option key={cal.id} value={cal.id}>
                     {cal.name}
                   </option>
                 ))}
-            </select>
-          </div>
-          <div style={{ padding: '12px 20px 16px', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button type="button" className="settings-btn" onClick={handleCancelMemberForm}>
-              {t('common.cancel')}
-            </button>
-            <button
-              type="button"
-              className="settings-btn settings-btn--primary"
-              onClick={handleSaveMember}
-              disabled={!memberForm.name.trim()}
+              </select>
+            </div>
+            <div
+              className="settings-row"
+              style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}
             >
-              {memberFormMode === 'edit' ? t('settings.family.saveChanges') : t('settings.family.addMemberBtn')}
-            </button>
+              <div>
+                <div className="settings-row-label">
+                  {t('settings.family.additionalCalendarsLabel')}
+                </div>
+                <div className="settings-row-sublabel">
+                  {t('settings.family.additionalCalendarsSublabel')}
+                </div>
+              </div>
+              {memberForm.additional_calendar_entities.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {memberForm.additional_calendar_entities.map((entityId) => {
+                    const cal = calendars.find((c) => c.id === entityId);
+                    return (
+                      <div
+                        key={entityId}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 8,
+                        }}
+                      >
+                        <span className="settings-row-sublabel">{cal?.name ?? entityId}</span>
+                        <button
+                          type="button"
+                          className="settings-btn"
+                          onClick={() =>
+                            setMemberForm((f) => ({
+                              ...f,
+                              additional_calendar_entities: f.additional_calendar_entities.filter(
+                                (id) => id !== entityId,
+                              ),
+                            }))
+                          }
+                        >
+                          {t('common.remove')}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <select
+                className="settings-select"
+                value=""
+                onChange={(e) => {
+                  const id = e.target.value;
+                  if (!id) return;
+                  setMemberForm((f) =>
+                    f.additional_calendar_entities.includes(id)
+                      ? f
+                      : {
+                          ...f,
+                          additional_calendar_entities: [...f.additional_calendar_entities, id],
+                        },
+                  );
+                }}
+              >
+                <option value="">{t('settings.family.addAnotherCalendar')}</option>
+                {calendars
+                  .filter(
+                    (cal) =>
+                      cal.id !== memberForm.calendar_entity &&
+                      !memberForm.additional_calendar_entities.includes(cal.id),
+                  )
+                  .map((cal) => (
+                    <option key={cal.id} value={cal.id}>
+                      {cal.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div
+              style={{
+                padding: '12px 20px 16px',
+                display: 'flex',
+                gap: 8,
+                justifyContent: 'flex-end',
+              }}
+            >
+              <button type="button" className="settings-btn" onClick={handleCancelMemberForm}>
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                className="settings-btn settings-btn--primary"
+                onClick={handleSaveMember}
+                disabled={!memberForm.name.trim()}
+              >
+                {memberFormMode === 'edit'
+                  ? t('settings.family.saveChanges')
+                  : t('settings.family.addMemberBtn')}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </>
+        )}
+      </>
     );
   };
 
@@ -1232,7 +1322,10 @@ export function SettingsView({
                           className={`settings-color-circle ${customColor === preset ? 'settings-color-circle--selected' : ''}`}
                           style={{ backgroundColor: preset }}
                           onClick={() => setColor(preset)}
-                          aria-label={t('settings.calendar.setColorTo', { name: cal.name, color: preset })}
+                          aria-label={t('settings.calendar.setColorTo', {
+                            name: cal.name,
+                            color: preset,
+                          })}
                         />
                       ))}
                     </div>
@@ -1242,7 +1335,9 @@ export function SettingsView({
                           type="color"
                           value={customColor || resolvedColor}
                           onChange={(e) => setColor(e.target.value)}
-                          aria-label={t('settings.calendar.chooseCustomColorFor', { name: cal.name })}
+                          aria-label={t('settings.calendar.chooseCustomColorFor', {
+                            name: cal.name,
+                          })}
                         />
                         <span>{t('common.custom')}</span>
                       </label>
@@ -1280,7 +1375,9 @@ export function SettingsView({
           </select>
         </div>
         <div className="settings-row">
-          <div className="settings-row-label">{t('settings.calendar.defaultEventDurationLabel')}</div>
+          <div className="settings-row-label">
+            {t('settings.calendar.defaultEventDurationLabel')}
+          </div>
           <Segment
             value={String(settings.defaultEventDuration)}
             options={[
@@ -1301,7 +1398,9 @@ export function SettingsView({
               { value: '15', label: t('settings.calendar.min15') },
               { value: '30', label: t('settings.calendar.min30') },
             ]}
-            onChange={(v) => onUpdateSettings({ notificationMinutes: Number(v) as 5 | 10 | 15 | 30 })}
+            onChange={(v) =>
+              onUpdateSettings({ notificationMinutes: Number(v) as 5 | 10 | 15 | 30 })
+            }
           />
         </div>
       </div>
@@ -1322,17 +1421,26 @@ export function SettingsView({
               className={`settings-status-dot ${connected ? 'settings-status-dot--connected' : 'settings-status-dot--disconnected'}`}
             />
             <div>
-              <div className="settings-row-label">{t('settings.integrations.connectionStatusLabel')}</div>
+              <div className="settings-row-label">
+                {t('settings.integrations.connectionStatusLabel')}
+              </div>
               <div className="settings-row-sublabel">
-                {connected ? t('settings.integrations.connected') : t('settings.integrations.disconnected')} &middot; {haUrl}
+                {connected
+                  ? t('settings.integrations.connected')
+                  : t('settings.integrations.disconnected')}{' '}
+                &middot; {haUrl}
               </div>
             </div>
           </div>
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">{t('settings.integrations.weatherEntityLabel')}</div>
-            <div className="settings-row-sublabel">{t('settings.integrations.weatherEntitySublabel')}</div>
+            <div className="settings-row-label">
+              {t('settings.integrations.weatherEntityLabel')}
+            </div>
+            <div className="settings-row-sublabel">
+              {t('settings.integrations.weatherEntitySublabel')}
+            </div>
           </div>
           <input
             type="text"
@@ -1353,7 +1461,9 @@ export function SettingsView({
             />
             <div>
               <div className="settings-row-label">{t('settings.integrations.grocyLabel')}</div>
-              <div className="settings-row-sublabel">{t('settings.integrations.grocySublabel')}</div>
+              <div className="settings-row-sublabel">
+                {t('settings.integrations.grocySublabel')}
+              </div>
             </div>
           </div>
           <Toggle
@@ -1372,7 +1482,9 @@ export function SettingsView({
             />
             <div>
               <div className="settings-row-label">{t('settings.integrations.anylistLabel')}</div>
-              <div className="settings-row-sublabel">{t('settings.integrations.anylistSublabel')}</div>
+              <div className="settings-row-sublabel">
+                {t('settings.integrations.anylistSublabel')}
+              </div>
             </div>
           </div>
           <Toggle
@@ -1384,7 +1496,10 @@ export function SettingsView({
 
       <div className="settings-group">
         <div className="settings-group-title">{t('settings.integrations.groceryTitle')}</div>
-        <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12 }}>
+        <div
+          className="settings-row"
+          style={{ flexDirection: 'column', alignItems: 'stretch', gap: 12 }}
+        >
           <div>
             <div className="settings-row-label">{t('settings.integrations.groceryListsLabel')}</div>
             <div className="settings-row-sublabel">
@@ -1397,7 +1512,7 @@ export function SettingsView({
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {todoLists.map(list => {
+              {todoLists.map((list) => {
                 const isChecked = settings.groceryListIds.includes(list.id);
                 return (
                   <label
@@ -1420,7 +1535,7 @@ export function SettingsView({
                       onChange={(e) => {
                         const newIds = e.target.checked
                           ? [...settings.groceryListIds, list.id]
-                          : settings.groceryListIds.filter(id => id !== list.id);
+                          : settings.groceryListIds.filter((id) => id !== list.id);
                         onUpdateSettings({ groceryListIds: newIds });
                       }}
                       style={{ width: 16, height: 16 }}
@@ -1436,8 +1551,12 @@ export function SettingsView({
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">{t('settings.integrations.defaultGroceryListLabel')}</div>
-            <div className="settings-row-sublabel">{t('settings.integrations.defaultGroceryListSublabel')}</div>
+            <div className="settings-row-label">
+              {t('settings.integrations.defaultGroceryListLabel')}
+            </div>
+            <div className="settings-row-sublabel">
+              {t('settings.integrations.defaultGroceryListSublabel')}
+            </div>
           </div>
           <select
             className="settings-input"
@@ -1445,15 +1564,21 @@ export function SettingsView({
             onChange={(e) => onUpdateSettings({ defaultGroceryList: e.target.value })}
           >
             <option value="">{t('settings.integrations.autoFirstAvailable')}</option>
-            {todoLists.map(list => (
-              <option key={list.id} value={list.id}>{list.name}</option>
+            {todoLists.map((list) => (
+              <option key={list.id} value={list.id}>
+                {list.name}
+              </option>
             ))}
           </select>
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">{t('settings.integrations.shoppingEntityLabel')}</div>
-            <div className="settings-row-sublabel">{t('settings.integrations.shoppingEntitySublabel')}</div>
+            <div className="settings-row-label">
+              {t('settings.integrations.shoppingEntityLabel')}
+            </div>
+            <div className="settings-row-sublabel">
+              {t('settings.integrations.shoppingEntitySublabel')}
+            </div>
           </div>
           <select
             className="settings-input"
@@ -1461,8 +1586,10 @@ export function SettingsView({
             onChange={(e) => onUpdateSettings({ shoppingEntity: e.target.value })}
           >
             <option value="">{t('common.none')}</option>
-            {todoLists.map(list => (
-              <option key={list.id} value={list.id}>{list.name}</option>
+            {todoLists.map((list) => (
+              <option key={list.id} value={list.id}>
+                {list.name}
+              </option>
             ))}
           </select>
         </div>
@@ -1472,8 +1599,12 @@ export function SettingsView({
         <div className="settings-group-title">{t('settings.integrations.musicAssistantTitle')}</div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">{t('settings.integrations.defaultPlayerLabel')}</div>
-            <div className="settings-row-sublabel">{t('settings.integrations.defaultPlayerSublabel')}</div>
+            <div className="settings-row-label">
+              {t('settings.integrations.defaultPlayerLabel')}
+            </div>
+            <div className="settings-row-sublabel">
+              {t('settings.integrations.defaultPlayerSublabel')}
+            </div>
           </div>
           <input
             type="text"
@@ -1489,8 +1620,12 @@ export function SettingsView({
         <div className="settings-group-title">{t('settings.integrations.photosTitle')}</div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">{t('settings.integrations.sourceDirectoryLabel')}</div>
-            <div className="settings-row-sublabel">{t('settings.integrations.sourceDirectorySublabel')}</div>
+            <div className="settings-row-label">
+              {t('settings.integrations.sourceDirectoryLabel')}
+            </div>
+            <div className="settings-row-sublabel">
+              {t('settings.integrations.sourceDirectorySublabel')}
+            </div>
           </div>
           <input
             type="text"
@@ -1502,8 +1637,12 @@ export function SettingsView({
         </div>
         <div className="settings-row">
           <div>
-            <div className="settings-row-label">{t('settings.integrations.slideshowIntervalLabel')}</div>
-            <div className="settings-row-sublabel">{t('settings.integrations.slideshowIntervalSublabel')}</div>
+            <div className="settings-row-label">
+              {t('settings.integrations.slideshowIntervalLabel')}
+            </div>
+            <div className="settings-row-sublabel">
+              {t('settings.integrations.slideshowIntervalSublabel')}
+            </div>
           </div>
           <Slider
             value={settings.photoInterval}
@@ -1515,7 +1654,9 @@ export function SettingsView({
           />
         </div>
         <div className="settings-row">
-          <div className="settings-row-label">{t('settings.integrations.transitionStyleLabel')}</div>
+          <div className="settings-row-label">
+            {t('settings.integrations.transitionStyleLabel')}
+          </div>
           <Segment
             value={settings.photoTransition}
             options={[
@@ -1551,7 +1692,9 @@ export function SettingsView({
             <div className="settings-row">
               <div>
                 <div className="settings-row-label">{t('settings.display.dimAfterLabel')}</div>
-                <div className="settings-row-sublabel">{t('settings.display.dimAfterSublabel')}</div>
+                <div className="settings-row-sublabel">
+                  {t('settings.display.dimAfterSublabel')}
+                </div>
               </div>
               <Slider
                 value={settings.dimTimeout}
@@ -1563,8 +1706,12 @@ export function SettingsView({
             </div>
             <div className="settings-row">
               <div>
-                <div className="settings-row-label">{t('settings.display.screenSaverAfterLabel')}</div>
-                <div className="settings-row-sublabel">{t('settings.display.screenSaverAfterSublabel')}</div>
+                <div className="settings-row-label">
+                  {t('settings.display.screenSaverAfterLabel')}
+                </div>
+                <div className="settings-row-sublabel">
+                  {t('settings.display.screenSaverAfterSublabel')}
+                </div>
               </div>
               <Slider
                 value={settings.screenSaverTimeout}
@@ -1612,15 +1759,17 @@ export function SettingsView({
         </div>
       </div>
 
-      <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.display.kidDisplayTitle')}</h2>
-      <p className="settings-section-desc">
-        {t('settings.display.kidDisplayDesc')}
-      </p>
+      <h2 className="settings-section-title" style={{ marginTop: 32 }}>
+        {t('settings.display.kidDisplayTitle')}
+      </h2>
+      <p className="settings-section-desc">{t('settings.display.kidDisplayDesc')}</p>
       <div className="settings-group">
         <div className="settings-row">
           <div>
             <div className="settings-row-label">{t('settings.display.familyMemberLabel')}</div>
-            <div className="settings-row-sublabel">{t('settings.display.familyMemberSublabel')}</div>
+            <div className="settings-row-sublabel">
+              {t('settings.display.familyMemberSublabel')}
+            </div>
           </div>
           <select
             className="settings-select"
@@ -1713,7 +1862,9 @@ export function SettingsView({
             <div className="settings-row">
               <div>
                 <div className="settings-row-label">{t('settings.chores.dailyResetTimeLabel')}</div>
-                <div className="settings-row-sublabel">{t('settings.chores.dailyResetTimeSublabel')}</div>
+                <div className="settings-row-sublabel">
+                  {t('settings.chores.dailyResetTimeSublabel')}
+                </div>
               </div>
               <input
                 type="time"
@@ -1725,7 +1876,9 @@ export function SettingsView({
             <div className="settings-row">
               <div>
                 <div className="settings-row-label">{t('settings.chores.streakDurationLabel')}</div>
-                <div className="settings-row-sublabel">{t('settings.chores.streakDurationSublabel')}</div>
+                <div className="settings-row-sublabel">
+                  {t('settings.chores.streakDurationSublabel')}
+                </div>
               </div>
               <Slider
                 value={settings.streakDays}
@@ -1787,7 +1940,9 @@ export function SettingsView({
               className={`settings-status-dot ${connected ? 'settings-status-dot--connected' : 'settings-status-dot--disconnected'}`}
               style={{ display: 'inline-block', marginRight: 6, verticalAlign: 'middle' }}
             />
-            {connected ? t('settings.integrations.connected') : t('settings.integrations.disconnected')}
+            {connected
+              ? t('settings.integrations.connected')
+              : t('settings.integrations.disconnected')}
           </span>
         </div>
         <div className="settings-about-row">

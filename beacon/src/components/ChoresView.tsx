@@ -8,7 +8,29 @@ import { useFamily } from '../hooks/useFamily';
 import { useSettings } from '../hooks/useSettings';
 import { useTranslation } from '../i18n';
 
-const CHORE_ICONS = ['🧹', '🍽️', '🐕', '🛏️', '📚', '🗑️', '👕', '🧺', '🪥', '🚿', '🧼', '💪'];
+// Standard Unicode emoji that render reliably across iOS/Android/desktop.
+const CHORE_ICONS = [
+  // Cleaning
+  '🧹', '🧽', '🧼', '🧴', '🧻', '🪣', '🚿', '🛁', '🪥', '🚽', '🗑️', '♻️', '🚮',
+  // Kitchen & food
+  '🍽️', '🍴', '🥄', '🍳', '🥘', '🍲', '🧊', '☕', '🥛', '🍎', '🥕', '🥦', '🍞', '🧃',
+  // Laundry & clothes
+  '👕', '👖', '🧦', '👟', '🧥', '🧺', '🪡',
+  // Rooms & furniture
+  '🛏️', '🛋️', '🧸', '🪑',
+  // Pets
+  '🐕', '🐈', '🐠', '🐹', '🦜', '🐾',
+  // Garden & plants
+  '🌱', '🪴', '🌳', '🌷',
+  // School & work
+  '📚', '📖', '✏️', '📝', '🎒', '🧮', '💻',
+  // Errands & transport
+  '🚗', '🚲', '🛒', '🧾', '📦',
+  // Tools & repairs
+  '🔧', '🔨', '🪛', '🧰', '🧯',
+  // Everyday
+  '💪', '⏰', '✅', '🎵',
+];
 
 const EMPTY_CHORE_FORM = {
   name: '',
@@ -393,7 +415,7 @@ export function ChoresView() {
               {/* Icon picker */}
               <div className="form-field">
                 <label className="form-label">{t('chores.icon')}</label>
-                <div className="fm-avatar-grid">
+                <div className="fm-avatar-grid" style={{ maxHeight: 240, overflowY: 'auto' }}>
                   {CHORE_ICONS.map((icon) => (
                     <button
                       key={icon}

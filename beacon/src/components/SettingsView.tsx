@@ -993,7 +993,7 @@ export function SettingsView({
           </div>
           <div className="settings-row" style={{ alignItems: 'flex-start' }}>
             <div className="settings-row-label" style={{ paddingTop: 4 }}>{t('settings.family.avatarLabel')}</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxWidth: 300 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxWidth: 300, maxHeight: 220, overflowY: 'auto' }}>
               {AVATAR_CATEGORIES.flatMap((cat) => cat.emojis).map((emoji) => (
                 <button
                   key={emoji}
