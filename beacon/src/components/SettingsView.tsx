@@ -17,6 +17,7 @@ import {
 import { AnyListClient } from '../api/anylist';
 import { GroceryList } from '../types/grocery';
 import { themes } from '../styles/themes';
+import { useChoreOps } from '../hooks/useChoreOps';
 import { FamilyMember, MEMBER_COLORS, AVATAR_CATEGORIES, Routine } from '../types/family';
 import type { BeaconSettings } from '../hooks/useSettings';
 import { getConfig } from '../config';
@@ -174,6 +175,7 @@ interface MemberForm {
   pin: string;
   calendar_entity: string;
   additional_calendar_entities: string[];
+  choreops_user: string;
 }
 
 const EMPTY_FORM: MemberForm = {
@@ -184,6 +186,7 @@ const EMPTY_FORM: MemberForm = {
   pin: '',
   calendar_entity: '',
   additional_calendar_entities: [],
+  choreops_user: '',
 };
 
 // ---------------------------------------------------------------------------
@@ -210,6 +213,8 @@ export function SettingsView({
   const { setTheme: applyTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
   const [editingMember, setEditingMember] = useState<string | null>(null);
+  const { data: choreOpsData } = useChoreOps();
+  const choreOpsUsers = choreOpsData?.users ?? [];
   const [memberForm, setMemberForm] = useState<MemberForm>(EMPTY_FORM);
   const [memberFormMode, setMemberFormMode] = useState<'list' | 'add' | 'edit'>('list');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -282,6 +287,7 @@ export function SettingsView({
       pin: member.pin ?? '',
       calendar_entity: member.calendar_entity ?? '',
       additional_calendar_entities: member.additional_calendar_entities ?? [],
+      choreops_user: member.choreops_user ?? '',
     });
     setEditingMember(member.id);
     setMemberFormMode('edit');
@@ -300,6 +306,7 @@ export function SettingsView({
         memberForm.additional_calendar_entities.length > 0
           ? memberForm.additional_calendar_entities
           : undefined,
+      choreops_user: memberForm.choreops_user || undefined,
     };
     if (memberFormMode === 'edit' && editingMember) {
       onUpdateMember(editingMember, data);
@@ -1099,6 +1106,31 @@ export function SettingsView({
                 ))}
               </div>
             </div>
+            {choreOpsUsers.length > 0 && (
+              <div className="settings-row">
+                <div className="settings-row-label">ChoreOps user</div>
+                <select
+                  value={memberForm.choreops_user}
+                  onChange={(e) => setMemberForm((f) => ({ ...f, choreops_user: e.target.value }))}
+                  style={{
+                    minHeight: 44,
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-page)',
+                    color: 'inherit',
+                    fontSize: '1rem',
+                  }}
+                >
+                  <option value="">Not linked</option>
+                  {choreOpsUsers.map((user) => (
+                    <option key={user.slug} value={user.name}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="settings-row" style={{ alignItems: 'flex-start' }}>
               <div className="settings-row-label" style={{ paddingTop: 4 }}>
                 {t('settings.family.colorLabel')}

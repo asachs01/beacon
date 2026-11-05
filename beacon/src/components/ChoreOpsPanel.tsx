@@ -8,7 +8,7 @@
  */
 import { useFamily } from '../hooks/useFamily';
 import { useChoreOps } from '../hooks/useChoreOps';
-import { matchMemberByName } from '../api/choreops';
+import { resolveMemberForUser } from '../api/choreops';
 import type { ChoreOpsReward, ChoreOpsUser } from '../types/choreops';
 import { STAR_CURRENCY } from '../types/family';
 
@@ -145,7 +145,7 @@ export function ChoreOpsPanel() {
           <PointsChip
             key={user.slug}
             user={user}
-            avatar={matchMemberByName(user.name, members)?.avatar ?? null}
+            avatar={resolveMemberForUser(user.name, members)?.avatar ?? null}
           />
         ))}
       </div>

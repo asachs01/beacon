@@ -206,3 +206,22 @@ export function matchMemberByName<T extends { name: string }>(
   const target = userName.trim().toLowerCase();
   return members.find((member) => member.name.trim().toLowerCase() === target) ?? null;
 }
+
+/**
+ * Resolve the family member for a ChoreOps user.
+ *
+ * An explicit `choreops_user` link always wins; a name match is the fallback so
+ * associations work before anyone touches the settings UI.
+ */
+export function resolveMemberForUser<T extends { name: string; choreops_user?: string }>(
+  userName: string | null,
+  members: T[],
+): T | null {
+  if (!userName) return null;
+  const target = userName.trim().toLowerCase();
+
+  return (
+    members.find((member) => member.choreops_user?.trim().toLowerCase() === target) ??
+    matchMemberByName(userName, members)
+  );
+}
