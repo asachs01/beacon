@@ -26,6 +26,33 @@ describe('dashboard "Family" layout renders members as columns, not stacked rows
     return match[1];
   }
 
+  /**
+   * Pull a media block out by brace matching.
+   *
+   * An earlier version of this test anchored the block with `\n}\n\n` plus the
+   * comment that follows it, which only ever matched a LF checkout: with
+   * core.autocrlf the same file arrives with CRLF and the whole suite failed on
+   * Windows while passing in CI. Brace matching is agnostic to that (and to any
+   * comment being moved around it).
+   */
+  function mediaBlockFor(query: string): string | null {
+    const start = css.indexOf(query);
+    if (start === -1) return null;
+
+    const open = css.indexOf('{', start);
+    if (open === -1) return null;
+
+    let depth = 0;
+    for (let i = open; i < css.length; i += 1) {
+      if (css[i] === '{') depth += 1;
+      if (css[i] === '}') {
+        depth -= 1;
+        if (depth === 0) return css.slice(open + 1, i);
+      }
+    }
+    return null;
+  }
+
   it('.dash-family-grid uses a multi-column grid keyed off --member-count', () => {
     const body = ruleBodyFor('.dash-family-grid');
     expect(body).toMatch(/display:\s*grid/);
@@ -44,10 +71,9 @@ describe('dashboard "Family" layout renders members as columns, not stacked rows
   });
 
   it('collapses back to a single stacked column below the tablet breakpoint (768px)', () => {
-    const mediaMatch = css.match(/@media \(max-width: 768px\) \{([\s\S]*?)\n\}\n\n\/\* ─── Responsive: Phone/);
-    expect(mediaMatch, 'tablet media query block not found').toBeTruthy();
-    const tabletBlock = mediaMatch![1];
-    const gridOverride = tabletBlock.match(/\.dash-family-grid\s*\{([^}]*)\}/);
+    const tabletBlock = mediaBlockFor('@media (max-width: 768px)');
+    expect(tabletBlock, 'tablet media query block not found').toBeTruthy();
+    const gridOverride = tabletBlock!.match(/\.dash-family-grid\s*\{([^}]*)\}/);
     expect(gridOverride, '.dash-family-grid override not found in tablet breakpoint').toBeTruthy();
     expect(gridOverride![1]).toMatch(/grid-template-columns:\s*1fr/);
   });
