@@ -58,8 +58,16 @@ export interface ChoreOpsState {
   users: ChoreOpsUser[];
   chores: ChoreOpsChore[];
   rewards: ChoreOpsReward[];
+  /** Every person entity in HA, including people without ChoreOps stats. */
+  people: HaPerson[];
   /** Lower-cased user name → points balance, for quick lookups. */
   pointsByUser: Record<string, number>;
   /** True when ChoreOps entities were found at all. */
   available: boolean;
+}
+
+/** A Home Assistant `person.*` entity (may or may not be a ChoreOps user). */
+export interface HaPerson {
+  entityId: string;
+  name: string;
 }

@@ -15,6 +15,7 @@ import type {
   ChoreOpsReward,
   ChoreOpsState,
   ChoreOpsUser,
+  HaPerson,
 } from '../types/choreops';
 
 export const CHOREOPS_PURPOSE = {
@@ -129,6 +130,7 @@ export function normalizeChoreOps(states: ChoreOpsEntityState[]): ChoreOpsState 
   const usersBySlug = new Map<string, ChoreOpsUser>();
   const rewards: ChoreOpsReward[] = [];
   const chores: ChoreOpsChore[] = [];
+  const people: HaPerson[] = [];
   let available = false;
 
   const ensureUser = (slug: string, name: string): ChoreOpsUser => {
@@ -148,6 +150,14 @@ export function normalizeChoreOps(states: ChoreOpsEntityState[]): ChoreOpsState 
   };
 
   for (const entity of states) {
+    // HA persons exist independently of ChoreOps (e.g. parents who do not do
+    // chores) so collect them before the purpose check filters them out.
+    if (entity.entity_id.startsWith('person.')) {
+      const name = str(entity.attributes, 'friendly_name');
+      if (name) people.push({ entityId: entity.entity_id, name });
+      continue;
+    }
+
     const purpose = purposeOf(entity);
     if (!purpose) continue;
 
@@ -194,7 +204,7 @@ export function normalizeChoreOps(states: ChoreOpsEntityState[]): ChoreOpsState 
   const pointsByUser: Record<string, number> = {};
   for (const user of users) pointsByUser[user.name.trim().toLowerCase()] = user.points;
 
-  return { users, chores, rewards, pointsByUser, available };
+  return { users, chores, rewards, people, pointsByUser, available };
 }
 
 /** Match a ChoreOps user to a Beacon family member by name (case-insensitive). */

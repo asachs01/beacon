@@ -214,14 +214,28 @@ export function SettingsView({
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
   const [editingMember, setEditingMember] = useState<string | null>(null);
 
-  /** True when a ChoreOps user is already linked to a different member. */
-  const isLinkedElsewhere = (userName: string): boolean =>
-    members.some(
-      (m) =>
-        m.id !== editingMember && (m.choreops_user ?? '').toLowerCase() === userName.toLowerCase(),
-    );
   const { data: choreOpsData } = useChoreOps();
   const choreOpsUsers = choreOpsData?.users ?? [];
+  const choreOpsNames = new Set(choreOpsUsers.map((u) => u.name.trim().toLowerCase()));
+
+  /** HA people (incl. non-ChoreOps members such as parents) + ChoreOps users. */
+  const peopleOptions: Array<{ name: string; hasChoreOps: boolean }> = [
+    ...choreOpsUsers.map((u) => ({ name: u.name, hasChoreOps: true })),
+    ...(choreOpsData?.people ?? [])
+      .filter((p) => !choreOpsNames.has(p.name.trim().toLowerCase()))
+      .map((p) => ({ name: p.name, hasChoreOps: false })),
+  ];
+
+  /** True when a person is already attached to a different member. */
+  const isLinkedElsewhere = (personName: string): boolean => {
+    const target = personName.trim().toLowerCase();
+    return members.some(
+      (m) =>
+        m.id !== editingMember &&
+        ((m.choreops_user ?? '').trim().toLowerCase() === target ||
+          m.name.trim().toLowerCase() === target),
+    );
+  };
   const [memberForm, setMemberForm] = useState<MemberForm>(EMPTY_FORM);
   const [memberFormMode, setMemberFormMode] = useState<'list' | 'add' | 'edit'>('list');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -1113,16 +1127,16 @@ export function SettingsView({
                 ))}
               </div>
             </div>
-            {choreOpsUsers.length > 0 && (
+            {peopleOptions.length > 0 && (
               <div className="settings-row">
-                <div className="settings-row-label">ChoreOps user</div>
+                <div className="settings-row-label">From Home Assistant</div>
                 <select
                   value={memberForm.choreops_user}
                   onChange={(e) => {
                     const value = e.target.value;
                     setMemberForm((f) => {
-                      // Keep a hand-written name; adopt the ChoreOps name when
-                      // the field is blank or was auto-filled from a previous pick.
+                      // Keep a hand-written name; adopt the HA name when the
+                      // field is blank or was auto-filled from a previous pick.
                       const autoNamed = !f.name.trim() || f.name === f.choreops_user;
                       return {
                         ...f,
@@ -1134,12 +1148,13 @@ export function SettingsView({
                   className="settings-select"
                 >
                   <option value="">Not linked</option>
-                  {choreOpsUsers.map((user) => {
-                    const linked = isLinkedElsewhere(user.name);
+                  {peopleOptions.map((person) => {
+                    const added = isLinkedElsewhere(person.name);
                     return (
-                      <option key={user.slug} value={user.name} disabled={linked}>
-                        {user.name}
-                        {linked ? ' (already added)' : ''}
+                      <option key={person.name} value={person.name} disabled={added}>
+                        {person.name}
+                        {person.hasChoreOps ? ' · ChoreOps' : ''}
+                        {added ? ' (already added)' : ''}
                       </option>
                     );
                   })}
