@@ -213,6 +213,13 @@ export function SettingsView({
   const { setTheme: applyTheme } = useTheme();
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
   const [editingMember, setEditingMember] = useState<string | null>(null);
+
+  /** True when a ChoreOps user is already linked to a different member. */
+  const isLinkedElsewhere = (userName: string): boolean =>
+    members.some(
+      (m) =>
+        m.id !== editingMember && (m.choreops_user ?? '').toLowerCase() === userName.toLowerCase(),
+    );
   const { data: choreOpsData } = useChoreOps();
   const choreOpsUsers = choreOpsData?.users ?? [];
   const [memberForm, setMemberForm] = useState<MemberForm>(EMPTY_FORM);
@@ -1111,7 +1118,19 @@ export function SettingsView({
                 <div className="settings-row-label">ChoreOps user</div>
                 <select
                   value={memberForm.choreops_user}
-                  onChange={(e) => setMemberForm((f) => ({ ...f, choreops_user: e.target.value }))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setMemberForm((f) => {
+                      // Keep a hand-written name; adopt the ChoreOps name when
+                      // the field is blank or was auto-filled from a previous pick.
+                      const autoNamed = !f.name.trim() || f.name === f.choreops_user;
+                      return {
+                        ...f,
+                        choreops_user: value,
+                        name: value && autoNamed ? value : f.name,
+                      };
+                    });
+                  }}
                   style={{
                     minHeight: 44,
                     padding: '8px 12px',
@@ -1123,11 +1142,15 @@ export function SettingsView({
                   }}
                 >
                   <option value="">Not linked</option>
-                  {choreOpsUsers.map((user) => (
-                    <option key={user.slug} value={user.name}>
-                      {user.name}
-                    </option>
-                  ))}
+                  {choreOpsUsers.map((user) => {
+                    const linked = isLinkedElsewhere(user.name);
+                    return (
+                      <option key={user.slug} value={user.name} disabled={linked}>
+                        {user.name}
+                        {linked ? ' (already added)' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             )}
