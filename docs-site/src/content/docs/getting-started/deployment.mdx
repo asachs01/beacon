@@ -1,6 +1,6 @@
 ---
-title: "Deployment"
-description: "Deploying Beacon — HA add-on, Docker standalone, reverse proxy, hardware recommendations, kiosk mode, and performance optimization."
+title: 'Deployment'
+description: 'Deploying Beacon — HA add-on, Docker standalone, reverse proxy, hardware recommendations, kiosk mode, and performance optimization.'
 order: 5
 ---
 
@@ -27,6 +27,7 @@ The simplest deployment. See [Getting Started](/docs/getting-started/installatio
 3. HA's ingress proxy forwards requests from the sidebar panel to port 3000
 
 **Health check**: The container includes a health check that runs every 30 seconds:
+
 ```
 wget -qO /dev/null http://localhost:3000/ || exit 1
 ```
@@ -44,7 +45,8 @@ docker run -d \
   --name beacon \
   --restart unless-stopped \
   -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="YOUR_LONG_LIVED_TOKEN" \
+  -e BEACON_MODE="standalone" \
+  -e HA_TOKEN="YOUR_LONG_LIVED_TOKEN" \
   -e HA_URL="http://192.168.1.100:8123" \
   -e FAMILY_NAME="Sachs" \
   -e THEME="midnight" \
@@ -55,24 +57,25 @@ docker run -d \
 ### Docker Compose
 
 ```yaml
-version: "3.8"
+version: '3.8'
 services:
   beacon:
     image: ghcr.io/asachs01/beacon:latest
     container_name: beacon
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
-      SUPERVISOR_TOKEN: "${HA_TOKEN}"
-      HA_URL: "http://192.168.1.100:8123"
-      FAMILY_NAME: "Sachs"
-      THEME: "midnight"
-      AUTO_DARK_MODE: "true"
-      WEATHER_ENTITY: "weather.home"
-      PHOTO_DIRECTORY: "/media/beacon/photos"
-      PHOTO_INTERVAL: "30"
-      SCREEN_SAVER_TIMEOUT: "5"
+      BEACON_MODE: 'standalone'
+      HA_TOKEN: '${HA_TOKEN}'
+      HA_URL: 'http://192.168.1.100:8123'
+      FAMILY_NAME: 'Sachs'
+      THEME: 'midnight'
+      AUTO_DARK_MODE: 'true'
+      WEATHER_ENTITY: 'weather.home'
+      PHOTO_DIRECTORY: '/media/beacon/photos'
+      PHOTO_INTERVAL: '30'
+      SCREEN_SAVER_TIMEOUT: '5'
 ```
 
 ### Building from source
@@ -82,7 +85,8 @@ git clone https://github.com/asachs01/beacon.git
 cd beacon
 docker build -t beacon .
 docker run -d --name beacon -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="..." \
+  -e BEACON_MODE="standalone" \
+  -e HA_TOKEN="..." \
   -e HA_URL="..." \
   beacon
 ```
@@ -130,8 +134,8 @@ Caddy handles SSL certificates automatically via Let's Encrypt.
 
 ### Important notes
 
-- Beacon connects to Home Assistant's WebSocket API directly from the browser. The browser must be able to reach the HA URL configured in `ha_url`.
-- If you put Beacon behind a reverse proxy but HA is on a different domain/port, you may need to configure CORS on HA or ensure both are accessible from the browser.
+- Beacon routes Home Assistant API and WebSocket requests through its backend proxy. The container must be able to reach the configured `HA_URL`.
+- Because HA requests use the same origin as Beacon, CORS does not need to be enabled on Home Assistant for standalone Docker mode.
 - For best results, keep Beacon and HA on the same network and access Beacon via the reverse proxy.
 
 ---
@@ -140,32 +144,32 @@ Caddy handles SSL certificates automatically via Let's Encrypt.
 
 ### Tablets (wall-mounted)
 
-| Device | Display | Price | Best For |
-|--------|---------|-------|----------|
-| Amazon Fire HD 8 | 8" 1280x800 | $35-50 | Budget setup, small kitchen display |
-| Amazon Fire HD 10 | 10.1" 1920x1200 | $75-100 | Family room, great value |
-| Samsung Galaxy Tab A8 | 10.5" 1920x1200 | $150 | Better build quality, Android apps |
-| iPad (10th gen) | 10.9" 2360x1640 | $300 | Premium display, reliable |
-| Lenovo Tab M10 | 10.1" 1920x1200 | $100-130 | Good alternative to Fire |
+| Device                | Display         | Price    | Best For                            |
+| --------------------- | --------------- | -------- | ----------------------------------- |
+| Amazon Fire HD 8      | 8" 1280x800     | $35-50   | Budget setup, small kitchen display |
+| Amazon Fire HD 10     | 10.1" 1920x1200 | $75-100  | Family room, great value            |
+| Samsung Galaxy Tab A8 | 10.5" 1920x1200 | $150     | Better build quality, Android apps  |
+| iPad (10th gen)       | 10.9" 2360x1640 | $300     | Premium display, reliable           |
+| Lenovo Tab M10        | 10.1" 1920x1200 | $100-130 | Good alternative to Fire            |
 
 ### Mini PCs + Monitor
 
-| Setup | Price | Best For |
-|-------|-------|----------|
-| Raspberry Pi 4 (4GB) + 10" HDMI monitor | $80-120 | DIY setup, larger displays |
-| Raspberry Pi 5 + 15" touchscreen | $150-200 | Living room command center |
-| Intel NUC + repurposed monitor | $100-200 | Desktop-class reliability |
-| Beelink Mini S + any HDMI display | $120-180 | Compact, powerful |
+| Setup                                   | Price    | Best For                   |
+| --------------------------------------- | -------- | -------------------------- |
+| Raspberry Pi 4 (4GB) + 10" HDMI monitor | $80-120  | DIY setup, larger displays |
+| Raspberry Pi 5 + 15" touchscreen        | $150-200 | Living room command center |
+| Intel NUC + repurposed monitor          | $100-200 | Desktop-class reliability  |
+| Beelink Mini S + any HDMI display       | $120-180 | Compact, powerful          |
 
 ### Mounting options
 
-| Mount Type | Price | Notes |
-|------------|-------|-------|
-| 3M Command strips | $5 | Temporary, no damage to walls |
-| Magnetic wall mount | $15 | Easy to detach for charging |
-| VESA mount (for monitors) | $15-30 | Standard TV/monitor mounting |
-| 3D-printed bracket | $5-10 | Custom fit for specific tablets |
-| Recessed wall mount | $50+ | Professional look, flush with wall |
+| Mount Type                | Price  | Notes                              |
+| ------------------------- | ------ | ---------------------------------- |
+| 3M Command strips         | $5     | Temporary, no damage to walls      |
+| Magnetic wall mount       | $15    | Easy to detach for charging        |
+| VESA mount (for monitors) | $15-30 | Standard TV/monitor mounting       |
+| 3D-printed bracket        | $5-10  | Custom fit for specific tablets    |
+| Recessed wall mount       | $50+   | Professional look, flush with wall |
 
 ---
 
@@ -273,19 +277,21 @@ You can run Beacon on multiple displays simultaneously. Each display:
 ### Container does not start
 
 1. Check Docker logs: `docker logs beacon`
-2. Verify the `SUPERVISOR_TOKEN` is valid (not expired)
-3. Verify the `HA_URL` is reachable from the Docker container (try `docker exec beacon wget -qO- http://HA_URL/api/`)
+2. Verify `HA_TOKEN` is a valid, non-expired Home Assistant long-lived access token
+3. Verify `HA_URL` is reachable from the Docker container
 
 ### Beacon loads but shows "Demo Mode"
 
 This means Beacon could not connect to Home Assistant. Check:
-1. The `ha_url` is correct and reachable from the browser
-2. The `ha_token` is valid
-3. The HA instance is running and the WebSocket API is accessible
+
+1. `BEACON_MODE` is set to `standalone`
+2. `HA_URL` is correct and reachable from the Beacon container
+3. `HA_TOKEN` is valid and the HA instance is running
 
 ### Display goes to sleep / screen turns off
 
 This is controlled by the device's OS, not by Beacon. Disable screen timeout:
+
 - **Android**: Settings > Display > Screen timeout > Never (or use Fully Kiosk's "Keep Screen On")
 - **iPad**: Settings > Display & Brightness > Auto-Lock > Never
 - **Linux**: `xset s off && xset -dpms`

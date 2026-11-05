@@ -1,14 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  Play,
-  Pause,
-  SkipBack,
-  SkipForward,
-  Volume2,
-  VolumeX,
-} from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
 import { MediaPlayer } from '../types/music';
-import { getConfig } from '../config';
+import { getHaResourceUrl } from '../api/ha-rest';
 import { useTranslation } from '../i18n';
 
 interface NowPlayingBarProps {
@@ -43,7 +36,9 @@ export function NowPlayingBar({
     if (animRef.current) clearInterval(animRef.current);
     if (player?.state !== 'playing') return;
     animRef.current = setInterval(() => setPosition((prev) => prev + 1), 1000);
-    return () => { if (animRef.current) clearInterval(animRef.current); };
+    return () => {
+      if (animRef.current) clearInterval(animRef.current);
+    };
   }, [player?.state, player?.media_position]);
 
   if (!player || (player.state !== 'playing' && player.state !== 'paused')) {
@@ -53,12 +48,7 @@ export function NowPlayingBar({
   const isPlaying = player.state === 'playing';
   const duration = player.media_duration ?? 0;
   const progressPct = duration > 0 ? Math.min(position / duration, 1) * 100 : 0;
-  const haUrl = getConfig().ha_url.replace(/\/$/, '');
-  const artSrc = player.entity_picture
-    ? (player.entity_picture.startsWith('http')
-      ? player.entity_picture
-      : `${haUrl}${player.entity_picture}`)
-    : null;
+  const artSrc = player.entity_picture ? getHaResourceUrl(player.entity_picture) : null;
 
   return (
     <div className="now-playing-bar" role="region" aria-label={t('music.nowPlaying')}>
@@ -88,9 +78,7 @@ export function NowPlayingBar({
           <span className="now-playing-title">
             {player.media_title || player.app_name || player.friendly_name}
           </span>
-          <span className="now-playing-artist">
-            {player.media_artist || player.friendly_name}
-          </span>
+          <span className="now-playing-artist">{player.media_artist || player.friendly_name}</span>
         </div>
       </button>
 
@@ -127,7 +115,7 @@ export function NowPlayingBar({
         <button
           type="button"
           className="now-playing-btn"
-          onClick={() => onSetVolume(player.is_volume_muted ? (player.volume_level || 0.5) : 0)}
+          onClick={() => onSetVolume(player.is_volume_muted ? player.volume_level || 0.5 : 0)}
           aria-label={player.is_volume_muted ? t('music.unmute') : t('music.mute')}
         >
           {player.is_volume_muted ? <VolumeX size={16} /> : <Volume2 size={16} />}

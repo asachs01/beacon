@@ -1,14 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { getConfig } from '../config';
-import {
-  Play,
-  Pause,
-  SkipBack,
-  SkipForward,
-  Volume2,
-  VolumeX,
-  ChevronDown,
-} from 'lucide-react';
+import { getHaResourceUrl } from '../api/ha-rest';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ChevronDown } from 'lucide-react';
 import { MediaPlayer } from '../types/music';
 import { useTranslation } from '../i18n';
 
@@ -49,17 +41,23 @@ export function MusicView({
   // Empty state when no media players found
   if (players.length === 0) {
     return (
-      <div className="music-view" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        className="music-view"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 40 }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎵</div>
-          <h2 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: 8 }}>{t('music.noPlayers')}</h2>
+          <h2 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: 8 }}>
+            {t('music.noPlayers')}
+          </h2>
           <p style={{ fontSize: '0.9rem' }}>{t('music.noPlayersDesc')}</p>
         </div>
       </div>
     );
   }
 
-  const player = activePlayer || players.find((p) => p.entity_id === selectedPlayerId) || players[0] || null;
+  const player =
+    activePlayer || players.find((p) => p.entity_id === selectedPlayerId) || players[0] || null;
   const isPlaying = player?.state === 'playing';
 
   // Track elapsed position locally for smooth progress bar
@@ -87,12 +85,7 @@ export function MusicView({
   const duration = player?.media_duration ?? 0;
   const progress = duration > 0 ? Math.min(position / duration, 1) : 0;
 
-  const haUrl = getConfig().ha_url.replace(/\/$/, '');
-  const artSrc = player?.entity_picture
-    ? (player.entity_picture.startsWith('http')
-      ? player.entity_picture
-      : `${haUrl}${player.entity_picture}`)
-    : null;
+  const artSrc = player?.entity_picture ? getHaResourceUrl(player.entity_picture) : null;
 
   const [showPlayerDropdown, setShowPlayerDropdown] = useState(false);
 
@@ -154,24 +147,15 @@ export function MusicView({
         <h2 className="music-track-title">
           {player?.media_title || player?.app_name || t('music.nowPlaying')}
         </h2>
-        <p className="music-track-artist">
-          {player?.media_artist || ''}
-        </p>
-        {player?.media_album_name && (
-          <p className="music-track-album">
-            {player.media_album_name}
-          </p>
-        )}
+        <p className="music-track-artist">{player?.media_artist || ''}</p>
+        {player?.media_album_name && <p className="music-track-album">{player.media_album_name}</p>}
       </div>
 
       {/* Progress bar */}
       <div className="music-progress">
         <span className="music-progress-time">{formatTime(position)}</span>
         <div className="music-progress-bar">
-          <div
-            className="music-progress-fill"
-            style={{ width: `${progress * 100}%` }}
-          />
+          <div className="music-progress-fill" style={{ width: `${progress * 100}%` }} />
         </div>
         <span className="music-progress-time">{formatTime(duration)}</span>
       </div>
@@ -210,10 +194,7 @@ export function MusicView({
           type="button"
           className="music-volume-btn"
           onClick={() =>
-            onSetVolume(
-              player?.is_volume_muted ? (player.volume_level || 0.5) : 0,
-              player?.entity_id,
-            )
+            onSetVolume(player?.is_volume_muted ? player.volume_level || 0.5 : 0, player?.entity_id)
           }
           aria-label={player?.is_volume_muted ? t('music.unmute') : t('music.mute')}
         >

@@ -33,23 +33,26 @@ export function useWeather(getClient: () => HomeAssistantClient | null) {
         let entity = null;
 
         if (configEntity) {
+          console.log(`Fetching weather for configured entity: ${configEntity}`);
           try {
-            entity = await haFetch(`/api/states/${configEntity}`) as {
+            entity = (await haFetch(`/api/states/${configEntity}`)) as {
               entity_id: string;
               state: string;
               attributes: Record<string, unknown>;
             };
-          } catch { /* entity doesn't exist, try discovery */ }
+          } catch {
+            /* entity doesn't exist, try discovery */
+          }
         }
 
         // Auto-discover first weather entity if configured one doesn't exist
         if (!entity) {
-          const states = await haFetch('/api/states') as Array<{
+          const states = (await haFetch('/api/states')) as Array<{
             entity_id: string;
             state: string;
             attributes: Record<string, unknown>;
           }>;
-          entity = states.find(s => s.entity_id.startsWith('weather.'));
+          entity = states.find((s) => s.entity_id.startsWith('weather.'));
         }
 
         if (entity) {
