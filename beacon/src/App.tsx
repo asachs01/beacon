@@ -5,6 +5,7 @@ import { useCalendarEvents, CalendarNotSupportedError } from './hooks/useCalenda
 import { useFamily } from './hooks/useFamily';
 import { useWeather } from './hooks/useWeather';
 import { useChores } from './hooks/useChores';
+import { useChoreOps } from './hooks/useChoreOps';
 import { Clock } from './components/Clock';
 import { WeekCalendar } from './components/WeekCalendar';
 import { DashboardView } from './components/DashboardView';
@@ -510,6 +511,45 @@ export function App() {
     [completedChoreIds, completeChore, uncompleteChore, firstMemberId],
   );
 
+  // ---- ChoreOps backend adapter (dashboard + calendar sidebar) ----
+  const choreOpsEnabled = getConfig().chore_backend === 'choreops';
+  const { data: choreOpsData, pressButton: pressChoreOpsButton } = useChoreOps();
+
+  const dashboardChores = useMemo(() => {
+    if (!choreOpsEnabled) return chores;
+    return (choreOpsData?.chores ?? []).map((chore) => ({
+      id: chore.id,
+      name: chore.name,
+      assigned_to: [] as string[],
+      frequency: 'once' as const,
+      value_cents: 0,
+      icon: chore.icon ?? undefined,
+    }));
+  }, [choreOpsEnabled, chores, choreOpsData]);
+
+  const dashboardCompletedChoreIds = useMemo(() => {
+    if (!choreOpsEnabled) return completedChoreIds;
+    const ids = new Set<string>();
+    for (const chore of choreOpsData?.chores ?? []) {
+      if (/^(approved|completed|done)/i.test(chore.status)) ids.add(chore.id);
+    }
+    return ids;
+  }, [choreOpsEnabled, completedChoreIds, choreOpsData]);
+
+  const handleDashboardToggleChore = useCallback(
+    (choreId: string) => {
+      if (!choreOpsEnabled) {
+        handleToggleChore(choreId);
+        return;
+      }
+      // ChoreOps has no "un-complete" action: ticking claims or approves.
+      const chore = choreOpsData?.chores.find((c) => c.id === choreId);
+      const buttonEid = chore?.actions.claim ?? chore?.actions.approve;
+      if (buttonEid) void pressChoreOpsButton(buttonEid);
+    },
+    [choreOpsEnabled, handleToggleChore, choreOpsData, pressChoreOpsButton],
+  );
+
   // Handle onboarding completion
   const handleOnboardingComplete = useCallback(
     async (haUrl: string, haToken: string) => {
@@ -643,9 +683,9 @@ export function App() {
               <DashboardView
                 events={visibleEvents}
                 weather={weather}
-                chores={settings.choresEnabled ? chores : []}
-                completedChoreIds={completedChoreIds}
-                onToggleChore={handleToggleChore}
+                chores={settings.choresEnabled ? dashboardChores : []}
+                completedChoreIds={dashboardCompletedChoreIds}
+                onToggleChore={handleDashboardToggleChore}
                 todoItems={dashboardTasks.items}
                 onToggleTodo={dashboardTasks.toggleItem}
                 onWeatherClick={() => setActiveView('weather')}
@@ -789,9 +829,9 @@ export function App() {
                 </div>
                 <CalendarSidebar
                   events={visibleEvents}
-                  chores={settings.choresEnabled ? chores : []}
-                  completedChoreIds={completedChoreIds}
-                  onToggleChore={handleToggleChore}
+                  chores={settings.choresEnabled ? dashboardChores : []}
+                  completedChoreIds={dashboardCompletedChoreIds}
+                  onToggleChore={handleDashboardToggleChore}
                   todoItems={dashboardTasks.items}
                   onToggleTodo={dashboardTasks.toggleItem}
                   members={members}
