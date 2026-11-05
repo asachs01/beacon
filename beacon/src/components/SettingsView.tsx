@@ -1057,27 +1057,45 @@ export function SettingsView({
                   overflowY: 'auto',
                 }}
               >
-                {AVATAR_CATEGORIES.flatMap((cat) => cat.emojis).map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 8,
-                      border:
-                        memberForm.avatar === emoji
-                          ? '2px solid var(--accent)'
-                          : '1px solid var(--border)',
-                      background: memberForm.avatar === emoji ? 'var(--bg-today)' : 'none',
-                      fontSize: '1.2rem',
-                      cursor: 'pointer',
-                      transition: 'all 150ms ease',
-                    }}
-                    onClick={() => setMemberForm((f) => ({ ...f, avatar: emoji }))}
-                  >
-                    {emoji}
-                  </button>
+                {AVATAR_CATEGORIES.map((cat) => (
+                  <div key={cat.labelKey} style={{ width: '100%' }}>
+                    <div
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.03em',
+                        color: 'var(--text-muted)',
+                        margin: '4px 0 2px',
+                      }}
+                    >
+                      {t(cat.labelKey)}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {cat.emojis.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 8,
+                            border:
+                              memberForm.avatar === emoji
+                                ? '2px solid var(--accent)'
+                                : '1px solid var(--border)',
+                            background: memberForm.avatar === emoji ? 'var(--bg-today)' : 'none',
+                            fontSize: '1.2rem',
+                            cursor: 'pointer',
+                            transition: 'all 150ms ease',
+                          }}
+                          onClick={() => setMemberForm((f) => ({ ...f, avatar: emoji }))}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

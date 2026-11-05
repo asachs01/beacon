@@ -36,10 +36,12 @@ export const fr: Record<TranslationKey, string> = {
   'nav.mainNavigation': 'Navigation principale',
 
   // ---- app chrome ----
-  'app.kidDisplayNotFound': "Membre de l'écran enfant introuvable — affichage de l'application complète.",
+  'app.kidDisplayNotFound':
+    "Membre de l'écran enfant introuvable — affichage de l'application complète.",
   'app.dismiss': 'Ignorer',
   'app.connecting': 'Connexion...',
-  'app.choresDisabled': 'Les corvées sont désactivées. Activez-les dans Paramètres → Corvées pour utiliser cet écran.',
+  'app.choresDisabled':
+    'Les corvées sont désactivées. Activez-les dans Paramètres → Corvées pour utiliser cet écran.',
   'app.demoMode': 'Mode démo',
 
   // ---- dashboard / cards ----
@@ -59,7 +61,8 @@ export const fr: Record<TranslationKey, string> = {
   'dashboard.completedItem': '{name} terminé',
   'dashboard.completeItem': 'Terminer {name}',
   'dashboard.shopping': 'Courses',
-  'dashboard.shoppingNotConfigured': 'Configurez une liste de courses dans Paramètres → Intégrations',
+  'dashboard.shoppingNotConfigured':
+    'Configurez une liste de courses dans Paramètres → Intégrations',
   'dashboard.shoppingAddItemPlaceholder': 'Ajouter un article...',
   'dashboard.shoppingAddItem': 'Ajouter un article',
   'dashboard.shoppingLoading': 'Chargement des articles...',
@@ -130,11 +133,14 @@ export const fr: Record<TranslationKey, string> = {
   'eventModal.repeatUntilLabel': "Répéter jusqu'au",
   'eventModal.descriptionLabel': 'Description',
   'eventModal.descriptionPlaceholder': 'Ajouter une description...',
-  'eventModal.errorEndDateBeforeStart': 'La date de fin ne peut pas être antérieure à la date de début.',
+  'eventModal.errorEndDateBeforeStart':
+    'La date de fin ne peut pas être antérieure à la date de début.',
   'eventModal.errorEndBeforeStart': "L'heure de fin doit être postérieure à l'heure de début.",
   'eventModal.errorTitleRequired': 'Le titre est requis.',
-  'eventModal.errorNoStableIdEdit': "Cet événement ne peut pas être modifié — il n'a pas d'identifiant stable de son fournisseur de calendrier.",
-  'eventModal.errorNoStableIdDelete': "Cet événement ne peut pas être supprimé — il n'a pas d'identifiant stable de son fournisseur de calendrier.",
+  'eventModal.errorNoStableIdEdit':
+    "Cet événement ne peut pas être modifié — il n'a pas d'identifiant stable de son fournisseur de calendrier.",
+  'eventModal.errorNoStableIdDelete':
+    "Cet événement ne peut pas être supprimé — il n'a pas d'identifiant stable de son fournisseur de calendrier.",
   'eventModal.errorSaveFailed': "Échec de l'enregistrement de l'événement. Veuillez réessayer.",
   'eventModal.errorDeleteFailed': "Échec de la suppression de l'événement. Veuillez réessayer.",
 
@@ -172,7 +178,7 @@ export const fr: Record<TranslationKey, string> = {
   'settings.general.monday': 'Lundi',
   'settings.general.languageLabel': 'Langue / Région',
   'settings.general.dashboardLayoutTitle': 'Disposition du tableau de bord',
-  'settings.general.dashboardLayoutDesc': "Choisissez comment votre tableau de bord est organisé.",
+  'settings.general.dashboardLayoutDesc': 'Choisissez comment votre tableau de bord est organisé.',
   'settings.general.layoutLabel': 'Disposition',
   'settings.general.layoutSublabel': 'Choisissez une disposition prédéfinie',
   'settings.general.layoutFamilyLabel': 'Famille',
@@ -192,7 +198,8 @@ export const fr: Record<TranslationKey, string> = {
   'settings.appearance.darkModeStartLabel': 'Le mode sombre commence',
   'settings.appearance.darkModeEndLabel': 'Le mode sombre se termine',
   'settings.appearance.fontSizeLabel': 'Taille de police',
-  'settings.appearance.fontSizeSublabel': "Ajuster selon la distance de visionnage sur les écrans muraux",
+  'settings.appearance.fontSizeSublabel':
+    'Ajuster selon la distance de visionnage sur les écrans muraux',
   'settings.appearance.fontNormal': 'Normal',
   'settings.appearance.fontLarge': 'Grand',
   'settings.appearance.fontXL': 'XL',
@@ -201,25 +208,36 @@ export const fr: Record<TranslationKey, string> = {
   'settings.appearance.right': 'Droite',
   'settings.appearance.bottom': 'Bas',
   'settings.appearance.advancedDashboardLabel': 'Tableau de bord avancé',
-  'settings.appearance.advancedDashboardSublabel': 'Active les widgets et dispositions de tableau de bord personnalisables',
+  'settings.appearance.advancedDashboardSublabel':
+    'Active les widgets et dispositions de tableau de bord personnalisables',
 
   // ---- settings: family ----
   'settings.family.title': 'Membres de la famille',
   'settings.family.desc': 'Gérez qui apparaît sur votre écran familial.',
-  'settings.family.empty': 'Aucun membre de la famille pour le moment. Ajoutez quelqu\'un pour commencer.',
+  'settings.family.empty':
+    "Aucun membre de la famille pour le moment. Ajoutez quelqu'un pour commencer.",
   'settings.family.addMember': '+ Ajouter un membre',
   'settings.family.nameLabel': 'Nom',
   'settings.family.roleLabel': 'Rôle',
   'settings.family.parent': 'Parent',
   'settings.family.child': 'Enfant',
   'settings.family.avatarLabel': 'Avatar',
+  'settings.family.avatarCategory.people': 'Personnes',
+  'settings.family.avatarCategory.skinTones': 'Teints',
+  'settings.family.avatarCategory.faces': 'Visages',
+  'settings.family.avatarCategory.animals': 'Animaux',
+  'settings.family.avatarCategory.nature': 'Nature',
+  'settings.family.avatarCategory.sports': 'Sports et loisirs',
+  'settings.family.avatarCategory.objects': 'Objets',
+  'settings.family.avatarCategory.food': 'Nourriture',
   'settings.family.colorLabel': 'Couleur',
   'settings.family.pinLabel': 'Code PIN',
   'settings.family.pinSublabel': 'Facultatif, 4 à 6 chiffres',
   'settings.family.calendarLabel': 'Calendrier',
   'settings.family.calendarSublabel': 'Associer à son calendrier HA',
   'settings.family.additionalCalendarsLabel': 'Calendriers supplémentaires',
-  'settings.family.additionalCalendarsSublabel': "Regrouper aussi d'autres calendriers (p. ex. une équipe sportive) sous ce membre",
+  'settings.family.additionalCalendarsSublabel':
+    "Regrouper aussi d'autres calendriers (p. ex. une équipe sportive) sous ce membre",
   'settings.family.addAnotherCalendar': '+ Ajouter un autre calendrier…',
   'settings.family.namePlaceholder': 'Nom du membre de la famille',
   'settings.family.saveChanges': 'Enregistrer les modifications',
@@ -230,7 +248,8 @@ export const fr: Record<TranslationKey, string> = {
   'settings.family.selectColor': 'Sélectionner la couleur {color}',
   'settings.family.routinesTitleSuffix': '— Routines',
   'settings.family.routinesDesc': 'Listes du matin et du soir affichées sur son écran enfant.',
-  'settings.family.routinesEmpty': "Aucune routine pour l'instant. Ajoutez une liste du matin ou du coucher.",
+  'settings.family.routinesEmpty':
+    "Aucune routine pour l'instant. Ajoutez une liste du matin ou du coucher.",
   'settings.family.routineTaskCountSingular': '{n} tâche',
   'settings.family.routineTaskCountPlural': '{n} tâches',
   'settings.family.editRoutine': 'Modifier {name}',
@@ -254,7 +273,8 @@ export const fr: Record<TranslationKey, string> = {
   'settings.calendar.title': 'Calendrier',
   'settings.calendar.desc': "Configurez l'affichage et les valeurs par défaut du calendrier.",
   'settings.calendar.connectedCalendarsTitle': 'Calendriers connectés',
-  'settings.calendar.noCalendars': 'Aucun calendrier trouvé. Connectez Home Assistant pour voir vos calendriers.',
+  'settings.calendar.noCalendars':
+    'Aucun calendrier trouvé. Connectez Home Assistant pour voir vos calendriers.',
   'settings.calendar.editColor': 'Modifier la couleur du calendrier',
   'settings.calendar.editColorFor': 'Modifier la couleur de {name}',
   'settings.calendar.setColorTo': 'Définir {name} sur {color}',
@@ -272,7 +292,7 @@ export const fr: Record<TranslationKey, string> = {
 
   // ---- settings: integrations ----
   'settings.integrations.title': 'Intégrations',
-  'settings.integrations.desc': 'Gérez les connexions à Home Assistant et à d\'autres services.',
+  'settings.integrations.desc': "Gérez les connexions à Home Assistant et à d'autres services.",
   'settings.integrations.homeAssistantTitle': 'Home Assistant',
   'settings.integrations.connectionStatusLabel': 'État de la connexion',
   'settings.integrations.connected': 'Connecté',
@@ -287,13 +307,17 @@ export const fr: Record<TranslationKey, string> = {
   'settings.integrations.anylistSublabel': 'Listes de courses partagées',
   'settings.integrations.groceryTitle': 'Courses',
   'settings.integrations.defaultGroceryListLabel': 'Liste de courses par défaut',
-  'settings.integrations.defaultGroceryListSublabel': "Liste affichée à l'ouverture de la vue courses",
+  'settings.integrations.defaultGroceryListSublabel':
+    "Liste affichée à l'ouverture de la vue courses",
   'settings.integrations.autoFirstAvailable': 'Auto (première disponible)',
   'settings.integrations.groceryListsLabel': 'Listes de courses',
-  'settings.integrations.groceryListsSublabel': 'Sélectionnez les entités de tâches HA qui sont des listes de courses',
-  'settings.integrations.noTodoListsFound': 'Aucune liste de tâches HA trouvée. Connectez Home Assistant pour voir les listes.',
+  'settings.integrations.groceryListsSublabel':
+    'Sélectionnez les entités de tâches HA qui sont des listes de courses',
+  'settings.integrations.noTodoListsFound':
+    'Aucune liste de tâches HA trouvée. Connectez Home Assistant pour voir les listes.',
   'settings.integrations.shoppingEntityLabel': 'Entité de la carte Courses',
-  'settings.integrations.shoppingEntitySublabel': 'Liste de tâches HA pour la carte Courses de la barre latérale',
+  'settings.integrations.shoppingEntitySublabel':
+    'Liste de tâches HA pour la carte Courses de la barre latérale',
   'settings.integrations.musicAssistantTitle': 'Music Assistant',
   'settings.integrations.defaultPlayerLabel': 'Lecteur par défaut',
   'settings.integrations.defaultPlayerSublabel': 'Lecteur multimédia utilisé par défaut',
@@ -308,12 +332,13 @@ export const fr: Record<TranslationKey, string> = {
 
   // ---- settings: display ----
   'settings.display.title': 'Affichage',
-  'settings.display.desc': "Écran de veille, luminosité et paramètres du mode kiosque.",
+  'settings.display.desc': 'Écran de veille, luminosité et paramètres du mode kiosque.',
   'settings.display.screenSaverLabel': 'Écran de veille',
-  'settings.display.screenSaverSublabel': 'Affiche une horloge flottante après une période d\'inactivité',
+  'settings.display.screenSaverSublabel':
+    "Affiche une horloge flottante après une période d'inactivité",
   'settings.display.dimAfterLabel': 'Atténuer après',
   'settings.display.dimAfterSublabel': "Minutes d'inactivité avant l'atténuation",
-  'settings.display.screenSaverAfterLabel': "Écran de veille après",
+  'settings.display.screenSaverAfterLabel': 'Écran de veille après',
   'settings.display.screenSaverAfterSublabel': "Minutes avant l'activation de l'écran de veille",
   'settings.display.alwaysOnLabel': 'Écran toujours allumé',
   'settings.display.alwaysOnSublabel': "Empêche l'écran de se mettre en veille",
@@ -322,14 +347,17 @@ export const fr: Record<TranslationKey, string> = {
   'settings.display.kioskModeLabel': 'Mode kiosque',
   'settings.display.kioskModeSublabel': 'Masque la barre latérale pour un affichage plus épuré',
   'settings.display.kidDisplayTitle': 'Écran enfant',
-  'settings.display.kidDisplayDesc': "Verrouille un écran mural sur un seul membre de la famille — n'affiche que ses routines et corvées.",
+  'settings.display.kidDisplayDesc':
+    "Verrouille un écran mural sur un seul membre de la famille — n'affiche que ses routines et corvées.",
   'settings.display.familyMemberLabel': 'Membre de la famille',
   'settings.display.familyMemberSublabel': 'À qui appartient cet écran',
   'settings.display.chooseAMember': 'Choisissez un membre…',
   'settings.display.useOnDeviceLabel': 'Utiliser sur cet appareil',
-  'settings.display.useOnDeviceSublabel': "Verrouille cet écran maintenant. Quittez plus tard avec 5 appuis sur l'horloge.",
+  'settings.display.useOnDeviceSublabel':
+    "Verrouille cet écran maintenant. Quittez plus tard avec 5 appuis sur l'horloge.",
   'settings.display.displayUrlLabel': "URL de l'affichage",
-  'settings.display.displayUrlSublabel': 'Pour les navigateurs en mode kiosque et les panneaux muraux — enregistrez comme favori ou page d\'accueil.',
+  'settings.display.displayUrlSublabel':
+    "Pour les navigateurs en mode kiosque et les panneaux muraux — enregistrez comme favori ou page d'accueil.",
   'settings.display.copyUrl': "Copier l'URL",
   'settings.display.copied': 'Copié !',
   'settings.display.copyUrlPrompt': 'Copiez cette URL :',
@@ -342,7 +370,7 @@ export const fr: Record<TranslationKey, string> = {
   'settings.chores.dailyResetTimeLabel': 'Heure de réinitialisation quotidienne',
   'settings.chores.dailyResetTimeSublabel': 'Quand les corvées quotidiennes se réinitialisent',
   'settings.chores.streakDurationLabel': 'Durée de la série',
-  'settings.chores.streakDurationSublabel': "Jours nécessaires pour maintenir une série",
+  'settings.chores.streakDurationSublabel': 'Jours nécessaires pour maintenir une série',
   'settings.chores.rewardsTitle': 'Récompenses',
   'settings.chores.currencySymbolLabel': 'Symbole monétaire',
   'settings.chores.payoutScheduleLabel': 'Calendrier de paiement',
@@ -371,7 +399,8 @@ export const fr: Record<TranslationKey, string> = {
   'cards.clockWeather.displayName': 'Horloge et météo',
   'cards.familyCalendar.displayName': 'Calendrier familial',
   'cards.familyCalendar.showOtherLabel': 'Afficher les autres',
-  'cards.familyCalendar.showOtherDescription': "Afficher les événements non attribués à un membre de la famille",
+  'cards.familyCalendar.showOtherDescription':
+    'Afficher les événements non attribués à un membre de la famille',
   'cards.agendaToday.displayName': "Aujourd'hui",
   'cards.agendaWeek.displayName': 'Cette semaine',
   'cards.menu.displayName': 'Menu',
@@ -408,7 +437,7 @@ export const fr: Record<TranslationKey, string> = {
   'timer.namePlaceholder': 'Nom du minuteur (facultatif)',
   'timer.startTimer': 'Démarrer le minuteur',
   'timer.start': 'Démarrer',
-  'timer.dismissAlarm': 'Arrêter l\'alarme',
+  'timer.dismissAlarm': "Arrêter l'alarme",
   'timer.pause': 'Pause',
   'timer.resume': 'Reprendre',
   'timer.remove': 'Supprimer',
@@ -417,7 +446,7 @@ export const fr: Record<TranslationKey, string> = {
   'timer.lapN': 'Tour {n}',
   'countdown.title': 'Compte à rebours',
   'countdown.add': 'Ajouter un compte à rebours',
-  'countdown.eventNamePlaceholder': 'Nom de l\'événement',
+  'countdown.eventNamePlaceholder': "Nom de l'événement",
   'countdown.addBtn': 'Ajouter',
   'countdown.day': 'jour',
   'countdown.days': 'jours',
@@ -453,10 +482,10 @@ export const fr: Record<TranslationKey, string> = {
   'chores.weekly': 'Hebdomadaire',
   'chores.monthly': 'Mensuel',
   'chores.oneTime': 'Une fois',
-  'chores.namePlaceholder': 'p. ex., Passer l\'aspirateur',
-  'chores.anyone': 'N\'importe qui',
+  'chores.namePlaceholder': "p. ex., Passer l'aspirateur",
+  'chores.anyone': "N'importe qui",
   'chores.empty': 'Pas encore de tâches — ajoutez-en une',
-  'chores.addMembersFirst': 'Ajoutez d\'abord des membres de la famille pour assigner des tâches.',
+  'chores.addMembersFirst': "Ajoutez d'abord des membres de la famille pour assigner des tâches.",
   'chores.openChores': 'Tâches ouvertes',
   'chores.noChoresAssigned': 'Aucune tâche assignée',
   'chores.addChoreFor': 'Ajouter une tâche pour {name}',
@@ -476,7 +505,8 @@ export const fr: Record<TranslationKey, string> = {
 
   // ---- music view ----
   'music.noPlayers': 'Aucun lecteur multimédia',
-  'music.noPlayersDesc': 'Connectez un lecteur multimédia dans Home Assistant pour contrôler la musique ici.',
+  'music.noPlayersDesc':
+    'Connectez un lecteur multimédia dans Home Assistant pour contrôler la musique ici.',
   'music.selectPlayer': 'Sélectionner un lecteur',
   'music.nowPlaying': 'En cours de lecture',
   'music.volume': 'Volume',
@@ -487,17 +517,17 @@ export const fr: Record<TranslationKey, string> = {
   'music.pause': 'Pause',
   'music.mute': 'Muet',
   'music.unmute': 'Rétablir le son',
-  'music.albumArt': 'Pochette d\'album',
+  'music.albumArt': "Pochette d'album",
 
   // ---- grocery / lists view ----
   'grocery.noListsAvailable': 'Aucune liste disponible',
   'grocery.addItem': 'Ajouter un article',
   'grocery.addItemPlaceholder': 'Ajouter un article...',
   'grocery.loadingItems': 'Chargement des articles...',
-  'grocery.empty': 'Pas encore d\'articles — ajoutez-en un ci-dessus',
+  'grocery.empty': "Pas encore d'articles — ajoutez-en un ci-dessus",
   'grocery.items': 'Articles ({count})',
   'grocery.completed': 'Terminés ({count})',
-  'grocery.deleteItem': 'Supprimer l\'article',
+  'grocery.deleteItem': "Supprimer l'article",
   'grocery.haList': '{name} (HA)',
 
   // ---- card picker modal ----
@@ -515,24 +545,28 @@ export const fr: Record<TranslationKey, string> = {
   'onboarding.welcomeDesc': 'Connectez votre Home Assistant pour commencer.',
   'onboarding.getStarted': 'Commencer',
   'onboarding.connectTitle': 'Se connecter à Home Assistant',
-  'onboarding.connectDesc': 'Entrez l\'URL de votre instance Home Assistant.',
+  'onboarding.connectDesc': "Entrez l'URL de votre instance Home Assistant.",
   'onboarding.haUrl': 'URL de Home Assistant',
   'onboarding.haUrlPlaceholder': 'https://homeassistant.local:8123',
   'onboarding.connect': 'Connecter',
   'onboarding.connecting': 'Connexion en cours...',
   'onboarding.authTitle': 'Authentification',
   'onboarding.authDesc': 'Choisissez comment vous authentifier avec Home Assistant.',
-  'onboarding.tokenMethod': 'Jeton d\'accès de longue durée',
+  'onboarding.tokenMethod': "Jeton d'accès de longue durée",
   'onboarding.tokenMethodDesc': 'Utilisez un jeton généré depuis votre profil Home Assistant.',
   'onboarding.tokenPlaceholder': 'Collez votre jeton ici',
   'onboarding.tokenHint': 'Comment créer un jeton :',
-  'onboarding.tokenHintDetail': 'Allez dans votre Profil HA → Jetons de longue durée → Créer un jeton',
+  'onboarding.tokenHintDetail':
+    'Allez dans votre Profil HA → Jetons de longue durée → Créer un jeton',
   'onboarding.oauthMethod': 'Se connecter avec Home Assistant',
-  'onboarding.oauthMethodDesc': 'Authentifiez-vous en utilisant vos identifiants Home Assistant via OAuth2.',
+  'onboarding.oauthMethodDesc':
+    'Authentifiez-vous en utilisant vos identifiants Home Assistant via OAuth2.',
   'onboarding.openHA': 'Ouvrir Home Assistant',
   'onboarding.completeSetup': 'Terminer la configuration',
-  'onboarding.urlError': 'L\'URL doit commencer par http:// ou https://',
-  'onboarding.connectionFailed': 'Échec de la connexion (HTTP {status}). Vérifiez l\'URL et réessayez.',
-  'onboarding.notReachable': 'Impossible d\'atteindre Home Assistant. Vérifiez l\'URL et assurez-vous qu\'elle est accessible.',
-  'onboarding.tokenRequired': 'Veuillez entrer votre jeton d\'accès.',
+  'onboarding.urlError': "L'URL doit commencer par http:// ou https://",
+  'onboarding.connectionFailed':
+    "Échec de la connexion (HTTP {status}). Vérifiez l'URL et réessayez.",
+  'onboarding.notReachable':
+    "Impossible d'atteindre Home Assistant. Vérifiez l'URL et assurez-vous qu'elle est accessible.",
+  'onboarding.tokenRequired': "Veuillez entrer votre jeton d'accès.",
 };

@@ -36,10 +36,12 @@ export const de: Record<TranslationKey, string> = {
   'nav.mainNavigation': 'Hauptnavigation',
 
   // ---- app chrome ----
-  'app.kidDisplayNotFound': 'Mitglied für Kinderanzeige nicht gefunden — die vollständige App wird angezeigt.',
+  'app.kidDisplayNotFound':
+    'Mitglied für Kinderanzeige nicht gefunden — die vollständige App wird angezeigt.',
   'app.dismiss': 'Verwerfen',
   'app.connecting': 'Verbindung wird hergestellt...',
-  'app.choresDisabled': 'Aufgaben sind deaktiviert. Aktiviere sie unter Einstellungen → Aufgaben, um diesen Bildschirm zu nutzen.',
+  'app.choresDisabled':
+    'Aufgaben sind deaktiviert. Aktiviere sie unter Einstellungen → Aufgaben, um diesen Bildschirm zu nutzen.',
   'app.demoMode': 'Demomodus',
 
   // ---- dashboard / cards ----
@@ -59,7 +61,8 @@ export const de: Record<TranslationKey, string> = {
   'dashboard.completedItem': '{name} erledigt',
   'dashboard.completeItem': '{name} erledigen',
   'dashboard.shopping': 'Einkauf',
-  'dashboard.shoppingNotConfigured': 'Richte unter Einstellungen → Integrationen eine Einkaufsliste ein',
+  'dashboard.shoppingNotConfigured':
+    'Richte unter Einstellungen → Integrationen eine Einkaufsliste ein',
   'dashboard.shoppingAddItemPlaceholder': 'Artikel hinzufügen...',
   'dashboard.shoppingAddItem': 'Artikel hinzufügen',
   'dashboard.shoppingLoading': 'Artikel werden geladen...',
@@ -133,8 +136,10 @@ export const de: Record<TranslationKey, string> = {
   'eventModal.errorEndDateBeforeStart': 'Das Enddatum darf nicht vor dem Startdatum liegen.',
   'eventModal.errorEndBeforeStart': 'Die Endzeit muss nach der Startzeit liegen.',
   'eventModal.errorTitleRequired': 'Titel ist erforderlich.',
-  'eventModal.errorNoStableIdEdit': 'Dieser Termin kann nicht bearbeitet werden — er hat keine stabile ID von seinem Kalenderanbieter.',
-  'eventModal.errorNoStableIdDelete': 'Dieser Termin kann nicht gelöscht werden — er hat keine stabile ID von seinem Kalenderanbieter.',
+  'eventModal.errorNoStableIdEdit':
+    'Dieser Termin kann nicht bearbeitet werden — er hat keine stabile ID von seinem Kalenderanbieter.',
+  'eventModal.errorNoStableIdDelete':
+    'Dieser Termin kann nicht gelöscht werden — er hat keine stabile ID von seinem Kalenderanbieter.',
   'eventModal.errorSaveFailed': 'Termin konnte nicht gespeichert werden. Bitte erneut versuchen.',
   'eventModal.errorDeleteFailed': 'Termin konnte nicht gelöscht werden. Bitte erneut versuchen.',
 
@@ -201,7 +206,8 @@ export const de: Record<TranslationKey, string> = {
   'settings.appearance.right': 'Rechts',
   'settings.appearance.bottom': 'Unten',
   'settings.appearance.advancedDashboardLabel': 'Erweiterte Übersicht',
-  'settings.appearance.advancedDashboardSublabel': 'Anpassbare Übersichts-Widgets und -Layouts aktivieren',
+  'settings.appearance.advancedDashboardSublabel':
+    'Anpassbare Übersichts-Widgets und -Layouts aktivieren',
 
   // ---- settings: family ----
   'settings.family.title': 'Familienmitglieder',
@@ -213,13 +219,22 @@ export const de: Record<TranslationKey, string> = {
   'settings.family.parent': 'Erwachsener',
   'settings.family.child': 'Kind',
   'settings.family.avatarLabel': 'Avatar',
+  'settings.family.avatarCategory.people': 'Personen',
+  'settings.family.avatarCategory.skinTones': 'Hauttöne',
+  'settings.family.avatarCategory.faces': 'Gesichter',
+  'settings.family.avatarCategory.animals': 'Tiere',
+  'settings.family.avatarCategory.nature': 'Natur',
+  'settings.family.avatarCategory.sports': 'Sport & Hobbys',
+  'settings.family.avatarCategory.objects': 'Objekte',
+  'settings.family.avatarCategory.food': 'Essen',
   'settings.family.colorLabel': 'Farbe',
   'settings.family.pinLabel': 'PIN',
   'settings.family.pinSublabel': 'Optional, 4-6 Ziffern',
   'settings.family.calendarLabel': 'Kalender',
   'settings.family.calendarSublabel': 'Mit ihrem HA-Kalender verknüpfen',
   'settings.family.additionalCalendarsLabel': 'Weitere Kalender',
-  'settings.family.additionalCalendarsSublabel': 'Weitere Kalender (z. B. ein Sportteam) diesem Mitglied zuordnen',
+  'settings.family.additionalCalendarsSublabel':
+    'Weitere Kalender (z. B. ein Sportteam) diesem Mitglied zuordnen',
   'settings.family.addAnotherCalendar': '+ Weiteren Kalender hinzufügen…',
   'settings.family.namePlaceholder': 'Name des Familienmitglieds',
   'settings.family.saveChanges': 'Änderungen speichern',
@@ -230,7 +245,8 @@ export const de: Record<TranslationKey, string> = {
   'settings.family.selectColor': 'Farbe {color} auswählen',
   'settings.family.routinesTitleSuffix': '— Routinen',
   'settings.family.routinesDesc': 'Morgen- und Abend-Checklisten für die Kinderanzeige.',
-  'settings.family.routinesEmpty': 'Noch keine Routinen. Füge eine Morgen- oder Abendroutine hinzu.',
+  'settings.family.routinesEmpty':
+    'Noch keine Routinen. Füge eine Morgen- oder Abendroutine hinzu.',
   'settings.family.routineTaskCountSingular': '{n} Aufgabe',
   'settings.family.routineTaskCountPlural': '{n} Aufgaben',
   'settings.family.editRoutine': '{name} bearbeiten',
@@ -254,7 +270,8 @@ export const de: Record<TranslationKey, string> = {
   'settings.calendar.title': 'Kalender',
   'settings.calendar.desc': 'Kalenderanzeige und Standardwerte konfigurieren.',
   'settings.calendar.connectedCalendarsTitle': 'Verbundene Kalender',
-  'settings.calendar.noCalendars': 'Keine Kalender gefunden. Verbinde Home Assistant, um Kalender zu sehen.',
+  'settings.calendar.noCalendars':
+    'Keine Kalender gefunden. Verbinde Home Assistant, um Kalender zu sehen.',
   'settings.calendar.editColor': 'Kalenderfarbe bearbeiten',
   'settings.calendar.editColorFor': 'Farbe für {name} bearbeiten',
   'settings.calendar.setColorTo': '{name} auf {color} setzen',
@@ -287,13 +304,17 @@ export const de: Record<TranslationKey, string> = {
   'settings.integrations.anylistSublabel': 'Gemeinsame Einkaufslisten',
   'settings.integrations.groceryTitle': 'Einkauf',
   'settings.integrations.defaultGroceryListLabel': 'Standard-Einkaufsliste',
-  'settings.integrations.defaultGroceryListSublabel': 'Beim Öffnen der Einkaufsansicht angezeigte Liste',
+  'settings.integrations.defaultGroceryListSublabel':
+    'Beim Öffnen der Einkaufsansicht angezeigte Liste',
   'settings.integrations.autoFirstAvailable': 'Automatisch (erste verfügbare)',
   'settings.integrations.groceryListsLabel': 'Einkaufslisten',
-  'settings.integrations.groceryListsSublabel': 'Wähle aus, welche HA-To-do-Entitäten Einkaufslisten sind',
-  'settings.integrations.noTodoListsFound': 'Keine HA-To-do-Listen gefunden. Verbinde Home Assistant, um Listen zu sehen.',
+  'settings.integrations.groceryListsSublabel':
+    'Wähle aus, welche HA-To-do-Entitäten Einkaufslisten sind',
+  'settings.integrations.noTodoListsFound':
+    'Keine HA-To-do-Listen gefunden. Verbinde Home Assistant, um Listen zu sehen.',
   'settings.integrations.shoppingEntityLabel': 'Entität für Einkaufskarte',
-  'settings.integrations.shoppingEntitySublabel': 'HA-To-do-Liste für die Einkaufskarte in der Seitenleiste',
+  'settings.integrations.shoppingEntitySublabel':
+    'HA-To-do-Liste für die Einkaufskarte in der Seitenleiste',
   'settings.integrations.musicAssistantTitle': 'Music Assistant',
   'settings.integrations.defaultPlayerLabel': 'Standard-Player',
   'settings.integrations.defaultPlayerSublabel': 'Standardmäßig verwendeter Medienplayer',
@@ -320,16 +341,20 @@ export const de: Record<TranslationKey, string> = {
   'settings.display.showSecondsLabel': 'Sekunden in der Uhr anzeigen',
   'settings.display.showSecondsSublabel': 'Zeigt Sekunden in der Kopfzeilenuhr an',
   'settings.display.kioskModeLabel': 'Kiosk-Modus',
-  'settings.display.kioskModeSublabel': 'Blendet die Seitenleiste für eine aufgeräumtere Anzeige aus',
+  'settings.display.kioskModeSublabel':
+    'Blendet die Seitenleiste für eine aufgeräumtere Anzeige aus',
   'settings.display.kidDisplayTitle': 'Kinderanzeige',
-  'settings.display.kidDisplayDesc': 'Sperrt einen Wandbildschirm auf ein Familienmitglied — zeigt nur dessen Routinen und Aufgaben.',
+  'settings.display.kidDisplayDesc':
+    'Sperrt einen Wandbildschirm auf ein Familienmitglied — zeigt nur dessen Routinen und Aufgaben.',
   'settings.display.familyMemberLabel': 'Familienmitglied',
   'settings.display.familyMemberSublabel': 'Wem diese Anzeige gehört',
   'settings.display.chooseAMember': 'Mitglied auswählen…',
   'settings.display.useOnDeviceLabel': 'Auf diesem Gerät verwenden',
-  'settings.display.useOnDeviceSublabel': 'Sperrt diesen Bildschirm jetzt. Später mit 5-fachem Tippen auf die Uhr beenden.',
+  'settings.display.useOnDeviceSublabel':
+    'Sperrt diesen Bildschirm jetzt. Später mit 5-fachem Tippen auf die Uhr beenden.',
   'settings.display.displayUrlLabel': 'Anzeige-URL',
-  'settings.display.displayUrlSublabel': 'Für Kiosk-Browser und Wandpanels — als Lesezeichen oder Startseite speichern.',
+  'settings.display.displayUrlSublabel':
+    'Für Kiosk-Browser und Wandpanels — als Lesezeichen oder Startseite speichern.',
   'settings.display.copyUrl': 'URL kopieren',
   'settings.display.copied': 'Kopiert!',
   'settings.display.copyUrlPrompt': 'Diese URL kopieren:',
@@ -371,7 +396,8 @@ export const de: Record<TranslationKey, string> = {
   'cards.clockWeather.displayName': 'Uhr & Wetter',
   'cards.familyCalendar.displayName': 'Familienkalender',
   'cards.familyCalendar.showOtherLabel': 'Andere anzeigen',
-  'cards.familyCalendar.showOtherDescription': 'Termine anzeigen, die keinem Familienmitglied zugeordnet sind',
+  'cards.familyCalendar.showOtherDescription':
+    'Termine anzeigen, die keinem Familienmitglied zugeordnet sind',
   'cards.agendaToday.displayName': 'Heute',
   'cards.agendaWeek.displayName': 'Diese Woche',
   'cards.menu.displayName': 'Speiseplan',
@@ -513,7 +539,7 @@ export const de: Record<TranslationKey, string> = {
   // ---- onboarding ----
   'onboarding.welcome': 'Willkommen bei Beacon',
   'onboarding.welcomeDesc': 'Verbinde dein Home Assistant, um loszulegen.',
-  'onboarding.getStarted': 'Los geht\'s',
+  'onboarding.getStarted': "Los geht's",
   'onboarding.connectTitle': 'Mit Home Assistant verbinden',
   'onboarding.connectDesc': 'Gib die URL deiner Home Assistant-Instanz ein.',
   'onboarding.haUrl': 'Home Assistant URL',
@@ -526,13 +552,17 @@ export const de: Record<TranslationKey, string> = {
   'onboarding.tokenMethodDesc': 'Verwende ein Token aus deinem Home Assistant-Profil.',
   'onboarding.tokenPlaceholder': 'Token hier einfügen',
   'onboarding.tokenHint': 'So erstellst du ein Token:',
-  'onboarding.tokenHintDetail': 'Gehe zu deinem HA-Profil → Langlebige Zugriffstoken → Token erstellen',
+  'onboarding.tokenHintDetail':
+    'Gehe zu deinem HA-Profil → Langlebige Zugriffstoken → Token erstellen',
   'onboarding.oauthMethod': 'Mit Home Assistant anmelden',
-  'onboarding.oauthMethodDesc': 'Authentifiziere dich mit deinen Home Assistant-Zugangsdaten via OAuth2.',
+  'onboarding.oauthMethodDesc':
+    'Authentifiziere dich mit deinen Home Assistant-Zugangsdaten via OAuth2.',
   'onboarding.openHA': 'Home Assistant öffnen',
   'onboarding.completeSetup': 'Einrichtung abschließen',
   'onboarding.urlError': 'URL muss mit http:// oder https:// beginnen',
-  'onboarding.connectionFailed': 'Verbindung fehlgeschlagen (HTTP {status}). Überprüfe die URL und versuche es erneut.',
-  'onboarding.notReachable': 'Home Assistant konnte nicht erreicht werden. Überprüfe die URL und stelle sicher, dass sie erreichbar ist.',
+  'onboarding.connectionFailed':
+    'Verbindung fehlgeschlagen (HTTP {status}). Überprüfe die URL und versuche es erneut.',
+  'onboarding.notReachable':
+    'Home Assistant konnte nicht erreicht werden. Überprüfe die URL und stelle sicher, dass sie erreichbar ist.',
   'onboarding.tokenRequired': 'Bitte gib dein Zugriffstoken ein.',
 };
