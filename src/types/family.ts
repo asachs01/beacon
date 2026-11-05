@@ -1,3 +1,5 @@
+import type { TranslationKey } from '../i18n';
+
 export interface FamilyMember {
   id: string;
   name: string;
@@ -108,13 +110,14 @@ export const MEMBER_COLORS = [
 
 /** Avatar categories for the picker UI */
 export interface AvatarCategory {
-  label: string;
+  /** Translation key for the section heading shown above the group. */
+  labelKey: TranslationKey;
   emojis: string[];
 }
 
 export const AVATAR_CATEGORIES: AvatarCategory[] = [
   {
-    label: 'People',
+    labelKey: 'settings.family.avatarCategory.people',
     emojis: [
       '👦',
       '👧',
@@ -159,7 +162,7 @@ export const AVATAR_CATEGORIES: AvatarCategory[] = [
     ],
   },
   {
-    label: 'Skin Tones',
+    labelKey: 'settings.family.avatarCategory.skinTones',
     emojis: [
       '🧑🏻',
       '🧑🏼',
@@ -204,7 +207,7 @@ export const AVATAR_CATEGORIES: AvatarCategory[] = [
     ],
   },
   {
-    label: 'Faces',
+    labelKey: 'settings.family.avatarCategory.faces',
     emojis: [
       '😀',
       '😃',
@@ -230,7 +233,7 @@ export const AVATAR_CATEGORIES: AvatarCategory[] = [
     ],
   },
   {
-    label: 'Animals',
+    labelKey: 'settings.family.avatarCategory.animals',
     emojis: [
       '🐶',
       '🐱',
@@ -265,7 +268,7 @@ export const AVATAR_CATEGORIES: AvatarCategory[] = [
     ],
   },
   {
-    label: 'Nature',
+    labelKey: 'settings.family.avatarCategory.nature',
     emojis: [
       '🌸',
       '🌻',
@@ -288,7 +291,7 @@ export const AVATAR_CATEGORIES: AvatarCategory[] = [
     ],
   },
   {
-    label: 'Sports & Hobbies',
+    labelKey: 'settings.family.avatarCategory.sports',
     emojis: [
       '⚽',
       '🏀',
@@ -313,7 +316,7 @@ export const AVATAR_CATEGORIES: AvatarCategory[] = [
     ],
   },
   {
-    label: 'Objects',
+    labelKey: 'settings.family.avatarCategory.objects',
     emojis: [
       '🚀',
       '🎭',
@@ -336,7 +339,7 @@ export const AVATAR_CATEGORIES: AvatarCategory[] = [
     ],
   },
   {
-    label: 'Food',
+    labelKey: 'settings.family.avatarCategory.food',
     emojis: [
       '🍕',
       '🍦',

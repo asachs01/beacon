@@ -36,10 +36,12 @@ export const es: Record<TranslationKey, string> = {
   'nav.mainNavigation': 'Navegación principal',
 
   // ---- app chrome ----
-  'app.kidDisplayNotFound': 'No se encontró el miembro de la pantalla infantil — mostrando la aplicación completa.',
+  'app.kidDisplayNotFound':
+    'No se encontró el miembro de la pantalla infantil — mostrando la aplicación completa.',
   'app.dismiss': 'Descartar',
   'app.connecting': 'Conectando...',
-  'app.choresDisabled': 'Las tareas están desactivadas. Actívalas en Ajustes → Tareas para usar esta pantalla.',
+  'app.choresDisabled':
+    'Las tareas están desactivadas. Actívalas en Ajustes → Tareas para usar esta pantalla.',
   'app.demoMode': 'Modo demo',
 
   // ---- dashboard / cards ----
@@ -133,8 +135,10 @@ export const es: Record<TranslationKey, string> = {
   'eventModal.errorEndDateBeforeStart': 'La fecha de fin no puede ser anterior a la de inicio.',
   'eventModal.errorEndBeforeStart': 'La hora de fin debe ser posterior a la de inicio.',
   'eventModal.errorTitleRequired': 'El título es obligatorio.',
-  'eventModal.errorNoStableIdEdit': 'Este evento no se puede editar — no tiene un ID estable de su proveedor de calendario.',
-  'eventModal.errorNoStableIdDelete': 'Este evento no se puede eliminar — no tiene un ID estable de su proveedor de calendario.',
+  'eventModal.errorNoStableIdEdit':
+    'Este evento no se puede editar — no tiene un ID estable de su proveedor de calendario.',
+  'eventModal.errorNoStableIdDelete':
+    'Este evento no se puede eliminar — no tiene un ID estable de su proveedor de calendario.',
   'eventModal.errorSaveFailed': 'No se pudo guardar el evento. Inténtalo de nuevo.',
   'eventModal.errorDeleteFailed': 'No se pudo eliminar el evento. Inténtalo de nuevo.',
 
@@ -192,7 +196,8 @@ export const es: Record<TranslationKey, string> = {
   'settings.appearance.darkModeStartLabel': 'El modo oscuro empieza',
   'settings.appearance.darkModeEndLabel': 'El modo oscuro termina',
   'settings.appearance.fontSizeLabel': 'Tamaño de fuente',
-  'settings.appearance.fontSizeSublabel': 'Ajusta según la distancia de visión en pantallas de pared',
+  'settings.appearance.fontSizeSublabel':
+    'Ajusta según la distancia de visión en pantallas de pared',
   'settings.appearance.fontNormal': 'Normal',
   'settings.appearance.fontLarge': 'Grande',
   'settings.appearance.fontXL': 'XL',
@@ -201,7 +206,8 @@ export const es: Record<TranslationKey, string> = {
   'settings.appearance.right': 'Derecha',
   'settings.appearance.bottom': 'Abajo',
   'settings.appearance.advancedDashboardLabel': 'Panel avanzado',
-  'settings.appearance.advancedDashboardSublabel': 'Activa widgets y diseños de panel personalizables',
+  'settings.appearance.advancedDashboardSublabel':
+    'Activa widgets y diseños de panel personalizables',
 
   // ---- settings: family ----
   'settings.family.title': 'Miembros de la familia',
@@ -213,13 +219,22 @@ export const es: Record<TranslationKey, string> = {
   'settings.family.parent': 'Adulto',
   'settings.family.child': 'Niño/a',
   'settings.family.avatarLabel': 'Avatar',
+  'settings.family.avatarCategory.people': 'Personas',
+  'settings.family.avatarCategory.skinTones': 'Tonos de piel',
+  'settings.family.avatarCategory.faces': 'Caras',
+  'settings.family.avatarCategory.animals': 'Animales',
+  'settings.family.avatarCategory.nature': 'Naturaleza',
+  'settings.family.avatarCategory.sports': 'Deportes y aficiones',
+  'settings.family.avatarCategory.objects': 'Objetos',
+  'settings.family.avatarCategory.food': 'Comida',
   'settings.family.colorLabel': 'Color',
   'settings.family.pinLabel': 'PIN',
   'settings.family.pinSublabel': 'Opcional, 4-6 dígitos',
   'settings.family.calendarLabel': 'Calendario',
   'settings.family.calendarSublabel': 'Vincular a su calendario de HA',
   'settings.family.additionalCalendarsLabel': 'Calendarios adicionales',
-  'settings.family.additionalCalendarsSublabel': 'Agrupa también otros calendarios (p. ej. un equipo deportivo) bajo este miembro',
+  'settings.family.additionalCalendarsSublabel':
+    'Agrupa también otros calendarios (p. ej. un equipo deportivo) bajo este miembro',
   'settings.family.addAnotherCalendar': '+ Añadir otro calendario…',
   'settings.family.namePlaceholder': 'Nombre del miembro de la familia',
   'settings.family.saveChanges': 'Guardar cambios',
@@ -230,7 +245,8 @@ export const es: Record<TranslationKey, string> = {
   'settings.family.selectColor': 'Seleccionar color {color}',
   'settings.family.routinesTitleSuffix': '— Rutinas',
   'settings.family.routinesDesc': 'Listas de mañana y noche mostradas en su pantalla infantil.',
-  'settings.family.routinesEmpty': 'Aún no hay rutinas. Añade una lista de mañana o de antes de dormir.',
+  'settings.family.routinesEmpty':
+    'Aún no hay rutinas. Añade una lista de mañana o de antes de dormir.',
   'settings.family.routineTaskCountSingular': '{n} tarea',
   'settings.family.routineTaskCountPlural': '{n} tareas',
   'settings.family.editRoutine': 'Editar {name}',
@@ -252,9 +268,11 @@ export const es: Record<TranslationKey, string> = {
 
   // ---- settings: calendar ----
   'settings.calendar.title': 'Calendario',
-  'settings.calendar.desc': 'Configura la visualización y los valores predeterminados del calendario.',
+  'settings.calendar.desc':
+    'Configura la visualización y los valores predeterminados del calendario.',
   'settings.calendar.connectedCalendarsTitle': 'Calendarios conectados',
-  'settings.calendar.noCalendars': 'No se encontraron calendarios. Conecta Home Assistant para verlos.',
+  'settings.calendar.noCalendars':
+    'No se encontraron calendarios. Conecta Home Assistant para verlos.',
   'settings.calendar.editColor': 'Editar color del calendario',
   'settings.calendar.editColorFor': 'Editar color de {name}',
   'settings.calendar.setColorTo': 'Poner {name} en {color}',
@@ -290,10 +308,13 @@ export const es: Record<TranslationKey, string> = {
   'settings.integrations.defaultGroceryListSublabel': 'Lista mostrada al abrir la vista de compras',
   'settings.integrations.autoFirstAvailable': 'Automático (primera disponible)',
   'settings.integrations.groceryListsLabel': 'Listas de compras',
-  'settings.integrations.groceryListsSublabel': 'Selecciona qué entidades de tareas de HA son listas de compras',
-  'settings.integrations.noTodoListsFound': 'No se encontraron listas de tareas de HA. Conecta Home Assistant para ver las listas.',
+  'settings.integrations.groceryListsSublabel':
+    'Selecciona qué entidades de tareas de HA son listas de compras',
+  'settings.integrations.noTodoListsFound':
+    'No se encontraron listas de tareas de HA. Conecta Home Assistant para ver las listas.',
   'settings.integrations.shoppingEntityLabel': 'Entidad de la tarjeta de compras',
-  'settings.integrations.shoppingEntitySublabel': 'Lista de tareas de HA para la tarjeta de compras de la barra lateral',
+  'settings.integrations.shoppingEntitySublabel':
+    'Lista de tareas de HA para la tarjeta de compras de la barra lateral',
   'settings.integrations.musicAssistantTitle': 'Music Assistant',
   'settings.integrations.defaultPlayerLabel': 'Reproductor predeterminado',
   'settings.integrations.defaultPlayerSublabel': 'Reproductor multimedia usado por defecto',
@@ -322,14 +343,17 @@ export const es: Record<TranslationKey, string> = {
   'settings.display.kioskModeLabel': 'Modo kiosco',
   'settings.display.kioskModeSublabel': 'Oculta la barra lateral para una pantalla más limpia',
   'settings.display.kidDisplayTitle': 'Pantalla infantil',
-  'settings.display.kidDisplayDesc': 'Bloquea una pantalla de pared a un solo miembro de la familia — solo muestra sus rutinas y tareas.',
+  'settings.display.kidDisplayDesc':
+    'Bloquea una pantalla de pared a un solo miembro de la familia — solo muestra sus rutinas y tareas.',
   'settings.display.familyMemberLabel': 'Miembro de la familia',
   'settings.display.familyMemberSublabel': 'A quién pertenece esta pantalla',
   'settings.display.chooseAMember': 'Elige un miembro…',
   'settings.display.useOnDeviceLabel': 'Usar en este dispositivo',
-  'settings.display.useOnDeviceSublabel': 'Bloquea esta pantalla ahora. Sal más tarde con 5 toques en el reloj.',
+  'settings.display.useOnDeviceSublabel':
+    'Bloquea esta pantalla ahora. Sal más tarde con 5 toques en el reloj.',
   'settings.display.displayUrlLabel': 'URL de la pantalla',
-  'settings.display.displayUrlSublabel': 'Para navegadores en modo kiosco y paneles de pared — guarda como marcador o página de inicio.',
+  'settings.display.displayUrlSublabel':
+    'Para navegadores en modo kiosco y paneles de pared — guarda como marcador o página de inicio.',
   'settings.display.copyUrl': 'Copiar URL',
   'settings.display.copied': '¡Copiado!',
   'settings.display.copyUrlPrompt': 'Copia esta URL:',
@@ -371,7 +395,8 @@ export const es: Record<TranslationKey, string> = {
   'cards.clockWeather.displayName': 'Reloj y Clima',
   'cards.familyCalendar.displayName': 'Calendario Familiar',
   'cards.familyCalendar.showOtherLabel': 'Mostrar otros',
-  'cards.familyCalendar.showOtherDescription': 'Mostrar eventos no asignados a un miembro de la familia',
+  'cards.familyCalendar.showOtherDescription':
+    'Mostrar eventos no asignados a un miembro de la familia',
   'cards.agendaToday.displayName': 'Hoy',
   'cards.agendaWeek.displayName': 'Esta Semana',
   'cards.menu.displayName': 'Menú',
@@ -476,7 +501,8 @@ export const es: Record<TranslationKey, string> = {
 
   // ---- music view ----
   'music.noPlayers': 'Sin reproductores multimedia',
-  'music.noPlayersDesc': 'Conecta un reproductor multimedia en Home Assistant para controlar música desde aquí.',
+  'music.noPlayersDesc':
+    'Conecta un reproductor multimedia en Home Assistant para controlar música desde aquí.',
   'music.selectPlayer': 'Seleccionar reproductor',
   'music.nowPlaying': 'Reproduciendo ahora',
   'music.volume': 'Volumen',
@@ -532,7 +558,9 @@ export const es: Record<TranslationKey, string> = {
   'onboarding.openHA': 'Abrir Home Assistant',
   'onboarding.completeSetup': 'Completar configuración',
   'onboarding.urlError': 'La URL debe comenzar con http:// o https://',
-  'onboarding.connectionFailed': 'Conexión fallida (HTTP {status}). Verifica la URL e intenta nuevamente.',
-  'onboarding.notReachable': 'No se pudo alcanzar Home Assistant. Verifica la URL y asegúrate de que sea accesible.',
+  'onboarding.connectionFailed':
+    'Conexión fallida (HTTP {status}). Verifica la URL e intenta nuevamente.',
+  'onboarding.notReachable':
+    'No se pudo alcanzar Home Assistant. Verifica la URL y asegúrate de que sea accesible.',
   'onboarding.tokenRequired': 'Por favor ingresa tu token de acceso.',
 };

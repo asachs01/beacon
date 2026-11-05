@@ -39,7 +39,8 @@ export const ko: Record<TranslationKey, string> = {
   'app.kidDisplayNotFound': '어린이 화면 구성원을 찾을 수 없습니다 — 전체 앱을 표시합니다.',
   'app.dismiss': '닫기',
   'app.connecting': '연결 중...',
-  'app.choresDisabled': '집안일 기능이 꺼져 있습니다. 이 화면을 사용하려면 설정 → 집안일에서 켜세요.',
+  'app.choresDisabled':
+    '집안일 기능이 꺼져 있습니다. 이 화면을 사용하려면 설정 → 집안일에서 켜세요.',
   'app.demoMode': '데모 모드',
 
   // ---- dashboard / cards ----
@@ -133,8 +134,10 @@ export const ko: Record<TranslationKey, string> = {
   'eventModal.errorEndDateBeforeStart': '종료일은 시작일보다 빠를 수 없습니다.',
   'eventModal.errorEndBeforeStart': '종료 시간은 시작 시간보다 나중이어야 합니다.',
   'eventModal.errorTitleRequired': '제목은 필수입니다.',
-  'eventModal.errorNoStableIdEdit': '이 일정은 편집할 수 없습니다 — 캘린더 제공자로부터 안정적인 ID가 없습니다.',
-  'eventModal.errorNoStableIdDelete': '이 일정은 삭제할 수 없습니다 — 캘린더 제공자로부터 안정적인 ID가 없습니다.',
+  'eventModal.errorNoStableIdEdit':
+    '이 일정은 편집할 수 없습니다 — 캘린더 제공자로부터 안정적인 ID가 없습니다.',
+  'eventModal.errorNoStableIdDelete':
+    '이 일정은 삭제할 수 없습니다 — 캘린더 제공자로부터 안정적인 ID가 없습니다.',
   'eventModal.errorSaveFailed': '일정을 저장하지 못했습니다. 다시 시도해 주세요.',
   'eventModal.errorDeleteFailed': '일정을 삭제하지 못했습니다. 다시 시도해 주세요.',
 
@@ -201,7 +204,8 @@ export const ko: Record<TranslationKey, string> = {
   'settings.appearance.right': '오른쪽',
   'settings.appearance.bottom': '아래쪽',
   'settings.appearance.advancedDashboardLabel': '고급 대시보드',
-  'settings.appearance.advancedDashboardSublabel': '사용자 지정 가능한 대시보드 위젯과 레이아웃을 활성화합니다',
+  'settings.appearance.advancedDashboardSublabel':
+    '사용자 지정 가능한 대시보드 위젯과 레이아웃을 활성화합니다',
 
   // ---- settings: family ----
   'settings.family.title': '가족 구성원',
@@ -213,13 +217,22 @@ export const ko: Record<TranslationKey, string> = {
   'settings.family.parent': '보호자',
   'settings.family.child': '자녀',
   'settings.family.avatarLabel': '아바타',
+  'settings.family.avatarCategory.people': '사람',
+  'settings.family.avatarCategory.skinTones': '피부톤',
+  'settings.family.avatarCategory.faces': '표정',
+  'settings.family.avatarCategory.animals': '동물',
+  'settings.family.avatarCategory.nature': '자연',
+  'settings.family.avatarCategory.sports': '스포츠·취미',
+  'settings.family.avatarCategory.objects': '사물',
+  'settings.family.avatarCategory.food': '음식',
   'settings.family.colorLabel': '색상',
   'settings.family.pinLabel': 'PIN',
   'settings.family.pinSublabel': '선택 사항, 4~6자리',
   'settings.family.calendarLabel': '캘린더',
   'settings.family.calendarSublabel': 'HA 캘린더와 연결합니다',
   'settings.family.additionalCalendarsLabel': '추가 캘린더',
-  'settings.family.additionalCalendarsSublabel': '다른 캘린더(예: 스포츠 팀)도 이 구성원 아래로 함께 묶을 수 있습니다',
+  'settings.family.additionalCalendarsSublabel':
+    '다른 캘린더(예: 스포츠 팀)도 이 구성원 아래로 함께 묶을 수 있습니다',
   'settings.family.addAnotherCalendar': '+ 다른 캘린더 추가…',
   'settings.family.namePlaceholder': '가족 구성원 이름',
   'settings.family.saveChanges': '변경사항 저장',
@@ -254,7 +267,8 @@ export const ko: Record<TranslationKey, string> = {
   'settings.calendar.title': '캘린더',
   'settings.calendar.desc': '캘린더 표시 방식과 기본값을 설정합니다.',
   'settings.calendar.connectedCalendarsTitle': '연결된 캘린더',
-  'settings.calendar.noCalendars': '캘린더를 찾을 수 없습니다. Home Assistant에 연결해 캘린더를 확인하세요.',
+  'settings.calendar.noCalendars':
+    '캘린더를 찾을 수 없습니다. Home Assistant에 연결해 캘린더를 확인하세요.',
   'settings.calendar.editColor': '캘린더 색상 편집',
   'settings.calendar.editColorFor': '{name}의 색상 편집',
   'settings.calendar.setColorTo': '{name}을(를) {color}(으)로 설정',
@@ -290,8 +304,10 @@ export const ko: Record<TranslationKey, string> = {
   'settings.integrations.defaultGroceryListSublabel': '장보기 화면을 열 때 표시되는 목록',
   'settings.integrations.autoFirstAvailable': '자동(첫 번째로 사용 가능한 항목)',
   'settings.integrations.groceryListsLabel': '장보기 목록',
-  'settings.integrations.groceryListsSublabel': '장보기 목록으로 사용할 HA 할 일 엔티티를 선택하세요',
-  'settings.integrations.noTodoListsFound': 'HA 할 일 목록이 없습니다. 목록을 보려면 Home Assistant에 연결하세요.',
+  'settings.integrations.groceryListsSublabel':
+    '장보기 목록으로 사용할 HA 할 일 엔티티를 선택하세요',
+  'settings.integrations.noTodoListsFound':
+    'HA 할 일 목록이 없습니다. 목록을 보려면 Home Assistant에 연결하세요.',
   'settings.integrations.shoppingEntityLabel': '장보기 카드 엔티티',
   'settings.integrations.shoppingEntitySublabel': '사이드바 장보기 카드에 사용할 HA 할 일 목록',
   'settings.integrations.musicAssistantTitle': 'Music Assistant',
@@ -322,14 +338,17 @@ export const ko: Record<TranslationKey, string> = {
   'settings.display.kioskModeLabel': '키오스크 모드',
   'settings.display.kioskModeSublabel': '더 깔끔한 화면을 위해 사이드바를 숨깁니다',
   'settings.display.kidDisplayTitle': '어린이 화면',
-  'settings.display.kidDisplayDesc': '벽걸이 화면을 한 명의 가족 구성원에게 고정하고, 그 사람의 루틴과 집안일만 표시합니다.',
+  'settings.display.kidDisplayDesc':
+    '벽걸이 화면을 한 명의 가족 구성원에게 고정하고, 그 사람의 루틴과 집안일만 표시합니다.',
   'settings.display.familyMemberLabel': '가족 구성원',
   'settings.display.familyMemberSublabel': '이 화면이 속한 구성원',
   'settings.display.chooseAMember': '구성원 선택…',
   'settings.display.useOnDeviceLabel': '이 기기에서 사용',
-  'settings.display.useOnDeviceSublabel': '지금 이 화면을 잠급니다. 나중에 시계를 5번 탭하면 나갈 수 있습니다.',
+  'settings.display.useOnDeviceSublabel':
+    '지금 이 화면을 잠급니다. 나중에 시계를 5번 탭하면 나갈 수 있습니다.',
   'settings.display.displayUrlLabel': '디스플레이 URL',
-  'settings.display.displayUrlSublabel': '키오스크 브라우저와 벽걸이 패널용입니다 — 즐겨찾기하거나 홈페이지로 설정하세요.',
+  'settings.display.displayUrlSublabel':
+    '키오스크 브라우저와 벽걸이 패널용입니다 — 즐겨찾기하거나 홈페이지로 설정하세요.',
   'settings.display.copyUrl': 'URL 복사',
   'settings.display.copied': '복사됨!',
   'settings.display.copyUrlPrompt': '이 URL을 복사하세요:',
@@ -476,7 +495,8 @@ export const ko: Record<TranslationKey, string> = {
 
   // ---- music view ----
   'music.noPlayers': '미디어 플레이어 없음',
-  'music.noPlayersDesc': 'Home Assistant에서 미디어 플레이어를 연결하여 여기에서 음악을 제어하세요.',
+  'music.noPlayersDesc':
+    'Home Assistant에서 미디어 플레이어를 연결하여 여기에서 음악을 제어하세요.',
   'music.selectPlayer': '플레이어 선택',
   'music.nowPlaying': '재생 중',
   'music.volume': '볼륨',
@@ -533,6 +553,7 @@ export const ko: Record<TranslationKey, string> = {
   'onboarding.completeSetup': '설정 완료',
   'onboarding.urlError': 'URL은 http:// 또는 https://로 시작해야 합니다',
   'onboarding.connectionFailed': '연결 실패 (HTTP {status}). URL을 확인하고 다시 시도하세요.',
-  'onboarding.notReachable': 'Home Assistant에 연결할 수 없습니다. URL을 확인하고 접근 가능한지 확인하세요.',
+  'onboarding.notReachable':
+    'Home Assistant에 연결할 수 없습니다. URL을 확인하고 접근 가능한지 확인하세요.',
   'onboarding.tokenRequired': '액세스 토큰을 입력하세요.',
 };

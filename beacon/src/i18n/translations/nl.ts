@@ -23,7 +23,7 @@ export const nl: Record<TranslationKey, string> = {
   'nav.dashboard': 'Dashboard',
   'nav.calendar': 'Agenda',
   'nav.chores': 'Klusjes',
-  'nav.grocery': "Lijsten",
+  'nav.grocery': 'Lijsten',
   'nav.tasks': 'Taken',
   'nav.leaderboard': 'Ranglijst',
   'nav.music': 'Muziek',
@@ -39,7 +39,8 @@ export const nl: Record<TranslationKey, string> = {
   'app.kidDisplayNotFound': 'Lid voor kinderscherm niet gevonden — de volledige app wordt getoond.',
   'app.dismiss': 'Negeren',
   'app.connecting': 'Verbinden...',
-  'app.choresDisabled': 'Klusjes zijn uitgeschakeld. Schakel ze in bij Instellingen → Klusjes om dit scherm te gebruiken.',
+  'app.choresDisabled':
+    'Klusjes zijn uitgeschakeld. Schakel ze in bij Instellingen → Klusjes om dit scherm te gebruiken.',
   'app.demoMode': 'Demomodus',
 
   // ---- dashboard / cards ----
@@ -133,8 +134,10 @@ export const nl: Record<TranslationKey, string> = {
   'eventModal.errorEndDateBeforeStart': 'De einddatum mag niet vóór de startdatum liggen.',
   'eventModal.errorEndBeforeStart': 'De eindtijd moet na de starttijd liggen.',
   'eventModal.errorTitleRequired': 'Titel is verplicht.',
-  'eventModal.errorNoStableIdEdit': 'Deze afspraak kan niet worden bewerkt — er is geen stabiele ID van de agendabron.',
-  'eventModal.errorNoStableIdDelete': 'Deze afspraak kan niet worden verwijderd — er is geen stabiele ID van de agendabron.',
+  'eventModal.errorNoStableIdEdit':
+    'Deze afspraak kan niet worden bewerkt — er is geen stabiele ID van de agendabron.',
+  'eventModal.errorNoStableIdDelete':
+    'Deze afspraak kan niet worden verwijderd — er is geen stabiele ID van de agendabron.',
   'eventModal.errorSaveFailed': 'Afspraak opslaan is mislukt. Probeer het opnieuw.',
   'eventModal.errorDeleteFailed': 'Afspraak verwijderen is mislukt. Probeer het opnieuw.',
 
@@ -201,7 +204,8 @@ export const nl: Record<TranslationKey, string> = {
   'settings.appearance.right': 'Rechts',
   'settings.appearance.bottom': 'Onder',
   'settings.appearance.advancedDashboardLabel': 'Geavanceerd dashboard',
-  'settings.appearance.advancedDashboardSublabel': 'Schakel aanpasbare dashboardwidgets en -indelingen in',
+  'settings.appearance.advancedDashboardSublabel':
+    'Schakel aanpasbare dashboardwidgets en -indelingen in',
 
   // ---- settings: family ----
   'settings.family.title': 'Gezinsleden',
@@ -213,14 +217,23 @@ export const nl: Record<TranslationKey, string> = {
   'settings.family.parent': 'Ouder',
   'settings.family.child': 'Kind',
   'settings.family.avatarLabel': 'Avatar',
+  'settings.family.avatarCategory.people': 'Personen',
+  'settings.family.avatarCategory.skinTones': 'Huidtinten',
+  'settings.family.avatarCategory.faces': 'Gezichten',
+  'settings.family.avatarCategory.animals': 'Dieren',
+  'settings.family.avatarCategory.nature': 'Natuur',
+  'settings.family.avatarCategory.sports': "Sport & hobby's",
+  'settings.family.avatarCategory.objects': 'Voorwerpen',
+  'settings.family.avatarCategory.food': 'Eten',
   'settings.family.colorLabel': 'Kleur',
   'settings.family.pinLabel': 'PIN',
   'settings.family.pinSublabel': 'Optioneel, 4-6 cijfers',
   'settings.family.calendarLabel': 'Agenda',
   'settings.family.calendarSublabel': 'Koppelen aan hun HA-agenda',
   'settings.family.additionalCalendarsLabel': "Extra agenda's",
-  'settings.family.additionalCalendarsSublabel': "Groepeer ook andere agenda's (bijv. een sportteam) onder dit lid",
-  'settings.family.addAnotherCalendar': "+ Nog een agenda toevoegen…",
+  'settings.family.additionalCalendarsSublabel':
+    "Groepeer ook andere agenda's (bijv. een sportteam) onder dit lid",
+  'settings.family.addAnotherCalendar': '+ Nog een agenda toevoegen…',
   'settings.family.namePlaceholder': 'Naam van gezinslid',
   'settings.family.saveChanges': 'Wijzigingen opslaan',
   'settings.family.addMemberBtn': 'Lid toevoegen',
@@ -229,7 +242,7 @@ export const nl: Record<TranslationKey, string> = {
   'settings.family.deleteMember': '{name} verwijderen',
   'settings.family.selectColor': 'Kleur {color} selecteren',
   'settings.family.routinesTitleSuffix': '— Routines',
-  'settings.family.routinesDesc': "Ochtend- en avondchecklists op hun kinderscherm.",
+  'settings.family.routinesDesc': 'Ochtend- en avondchecklists op hun kinderscherm.',
   'settings.family.routinesEmpty': 'Nog geen routines. Voeg een ochtend- of avondchecklist toe.',
   'settings.family.routineTaskCountSingular': '{n} taak',
   'settings.family.routineTaskCountPlural': '{n} taken',
@@ -254,7 +267,8 @@ export const nl: Record<TranslationKey, string> = {
   'settings.calendar.title': 'Agenda',
   'settings.calendar.desc': 'Configureer de agendaweergave en standaardwaarden.',
   'settings.calendar.connectedCalendarsTitle': "Gekoppelde agenda's",
-  'settings.calendar.noCalendars': "Geen agenda's gevonden. Verbind Home Assistant om agenda's te zien.",
+  'settings.calendar.noCalendars':
+    "Geen agenda's gevonden. Verbind Home Assistant om agenda's te zien.",
   'settings.calendar.editColor': 'Agendakleur bewerken',
   'settings.calendar.editColorFor': 'Kleur van {name} bewerken',
   'settings.calendar.setColorTo': '{name} instellen op {color}',
@@ -287,19 +301,23 @@ export const nl: Record<TranslationKey, string> = {
   'settings.integrations.anylistSublabel': 'Gedeelde boodschappenlijsten',
   'settings.integrations.groceryTitle': 'Boodschappen',
   'settings.integrations.defaultGroceryListLabel': 'Standaard boodschappenlijst',
-  'settings.integrations.defaultGroceryListSublabel': 'Lijst die wordt getoond bij het openen van de boodschappenweergave',
+  'settings.integrations.defaultGroceryListSublabel':
+    'Lijst die wordt getoond bij het openen van de boodschappenweergave',
   'settings.integrations.autoFirstAvailable': 'Automatisch (eerste beschikbare)',
   'settings.integrations.groceryListsLabel': 'Boodschappenlijsten',
-  'settings.integrations.groceryListsSublabel': 'Kies welke HA-takenentiteiten boodschappenlijsten zijn',
-  'settings.integrations.noTodoListsFound': 'Geen HA-takenlijsten gevonden. Verbind Home Assistant om lijsten te zien.',
+  'settings.integrations.groceryListsSublabel':
+    'Kies welke HA-takenentiteiten boodschappenlijsten zijn',
+  'settings.integrations.noTodoListsFound':
+    'Geen HA-takenlijsten gevonden. Verbind Home Assistant om lijsten te zien.',
   'settings.integrations.shoppingEntityLabel': 'Entiteit voor boodschappenkaart',
-  'settings.integrations.shoppingEntitySublabel': 'HA-takenlijst voor de boodschappenkaart in de zijbalk',
+  'settings.integrations.shoppingEntitySublabel':
+    'HA-takenlijst voor de boodschappenkaart in de zijbalk',
   'settings.integrations.musicAssistantTitle': 'Music Assistant',
   'settings.integrations.defaultPlayerLabel': 'Standaardspeler',
   'settings.integrations.defaultPlayerSublabel': 'Standaard gebruikte mediaspeler',
   'settings.integrations.photosTitle': "Foto's",
   'settings.integrations.sourceDirectoryLabel': 'Bronmap',
-  'settings.integrations.sourceDirectorySublabel': "Pad naar de fotomap op HA",
+  'settings.integrations.sourceDirectorySublabel': 'Pad naar de fotomap op HA',
   'settings.integrations.slideshowIntervalLabel': 'Diavoorstellingsinterval',
   'settings.integrations.slideshowIntervalSublabel': 'Seconden tussen fotowisselingen',
   'settings.integrations.transitionStyleLabel': 'Overgangsstijl',
@@ -322,14 +340,17 @@ export const nl: Record<TranslationKey, string> = {
   'settings.display.kioskModeLabel': 'Kioskmodus',
   'settings.display.kioskModeSublabel': 'Verbergt de zijbalk voor een opgeruimder scherm',
   'settings.display.kidDisplayTitle': 'Kinderscherm',
-  'settings.display.kidDisplayDesc': 'Vergrendel een wandscherm voor één gezinslid — toont alleen diens routines en klusjes.',
+  'settings.display.kidDisplayDesc':
+    'Vergrendel een wandscherm voor één gezinslid — toont alleen diens routines en klusjes.',
   'settings.display.familyMemberLabel': 'Gezinslid',
   'settings.display.familyMemberSublabel': 'Van wie dit scherm is',
   'settings.display.chooseAMember': 'Kies een lid…',
   'settings.display.useOnDeviceLabel': 'Gebruiken op dit apparaat',
-  'settings.display.useOnDeviceSublabel': 'Vergrendelt dit scherm nu. Later verlaten met 5 tikken op de klok.',
+  'settings.display.useOnDeviceSublabel':
+    'Vergrendelt dit scherm nu. Later verlaten met 5 tikken op de klok.',
   'settings.display.displayUrlLabel': 'Scherm-URL',
-  'settings.display.displayUrlSublabel': "Voor kioskbrowsers en wandpanelen — sla op als bladwijzer of startpagina.",
+  'settings.display.displayUrlSublabel':
+    'Voor kioskbrowsers en wandpanelen — sla op als bladwijzer of startpagina.',
   'settings.display.copyUrl': 'URL kopiëren',
   'settings.display.copied': 'Gekopieerd!',
   'settings.display.copyUrlPrompt': 'Kopieer deze URL:',
@@ -371,7 +392,8 @@ export const nl: Record<TranslationKey, string> = {
   'cards.clockWeather.displayName': 'Klok & Weer',
   'cards.familyCalendar.displayName': 'Gezinskalender',
   'cards.familyCalendar.showOtherLabel': 'Overige tonen',
-  'cards.familyCalendar.showOtherDescription': 'Toon afspraken die niet aan een gezinslid zijn toegewezen',
+  'cards.familyCalendar.showOtherDescription':
+    'Toon afspraken die niet aan een gezinslid zijn toegewezen',
   'cards.agendaToday.displayName': 'Vandaag',
   'cards.agendaWeek.displayName': 'Deze Week',
   'cards.menu.displayName': 'Menu',
@@ -423,8 +445,8 @@ export const nl: Record<TranslationKey, string> = {
   'countdown.days': 'dagen',
   'countdown.remove': 'Verwijderen',
   'countdown.removeNamed': '{name} verwijderen',
-  'photoFrame.noPhotos': 'Geen foto\'s beschikbaar',
-  'photoFrame.addPhotosHint': 'Voeg foto\'s toe aan je Home Assistant-mediamap',
+  'photoFrame.noPhotos': "Geen foto's beschikbaar",
+  'photoFrame.addPhotosHint': "Voeg foto's toe aan je Home Assistant-mediamap",
   'photoFrame.backToDashboard': 'Terug naar dashboard',
   'photoFrame.photoAlt': 'Foto',
   'photoFrame.previousPhoto': 'Vorige foto',
@@ -532,7 +554,9 @@ export const nl: Record<TranslationKey, string> = {
   'onboarding.openHA': 'Home Assistant openen',
   'onboarding.completeSetup': 'Installatie voltooien',
   'onboarding.urlError': 'URL moet beginnen met http:// of https://',
-  'onboarding.connectionFailed': 'Verbinding mislukt (HTTP {status}). Controleer de URL en probeer opnieuw.',
-  'onboarding.notReachable': 'Kan Home Assistant niet bereiken. Controleer de URL en zorg ervoor dat het toegankelijk is.',
+  'onboarding.connectionFailed':
+    'Verbinding mislukt (HTTP {status}). Controleer de URL en probeer opnieuw.',
+  'onboarding.notReachable':
+    'Kan Home Assistant niet bereiken. Controleer de URL en zorg ervoor dat het toegankelijk is.',
   'onboarding.tokenRequired': 'Voer je toegangstoken in.',
 };

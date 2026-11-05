@@ -36,7 +36,8 @@ export const ja: Record<TranslationKey, string> = {
   'nav.mainNavigation': 'メインナビゲーション',
 
   // ---- app chrome ----
-  'app.kidDisplayNotFound': '子供用ディスプレイのメンバーが見つかりません — 通常のアプリを表示します。',
+  'app.kidDisplayNotFound':
+    '子供用ディスプレイのメンバーが見つかりません — 通常のアプリを表示します。',
   'app.dismiss': '閉じる',
   'app.connecting': '接続中...',
   'app.choresDisabled': '家事機能は無効です。この画面を使うには設定 → 家事で有効にしてください。',
@@ -133,8 +134,10 @@ export const ja: Record<TranslationKey, string> = {
   'eventModal.errorEndDateBeforeStart': '終了日を開始日より前にすることはできません。',
   'eventModal.errorEndBeforeStart': '終了時刻は開始時刻より後にしてください。',
   'eventModal.errorTitleRequired': 'タイトルは必須です。',
-  'eventModal.errorNoStableIdEdit': 'この予定は編集できません — カレンダー提供元の安定したIDがありません。',
-  'eventModal.errorNoStableIdDelete': 'この予定は削除できません — カレンダー提供元の安定したIDがありません。',
+  'eventModal.errorNoStableIdEdit':
+    'この予定は編集できません — カレンダー提供元の安定したIDがありません。',
+  'eventModal.errorNoStableIdDelete':
+    'この予定は削除できません — カレンダー提供元の安定したIDがありません。',
   'eventModal.errorSaveFailed': '予定の保存に失敗しました。もう一度お試しください。',
   'eventModal.errorDeleteFailed': '予定の削除に失敗しました。もう一度お試しください。',
 
@@ -201,7 +204,8 @@ export const ja: Record<TranslationKey, string> = {
   'settings.appearance.right': '右',
   'settings.appearance.bottom': '下',
   'settings.appearance.advancedDashboardLabel': '高度なダッシュボード',
-  'settings.appearance.advancedDashboardSublabel': 'カスタマイズ可能なダッシュボードウィジェットとレイアウトを有効にします',
+  'settings.appearance.advancedDashboardSublabel':
+    'カスタマイズ可能なダッシュボードウィジェットとレイアウトを有効にします',
 
   // ---- settings: family ----
   'settings.family.title': '家族メンバー',
@@ -213,13 +217,22 @@ export const ja: Record<TranslationKey, string> = {
   'settings.family.parent': '保護者',
   'settings.family.child': '子供',
   'settings.family.avatarLabel': 'アバター',
+  'settings.family.avatarCategory.people': '人々',
+  'settings.family.avatarCategory.skinTones': '肌の色',
+  'settings.family.avatarCategory.faces': '顔',
+  'settings.family.avatarCategory.animals': '動物',
+  'settings.family.avatarCategory.nature': '自然',
+  'settings.family.avatarCategory.sports': 'スポーツ・趣味',
+  'settings.family.avatarCategory.objects': 'もの',
+  'settings.family.avatarCategory.food': '食べ物',
   'settings.family.colorLabel': '色',
   'settings.family.pinLabel': 'PIN',
   'settings.family.pinSublabel': '任意、4〜6桁',
   'settings.family.calendarLabel': 'カレンダー',
   'settings.family.calendarSublabel': 'HAのカレンダーと連携します',
   'settings.family.additionalCalendarsLabel': '追加のカレンダー',
-  'settings.family.additionalCalendarsSublabel': '他のカレンダー(例: スポーツチーム)もこのメンバーにまとめて表示できます',
+  'settings.family.additionalCalendarsSublabel':
+    '他のカレンダー(例: スポーツチーム)もこのメンバーにまとめて表示できます',
   'settings.family.addAnotherCalendar': '+ 別のカレンダーを追加…',
   'settings.family.namePlaceholder': '家族メンバーの名前',
   'settings.family.saveChanges': '変更を保存',
@@ -230,7 +243,8 @@ export const ja: Record<TranslationKey, string> = {
   'settings.family.selectColor': '色{color}を選択',
   'settings.family.routinesTitleSuffix': '— ルーティン',
   'settings.family.routinesDesc': '子供用ディスプレイに表示される朝と夜のチェックリストです。',
-  'settings.family.routinesEmpty': 'まだルーティンがありません。朝や就寝前のチェックリストを追加しましょう。',
+  'settings.family.routinesEmpty':
+    'まだルーティンがありません。朝や就寝前のチェックリストを追加しましょう。',
   'settings.family.routineTaskCountSingular': '{n}件のタスク',
   'settings.family.routineTaskCountPlural': '{n}件のタスク',
   'settings.family.editRoutine': '{name}を編集',
@@ -290,10 +304,13 @@ export const ja: Record<TranslationKey, string> = {
   'settings.integrations.defaultGroceryListSublabel': '買い物画面を開いたときに表示されるリスト',
   'settings.integrations.autoFirstAvailable': '自動(最初に利用可能なもの)',
   'settings.integrations.groceryListsLabel': '買い物リスト',
-  'settings.integrations.groceryListsSublabel': '買い物リストとして使う HA の ToDo エンティティを選択',
-  'settings.integrations.noTodoListsFound': 'HA の ToDo リストが見つかりません。リストを表示するには Home Assistant に接続してください。',
+  'settings.integrations.groceryListsSublabel':
+    '買い物リストとして使う HA の ToDo エンティティを選択',
+  'settings.integrations.noTodoListsFound':
+    'HA の ToDo リストが見つかりません。リストを表示するには Home Assistant に接続してください。',
   'settings.integrations.shoppingEntityLabel': '買い物カードのエンティティ',
-  'settings.integrations.shoppingEntitySublabel': 'サイドバーの買い物カードに使う HA の ToDo リスト',
+  'settings.integrations.shoppingEntitySublabel':
+    'サイドバーの買い物カードに使う HA の ToDo リスト',
   'settings.integrations.musicAssistantTitle': 'Music Assistant',
   'settings.integrations.defaultPlayerLabel': 'デフォルトのプレーヤー',
   'settings.integrations.defaultPlayerSublabel': '標準で使用するメディアプレーヤー',
@@ -322,14 +339,17 @@ export const ja: Record<TranslationKey, string> = {
   'settings.display.kioskModeLabel': 'キオスクモード',
   'settings.display.kioskModeSublabel': 'サイドバーを非表示にしてすっきり表示します',
   'settings.display.kidDisplayTitle': '子供用ディスプレイ',
-  'settings.display.kidDisplayDesc': '壁掛けディスプレイを1人の家族メンバーに固定し、その人のルーティンと家事のみを表示します。',
+  'settings.display.kidDisplayDesc':
+    '壁掛けディスプレイを1人の家族メンバーに固定し、その人のルーティンと家事のみを表示します。',
   'settings.display.familyMemberLabel': '家族メンバー',
   'settings.display.familyMemberSublabel': 'このディスプレイの所有者',
   'settings.display.chooseAMember': 'メンバーを選択…',
   'settings.display.useOnDeviceLabel': 'このデバイスで使用',
-  'settings.display.useOnDeviceSublabel': '今すぐこの画面をロックします。時計を5回タップすると後で解除できます。',
+  'settings.display.useOnDeviceSublabel':
+    '今すぐこの画面をロックします。時計を5回タップすると後で解除できます。',
   'settings.display.displayUrlLabel': 'ディスプレイのURL',
-  'settings.display.displayUrlSublabel': 'キオスクブラウザや壁掛けパネル用です — ブックマークまたはホームページに設定してください。',
+  'settings.display.displayUrlSublabel':
+    'キオスクブラウザや壁掛けパネル用です — ブックマークまたはホームページに設定してください。',
   'settings.display.copyUrl': 'URLをコピー',
   'settings.display.copied': 'コピーしました!',
   'settings.display.copyUrlPrompt': 'このURLをコピーしてください:',
@@ -371,7 +391,8 @@ export const ja: Record<TranslationKey, string> = {
   'cards.clockWeather.displayName': '時計と天気',
   'cards.familyCalendar.displayName': '家族カレンダー',
   'cards.familyCalendar.showOtherLabel': 'その他を表示',
-  'cards.familyCalendar.showOtherDescription': '家族のメンバーに割り当てられていない予定を表示します',
+  'cards.familyCalendar.showOtherDescription':
+    '家族のメンバーに割り当てられていない予定を表示します',
   'cards.agendaToday.displayName': '今日',
   'cards.agendaWeek.displayName': '今週',
   'cards.menu.displayName': 'メニュー',
@@ -476,7 +497,8 @@ export const ja: Record<TranslationKey, string> = {
 
   // ---- music view ----
   'music.noPlayers': 'メディアプレーヤーがありません',
-  'music.noPlayersDesc': 'Home Assistantでメディアプレーヤーを接続して、ここから音楽を制御してください。',
+  'music.noPlayersDesc':
+    'Home Assistantでメディアプレーヤーを接続して、ここから音楽を制御してください。',
   'music.selectPlayer': 'プレーヤーを選択',
   'music.nowPlaying': '再生中',
   'music.volume': '音量',
@@ -532,7 +554,9 @@ export const ja: Record<TranslationKey, string> = {
   'onboarding.openHA': 'Home Assistantを開く',
   'onboarding.completeSetup': 'セットアップを完了',
   'onboarding.urlError': 'URLはhttp://またはhttps://で始まる必要があります',
-  'onboarding.connectionFailed': '接続に失敗しました（HTTP {status}）。URLを確認して再試行してください。',
-  'onboarding.notReachable': 'Home Assistantに到達できませんでした。URLを確認し、アクセス可能であることを確認してください。',
+  'onboarding.connectionFailed':
+    '接続に失敗しました（HTTP {status}）。URLを確認して再試行してください。',
+  'onboarding.notReachable':
+    'Home Assistantに到達できませんでした。URLを確認し、アクセス可能であることを確認してください。',
   'onboarding.tokenRequired': 'アクセストークンを入力してください。',
 };

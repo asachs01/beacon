@@ -36,10 +36,12 @@ export const it: Record<TranslationKey, string> = {
   'nav.mainNavigation': 'Navigazione principale',
 
   // ---- app chrome ----
-  'app.kidDisplayNotFound': 'Membro per lo schermo bambini non trovato — viene mostrata l\'app completa.',
+  'app.kidDisplayNotFound':
+    "Membro per lo schermo bambini non trovato — viene mostrata l'app completa.",
   'app.dismiss': 'Ignora',
   'app.connecting': 'Connessione in corso...',
-  'app.choresDisabled': 'Le faccende sono disattivate. Attivale in Impostazioni → Faccende per usare questa schermata.',
+  'app.choresDisabled':
+    'Le faccende sono disattivate. Attivale in Impostazioni → Faccende per usare questa schermata.',
   'app.demoMode': 'Modalità demo',
 
   // ---- dashboard / cards ----
@@ -59,7 +61,8 @@ export const it: Record<TranslationKey, string> = {
   'dashboard.completedItem': '{name} completato',
   'dashboard.completeItem': 'Completa {name}',
   'dashboard.shopping': 'Spesa',
-  'dashboard.shoppingNotConfigured': 'Configura una lista della spesa in Impostazioni → Integrazioni',
+  'dashboard.shoppingNotConfigured':
+    'Configura una lista della spesa in Impostazioni → Integrazioni',
   'dashboard.shoppingAddItemPlaceholder': 'Aggiungi articolo...',
   'dashboard.shoppingAddItem': 'Aggiungi articolo',
   'dashboard.shoppingLoading': 'Caricamento articoli...',
@@ -115,7 +118,7 @@ export const it: Record<TranslationKey, string> = {
   'weekCalendar.addEventOnAt': 'Aggiungi evento il {day} alle {time}',
 
   // ---- event modal ----
-  'eventModal.editTitle': "Dettagli evento",
+  'eventModal.editTitle': 'Dettagli evento',
   'eventModal.newTitle': 'Nuovo evento',
   'eventModal.titleLabel': 'Titolo',
   'eventModal.titlePlaceholder': "Titolo dell'evento",
@@ -130,11 +133,14 @@ export const it: Record<TranslationKey, string> = {
   'eventModal.repeatUntilLabel': 'Ripeti fino al',
   'eventModal.descriptionLabel': 'Descrizione',
   'eventModal.descriptionPlaceholder': 'Aggiungi una descrizione...',
-  'eventModal.errorEndDateBeforeStart': 'La data di fine non può essere precedente alla data di inizio.',
+  'eventModal.errorEndDateBeforeStart':
+    'La data di fine non può essere precedente alla data di inizio.',
   'eventModal.errorEndBeforeStart': "L'orario di fine deve essere successivo all'orario di inizio.",
   'eventModal.errorTitleRequired': 'Il titolo è obbligatorio.',
-  'eventModal.errorNoStableIdEdit': "Questo evento non può essere modificato — non ha un ID stabile dal suo provider di calendario.",
-  'eventModal.errorNoStableIdDelete': "Questo evento non può essere eliminato — non ha un ID stabile dal suo provider di calendario.",
+  'eventModal.errorNoStableIdEdit':
+    'Questo evento non può essere modificato — non ha un ID stabile dal suo provider di calendario.',
+  'eventModal.errorNoStableIdDelete':
+    'Questo evento non può essere eliminato — non ha un ID stabile dal suo provider di calendario.',
   'eventModal.errorSaveFailed': "Impossibile salvare l'evento. Riprova.",
   'eventModal.errorDeleteFailed': "Impossibile eliminare l'evento. Riprova.",
 
@@ -192,7 +198,8 @@ export const it: Record<TranslationKey, string> = {
   'settings.appearance.darkModeStartLabel': 'La modalità scura inizia',
   'settings.appearance.darkModeEndLabel': 'La modalità scura termina',
   'settings.appearance.fontSizeLabel': 'Dimensione del testo',
-  'settings.appearance.fontSizeSublabel': 'Regola in base alla distanza di visione sui display a parete',
+  'settings.appearance.fontSizeSublabel':
+    'Regola in base alla distanza di visione sui display a parete',
   'settings.appearance.fontNormal': 'Normale',
   'settings.appearance.fontLarge': 'Grande',
   'settings.appearance.fontXL': 'XL',
@@ -201,7 +208,8 @@ export const it: Record<TranslationKey, string> = {
   'settings.appearance.right': 'Destra',
   'settings.appearance.bottom': 'In basso',
   'settings.appearance.advancedDashboardLabel': 'Bacheca avanzata',
-  'settings.appearance.advancedDashboardSublabel': 'Attiva widget e layout della bacheca personalizzabili',
+  'settings.appearance.advancedDashboardSublabel':
+    'Attiva widget e layout della bacheca personalizzabili',
 
   // ---- settings: family ----
   'settings.family.title': 'Membri della famiglia',
@@ -213,13 +221,22 @@ export const it: Record<TranslationKey, string> = {
   'settings.family.parent': 'Genitore',
   'settings.family.child': 'Bambino/a',
   'settings.family.avatarLabel': 'Avatar',
+  'settings.family.avatarCategory.people': 'Persone',
+  'settings.family.avatarCategory.skinTones': 'Carnagioni',
+  'settings.family.avatarCategory.faces': 'Volti',
+  'settings.family.avatarCategory.animals': 'Animali',
+  'settings.family.avatarCategory.nature': 'Natura',
+  'settings.family.avatarCategory.sports': 'Sport e hobby',
+  'settings.family.avatarCategory.objects': 'Oggetti',
+  'settings.family.avatarCategory.food': 'Cibo',
   'settings.family.colorLabel': 'Colore',
   'settings.family.pinLabel': 'PIN',
   'settings.family.pinSublabel': 'Opzionale, 4-6 cifre',
   'settings.family.calendarLabel': 'Calendario',
   'settings.family.calendarSublabel': 'Collega al loro calendario HA',
   'settings.family.additionalCalendarsLabel': 'Calendari aggiuntivi',
-  'settings.family.additionalCalendarsSublabel': 'Raggruppa anche altri calendari (es. una squadra sportiva) sotto questo membro',
+  'settings.family.additionalCalendarsSublabel':
+    'Raggruppa anche altri calendari (es. una squadra sportiva) sotto questo membro',
   'settings.family.addAnotherCalendar': '+ Aggiungi un altro calendario…',
   'settings.family.namePlaceholder': 'Nome del membro della famiglia',
   'settings.family.saveChanges': 'Salva modifiche',
@@ -229,7 +246,8 @@ export const it: Record<TranslationKey, string> = {
   'settings.family.deleteMember': 'Elimina {name}',
   'settings.family.selectColor': 'Seleziona colore {color}',
   'settings.family.routinesTitleSuffix': '— Routine',
-  'settings.family.routinesDesc': 'Liste del mattino e della sera mostrate sul loro display bambini.',
+  'settings.family.routinesDesc':
+    'Liste del mattino e della sera mostrate sul loro display bambini.',
   'settings.family.routinesEmpty': 'Nessuna routine ancora. Aggiungi una lista mattutina o serale.',
   'settings.family.routineTaskCountSingular': '{n} attività',
   'settings.family.routineTaskCountPlural': '{n} attività',
@@ -254,7 +272,8 @@ export const it: Record<TranslationKey, string> = {
   'settings.calendar.title': 'Calendario',
   'settings.calendar.desc': 'Configura la visualizzazione e i valori predefiniti del calendario.',
   'settings.calendar.connectedCalendarsTitle': 'Calendari collegati',
-  'settings.calendar.noCalendars': 'Nessun calendario trovato. Collega Home Assistant per vedere i calendari.',
+  'settings.calendar.noCalendars':
+    'Nessun calendario trovato. Collega Home Assistant per vedere i calendari.',
   'settings.calendar.editColor': 'Modifica colore calendario',
   'settings.calendar.editColorFor': 'Modifica colore di {name}',
   'settings.calendar.setColorTo': 'Imposta {name} su {color}',
@@ -290,13 +309,17 @@ export const it: Record<TranslationKey, string> = {
   'settings.integrations.defaultGroceryListSublabel': 'Lista mostrata aprendo la vista spesa',
   'settings.integrations.autoFirstAvailable': 'Automatico (prima disponibile)',
   'settings.integrations.groceryListsLabel': 'Liste della spesa',
-  'settings.integrations.groceryListsSublabel': 'Seleziona quali entità di attività HA sono liste della spesa',
-  'settings.integrations.noTodoListsFound': 'Nessuna lista di attività HA trovata. Connetti Home Assistant per vedere le liste.',
+  'settings.integrations.groceryListsSublabel':
+    'Seleziona quali entità di attività HA sono liste della spesa',
+  'settings.integrations.noTodoListsFound':
+    'Nessuna lista di attività HA trovata. Connetti Home Assistant per vedere le liste.',
   'settings.integrations.shoppingEntityLabel': 'Entità della scheda Spesa',
-  'settings.integrations.shoppingEntitySublabel': 'Lista di attività HA per la scheda Spesa nella barra laterale',
+  'settings.integrations.shoppingEntitySublabel':
+    'Lista di attività HA per la scheda Spesa nella barra laterale',
   'settings.integrations.musicAssistantTitle': 'Music Assistant',
   'settings.integrations.defaultPlayerLabel': 'Player predefinito',
-  'settings.integrations.defaultPlayerSublabel': 'Player multimediale usato per impostazione predefinita',
+  'settings.integrations.defaultPlayerSublabel':
+    'Player multimediale usato per impostazione predefinita',
   'settings.integrations.photosTitle': 'Foto',
   'settings.integrations.sourceDirectoryLabel': 'Cartella di origine',
   'settings.integrations.sourceDirectorySublabel': 'Percorso della cartella foto su HA',
@@ -322,14 +345,17 @@ export const it: Record<TranslationKey, string> = {
   'settings.display.kioskModeLabel': 'Modalità chiosco',
   'settings.display.kioskModeSublabel': 'Nasconde la barra laterale per un display più pulito',
   'settings.display.kidDisplayTitle': 'Display bambini',
-  'settings.display.kidDisplayDesc': 'Blocca uno schermo a parete su un solo membro della famiglia — mostra solo le sue routine e faccende.',
+  'settings.display.kidDisplayDesc':
+    'Blocca uno schermo a parete su un solo membro della famiglia — mostra solo le sue routine e faccende.',
   'settings.display.familyMemberLabel': 'Membro della famiglia',
   'settings.display.familyMemberSublabel': 'A chi appartiene questo display',
   'settings.display.chooseAMember': 'Scegli un membro…',
   'settings.display.useOnDeviceLabel': 'Usa su questo dispositivo',
-  'settings.display.useOnDeviceSublabel': "Blocca subito questo schermo. Esci più tardi con 5 tocchi sull'orologio.",
+  'settings.display.useOnDeviceSublabel':
+    "Blocca subito questo schermo. Esci più tardi con 5 tocchi sull'orologio.",
   'settings.display.displayUrlLabel': 'URL del display',
-  'settings.display.displayUrlSublabel': 'Per browser in modalità chiosco e pannelli a parete — salva come preferito o pagina iniziale.',
+  'settings.display.displayUrlSublabel':
+    'Per browser in modalità chiosco e pannelli a parete — salva come preferito o pagina iniziale.',
   'settings.display.copyUrl': 'Copia URL',
   'settings.display.copied': 'Copiato!',
   'settings.display.copyUrlPrompt': 'Copia questo URL:',
@@ -371,7 +397,8 @@ export const it: Record<TranslationKey, string> = {
   'cards.clockWeather.displayName': 'Orologio e Meteo',
   'cards.familyCalendar.displayName': 'Calendario di Famiglia',
   'cards.familyCalendar.showOtherLabel': 'Mostra altri',
-  'cards.familyCalendar.showOtherDescription': 'Mostra eventi non assegnati a un membro della famiglia',
+  'cards.familyCalendar.showOtherDescription':
+    'Mostra eventi non assegnati a un membro della famiglia',
   'cards.agendaToday.displayName': 'Oggi',
   'cards.agendaWeek.displayName': 'Questa Settimana',
   'cards.menu.displayName': 'Menu',
@@ -476,7 +503,8 @@ export const it: Record<TranslationKey, string> = {
 
   // ---- music view ----
   'music.noPlayers': 'Nessun lettore multimediale',
-  'music.noPlayersDesc': 'Collega un lettore multimediale in Home Assistant per controllare la musica da qui.',
+  'music.noPlayersDesc':
+    'Collega un lettore multimediale in Home Assistant per controllare la musica da qui.',
   'music.selectPlayer': 'Seleziona lettore',
   'music.nowPlaying': 'In riproduzione',
   'music.volume': 'Volume',
@@ -502,7 +530,7 @@ export const it: Record<TranslationKey, string> = {
 
   // ---- card picker modal ----
   'cardPicker.title': 'Aggiungi scheda',
-  'cardPicker.empty': 'Nessun tipo di scheda disponibile per quest\'area.',
+  'cardPicker.empty': "Nessun tipo di scheda disponibile per quest'area.",
 
   // ---- card config modal (common) ----
   'cardConfig.entitiesPlaceholder': 'Entità',
@@ -515,7 +543,7 @@ export const it: Record<TranslationKey, string> = {
   'onboarding.welcomeDesc': 'Collega il tuo Home Assistant per iniziare.',
   'onboarding.getStarted': 'Inizia',
   'onboarding.connectTitle': 'Collega a Home Assistant',
-  'onboarding.connectDesc': 'Inserisci l\'URL della tua istanza Home Assistant.',
+  'onboarding.connectDesc': "Inserisci l'URL della tua istanza Home Assistant.",
   'onboarding.haUrl': 'URL di Home Assistant',
   'onboarding.haUrlPlaceholder': 'https://homeassistant.local:8123',
   'onboarding.connect': 'Collega',
@@ -528,11 +556,13 @@ export const it: Record<TranslationKey, string> = {
   'onboarding.tokenHint': 'Come creare un token:',
   'onboarding.tokenHintDetail': 'Vai al tuo Profilo HA → Token a lungo termine → Crea token',
   'onboarding.oauthMethod': 'Accedi con Home Assistant',
-  'onboarding.oauthMethodDesc': 'Autenticati utilizzando le tue credenziali Home Assistant tramite OAuth2.',
+  'onboarding.oauthMethodDesc':
+    'Autenticati utilizzando le tue credenziali Home Assistant tramite OAuth2.',
   'onboarding.openHA': 'Apri Home Assistant',
   'onboarding.completeSetup': 'Completa configurazione',
-  'onboarding.urlError': 'L\'URL deve iniziare con http:// o https://',
-  'onboarding.connectionFailed': 'Connessione fallita (HTTP {status}). Controlla l\'URL e riprova.',
-  'onboarding.notReachable': 'Impossibile raggiungere Home Assistant. Verifica l\'URL e assicurati che sia accessibile.',
+  'onboarding.urlError': "L'URL deve iniziare con http:// o https://",
+  'onboarding.connectionFailed': "Connessione fallita (HTTP {status}). Controlla l'URL e riprova.",
+  'onboarding.notReachable':
+    "Impossibile raggiungere Home Assistant. Verifica l'URL e assicurati che sia accessibile.",
   'onboarding.tokenRequired': 'Inserisci il tuo token di accesso.',
 };
