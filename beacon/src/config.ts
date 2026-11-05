@@ -8,6 +8,8 @@
 
 export interface BeaconConfig {
   deployment_mode?: 'addon' | 'standalone';
+  /** Which backend supplies chore data. 'native' keeps Beacon's local store. */
+  chore_backend?: 'native' | 'choreops';
   ha_url: string;
   ha_token: string;
   family_name: string;
@@ -34,6 +36,9 @@ export function getConfig(): BeaconConfig {
   const runtime = window.__BEACON_CONFIG__ ?? {};
 
   cached = {
+    chore_backend:
+      runtime.chore_backend ??
+      (import.meta.env.VITE_CHORE_BACKEND === 'choreops' ? 'choreops' : 'native'),
     ha_url: runtime.ha_url ?? import.meta.env.VITE_HA_URL ?? '',
     ha_token: runtime.ha_token || import.meta.env.VITE_HA_TOKEN || '',
     family_name: runtime.family_name || import.meta.env.VITE_FAMILY_NAME || 'My Family',

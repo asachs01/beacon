@@ -13,6 +13,7 @@ import { FamilyFilter } from './components/FamilyFilter';
 import { SettingsView } from './components/SettingsView';
 import { useSettings } from './hooks/useSettings';
 import { ChoresView } from './components/ChoresView';
+import { ChoreOpsPanel } from './components/ChoreOpsPanel';
 import { Leaderboard } from './components/Leaderboard';
 import { Sidebar, SidebarView } from './components/Sidebar';
 import { MusicView } from './components/MusicView';
@@ -56,12 +57,7 @@ export function App() {
   const i18n = useMemo(() => createI18n(settings.locale), [settings.locale]);
   const { t } = i18n;
 
-  const {
-    members,
-    addMember,
-    updateMember,
-    removeMember,
-  } = useFamily();
+  const { members, addMember, updateMember, removeMember } = useFamily();
 
   const {
     calendars: haCalendars,
@@ -71,10 +67,14 @@ export function App() {
     createEvent: createHaEvent,
     updateEvent: updateHaEvent,
     deleteEvent: deleteHaEvent,
-  } = useCalendarEvents(connected, {
-    calendarColors: settings.calendarColors,
-    members,
-  }, client);
+  } = useCalendarEvents(
+    connected,
+    {
+      calendarColors: settings.calendarColors,
+      members,
+    },
+    client,
+  );
 
   const localCal = useLocalCalendar();
 
@@ -90,46 +90,50 @@ export function App() {
     [localCal.calendar, localCalendarColor, haCalendars],
   );
   const events = useMemo(
-    () => [
-      ...localCal.events.map((ev) => ({ ...ev, color: localCalendarColor })),
-      ...haEvents,
-    ].sort((a, b) => a.start.localeCompare(b.start)),
+    () =>
+      [...localCal.events.map((ev) => ({ ...ev, color: localCalendarColor })), ...haEvents].sort(
+        (a, b) => a.start.localeCompare(b.start),
+      ),
     [localCal.events, localCalendarColor, haEvents],
   );
 
   // Route create/update/delete to local or HA based on calendar ID
-  const createEvent = useCallback(async (calendarId: string, eventData: Parameters<typeof createHaEvent>[1]) => {
-    if (calendarId === localCal.calendar.id) {
-      localCal.createEvent(eventData);
-    } else {
-      await createHaEvent(calendarId, eventData);
-    }
-  }, [localCal, createHaEvent]);
+  const createEvent = useCallback(
+    async (calendarId: string, eventData: Parameters<typeof createHaEvent>[1]) => {
+      if (calendarId === localCal.calendar.id) {
+        localCal.createEvent(eventData);
+      } else {
+        await createHaEvent(calendarId, eventData);
+      }
+    },
+    [localCal, createHaEvent],
+  );
 
-  const updateEvent = useCallback(async (calendarId: string, uid: string, eventData: Parameters<typeof updateHaEvent>[2]) => {
-    if (calendarId === localCal.calendar.id) {
-      localCal.updateEvent(uid, eventData);
-    } else {
-      await updateHaEvent(calendarId, uid, eventData);
-    }
-  }, [localCal, updateHaEvent]);
+  const updateEvent = useCallback(
+    async (calendarId: string, uid: string, eventData: Parameters<typeof updateHaEvent>[2]) => {
+      if (calendarId === localCal.calendar.id) {
+        localCal.updateEvent(uid, eventData);
+      } else {
+        await updateHaEvent(calendarId, uid, eventData);
+      }
+    },
+    [localCal, updateHaEvent],
+  );
 
-  const deleteEvent = useCallback(async (calendarId: string, uid: string) => {
-    if (calendarId === localCal.calendar.id) {
-      localCal.deleteEvent(uid);
-    } else {
-      await deleteHaEvent(calendarId, uid);
-    }
-  }, [localCal, deleteHaEvent]);
+  const deleteEvent = useCallback(
+    async (calendarId: string, uid: string) => {
+      if (calendarId === localCal.calendar.id) {
+        localCal.deleteEvent(uid);
+      } else {
+        await deleteHaEvent(calendarId, uid);
+      }
+    },
+    [localCal, deleteHaEvent],
+  );
 
   const { weather } = useWeather(client);
   const music = useMusic(client, connected);
-  const {
-    chores,
-    completionsToday,
-    completeChore,
-    uncompleteChore,
-  } = useChores();
+  const { chores, completionsToday, completeChore, uncompleteChore } = useChores();
 
   const dashboardTasks = useDashboardTasks(connected, settings.groceryListIds);
 
@@ -161,7 +165,7 @@ export function App() {
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [prefillTime, setPrefillTime] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<SidebarView>(
-    (settings.defaultView as SidebarView) || 'dashboard'
+    (settings.defaultView as SidebarView) || 'dashboard',
   );
 
   // Kid Display (focus) mode — URL param wins, then device-local storage
@@ -231,16 +235,24 @@ export function App() {
     loadData();
 
     // Refresh every 5 minutes for the currently-visible week
-    const interval = setInterval(() => {
-      refetchEventsForWeek(visibleWeekStart);
-    }, 5 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        refetchEventsForWeek(visibleWeekStart);
+      },
+      5 * 60 * 1000,
+    );
 
     return () => clearInterval(interval);
   }, [connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart]);
 
   // Re-fetch when calendar colors or family members change so colors update
   // immediately, without recreating the 5-minute polling interval above.
-  const colorRefreshRef = useRef({ connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart });
+  const colorRefreshRef = useRef({
+    connected,
+    fetchCalendars,
+    refetchEventsForWeek,
+    visibleWeekStart,
+  });
   colorRefreshRef.current = { connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart };
   const didColorRefreshMount = useRef(false);
   useEffect(() => {
@@ -253,21 +265,24 @@ export function App() {
     colorRefreshRef.current.refetchEventsForWeek(colorRefreshRef.current.visibleWeekStart);
   }, [settings.calendarColors, members]);
 
-  const handleToggleCalendar = useCallback((calendarId: string) => {
-    setHiddenCalendars(prev => {
-      const next = new Set(prev);
-      if (next.has(calendarId)) {
-        next.delete(calendarId);
-      } else {
-        next.add(calendarId);
-      }
-      // Persist to Settings so the Calendar-view selection survives
-      // navigation/remount and reload — settings.permanentlyHiddenCalendars
-      // is the single source of truth for calendar visibility.
-      updateSettings({ permanentlyHiddenCalendars: Array.from(next) });
-      return next;
-    });
-  }, [updateSettings]);
+  const handleToggleCalendar = useCallback(
+    (calendarId: string) => {
+      setHiddenCalendars((prev) => {
+        const next = new Set(prev);
+        if (next.has(calendarId)) {
+          next.delete(calendarId);
+        } else {
+          next.add(calendarId);
+        }
+        // Persist to Settings so the Calendar-view selection survives
+        // navigation/remount and reload — settings.permanentlyHiddenCalendars
+        // is the single source of truth for calendar visibility.
+        updateSettings({ permanentlyHiddenCalendars: Array.from(next) });
+        return next;
+      });
+    },
+    [updateSettings],
+  );
 
   const handleEventClick = useCallback((event: CalendarEvent) => {
     setSelectedEvent(event);
@@ -290,136 +305,162 @@ export function App() {
     setPrefillTime(null);
   }, []);
 
-  const handleSaveEvent = useCallback(async (calendarId: string, data: EventFormData) => {
-    const eventData = data.allDay
-      ? {
-          summary: data.summary,
-          start_date: data.startDate,
-          // HA's calendar API treats dtend as exclusive (the day AFTER the
-          // last day of the event) and rejects dtstart === dtend with a
-          // "minimum event duration" error. When the user picks the same
-          // start/end date for a single-day all-day event, bump end_date to
-          // the day after start_date so HA sees a valid >=1-day duration.
-          end_date: data.endDate <= data.startDate
-            ? format(addDays(new Date(`${data.startDate}T00:00:00`), 1), 'yyyy-MM-dd')
-            : data.endDate,
-          description: data.description || undefined,
-        }
-      : {
-          summary: data.summary,
-          start_date_time: `${data.startDate}T${data.startTime}:00`,
-          end_date_time: `${data.endDate}T${data.endTime}:00`,
-          description: data.description || undefined,
-        };
-
-    // Build rrule if recurrence is set
-    if (data.recurrence && data.recurrence !== 'none') {
-      const freqMap = { daily: 'DAILY', weekly: 'WEEKLY', monthly: 'MONTHLY' } as const;
-      const freq = freqMap[data.recurrence];
-      const until = data.recurrenceEnd.replace(/-/g, '') + 'T235959Z';
-      (eventData as Record<string, unknown>).rrule = `FREQ=${freq};UNTIL=${until}`;
-    }
-
-    try {
-      if (selectedEvent) {
-        // Editing an existing event — update in place rather than creating
-        // a duplicate. `selectedEvent.calendarId` is the event's original
-        // calendar; if the user changed the calendar in the form, move it
-        // by deleting from the old calendar and creating on the new one
-        // (HA's update_event can't move an event across entities).
-        if (selectedEvent.hasStableId === false) {
-          throw new Error("This event can't be edited — it has no stable ID from its calendar provider.");
-        }
-        if (calendarId !== selectedEvent.calendarId) {
-          await deleteEvent(selectedEvent.calendarId, selectedEvent.id);
-          await createEvent(calendarId, eventData);
-        } else {
-          try {
-            await updateEvent(calendarId, selectedEvent.id, eventData);
-          } catch (err) {
-            // Many calendar providers (Google Calendar via HA, several
-            // CalDAV backends, etc.) don't support in-place event updates
-            // at all. Fall back to delete + recreate so editing still
-            // works — the event gets a new id, but that's invisible to
-            // the user since we refetch right after.
-            if (err instanceof CalendarNotSupportedError) {
-              await deleteEvent(calendarId, selectedEvent.id);
-              await createEvent(calendarId, eventData);
-            } else {
-              throw err;
-            }
-          }
-        }
-      } else {
-        await createEvent(calendarId, eventData);
-      }
-
-      await refetchEventsForWeek(visibleWeekStart);
-
-      handleCloseModal();
-    } catch (err) {
-      console.error('Failed to save event:', err);
-      // Re-throw so EventModal can surface an inline error to the user
-      // instead of the save silently appearing to do nothing.
-      throw err;
-    }
-  }, [selectedEvent, createEvent, updateEvent, deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
-
-  const handleDeleteEvent = useCallback(async (calendarId: string, eventId: string) => {
-    try {
-      if (selectedEvent && selectedEvent.id === eventId && selectedEvent.hasStableId === false) {
-        throw new Error("This event can't be deleted — it has no stable ID from its calendar provider.");
-      }
-      await deleteEvent(calendarId, eventId);
-
-      await refetchEventsForWeek(visibleWeekStart);
-
-      handleCloseModal();
-    } catch (err) {
-      console.error('Failed to delete event:', err);
-      throw err instanceof CalendarNotSupportedError
-        ? new Error('This calendar does not support deleting events.')
-        : err;
-    }
-  }, [selectedEvent, deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
-
-  const handleEventReschedule = useCallback(async (event: CalendarEvent, newDate: string, newHour: number) => {
-    try {
-      const oldStart = new Date(event.start);
-      const oldEnd = new Date(event.end);
-      const durationMs = oldEnd.getTime() - oldStart.getTime();
-
-      const patch = event.allDay
+  const handleSaveEvent = useCallback(
+    async (calendarId: string, data: EventFormData) => {
+      const eventData = data.allDay
         ? {
-            start_date: newDate,
-            end_date: format(new Date(new Date(newDate).getTime() + durationMs), 'yyyy-MM-dd'),
+            summary: data.summary,
+            start_date: data.startDate,
+            // HA's calendar API treats dtend as exclusive (the day AFTER the
+            // last day of the event) and rejects dtstart === dtend with a
+            // "minimum event duration" error. When the user picks the same
+            // start/end date for a single-day all-day event, bump end_date to
+            // the day after start_date so HA sees a valid >=1-day duration.
+            end_date:
+              data.endDate <= data.startDate
+                ? format(addDays(new Date(`${data.startDate}T00:00:00`), 1), 'yyyy-MM-dd')
+                : data.endDate,
+            description: data.description || undefined,
           }
-        : (() => {
-            const pad = (n: number) => String(n).padStart(2, '0');
-            const newStartDt = `${newDate}T${pad(newHour)}:00:00`;
-            const newEndTime = new Date(new Date(newStartDt).getTime() + durationMs);
-            const newEndDt = `${format(newEndTime, 'yyyy-MM-dd')}T${pad(newEndTime.getHours())}:${pad(newEndTime.getMinutes())}:00`;
-            return { start_date_time: newStartDt, end_date_time: newEndDt };
-          })();
+        : {
+            summary: data.summary,
+            start_date_time: `${data.startDate}T${data.startTime}:00`,
+            end_date_time: `${data.endDate}T${data.endTime}:00`,
+            description: data.description || undefined,
+          };
+
+      // Build rrule if recurrence is set
+      if (data.recurrence && data.recurrence !== 'none') {
+        const freqMap = { daily: 'DAILY', weekly: 'WEEKLY', monthly: 'MONTHLY' } as const;
+        const freq = freqMap[data.recurrence];
+        const until = data.recurrenceEnd.replace(/-/g, '') + 'T235959Z';
+        (eventData as Record<string, unknown>).rrule = `FREQ=${freq};UNTIL=${until}`;
+      }
 
       try {
-        await updateEvent(event.calendarId, event.id, patch);
-      } catch (err) {
-        // Same fallback as handleSaveEvent: calendars without update
-        // support need delete + recreate to move an event via drag.
-        if (err instanceof CalendarNotSupportedError) {
-          await deleteEvent(event.calendarId, event.id);
-          await createEvent(event.calendarId, { ...patch, summary: event.title, description: event.description });
+        if (selectedEvent) {
+          // Editing an existing event — update in place rather than creating
+          // a duplicate. `selectedEvent.calendarId` is the event's original
+          // calendar; if the user changed the calendar in the form, move it
+          // by deleting from the old calendar and creating on the new one
+          // (HA's update_event can't move an event across entities).
+          if (selectedEvent.hasStableId === false) {
+            throw new Error(
+              "This event can't be edited — it has no stable ID from its calendar provider.",
+            );
+          }
+          if (calendarId !== selectedEvent.calendarId) {
+            await deleteEvent(selectedEvent.calendarId, selectedEvent.id);
+            await createEvent(calendarId, eventData);
+          } else {
+            try {
+              await updateEvent(calendarId, selectedEvent.id, eventData);
+            } catch (err) {
+              // Many calendar providers (Google Calendar via HA, several
+              // CalDAV backends, etc.) don't support in-place event updates
+              // at all. Fall back to delete + recreate so editing still
+              // works — the event gets a new id, but that's invisible to
+              // the user since we refetch right after.
+              if (err instanceof CalendarNotSupportedError) {
+                await deleteEvent(calendarId, selectedEvent.id);
+                await createEvent(calendarId, eventData);
+              } else {
+                throw err;
+              }
+            }
+          }
         } else {
-          throw err;
+          await createEvent(calendarId, eventData);
         }
-      }
 
-      await refetchEventsForWeek(visibleWeekStart);
-    } catch (err) {
-      console.error('Failed to reschedule event:', err);
-    }
-  }, [updateEvent, deleteEvent, createEvent, refetchEventsForWeek, visibleWeekStart]);
+        await refetchEventsForWeek(visibleWeekStart);
+
+        handleCloseModal();
+      } catch (err) {
+        console.error('Failed to save event:', err);
+        // Re-throw so EventModal can surface an inline error to the user
+        // instead of the save silently appearing to do nothing.
+        throw err;
+      }
+    },
+    [
+      selectedEvent,
+      createEvent,
+      updateEvent,
+      deleteEvent,
+      refetchEventsForWeek,
+      visibleWeekStart,
+      handleCloseModal,
+    ],
+  );
+
+  const handleDeleteEvent = useCallback(
+    async (calendarId: string, eventId: string) => {
+      try {
+        if (selectedEvent && selectedEvent.id === eventId && selectedEvent.hasStableId === false) {
+          throw new Error(
+            "This event can't be deleted — it has no stable ID from its calendar provider.",
+          );
+        }
+        await deleteEvent(calendarId, eventId);
+
+        await refetchEventsForWeek(visibleWeekStart);
+
+        handleCloseModal();
+      } catch (err) {
+        console.error('Failed to delete event:', err);
+        throw err instanceof CalendarNotSupportedError
+          ? new Error('This calendar does not support deleting events.')
+          : err;
+      }
+    },
+    [selectedEvent, deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal],
+  );
+
+  const handleEventReschedule = useCallback(
+    async (event: CalendarEvent, newDate: string, newHour: number) => {
+      try {
+        const oldStart = new Date(event.start);
+        const oldEnd = new Date(event.end);
+        const durationMs = oldEnd.getTime() - oldStart.getTime();
+
+        const patch = event.allDay
+          ? {
+              start_date: newDate,
+              end_date: format(new Date(new Date(newDate).getTime() + durationMs), 'yyyy-MM-dd'),
+            }
+          : (() => {
+              const pad = (n: number) => String(n).padStart(2, '0');
+              const newStartDt = `${newDate}T${pad(newHour)}:00:00`;
+              const newEndTime = new Date(new Date(newStartDt).getTime() + durationMs);
+              const newEndDt = `${format(newEndTime, 'yyyy-MM-dd')}T${pad(newEndTime.getHours())}:${pad(newEndTime.getMinutes())}:00`;
+              return { start_date_time: newStartDt, end_date_time: newEndDt };
+            })();
+
+        try {
+          await updateEvent(event.calendarId, event.id, patch);
+        } catch (err) {
+          // Same fallback as handleSaveEvent: calendars without update
+          // support need delete + recreate to move an event via drag.
+          if (err instanceof CalendarNotSupportedError) {
+            await deleteEvent(event.calendarId, event.id);
+            await createEvent(event.calendarId, {
+              ...patch,
+              summary: event.title,
+              description: event.description,
+            });
+          } else {
+            throw err;
+          }
+        }
+
+        await refetchEventsForWeek(visibleWeekStart);
+      } catch (err) {
+        console.error('Failed to reschedule event:', err);
+      }
+    },
+    [updateEvent, deleteEvent, createEvent, refetchEventsForWeek, visibleWeekStart],
+  );
 
   const handleAddEvent = useCallback(() => {
     setSelectedEvent(null);
@@ -429,20 +470,17 @@ export function App() {
     setShowModal(true);
   }, [activeView, dashboardDate]);
 
-  const handleChangeView = useCallback(
-    (view: SidebarView) => {
-      // Leaderboard opens as an overlay, doesn't change the main view.
-      // Chores is a real activeView now (dedicated full-screen view).
-      if (view === 'leaderboard') {
-        setShowLeaderboard(true);
-        return;
-      }
-      // All other views: close any open panel and switch view
-      setShowLeaderboard(false);
-      setActiveView(view);
-    },
-    [],
-  );
+  const handleChangeView = useCallback((view: SidebarView) => {
+    // Leaderboard opens as an overlay, doesn't change the main view.
+    // Chores is a real activeView now (dedicated full-screen view).
+    if (view === 'leaderboard') {
+      setShowLeaderboard(true);
+      return;
+    }
+    // All other views: close any open panel and switch view
+    setShowLeaderboard(false);
+    setActiveView(view);
+  }, []);
 
   const handleClosePanel = useCallback(() => {
     setShowLeaderboard(false);
@@ -469,19 +507,25 @@ export function App() {
         completeChore(choreId, firstMemberId);
       }
     },
-    [completedChoreIds, completeChore, uncompleteChore, firstMemberId]
+    [completedChoreIds, completeChore, uncompleteChore, firstMemberId],
   );
 
   // Handle onboarding completion
-  const handleOnboardingComplete = useCallback(async (haUrl: string, haToken: string) => {
-    await auth.saveManualToken(haUrl, haToken);
-    patchConfig({ ha_url: haUrl, ha_token: haToken });
-    window.location.reload();
-  }, [auth]);
+  const handleOnboardingComplete = useCallback(
+    async (haUrl: string, haToken: string) => {
+      await auth.saveManualToken(haUrl, haToken);
+      patchConfig({ ha_url: haUrl, ha_token: haToken });
+      window.location.reload();
+    },
+    [auth],
+  );
 
-  const handleOAuthStart = useCallback((haUrl: string) => {
-    auth.startOAuth(haUrl);
-  }, [auth]);
+  const handleOAuthStart = useCallback(
+    (haUrl: string) => {
+      auth.startOAuth(haUrl);
+    },
+    [auth],
+  );
 
   // Keyboard shortcuts for quick view switching
   useEffect(() => {
@@ -500,7 +544,12 @@ export function App() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't intercept when typing in inputs
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      )
+        return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
       const view = viewMap[e.key];
@@ -519,7 +568,15 @@ export function App() {
   // Show loading screen while checking stored credentials
   if (auth.state.loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          background: 'var(--bg-primary)',
+        }}
+      >
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
       </div>
     );
@@ -535,30 +592,27 @@ export function App() {
     window.location.pathname.includes('/ingress/')
   );
   if (!isHaManaged && !auth.state.isOnboarded) {
-    return (
-      <OnboardingView
-        onComplete={handleOnboardingComplete}
-        onOAuthStart={handleOAuthStart}
-      />
-    );
+    return <OnboardingView onComplete={handleOnboardingComplete} onOAuthStart={handleOAuthStart} />;
   }
 
   // Kid Display mode: replace the entire shell (same pattern as onboarding)
   if (focusMember) {
-    return (
-      <FocusView
-        memberId={focusMember.id}
-        settings={settings}
-        onExit={handleExitFocus}
-      />
-    );
+    return <FocusView memberId={focusMember.id} settings={settings} onExit={handleExitFocus} />;
   }
 
   // Focus member requested but members not loaded yet (fresh device cache):
   // hold on a lightweight loading screen instead of flashing the full app.
   if (focusMemberId && members.length === 0 && !focusLoadTimedOut) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          background: 'var(--bg-primary)',
+        }}
+      >
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
       </div>
     );
@@ -566,229 +620,241 @@ export function App() {
 
   return (
     <I18nContext.Provider value={i18n}>
-    <div className={`beacon ${settings.kioskMode ? 'beacon--kiosk' : `beacon--sidebar-${sidebarPos}`} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
-      {focusInvalid && (
-        <div className="focus-invalid-banner">
-          {t('app.kidDisplayNotFound')}
-          <button type="button" className="settings-btn" onClick={handleExitFocus}>
-            {t('app.dismiss')}
-          </button>
-        </div>
-      )}
-      {/* Sidebar — hidden entirely in Kiosk Mode (Settings > Display) */}
-      {!settings.kioskMode && (
-        <Sidebar
-          activeView={activeView}
-          onChangeView={handleChangeView}
-          position={sidebarPos}
-        />
-      )}
-
-      {/* Main content area */}
-      <div className="beacon-main">
-        {activeView === 'dashboard' ? (
-          <>
-            <DashboardView
-              events={visibleEvents}
-              weather={weather}
-              chores={settings.choresEnabled ? chores : []}
-              completedChoreIds={completedChoreIds}
-              onToggleChore={handleToggleChore}
-              todoItems={dashboardTasks.items}
-              onToggleTodo={dashboardTasks.toggleItem}
-              onWeatherClick={() => setActiveView('weather')}
-              onEventClick={handleEventClick}
-              members={members}
-              taskmateUsers={dashboardTasks.users}
-              layout={settings.dashboardLayout}
-              advancedDashboard={settings.advancedDashboard}
-              timeFormat={settings.timeFormat}
-              selectedDate={dashboardDate}
-              onSelectedDateChange={setDashboardDate}
-            />
-            <OmniAdd
-              onAddEvent={handleAddEvent}
-              onAddGroceryItem={() => setActiveView('grocery')}
-              onAddChore={() => handleChangeView('chores')}
-              onNavigateTimer={() => setActiveView('timer')}
-              sidebarPosition={sidebarPos}
-            />
-          </>
-        ) : activeView === 'chores' ? (
-          settings.choresEnabled ? (
-            <ChoresView />
-          ) : (
-            <div className="chores-empty" style={{ padding: 48 }}>
-              {t('app.choresDisabled')}
-            </div>
-          )
-        ) : activeView === 'music' ? (
-          <MusicView
-            activePlayer={music.activePlayer}
-            players={music.players}
-            selectedPlayerId={music.selectedPlayerId}
-            onPlay={music.play}
-            onPause={music.pause}
-            onNext={music.next}
-            onPrevious={music.previous}
-            onSetVolume={music.setVolume}
-            onSelectPlayer={music.selectPlayer}
-          />
-        ) : activeView === 'settings' ? (
-          <SettingsView
-            settings={settings}
-            onUpdateSettings={updateSettings}
-            onResetSettings={resetSettings}
-            onExportSettings={exportSettings}
-            onImportSettings={importSettings}
-            onClearLocalStorage={clearLocalStorage}
-            members={members}
-            onAddMember={addMember}
-            onUpdateMember={updateMember}
-            onRemoveMember={removeMember}
-            connected={connected}
-            haUrl={config.ha_url}
-            calendars={calendars}
-            onEnterFocusMode={handleEnterFocusMode}
-          />
-        ) : activeView === 'grocery' ? (
-          <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" groceryListIds={settings.groceryListIds} />
-        ) : activeView === 'tasks' ? (
-          <GroceryView mode="tasks" groceryListIds={settings.groceryListIds} />
-        ) : activeView === 'timer' ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 24 }}>
-            <Timer />
+      <div
+        className={`beacon ${settings.kioskMode ? 'beacon--kiosk' : `beacon--sidebar-${sidebarPos}`} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}
+      >
+        {focusInvalid && (
+          <div className="focus-invalid-banner">
+            {t('app.kidDisplayNotFound')}
+            <button type="button" className="settings-btn" onClick={handleExitFocus}>
+              {t('app.dismiss')}
+            </button>
           </div>
-        ) : activeView === 'weather' ? (
-          <WeatherView />
-        ) : activeView === 'photos' ? (
-          <PhotoFrame
-            musicPlayer={music.activePlayer}
-            onMusicPlay={() => music.activePlayer && music.play(music.activePlayer.entity_id)}
-            onMusicPause={() => music.activePlayer && music.pause(music.activePlayer.entity_id)}
-            onMusicNext={() => music.activePlayer && music.next(music.activePlayer.entity_id)}
-            onMusicPrevious={() => music.activePlayer && music.previous(music.activePlayer.entity_id)}
-            onMusicSetVolume={(v) => music.activePlayer && music.setVolume(v, music.activePlayer.entity_id)}
-            onBack={() => setActiveView('dashboard')}
-          />
-        ) : (
-          <>
-            {/* Header */}
-            <header className="beacon-header">
-              <div className="header-left">
-                <span className="header-family-name">{settings.familyName}</span>
-                <span className="header-separator" />
-                <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy', { locale: i18n.dateLocale })}</span>
-                {!connected && (
-                  <div className="connection-status">
-                    <span className="connection-dot" />
-                    {t('app.connecting')}
-                  </div>
-                )}
-              </div>
-              <div className="header-right">
-                <Clock />
-              </div>
-            </header>
+        )}
+        {/* Sidebar — hidden entirely in Kiosk Mode (Settings > Display) */}
+        {!settings.kioskMode && (
+          <Sidebar activeView={activeView} onChangeView={handleChangeView} position={sidebarPos} />
+        )}
 
-            {/* Family filter pills — above the calendar */}
-            <div className="filter-bar">
-              <FamilyFilter
-                calendars={calendars}
-                hiddenCalendars={hiddenCalendars}
-                onToggle={handleToggleCalendar}
-              />
-            </div>
-
-            {/* Calendar Body — two-column on desktop */}
-            <div className="beacon-body beacon-body--two-col">
-              <div className="beacon-body-calendar">
-                <WeekCalendar
-                  events={events}
-                  hiddenCalendars={hiddenCalendars}
-                  onEventClick={handleEventClick}
-                  onSlotClick={handleSlotClick}
-                  onEventReschedule={handleEventReschedule}
-                  onVisibleWeekChange={setVisibleWeekStart}
-                  weekStartsOn={settings.weekStartsOn}
-                />
-              </div>
-              <CalendarSidebar
+        {/* Main content area */}
+        <div className="beacon-main">
+          {activeView === 'dashboard' ? (
+            <>
+              <DashboardView
                 events={visibleEvents}
+                weather={weather}
                 chores={settings.choresEnabled ? chores : []}
                 completedChoreIds={completedChoreIds}
                 onToggleChore={handleToggleChore}
                 todoItems={dashboardTasks.items}
                 onToggleTodo={dashboardTasks.toggleItem}
+                onWeatherClick={() => setActiveView('weather')}
+                onEventClick={handleEventClick}
                 members={members}
+                taskmateUsers={dashboardTasks.users}
+                layout={settings.dashboardLayout}
+                advancedDashboard={settings.advancedDashboard}
+                timeFormat={settings.timeFormat}
+                selectedDate={dashboardDate}
+                onSelectedDateChange={setDashboardDate}
               />
-            </div>
-
-            {/* Omni-Add FAB */}
-            <OmniAdd
-              onAddEvent={handleAddEvent}
-              onAddGroceryItem={() => setActiveView('grocery')}
-              onAddChore={() => handleChangeView('chores')}
-              onNavigateTimer={() => setActiveView('timer')}
-              sidebarPosition={sidebarPos}
+              <OmniAdd
+                onAddEvent={handleAddEvent}
+                onAddGroceryItem={() => setActiveView('grocery')}
+                onAddChore={() => handleChangeView('chores')}
+                onNavigateTimer={() => setActiveView('timer')}
+                sidebarPosition={sidebarPos}
+              />
+            </>
+          ) : activeView === 'chores' ? (
+            settings.choresEnabled ? (
+              getConfig().chore_backend === 'choreops' ? (
+                <ChoreOpsPanel />
+              ) : (
+                <ChoresView />
+              )
+            ) : (
+              <div className="chores-empty" style={{ padding: 48 }}>
+                {t('app.choresDisabled')}
+              </div>
+            )
+          ) : activeView === 'music' ? (
+            <MusicView
+              activePlayer={music.activePlayer}
+              players={music.players}
+              selectedPlayerId={music.selectedPlayerId}
+              onPlay={music.play}
+              onPause={music.pause}
+              onNext={music.next}
+              onPrevious={music.previous}
+              onSetVolume={music.setVolume}
+              onSelectPlayer={music.selectPlayer}
             />
-          </>
+          ) : activeView === 'settings' ? (
+            <SettingsView
+              settings={settings}
+              onUpdateSettings={updateSettings}
+              onResetSettings={resetSettings}
+              onExportSettings={exportSettings}
+              onImportSettings={importSettings}
+              onClearLocalStorage={clearLocalStorage}
+              members={members}
+              onAddMember={addMember}
+              onUpdateMember={updateMember}
+              onRemoveMember={removeMember}
+              connected={connected}
+              haUrl={config.ha_url}
+              calendars={calendars}
+              onEnterFocusMode={handleEnterFocusMode}
+            />
+          ) : activeView === 'grocery' ? (
+            <GroceryView
+              defaultListId={settings.defaultGroceryList || undefined}
+              mode="grocery"
+              groceryListIds={settings.groceryListIds}
+            />
+          ) : activeView === 'tasks' ? (
+            <GroceryView mode="tasks" groceryListIds={settings.groceryListIds} />
+          ) : activeView === 'timer' ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                padding: 24,
+              }}
+            >
+              <Timer />
+            </div>
+          ) : activeView === 'weather' ? (
+            <WeatherView />
+          ) : activeView === 'photos' ? (
+            <PhotoFrame
+              musicPlayer={music.activePlayer}
+              onMusicPlay={() => music.activePlayer && music.play(music.activePlayer.entity_id)}
+              onMusicPause={() => music.activePlayer && music.pause(music.activePlayer.entity_id)}
+              onMusicNext={() => music.activePlayer && music.next(music.activePlayer.entity_id)}
+              onMusicPrevious={() =>
+                music.activePlayer && music.previous(music.activePlayer.entity_id)
+              }
+              onMusicSetVolume={(v) =>
+                music.activePlayer && music.setVolume(v, music.activePlayer.entity_id)
+              }
+              onBack={() => setActiveView('dashboard')}
+            />
+          ) : (
+            <>
+              {/* Header */}
+              <header className="beacon-header">
+                <div className="header-left">
+                  <span className="header-family-name">{settings.familyName}</span>
+                  <span className="header-separator" />
+                  <span className="header-date">
+                    {format(new Date(), 'EEEE, MMMM d, yyyy', { locale: i18n.dateLocale })}
+                  </span>
+                  {!connected && (
+                    <div className="connection-status">
+                      <span className="connection-dot" />
+                      {t('app.connecting')}
+                    </div>
+                  )}
+                </div>
+                <div className="header-right">
+                  <Clock />
+                </div>
+              </header>
+
+              {/* Family filter pills — above the calendar */}
+              <div className="filter-bar">
+                <FamilyFilter
+                  calendars={calendars}
+                  hiddenCalendars={hiddenCalendars}
+                  onToggle={handleToggleCalendar}
+                />
+              </div>
+
+              {/* Calendar Body — two-column on desktop */}
+              <div className="beacon-body beacon-body--two-col">
+                <div className="beacon-body-calendar">
+                  <WeekCalendar
+                    events={events}
+                    hiddenCalendars={hiddenCalendars}
+                    onEventClick={handleEventClick}
+                    onSlotClick={handleSlotClick}
+                    onEventReschedule={handleEventReschedule}
+                    onVisibleWeekChange={setVisibleWeekStart}
+                    weekStartsOn={settings.weekStartsOn}
+                  />
+                </div>
+                <CalendarSidebar
+                  events={visibleEvents}
+                  chores={settings.choresEnabled ? chores : []}
+                  completedChoreIds={completedChoreIds}
+                  onToggleChore={handleToggleChore}
+                  todoItems={dashboardTasks.items}
+                  onToggleTodo={dashboardTasks.toggleItem}
+                  members={members}
+                />
+              </div>
+
+              {/* Omni-Add FAB */}
+              <OmniAdd
+                onAddEvent={handleAddEvent}
+                onAddGroceryItem={() => setActiveView('grocery')}
+                onAddChore={() => handleChangeView('chores')}
+                onNavigateTimer={() => setActiveView('timer')}
+                sidebarPosition={sidebarPos}
+              />
+            </>
+          )}
+        </div>
+
+        {/* Event Modal */}
+        {showModal && (
+          <EventModal
+            event={selectedEvent}
+            calendars={calendars}
+            defaultCalendarId={settings.defaultCalendar}
+            onSave={handleSaveEvent}
+            onDelete={handleDeleteEvent}
+            onClose={handleCloseModal}
+            prefillDate={prefillDate}
+            prefillTime={prefillTime}
+          />
         )}
+
+        {/* Leaderboard Slide Panel */}
+        <Leaderboard open={showLeaderboard} onClose={handleClosePanel} />
+        {showLeaderboard && <div className="slide-panel-backdrop" onClick={handleClosePanel} />}
+
+        {/* GroceryView is now rendered as a full view above */}
+
+        {/* Now Playing Bar — shows when music is playing, hidden in photo/music views */}
+        {activeView !== 'music' &&
+          activeView !== 'photos' &&
+          music.activePlayer?.state === 'playing' && (
+            <NowPlayingBar
+              player={music.activePlayer}
+              onPlay={() => music.play(music.activePlayer!.entity_id)}
+              onPause={() => music.pause(music.activePlayer!.entity_id)}
+              onNext={() => music.next(music.activePlayer!.entity_id)}
+              onPrevious={() => music.previous(music.activePlayer!.entity_id)}
+              onSetVolume={(v) => music.setVolume(v, music.activePlayer!.entity_id)}
+              onExpand={() => setActiveView('music')}
+            />
+          )}
+
+        {/* Screen saver / dim mode */}
+        <ScreenSaver
+          enabled={settings.screenSaverEnabled}
+          dimTimeoutMin={settings.dimTimeout}
+          screenSaverTimeoutMin={settings.screenSaverTimeout}
+        />
+
+        {/* Demo indicator — only show outside of add-on ingress */}
+        {!connected && !isHaManaged && <div className="demo-badge">{t('app.demoMode')}</div>}
       </div>
-
-      {/* Event Modal */}
-      {showModal && (
-        <EventModal
-          event={selectedEvent}
-          calendars={calendars}
-          defaultCalendarId={settings.defaultCalendar}
-          onSave={handleSaveEvent}
-          onDelete={handleDeleteEvent}
-          onClose={handleCloseModal}
-          prefillDate={prefillDate}
-          prefillTime={prefillTime}
-        />
-      )}
-
-      {/* Leaderboard Slide Panel */}
-      <Leaderboard
-        open={showLeaderboard}
-        onClose={handleClosePanel}
-      />
-      {showLeaderboard && (
-        <div
-          className="slide-panel-backdrop"
-          onClick={handleClosePanel}
-        />
-      )}
-
-      {/* GroceryView is now rendered as a full view above */}
-
-      {/* Now Playing Bar — shows when music is playing, hidden in photo/music views */}
-      {activeView !== 'music' && activeView !== 'photos' && music.activePlayer?.state === 'playing' && (
-        <NowPlayingBar
-          player={music.activePlayer}
-          onPlay={() => music.play(music.activePlayer!.entity_id)}
-          onPause={() => music.pause(music.activePlayer!.entity_id)}
-          onNext={() => music.next(music.activePlayer!.entity_id)}
-          onPrevious={() => music.previous(music.activePlayer!.entity_id)}
-          onSetVolume={(v) => music.setVolume(v, music.activePlayer!.entity_id)}
-          onExpand={() => setActiveView('music')}
-        />
-      )}
-
-      {/* Screen saver / dim mode */}
-      <ScreenSaver
-        enabled={settings.screenSaverEnabled}
-        dimTimeoutMin={settings.dimTimeout}
-        screenSaverTimeoutMin={settings.screenSaverTimeout}
-      />
-
-      {/* Demo indicator — only show outside of add-on ingress */}
-      {!connected && !isHaManaged && (
-        <div className="demo-badge">{t('app.demoMode')}</div>
-      )}
-    </div>
     </I18nContext.Provider>
   );
 }
