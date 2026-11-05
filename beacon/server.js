@@ -16,7 +16,9 @@ const WebSocket = require('ws');
 
 const PORT = 3000;
 const DIST = process.env.BEACON_DIST || '/app/dist';
-const SUPERVISOR_TOKEN = process.env.SUPERVISOR_TOKEN || process.env.HA_TOKEN || '';
+// HA_TOKEN for standalone Docker; SUPERVISOR_TOKEN is what the Supervisor
+// injects in add-on mode (and remains supported as a legacy alias).
+const HA_TOKEN = process.env.HA_TOKEN || process.env.SUPERVISOR_TOKEN || '';
 const HA_API_BASE = (process.env.HA_API_BASE_OVERRIDE || 'http://supervisor/core').replace(
   /\/$/,
   '',
@@ -119,7 +121,7 @@ function proxyToHA(req, res) {
       path: url.pathname + url.search,
       method: req.method,
       headers: {
-        Authorization: `Bearer ${SUPERVISOR_TOKEN}`,
+        Authorization: `Bearer ${HA_TOKEN}`,
         'Content-Type': req.headers['content-type'] || 'application/json',
       },
     };
@@ -200,7 +202,7 @@ function handleServiceCall(req, res) {
  */
 function haWsCommand(command, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
-    if (!SUPERVISOR_TOKEN) {
+    if (!HA_TOKEN) {
       reject(new Error('No Home Assistant token available'));
       return;
     }
@@ -235,7 +237,7 @@ function haWsCommand(command, timeoutMs = 10000) {
       }
 
       if (msg.type === 'auth_required') {
-        ws.send(JSON.stringify({ type: 'auth', access_token: SUPERVISOR_TOKEN }));
+        ws.send(JSON.stringify({ type: 'auth', access_token: HA_TOKEN }));
         return;
       }
       if (msg.type === 'auth_invalid') {
@@ -519,7 +521,7 @@ function haRequest(method, apiPath, body) {
       path: url.pathname + url.search,
       method,
       headers: {
-        Authorization: `Bearer ${SUPERVISOR_TOKEN}`,
+        Authorization: `Bearer ${HA_TOKEN}`,
         'Content-Type': 'application/json',
       },
     };
@@ -839,11 +841,11 @@ const server = http.createServer((req, res) => {
 
   // Proxy API requests to HA
   if (req.url.startsWith('/api/')) {
-    if (SUPERVISOR_TOKEN) {
+    if (HA_TOKEN) {
       proxyToHA(req, res);
     } else {
       res.writeHead(503);
-      res.end(JSON.stringify({ error: 'No Supervisor token available' }));
+      res.end(JSON.stringify({ error: 'No Home Assistant token available' }));
     }
     return;
   }
@@ -853,7 +855,7 @@ const server = http.createServer((req, res) => {
 
 // Handle WebSocket upgrades for /api/websocket
 server.on('upgrade', (req, socket, head) => {
-  if (!req.url.startsWith('/api/websocket') || !SUPERVISOR_TOKEN) {
+  if (!req.url.startsWith('/api/websocket') || !HA_TOKEN) {
     socket.destroy();
     return;
   }
@@ -894,6 +896,6 @@ server.on('upgrade', (req, socket, head) => {
 
 server.listen(PORT, () => {
   console.log(`Beacon server listening on port ${PORT}`);
-  console.log(`Supervisor token: ${SUPERVISOR_TOKEN ? 'available' : 'NOT available'}`);
+  console.log(`Home Assistant token: ${HA_TOKEN ? 'available' : 'NOT available'}`);
   console.log(`Data directory: ${DATA_DIR}`);
 });

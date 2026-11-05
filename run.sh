@@ -101,7 +101,7 @@ fi
 
 bashio::log.info "Starting Beacon server on port 3000 (API proxy enabled)..."
 if [ "${BEACON_MODE}" = "standalone" ]; then
-  SUPERVISOR_TOKEN="${SERVER_HA_TOKEN}" HA_API_BASE_OVERRIDE="${SERVER_HA_URL}" exec node /app/server.js
+  HA_TOKEN="${SERVER_HA_TOKEN}" HA_API_BASE_OVERRIDE="${SERVER_HA_URL}" exec node /app/server.js
 else
   exec node /app/server.js
 fi
