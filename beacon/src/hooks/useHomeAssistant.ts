@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { HomeAssistantClient } from '../api/homeassistant';
 import { getConfig } from '../config';
 import { setHaToken } from '../api/ha-rest';
-import { isAddOn, isIngress } from '../utils/ha-env';
+import { usesServerProxy, isIngress } from '../utils/ha-env';
 
 function resolveHaUrl(): string {
   const config = getConfig();
@@ -37,7 +37,11 @@ function requestIngressToken(): Promise<string | null> {
 
     // Determine the expected origin for postMessage validation
     let expectedOrigin = '';
-    try { expectedOrigin = window.parent.location.origin; } catch { /* cross-origin */ }
+    try {
+      expectedOrigin = window.parent.location.origin;
+    } catch {
+      /* cross-origin */
+    }
 
     function handler(event: MessageEvent) {
       // Validate origin to prevent token injection from other frames
@@ -73,18 +77,18 @@ export function useHomeAssistant() {
       let token = config.ha_token;
       const url = resolveHaUrl();
 
-      // In add-on mode with the proxy, we don't need a browser-side token.
-      // The server.js proxy injects SUPERVISOR_TOKEN for all /api/* requests.
+      // Server-proxy deployments don't need a browser-side token.
+      // The backend injects the HA token for all /api/* requests.
       // Just mark as connected so REST-based hooks fire.
-      if (isAddOn() && !token) {
-        console.info('Beacon: Add-on proxy mode — using REST API via ingress.');
+      if (usesServerProxy() && !token) {
+        console.info('Beacon: Server proxy mode — using REST API through Beacon.');
         if (!cancelled) setConnected(true);
         return;
       }
 
       // If no token from config, try requesting one from HA ingress
       if (!token && isIngress()) {
-        token = await requestIngressToken() || '';
+        token = (await requestIngressToken()) || '';
       }
 
       if (!token) {

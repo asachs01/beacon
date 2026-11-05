@@ -7,6 +7,7 @@
  */
 
 export interface BeaconConfig {
+  deployment_mode?: 'addon' | 'standalone';
   ha_url: string;
   ha_token: string;
   family_name: string;
@@ -36,13 +37,17 @@ export function getConfig(): BeaconConfig {
     ha_url: runtime.ha_url ?? import.meta.env.VITE_HA_URL ?? '',
     ha_token: runtime.ha_token || import.meta.env.VITE_HA_TOKEN || '',
     family_name: runtime.family_name || import.meta.env.VITE_FAMILY_NAME || 'My Family',
-    save_config_in_browser: runtime.save_config_in_browser ?? (import.meta.env.VITE_SAVE_CONFIG_IN_BROWSER !== 'false'),
+    save_config_in_browser:
+      runtime.save_config_in_browser ?? import.meta.env.VITE_SAVE_CONFIG_IN_BROWSER !== 'false',
     theme: runtime.theme || import.meta.env.VITE_THEME || 'skylight',
-    auto_dark_mode: runtime.auto_dark_mode ?? (import.meta.env.VITE_AUTO_DARK_MODE !== 'false'),
-    weather_entity: runtime.weather_entity || import.meta.env.VITE_HA_WEATHER_ENTITY || 'weather.home',
-    photo_directory: runtime.photo_directory || import.meta.env.VITE_PHOTO_DIRECTORY || '/media/beacon/photos',
+    auto_dark_mode: runtime.auto_dark_mode ?? import.meta.env.VITE_AUTO_DARK_MODE !== 'false',
+    weather_entity:
+      runtime.weather_entity || import.meta.env.VITE_HA_WEATHER_ENTITY || 'weather.home',
+    photo_directory:
+      runtime.photo_directory || import.meta.env.VITE_PHOTO_DIRECTORY || '/media/beacon/photos',
     photo_interval: runtime.photo_interval ?? (Number(import.meta.env.VITE_PHOTO_INTERVAL) || 30),
-    screen_saver_timeout: runtime.screen_saver_timeout ?? (Number(import.meta.env.VITE_SCREEN_SAVER_TIMEOUT) || 5),
+    screen_saver_timeout:
+      runtime.screen_saver_timeout ?? (Number(import.meta.env.VITE_SCREEN_SAVER_TIMEOUT) || 5),
   };
 
   return cached;

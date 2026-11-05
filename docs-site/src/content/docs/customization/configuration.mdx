@@ -15,26 +15,26 @@ Beacon can be configured through the Home Assistant add-on options panel, Docker
 
 These options are set in **Settings > Add-ons > Beacon > Configuration** when running as an HA add-on.
 
-| Option | Type | Default | Description | Example |
-|--------|------|---------|-------------|---------|
-| `family_name` | string | `"My Family"` | Your family name. Appears in the dashboard greeting ("Good morning, Sachs") and the calendar header. | `"Sachs"` |
-| `save_config_in_browser` | boolean | `true` | Allows the General settings option to keep a local browser copy of Beacon settings. Set to `false` to disable browser storage; add-on server storage remains available. This configuration takes precedence over the in-app option. | `false` |
-| `theme` | string | `"skylight"` | The color theme to use. Options: `skylight`, `midnight`, `nord`, `dracula`, `monokai`, `rose`, `forest`. The theme selector in the sidebar overrides this value. | `"midnight"` |
-| `auto_dark_mode` | boolean | `true` | When true and theme is set to `auto`, Beacon switches between Skylight (day) and Midnight (night) based on time of day. | `true` |
-| `weather_entity` | string | `"weather.home"` | The Home Assistant weather entity ID to use for temperature and forecast data. Leave empty to disable weather. | `"weather.forecast_home"` |
-| `photo_directory` | string | `"/media/beacon/photos"` | The path to the photo directory on the Home Assistant server. Photos in this directory are displayed in the Photo Frame view. | `"/media/family-photos"` |
-| `photo_interval` | integer | `30` | Seconds between automatic photo transitions in the Photo Frame slideshow. | `15` |
-| `screen_saver_timeout` | integer | `5` | Minutes of inactivity before the screen dimming phase activates. The clock screensaver activates at 2x this value. | `10` |
+| Option                   | Type    | Default                  | Description                                                                                                                                                                                                                         | Example                   |
+| ------------------------ | ------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `family_name`            | string  | `"My Family"`            | Your family name. Appears in the dashboard greeting ("Good morning, Sachs") and the calendar header.                                                                                                                                | `"Sachs"`                 |
+| `save_config_in_browser` | boolean | `true`                   | Allows the General settings option to keep a local browser copy of Beacon settings. Set to `false` to disable browser storage; add-on server storage remains available. This configuration takes precedence over the in-app option. | `false`                   |
+| `theme`                  | string  | `"skylight"`             | The color theme to use. Options: `skylight`, `midnight`, `nord`, `dracula`, `monokai`, `rose`, `forest`. The theme selector in the sidebar overrides this value.                                                                    | `"midnight"`              |
+| `auto_dark_mode`         | boolean | `true`                   | When true and theme is set to `auto`, Beacon switches between Skylight (day) and Midnight (night) based on time of day.                                                                                                             | `true`                    |
+| `weather_entity`         | string  | `"weather.home"`         | The Home Assistant weather entity ID to use for temperature and forecast data. Leave empty to disable weather.                                                                                                                      | `"weather.forecast_home"` |
+| `photo_directory`        | string  | `"/media/beacon/photos"` | The path to the photo directory on the Home Assistant server. Photos in this directory are displayed in the Photo Frame view.                                                                                                       | `"/media/family-photos"`  |
+| `photo_interval`         | integer | `30`                     | Seconds between automatic photo transitions in the Photo Frame slideshow.                                                                                                                                                           | `15`                      |
+| `screen_saver_timeout`   | integer | `5`                      | Minutes of inactivity before the screen dimming phase activates. The clock screensaver activates at 2x this value.                                                                                                                  | `10`                      |
 
 ### Example add-on configuration
 
 ```yaml
-family_name: "Sachs"
+family_name: 'Sachs'
 save_config_in_browser: true
-theme: "midnight"
+theme: 'midnight'
 auto_dark_mode: true
-weather_entity: "weather.home"
-photo_directory: "/media/beacon/photos"
+weather_entity: 'weather.home'
+photo_directory: '/media/beacon/photos'
 photo_interval: 30
 screen_saver_timeout: 5
 ```
@@ -47,34 +47,37 @@ When running Beacon as a standalone Docker container or in development mode, con
 
 ### Docker environment variables
 
-| Variable | Maps To | Default |
-|----------|---------|---------|
-| `SUPERVISOR_TOKEN` | `ha_token` | (none) |
-| `HA_URL` | `ha_url` | `http://supervisor/core` |
-| `FAMILY_NAME` | `family_name` | `My Family` |
-| `SAVE_CONFIG_IN_BROWSER` | `save_config_in_browser` | `true` |
-| `THEME` | `theme` | `skylight` |
-| `AUTO_DARK_MODE` | `auto_dark_mode` | `true` |
-| `WEATHER_ENTITY` | `weather_entity` | `weather.home` |
-| `PHOTO_DIRECTORY` | `photo_directory` | `/media/beacon/photos` |
-| `PHOTO_INTERVAL` | `photo_interval` | `30` |
-| `SCREEN_SAVER_TIMEOUT` | `screen_saver_timeout` | `5` |
+| Variable                 | Maps To                  | Default                                              |
+| ------------------------ | ------------------------ | ---------------------------------------------------- |
+| `BEACON_MODE`            | deployment mode          | `addon` (`standalone` for Docker outside Supervisor) |
+| `HA_TOKEN`               | `ha_token`               | (none; required in standalone mode)                  |
+| `HA_URL`                 | `ha_url`                 | Ignored in add-on mode; required in standalone mode  |
+| `FAMILY_NAME`            | `family_name`            | `My Family`                                          |
+| `SAVE_CONFIG_IN_BROWSER` | `save_config_in_browser` | `true`                                               |
+| `THEME`                  | `theme`                  | `skylight`                                           |
+| `AUTO_DARK_MODE`         | `auto_dark_mode`         | `true`                                               |
+| `WEATHER_ENTITY`         | `weather_entity`         | `weather.home`                                       |
+| `PHOTO_DIRECTORY`        | `photo_directory`        | `/media/beacon/photos`                               |
+| `PHOTO_INTERVAL`         | `photo_interval`         | `30`                                                 |
+| `SCREEN_SAVER_TIMEOUT`   | `screen_saver_timeout`   | `5`                                                  |
+
+`SUPERVISOR_TOKEN` is also accepted as a legacy alias for `HA_TOKEN` in standalone Docker deployments. The token stays in the backend container and is not included in the browser runtime config.
 
 ### Vite environment variables (development)
 
 Create a `.env` file in the project root:
 
-| Variable | Maps To | Default |
-|----------|---------|---------|
-| `VITE_HA_URL` | `ha_url` | `http://supervisor/core` |
-| `VITE_HA_TOKEN` | `ha_token` | (none) |
-| `VITE_FAMILY_NAME` | `family_name` | `My Family` |
-| `VITE_THEME` | `theme` | `skylight` |
-| `VITE_AUTO_DARK_MODE` | `auto_dark_mode` | `true` (set to `false` to disable) |
-| `VITE_HA_WEATHER_ENTITY` | `weather_entity` | `weather.home` |
-| `VITE_PHOTO_DIRECTORY` | `photo_directory` | `/media/beacon/photos` |
-| `VITE_PHOTO_INTERVAL` | `photo_interval` | `30` |
-| `VITE_SCREEN_SAVER_TIMEOUT` | `screen_saver_timeout` | `5` |
+| Variable                    | Maps To                | Default                            |
+| --------------------------- | ---------------------- | ---------------------------------- |
+| `VITE_HA_URL`               | `ha_url`               | `http://supervisor/core`           |
+| `VITE_HA_TOKEN`             | `ha_token`             | (none)                             |
+| `VITE_FAMILY_NAME`          | `family_name`          | `My Family`                        |
+| `VITE_THEME`                | `theme`                | `skylight`                         |
+| `VITE_AUTO_DARK_MODE`       | `auto_dark_mode`       | `true` (set to `false` to disable) |
+| `VITE_HA_WEATHER_ENTITY`    | `weather_entity`       | `weather.home`                     |
+| `VITE_PHOTO_DIRECTORY`      | `photo_directory`      | `/media/beacon/photos`             |
+| `VITE_PHOTO_INTERVAL`       | `photo_interval`       | `30`                               |
+| `VITE_SCREEN_SAVER_TIMEOUT` | `screen_saver_timeout` | `5`                                |
 
 ### Example `.env` file
 
@@ -132,15 +135,15 @@ In add-on mode, `run.sh` generates this JavaScript object:
 
 ```javascript
 window.__BEACON_CONFIG__ = {
-  ha_url: "http://supervisor/core",
-  ha_token: "SUPERVISOR_TOKEN_VALUE",
-  family_name: "Sachs",
-  theme: "midnight",
+  ha_url: 'http://supervisor/core',
+  ha_token: 'SUPERVISOR_TOKEN_VALUE',
+  family_name: 'Sachs',
+  theme: 'midnight',
   auto_dark_mode: true,
-  weather_entity: "weather.home",
-  photo_directory: "/media/beacon/photos",
+  weather_entity: 'weather.home',
+  photo_directory: '/media/beacon/photos',
   photo_interval: 30,
-  screen_saver_timeout: 5
+  screen_saver_timeout: 5,
 };
 ```
 
@@ -186,10 +189,10 @@ The `config.yaml` file in the repository root defines the add-on metadata for Ho
 
 ```yaml
 name: Beacon
-version: "1.0.0"
+version: '1.0.0'
 slug: beacon
-description: "Family command center for wall-mounted displays"
-url: "https://github.com/asachs01/beacon"
+description: 'Family command center for wall-mounted displays'
+url: 'https://github.com/asachs01/beacon'
 arch:
   - amd64
   - aarch64
@@ -204,15 +207,15 @@ homeassistant_api: true
 auth_api: true
 ```
 
-| Field | Description |
-|-------|-------------|
-| `arch` | Supported CPU architectures (AMD64, ARM64, ARMv7) |
-| `ingress: true` | Beacon is accessible through HA's ingress proxy (sidebar panel) |
-| `ingress_port: 3000` | The internal port Beacon listens on |
-| `panel_icon` | The icon shown in HA's sidebar (`mdi:calendar-clock`) |
-| `panel_title` | The label shown in HA's sidebar ("Beacon") |
-| `homeassistant_api: true` | Beacon has access to the HA API |
-| `auth_api: true` | Beacon uses HA's authentication system |
+| Field                     | Description                                                     |
+| ------------------------- | --------------------------------------------------------------- |
+| `arch`                    | Supported CPU architectures (AMD64, ARM64, ARMv7)               |
+| `ingress: true`           | Beacon is accessible through HA's ingress proxy (sidebar panel) |
+| `ingress_port: 3000`      | The internal port Beacon listens on                             |
+| `panel_icon`              | The icon shown in HA's sidebar (`mdi:calendar-clock`)           |
+| `panel_title`             | The label shown in HA's sidebar ("Beacon")                      |
+| `homeassistant_api: true` | Beacon has access to the HA API                                 |
+| `auth_api: true`          | Beacon uses HA's authentication system                          |
 
 ---
 
@@ -227,8 +230,9 @@ auth_api: true
 ### "No HA token configured" warning
 
 This appears in the browser console when:
+
 1. No `VITE_HA_TOKEN` is set in `.env` (development mode)
-2. The `SUPERVISOR_TOKEN` environment variable is missing (Docker mode)
+2. `HA_TOKEN` is missing (standalone Docker mode; legacy `SUPERVISOR_TOKEN` is also accepted)
 3. The runtime-config.js script did not generate correctly (add-on mode)
 
 Without a token, Beacon runs in demo mode — no data is fetched from Home Assistant.
@@ -236,6 +240,7 @@ Without a token, Beacon runs in demo mode — no data is fetched from Home Assis
 ### Weather entity not found
 
 If the weather widget does not appear:
+
 1. Verify the entity ID in your configuration matches exactly (case-sensitive)
 2. Check that the entity exists in **Developer Tools > States**
 3. Some weather integrations create entities with different naming patterns (e.g., `weather.forecast_home` vs `weather.home`)

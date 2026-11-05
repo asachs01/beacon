@@ -1,5 +1,5 @@
 ---
-title: "Getting Started"
+title: 'Getting Started'
 description: "Install Beacon as a Home Assistant add-on, Docker container, or development server and connect your family's calendar in under 10 minutes."
 order: 3
 ---
@@ -14,35 +14,35 @@ This guide walks you through three ways to install Beacon, then covers first-tim
 
 ### Software requirements
 
-| Requirement | Minimum | Recommended |
-|------------|---------|-------------|
-| Home Assistant | 2024.1+ with Supervisor | Latest stable |
-| Node.js (dev only) | 20.x | 22.x |
-| Docker (standalone only) | 20.10+ | Latest stable |
-| Web browser | Chrome 90+, Safari 15+, Firefox 90+ | Chrome or Chromium |
+| Requirement              | Minimum                             | Recommended        |
+| ------------------------ | ----------------------------------- | ------------------ |
+| Home Assistant           | 2024.1+ with Supervisor             | Latest stable      |
+| Node.js (dev only)       | 20.x                                | 22.x               |
+| Docker (standalone only) | 20.10+                              | Latest stable      |
+| Web browser              | Chrome 90+, Safari 15+, Firefox 90+ | Chrome or Chromium |
 
 ### Hardware recommendations
 
 **For the Home Assistant server:**
 
-| Setup | Notes |
-|-------|-------|
-| Raspberry Pi 4 (4GB+) | Good for small households |
-| Intel NUC / Mini PC | Recommended for reliability |
-| Home Assistant Yellow / Green | Purpose-built HA hardware |
-| Virtual machine | Proxmox, VMware, or VirtualBox |
+| Setup                         | Notes                          |
+| ----------------------------- | ------------------------------ |
+| Raspberry Pi 4 (4GB+)         | Good for small households      |
+| Intel NUC / Mini PC           | Recommended for reliability    |
+| Home Assistant Yellow / Green | Purpose-built HA hardware      |
+| Virtual machine               | Proxmox, VMware, or VirtualBox |
 
 **For the wall-mounted display:**
 
-| Device | Price Range | Notes |
-|--------|------------|-------|
-| Amazon Fire HD 8 (refurbished) | $30-50 | Best value. Use Fully Kiosk Browser. |
-| Amazon Fire HD 10 | $75-100 | Bigger screen, still affordable. |
-| Samsung Galaxy Tab A | $100-150 | Good Android tablet with decent screen. |
-| Old iPad (any model from 2018+) | Free if you have one | Works well in Safari. |
-| Raspberry Pi 4 + HDMI monitor | $80-120 | Great for larger 15-24" displays. |
-| Old laptop/monitor + mini PC | $50-100 | Repurpose hardware you already have. |
-| Elecrow 10.1" touchscreen | $90-120 | Purpose-built wall display with stand. |
+| Device                          | Price Range          | Notes                                   |
+| ------------------------------- | -------------------- | --------------------------------------- |
+| Amazon Fire HD 8 (refurbished)  | $30-50               | Best value. Use Fully Kiosk Browser.    |
+| Amazon Fire HD 10               | $75-100              | Bigger screen, still affordable.        |
+| Samsung Galaxy Tab A            | $100-150             | Good Android tablet with decent screen. |
+| Old iPad (any model from 2018+) | Free if you have one | Works well in Safari.                   |
+| Raspberry Pi 4 + HDMI monitor   | $80-120              | Great for larger 15-24" displays.       |
+| Old laptop/monitor + mini PC    | $50-100              | Repurpose hardware you already have.    |
+| Elecrow 10.1" touchscreen       | $90-120              | Purpose-built wall display with stand.  |
 
 > **The cheapest path**: A $35 refurbished Fire HD 8 tablet with a $15 magnetic wall mount. Under $50 total and it looks great.
 
@@ -84,11 +84,11 @@ You will see the Beacon add-on info page when installation is complete.
 2. Set the following options:
 
 ```yaml
-family_name: "My Family"
-theme: "skylight"
+family_name: 'My Family'
+theme: 'skylight'
 auto_dark_mode: true
-weather_entity: "weather.home"
-photo_directory: "/media/beacon/photos"
+weather_entity: 'weather.home'
+photo_directory: '/media/beacon/photos'
 photo_interval: 30
 screen_saver_timeout: 5
 ```
@@ -123,12 +123,14 @@ Use this method if you want to run Beacon outside of Home Assistant, or if you u
 docker run -d \
   --name beacon \
   -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
+   -e BEACON_MODE="standalone" \
+   -e HA_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
   -e HA_URL="http://YOUR_HA_IP:8123" \
   ghcr.io/asachs01/beacon:latest
 ```
 
 Replace:
+
 - `YOUR_HA_LONG_LIVED_TOKEN` with a long-lived access token from Home Assistant (create one at **Profile > Long-Lived Access Tokens**)
 - `YOUR_HA_IP` with your Home Assistant IP address or hostname
 
@@ -160,7 +162,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - SUPERVISOR_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
+         - BEACON_MODE=standalone
+         - HA_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
       - HA_URL=http://YOUR_HA_IP:8123
 ```
 
