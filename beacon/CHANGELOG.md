@@ -1,3 +1,10 @@
+## [1.40.2](https://github.com/asachs01/beacon/compare/v1.40.1...v1.40.2) (2026-11-20)
+
+
+### Bug Fixes
+
+* **display:** exit paths for kiosk and kid display ([1675285](https://github.com/asachs01/beacon/commit/1675285072b3d55c932936102befbec6230a1420)), closes [#57](https://github.com/asachs01/beacon/issues/57)
+
 ## [1.40.1](https://github.com/asachs01/beacon/compare/v1.40.0...v1.40.1) (2026-11-20)
 
 
