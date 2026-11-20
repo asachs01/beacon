@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { loadData } from '../api/beacon-store';
+import { localDayKey } from '../api/date-keys';
 import { MealPlanEntry, DayMenu } from '../types/meals';
 
 const STORAGE_KEY = 'beacon_meal_plans';
@@ -21,7 +22,9 @@ export function useMealPlans() {
     return () => clearInterval(interval);
   }, []);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // Stored plans are local YYYY-MM-DD keys. UTC's date rolls to tomorrow
+  // after 17:00 in UTC-7 (America/Phoenix), which would show the wrong day.
+  const todayStr = localDayKey();
 
   const todaysMenu: DayMenu = useMemo(() => {
     const meals = entries
