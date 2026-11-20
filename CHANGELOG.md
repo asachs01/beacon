@@ -1,3 +1,10 @@
+## [1.40.1](https://github.com/asachs01/beacon/compare/v1.40.0...v1.40.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* **meals:** use local date for today instead of UTC ([0922240](https://github.com/asachs01/beacon/commit/092224072cd1a0316f4a6918fe6919fd0726a087))
+
 # [1.40.0](https://github.com/asachs01/beacon/compare/v1.39.6...v1.40.0) (2026-10-17)
 
 
