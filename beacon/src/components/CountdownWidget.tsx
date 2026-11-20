@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { differenceInDays, parseISO, startOfDay, format } from 'date-fns';
 import { CalendarEvent } from '../types';
+import { localDayKey } from '../api/date-keys';
 import { useTranslation } from '../i18n';
 
 const STORAGE_KEY = 'beacon-countdown-events';
@@ -51,7 +52,7 @@ export function CountdownWidget({ events = [] }: CountdownWidgetProps) {
       .map((e) => ({
         id: `cal-${e.id}`,
         title: e.title,
-        date: e.start.slice(0, 10),
+        date: localDayKey(e.start),
       }));
   }, [events]);
 

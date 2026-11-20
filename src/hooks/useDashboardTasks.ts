@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { hasToken, haFetch, callHaService } from '../api/ha-rest';
+import { localDayKey } from '../api/date-keys';
 import { useLocalTasks } from './useLocalTasks';
 import { useTaskmate } from './useTaskmate';
 
@@ -144,11 +145,6 @@ function isGroceryEntity(name: string): boolean {
 }
 
 function isToday(iso: string): boolean {
-  const d = new Date(iso);
-  const now = new Date();
-  return (
-    d.getFullYear() === now.getFullYear() &&
-    d.getMonth() === now.getMonth() &&
-    d.getDate() === now.getDate()
-  );
+  const today = localDayKey();
+  return today !== '' && localDayKey(iso) === today;
 }

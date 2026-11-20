@@ -44,7 +44,14 @@ if (!fromDate || !toDate) {
   const endSunday = new Date(monday);
   endSunday.setDate(monday.getDate() + 20); // 3 weeks minus 1 day
 
-  const fmt = (d) => d.toISOString().slice(0, 10);
+  // Local calendar day, same rule as src/api/date-keys.ts localDayKey.
+  // toISOString() would shift the window a day after 17:00 in UTC-7.
+  const fmt = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
   fromDate = fromDate || fmt(monday);
   toDate = toDate || fmt(endSunday);
 }
