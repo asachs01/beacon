@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/asachs01/beacon/compare/v1.40.3...v1.41.0) (2026-11-20)
+
+
+### Features
+
+* **appearance:** custom heading and body fonts ([#69](https://github.com/asachs01/beacon/issues/69)) ([f18dd75](https://github.com/asachs01/beacon/commit/f18dd7543019445428aaef5805eb721494941437)), closes [#58](https://github.com/asachs01/beacon/issues/58)
+
 ## [1.40.3](https://github.com/asachs01/beacon/compare/v1.40.2...v1.40.3) (2026-11-20)
 
 
