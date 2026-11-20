@@ -34,6 +34,10 @@ Skylight is a polished wall calendar that charges for hardware **and** locks mea
 
 → [Getting started](https://beacon-family-docs.netlify.app/docs/getting-started/welcome/) · [Beacon vs Skylight](https://beacon-family-docs.netlify.app/docs/getting-started/skylight-alternative/) · Install with the Home Assistant badge above
 
+**Beacon is the free, MIT-licensed family command center that installs as a Home Assistant add-on in one click — open source all the way down, on any tablet, in your language.**
+
+> **Looking at other self-hosted options?** [Kinboard](https://kinboard.app) is a self-hosted family dashboard with doorbell popups and "today" hints. It runs on Docker with Postgres and is free for noncommercial use under the [PolyForm Noncommercial license](https://github.com/svenger87/kinboard#license). Beacon is MIT-licensed, installs as a one-click Home Assistant add-on, and ships in nine languages. Pick the one that fits your setup.
+
 ## Features
 
 - **Weekly Calendar** -- Beautiful week view with color-coded family members; supports HA calendar entities and a built-in local calendar
