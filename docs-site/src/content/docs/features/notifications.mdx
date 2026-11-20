@@ -146,6 +146,6 @@ This typically happens when:
 
 ### Notifications arrive too early or too late
 
-Beacon checks for upcoming events every 60 seconds and notifies when an event is within 15 minutes of starting. The worst-case delay is ~60 seconds (one check interval). If notifications seem inconsistent, verify that:
+Beacon checks for upcoming events every 60 seconds and notifies when an event is within your configured lead time (10 minutes by default) of starting. The worst-case delay is ~60 seconds (one check interval). If notifications seem inconsistent, verify that:
 1. The browser tab/window is active (background tabs may throttle timers)
 2. The event's start time is correct in the calendar
