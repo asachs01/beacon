@@ -49,6 +49,7 @@ export const ko: Record<TranslationKey, string> = {
   'dashboard.nothingScheduledOpen': '예정된 일정이 없습니다 — 오늘은 자유로운 하루예요',
   'dashboard.nothingScheduledToday': '오늘 예정된 일정이 없습니다',
   'dashboard.nothingScheduledThisDay': '이 날 예정된 일정이 없습니다',
+  'dashboard.eventsLoading': '일정을 불러오는 중...',
   'dashboard.filterChoresFor': '{name}의 집안일로 필터링',
   'dashboard.other': '기타',
   'dashboard.thisWeek': '이번 주',

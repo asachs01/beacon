@@ -6,7 +6,10 @@ import { useTranslation } from '../../i18n';
 /** Per-member calendar grid (default layout's main content). */
 export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
   const { t } = useTranslation();
-  const { members, byMember, other, todayEvents, onEventClick, selectedMemberFilter, toggleMemberFilter, isViewingToday } = context;
+  const { members, byMember, other, todayEvents, onEventClick, selectedMemberFilter, toggleMemberFilter, isViewingToday, eventsLoading } = context;
+  const emptyLabel = eventsLoading
+    ? t('dashboard.eventsLoading')
+    : (isViewingToday ? t('dashboard.nothingScheduledToday') : t('dashboard.nothingScheduledThisDay'));
   const showOther = readBoolean(config, 'show_other', true);
 
   const hasMemberCalendars = members.some(
@@ -19,7 +22,9 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
       <div className="dash-events-fallback">
         <div className="dashboard-events-scroll">
           {todayEvents.length === 0 ? (
-            <div className="dashboard-empty">{t('dashboard.nothingScheduledOpen')}</div>
+            <div className="dashboard-empty" aria-busy={eventsLoading || undefined}>
+              {eventsLoading ? t('dashboard.eventsLoading') : t('dashboard.nothingScheduledOpen')}
+            </div>
           ) : (
             <div className="dashboard-events-list">
               {todayEvents.map((event) => (
@@ -58,8 +63,8 @@ export function FamilyCalendarCard({ config, context }: DashboardCardProps) {
             </button>
             <div className="dash-member-events">
               {memberEvents.length === 0 ? (
-                <div className="dash-member-empty">
-                  {isViewingToday ? t('dashboard.nothingScheduledToday') : t('dashboard.nothingScheduledThisDay')}
+                <div className="dash-member-empty" aria-busy={eventsLoading || undefined}>
+                  {emptyLabel}
                 </div>
               ) : (
                 memberEvents.map((event) => (

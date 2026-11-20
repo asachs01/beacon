@@ -73,6 +73,13 @@ export interface DashboardCardContext {
   goToPreviousDay: () => void;
   goToNextDay: () => void;
   goToToday: () => void;
+  /**
+   * True while the selected day's events are not in the loaded window yet.
+   * Empty states must show a loading message instead of "nothing scheduled".
+   */
+  eventsLoading?: boolean;
+  /** False while that day's window is still being fetched. */
+  isDayLoaded?: (day: Date) => boolean;
   todayEvents: CalendarEvent[];
   weekEvents: { day: Date; events: CalendarEvent[] }[];
   todaysMenu: DayMenu;

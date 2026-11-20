@@ -54,6 +54,7 @@ export const en = {
   'dashboard.nothingScheduledOpen': 'Nothing scheduled — your day is wide open',
   'dashboard.nothingScheduledToday': 'Nothing scheduled today',
   'dashboard.nothingScheduledThisDay': 'Nothing scheduled this day',
+  'dashboard.eventsLoading': 'Loading events...',
   'dashboard.filterChoresFor': 'Filter chores for {name}',
   'dashboard.other': 'Other',
   'dashboard.thisWeek': 'This Week',

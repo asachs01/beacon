@@ -49,6 +49,7 @@ export const fr: Record<TranslationKey, string> = {
   'dashboard.nothingScheduledOpen': 'Rien de prévu — votre journée est libre',
   'dashboard.nothingScheduledToday': "Rien de prévu aujourd'hui",
   'dashboard.nothingScheduledThisDay': 'Rien de prévu ce jour-là',
+  'dashboard.eventsLoading': 'Chargement des événements...',
   'dashboard.filterChoresFor': 'Filtrer les corvées de {name}',
   'dashboard.other': 'Autre',
   'dashboard.thisWeek': 'Cette semaine',

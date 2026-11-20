@@ -49,6 +49,7 @@ export const it: Record<TranslationKey, string> = {
   'dashboard.nothingScheduledOpen': 'Nulla in programma — la tua giornata è libera',
   'dashboard.nothingScheduledToday': 'Nulla in programma oggi',
   'dashboard.nothingScheduledThisDay': 'Nulla in programma in questo giorno',
+  'dashboard.eventsLoading': 'Caricamento eventi...',
   'dashboard.filterChoresFor': 'Filtra le faccende di {name}',
   'dashboard.other': 'Altro',
   'dashboard.thisWeek': 'Questa settimana',

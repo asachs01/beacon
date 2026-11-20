@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { startOfWeek, startOfDay, addDays, format } from 'date-fns';
 import { useHomeAssistant } from './hooks/useHomeAssistant';
 import { useCalendarEvents, CalendarNotSupportedError } from './hooks/useCalendarEvents';
+import { useEnsureEventRange } from './hooks/useEnsureEventRange';
+import { rangesForView } from './utils/event-fetch-range';
 import { useFamily } from './hooks/useFamily';
 import { useWeather } from './hooks/useWeather';
 import { useChores } from './hooks/useChores';
@@ -68,6 +70,7 @@ export function App() {
   const {
     calendars: haCalendars,
     events: haEvents,
+    loadedRanges,
     fetchCalendars,
     fetchEvents,
     createEvent: createHaEvent,
@@ -196,7 +199,8 @@ export function App() {
     setFocusMemberId(memberId);
   }, []);
 
-  // Visible week shown by the calendar (drives event fetch window)
+  // Visible week shown by the calendar. Dashboard day changes do not move
+  // this — see eventRanges below.
   const [visibleWeekStart, setVisibleWeekStart] = useState<Date>(() =>
     startOfWeek(new Date(), { weekStartsOn: settings.weekStartsOn }),
   );
@@ -204,16 +208,49 @@ export function App() {
   // Day currently selected on the Dashboard's day view
   const [dashboardDate, setDashboardDate] = useState<Date>(() => startOfDay(new Date()));
 
-  // Helper: refetch events for a given week, with one extra day on either side
-  // so multi-day events that bleed in/out of the visible week still render.
-  const refetchEventsForWeek = useCallback(
-    async (weekStart: Date) => {
-      const rangeStart = addDays(weekStart, -1);
-      const rangeEnd = addDays(weekStart, 8);
-      await fetchEvents(rangeStart.toISOString(), rangeEnd.toISOString());
-    },
-    [fetchEvents],
+  // Which windows to load. The calendar follows visibleWeekStart; the
+  // dashboard follows dashboardDate, so stepping more than a few days off
+  // today still requests the week that contains the day on screen.
+  const eventRanges = useMemo(
+    () => rangesForView({
+      activeView,
+      dashboardDate,
+      visibleWeekStart,
+      weekStartsOn: settings.weekStartsOn,
+    }),
+    [activeView, dashboardDate, visibleWeekStart, settings.weekStartsOn],
   );
+  const eventRangeKey = eventRanges.map((range) => `${range.startMs}:${range.endMs}`).join('|');
+  const eventRangesRef = useRef(eventRanges);
+  eventRangesRef.current = eventRanges;
+  const loadedRangesRef = useRef(loadedRanges);
+  loadedRangesRef.current = loadedRanges;
+
+  const refetchRanges = useCallback(async (
+    ranges: { startMs: number; endMs: number }[],
+  ) => {
+    const seen = new Set<string>();
+    for (const range of ranges) {
+      const key = `${range.startMs}:${range.endMs}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      await fetchEvents(new Date(range.startMs).toISOString(), new Date(range.endMs).toISOString());
+    }
+  }, [fetchEvents]);
+
+  const refetchActiveRanges = useCallback(
+    () => refetchRanges(eventRangesRef.current),
+    [refetchRanges],
+  );
+
+  const { selectedDayLoading, isDayLoaded } = useEnsureEventRange({
+    enabled: connected,
+    activeView,
+    dashboardDate,
+    ranges: eventRanges,
+    loadedRanges,
+    fetchEvents,
+  });
 
   // Event notifications (browser + HA mobile_app)
   useNotifications(events, client, !focusMemberId, settings.notificationMinutes);
@@ -222,29 +259,27 @@ export function App() {
   // a real full-screen activeView (see PRD: dedicated chores screen).
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
-  // Fetch data when connected, or when the user navigates to a different week.
+  // Calendar list on connect. Event windows are loaded by useEnsureEventRange
+  // so a dashboard date outside the visible week is fetched too.
   useEffect(() => {
     if (!connected) return;
+    void fetchCalendars();
+  }, [connected, fetchCalendars]);
 
-    const loadData = async () => {
-      await fetchCalendars();
-      await refetchEventsForWeek(visibleWeekStart);
-    };
-
-    loadData();
-
-    // Refresh every 5 minutes for the currently-visible week
+  // Revalidate the windows on screen. Cached weeks are left alone until the
+  // user comes back to them (useEnsureEventRange treats them as stale then).
+  useEffect(() => {
+    if (!connected) return;
     const interval = setInterval(() => {
-      refetchEventsForWeek(visibleWeekStart);
+      void refetchActiveRanges();
     }, 5 * 60 * 1000);
-
     return () => clearInterval(interval);
-  }, [connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart]);
+  }, [connected, refetchActiveRanges, eventRangeKey]);
 
   // Re-fetch when calendar colors or family members change so colors update
   // immediately, without recreating the 5-minute polling interval above.
-  const colorRefreshRef = useRef({ connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart });
-  colorRefreshRef.current = { connected, fetchCalendars, refetchEventsForWeek, visibleWeekStart };
+  const colorRefreshRef = useRef({ connected, fetchCalendars, refetchRanges });
+  colorRefreshRef.current = { connected, fetchCalendars, refetchRanges };
   const didColorRefreshMount = useRef(false);
   useEffect(() => {
     if (!didColorRefreshMount.current) {
@@ -252,8 +287,11 @@ export function App() {
       return;
     }
     if (!colorRefreshRef.current.connected) return;
-    colorRefreshRef.current.fetchCalendars();
-    colorRefreshRef.current.refetchEventsForWeek(colorRefreshRef.current.visibleWeekStart);
+    void colorRefreshRef.current.fetchCalendars();
+    const ranges = loadedRangesRef.current.length > 0
+      ? loadedRangesRef.current
+      : eventRangesRef.current;
+    void colorRefreshRef.current.refetchRanges(ranges);
   }, [settings.calendarColors, members]);
 
   const handleToggleCalendar = useCallback((calendarId: string) => {
@@ -357,7 +395,7 @@ export function App() {
         await createEvent(calendarId, eventData);
       }
 
-      await refetchEventsForWeek(visibleWeekStart);
+      await refetchActiveRanges();
 
       handleCloseModal();
     } catch (err) {
@@ -366,7 +404,7 @@ export function App() {
       // instead of the save silently appearing to do nothing.
       throw err;
     }
-  }, [selectedEvent, createEvent, updateEvent, deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
+  }, [selectedEvent, createEvent, updateEvent, deleteEvent, refetchActiveRanges, handleCloseModal]);
 
   const handleDeleteEvent = useCallback(async (calendarId: string, eventId: string) => {
     try {
@@ -375,7 +413,7 @@ export function App() {
       }
       await deleteEvent(calendarId, eventId);
 
-      await refetchEventsForWeek(visibleWeekStart);
+      await refetchActiveRanges();
 
       handleCloseModal();
     } catch (err) {
@@ -384,7 +422,7 @@ export function App() {
         ? new Error('This calendar does not support deleting events.')
         : err;
     }
-  }, [selectedEvent, deleteEvent, refetchEventsForWeek, visibleWeekStart, handleCloseModal]);
+  }, [selectedEvent, deleteEvent, refetchActiveRanges, handleCloseModal]);
 
   const handleEventReschedule = useCallback(async (event: CalendarEvent, newDate: string, newHour: number) => {
     try {
@@ -418,11 +456,11 @@ export function App() {
         }
       }
 
-      await refetchEventsForWeek(visibleWeekStart);
+      await refetchActiveRanges();
     } catch (err) {
       console.error('Failed to reschedule event:', err);
     }
-  }, [updateEvent, deleteEvent, createEvent, refetchEventsForWeek, visibleWeekStart]);
+  }, [updateEvent, deleteEvent, createEvent, refetchActiveRanges]);
 
   const handleAddEvent = useCallback(() => {
     setSelectedEvent(null);
@@ -620,6 +658,8 @@ export function App() {
               timeFormat={settings.timeFormat}
               selectedDate={dashboardDate}
               onSelectedDateChange={setDashboardDate}
+              eventsLoading={selectedDayLoading}
+              isDayLoaded={isDayLoaded}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}

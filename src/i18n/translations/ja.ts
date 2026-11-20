@@ -49,6 +49,7 @@ export const ja: Record<TranslationKey, string> = {
   'dashboard.nothingScheduledOpen': '予定はありません — 今日は自由な一日です',
   'dashboard.nothingScheduledToday': '今日の予定はありません',
   'dashboard.nothingScheduledThisDay': 'この日の予定はありません',
+  'dashboard.eventsLoading': '予定を読み込み中...',
   'dashboard.filterChoresFor': '{name}の家事で絞り込む',
   'dashboard.other': 'その他',
   'dashboard.thisWeek': '今週',

@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { CalendarEvent, CalendarInfo, CalendarColorMember, resolveCalendarColor } from '../types';
 import { haFetch, hasToken, callBeaconAction, BeaconActionError } from '../api/ha-rest';
 import { HomeAssistantClient, toWsEventPayload } from '../api/homeassistant';
+import { LoadedEventRange, mergeEventsForRange, recordLoadedRange } from '../utils/event-fetch-range';
 
 /**
  * Re-thrown by createEvent/updateEvent/deleteEvent when HA reports the calendar
@@ -43,10 +44,14 @@ export function useCalendarEvents(
 ) {
   const [calendars, setCalendars] = useState<CalendarInfo[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loadedRanges, setLoadedRanges] = useState<LoadedEventRange[]>([]);
   const [loading, setLoading] = useState(false);
   const calendarsRef = useRef<CalendarInfo[]>([]);
   const colorOptionsRef = useRef(colorOptions);
   colorOptionsRef.current = colorOptions;
+  // Bumped per requested window so a slower response for the same window
+  // cannot overwrite a newer one. Distinct windows still merge.
+  const rangeEpoch = useRef(new Map<string, number>());
 
   const fetchCalendars = useCallback(async () => {
     if (!connected && !hasToken()) return [];
@@ -70,13 +75,35 @@ export function useCalendarEvents(
   const fetchEvents = useCallback(async (start: string, end: string) => {
     if (!connected && !hasToken()) return;
 
+    const startMs = Date.parse(start);
+    const endMs = Date.parse(end);
+    if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) return;
+
+    const rangeKey = `${startMs}:${endMs}`;
+    const epoch = (rangeEpoch.current.get(rangeKey) ?? 0) + 1;
+    rangeEpoch.current.set(rangeKey, epoch);
+    const stillCurrent = () => rangeEpoch.current.get(rangeKey) === epoch;
+    const range = { startMs, endMs };
+
+    const commit = (incoming: CalendarEvent[]) => {
+      if (!stillCurrent()) return;
+      setEvents((prev) => mergeEventsForRange(prev, incoming, range));
+      setLoadedRanges((prev) => recordLoadedRange(prev, range, Date.now()));
+    };
+
     setLoading(true);
     try {
       let cals = calendarsRef.current;
       if (cals.length === 0) {
         cals = (await fetchCalendars()) || [];
       }
-      if (cals.length === 0) return;
+      if (!stillCurrent()) return;
+      // No calendars: remember the window so the dashboard can leave the
+      // loading state, and drop any HA events previously cached in it.
+      if (cals.length === 0) {
+        commit([]);
+        return;
+      }
 
       const allEvents: CalendarEvent[] = [];
       for (const cal of cals) {
@@ -125,10 +152,13 @@ export function useCalendarEvents(
         }
       }
 
+      if (!stillCurrent()) return;
       allEvents.sort((a, b) => a.start.localeCompare(b.start));
-      setEvents(allEvents);
+      // Merge into events already loaded for other windows. Replacing the
+      // whole list would blank today while a later dashboard day loads.
+      commit(allEvents);
     } finally {
-      setLoading(false);
+      if (stillCurrent()) setLoading(false);
     }
   }, [connected, fetchCalendars]);
 
@@ -251,6 +281,7 @@ export function useCalendarEvents(
   return {
     calendars,
     events,
+    loadedRanges,
     loading,
     fetchCalendars,
     fetchEvents,

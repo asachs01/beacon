@@ -6,7 +6,7 @@ import { useTranslation } from '../../i18n';
 /** Classic layout's "This Week" agenda column. */
 export function AgendaWeekCard({ context }: DashboardCardProps) {
   const { t, dateLocale } = useTranslation();
-  const { weekEvents, onEventClick } = context;
+  const { weekEvents, onEventClick, isDayLoaded } = context;
 
   return (
     <section className="dash-classic-col">
@@ -16,7 +16,9 @@ export function AgendaWeekCard({ context }: DashboardCardProps) {
           <div key={day.toISOString()} className="dash-week-day">
             <div className="dash-week-day-label">{format(day, 'EEE d', { locale: dateLocale })}</div>
             {dayEvents.length === 0 ? (
-              <div className="dash-week-empty">{t('dashboard.weekEmpty')}</div>
+              <div className="dash-week-empty" aria-busy={isDayLoaded && !isDayLoaded(day) ? true : undefined}>
+                {isDayLoaded && !isDayLoaded(day) ? t('dashboard.eventsLoading') : t('dashboard.weekEmpty')}
+              </div>
             ) : (
               <div className="dashboard-events-list">
                 {dayEvents.map((event) => (
