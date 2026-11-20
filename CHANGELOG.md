@@ -1,3 +1,10 @@
+## [1.40.3](https://github.com/asachs01/beacon/compare/v1.40.2...v1.40.3) (2026-11-20)
+
+
+### Bug Fixes
+
+* **dashboard:** fetch events for the selected dashboard date ([0db8b15](https://github.com/asachs01/beacon/commit/0db8b1525ef27d5d3a0843579026f20451dab2cb)), closes [#62](https://github.com/asachs01/beacon/issues/62)
+
 ## [1.40.2](https://github.com/asachs01/beacon/compare/v1.40.1...v1.40.2) (2026-11-20)
 
 
