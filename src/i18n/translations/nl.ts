@@ -49,6 +49,7 @@ export const nl: Record<TranslationKey, string> = {
   'dashboard.nothingScheduledOpen': 'Niets gepland — je dag is helemaal vrij',
   'dashboard.nothingScheduledToday': 'Vandaag niets gepland',
   'dashboard.nothingScheduledThisDay': 'Deze dag niets gepland',
+  'dashboard.eventsLoading': 'Afspraken laden...',
   'dashboard.filterChoresFor': 'Klusjes van {name} filteren',
   'dashboard.other': 'Overig',
   'dashboard.thisWeek': 'Deze week',

@@ -38,6 +38,9 @@ interface DashboardViewProps {
   timeFormat: '12h' | '24h';
   selectedDate: Date;
   onSelectedDateChange: (date: Date) => void;
+  /** Selected day is not in the fetched window yet. */
+  eventsLoading?: boolean;
+  isDayLoaded?: (day: Date) => boolean;
 }
 
 function renderCard(card: DashboardCard, context: DashboardCardContext) {
@@ -64,6 +67,8 @@ export function DashboardView({
   timeFormat,
   selectedDate,
   onSelectedDateChange,
+  eventsLoading = false,
+  isDayLoaded,
 }: DashboardViewProps) {
   const { t } = useTranslation();
   const [now, setNow] = useState(new Date());
@@ -133,6 +138,8 @@ export function DashboardView({
     goToPreviousDay,
     goToNextDay,
     goToToday,
+    eventsLoading,
+    isDayLoaded,
     todayEvents,
     weekEvents,
     todaysMenu,
