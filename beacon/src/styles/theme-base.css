@@ -37,9 +37,9 @@
   --event-5: #fbcfe8;
   --event-6: #99f6e4;
 
-  /* Typography */
-  --font-display: 'Fraunces', serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Typography — aliases of the tokens in tokens.css */
+  --font-display: var(--font-family-heading);
+  --font-body: var(--font-family-body);
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 
   /* Layout tokens (stable across themes) */

@@ -277,7 +277,7 @@
 }
 
 .music-track-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--text-primary);

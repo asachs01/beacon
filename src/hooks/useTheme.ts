@@ -39,8 +39,8 @@ function applyThemeToDOM(theme: Theme): void {
     root.style.setProperty(`--event-${i + 1}`, color);
   });
 
-  root.style.setProperty('--font-display', fonts.display);
-  root.style.setProperty('--font-body', fonts.body);
+  // Heading and body faces are user settings (--font-family-heading / --font-family-body),
+  // not part of the color theme, so a theme change can't clobber them.
   root.style.setProperty('--font-mono', fonts.mono);
 
   // Also set data-theme so other CSS can hook into light/dark if needed.

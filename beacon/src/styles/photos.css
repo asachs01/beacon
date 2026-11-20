@@ -46,7 +46,7 @@
 }
 
 .photo-frame-clock {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 3.5rem;
   font-weight: 300;
   color: white;

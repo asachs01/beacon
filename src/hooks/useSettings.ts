@@ -1,6 +1,12 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { getConfig } from '../config';
 import { loadDataSync, loadServerData, saveData } from '../api/beacon-store';
+import {
+  DEFAULT_BODY_FONT,
+  DEFAULT_HEADING_FONT,
+  normalizeFontSelection,
+  type FontSelection,
+} from '../fonts/selection';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -21,6 +27,10 @@ export interface BeaconSettings {
   darkModeStart: string; // "HH:mm"
   darkModeEnd: string;   // "HH:mm"
   fontScale: 'normal' | 'large' | 'extra-large';
+  /** Heading face. Defaults to Fraunces, the face Beacon shipped with. */
+  headingFont: FontSelection;
+  /** Body face. Defaults to Inter, the face Beacon shipped with. */
+  bodyFont: FontSelection;
   sidebarPosition: 'left' | 'right' | 'bottom';
 
   // Calendar
@@ -86,6 +96,8 @@ function buildDefaults(): BeaconSettings {
     darkModeStart: '19:00',
     darkModeEnd: '06:00',
     fontScale: 'normal',
+    headingFont: DEFAULT_HEADING_FONT,
+    bodyFont: DEFAULT_BODY_FONT,
     sidebarPosition: 'left',
 
     defaultCalendar: '',
@@ -135,12 +147,20 @@ async function loadSettingsAsync(): Promise<BeaconSettings> {
   const stored = serverStored ?? (configAllowsBrowserStorage
     ? loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {})
     : {});
-  return {
+  return withNormalizedFonts({
     ...defaults,
     ...stored,
     // The add-on configuration is authoritative: it can disable browser
     // storage, while the user preference can opt out when config allows it.
     saveConfigInBrowser: configAllowsBrowserStorage && (stored.saveConfigInBrowser ?? true),
+  });
+}
+
+function withNormalizedFonts(settings: BeaconSettings): BeaconSettings {
+  return {
+    ...settings,
+    headingFont: normalizeFontSelection(settings.headingFont, DEFAULT_HEADING_FONT),
+    bodyFont: normalizeFontSelection(settings.bodyFont, DEFAULT_BODY_FONT),
   };
 }
 
@@ -215,7 +235,7 @@ export function useSettings() {
     try {
       const parsed = JSON.parse(json);
       const defaults = buildDefaults();
-      setSettingsState({ ...defaults, ...parsed });
+      setSettingsState(withNormalizedFonts({ ...defaults, ...parsed }));
     } catch {
       // invalid JSON — do nothing
     }

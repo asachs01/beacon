@@ -36,7 +36,7 @@
 }
 
 .slide-panel-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 1.3rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -344,7 +344,7 @@
 }
 
 .chores-group-name {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-weight: 600;
   font-size: 1rem;
   color: var(--text-primary);
@@ -633,7 +633,7 @@
 }
 
 .chores-add-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -792,7 +792,7 @@
 }
 
 .lb-earnings {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-weight: 700;
   font-size: 1.1rem;
   color: var(--color-green-full);
@@ -939,7 +939,7 @@
 }
 
 .chores-view-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -959,7 +959,7 @@
 }
 
 .chores-section-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);

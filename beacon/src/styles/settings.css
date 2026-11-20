@@ -27,7 +27,7 @@
 
 .settings-nav-header {
   padding: 24px 20px 16px;
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -42,7 +42,7 @@
   border: none;
   background: none;
   cursor: pointer;
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
   font-size: 0.9rem;
   font-weight: 400;
   color: var(--text-secondary);
@@ -82,7 +82,7 @@
 }
 
 .settings-section-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -106,7 +106,7 @@
 }
 
 .settings-group-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -207,7 +207,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 6px 32px 6px 12px;
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
   font-size: 0.85rem;
   color: var(--text-primary);
   cursor: pointer;
@@ -229,7 +229,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 6px 12px;
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
   font-size: 0.85rem;
   color: var(--text-primary);
   width: 200px;
@@ -305,7 +305,7 @@
   padding: 6px 14px;
   border: none;
   background: none;
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
   font-size: 0.82rem;
   color: var(--text-secondary);
   cursor: pointer;
@@ -501,7 +501,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-surface);
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
   font-size: 0.85rem;
   color: var(--text-primary);
   cursor: pointer;
@@ -657,7 +657,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 6px 10px;
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
   font-size: 0.85rem;
   color: var(--text-primary);
   cursor: pointer;
@@ -722,4 +722,84 @@
   .settings-slider {
     width: 120px;
   }
+}
+
+/* --- Font picker --- */
+.settings-font-intro {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  padding: 0 20px 8px;
+  margin: 0;
+}
+
+.settings-font-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 20px;
+}
+
+.settings-font-choice + .settings-font-choice {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.settings-font-select,
+.settings-font-input {
+  width: min(100%, 460px);
+  max-width: 100%;
+}
+
+.settings-font-custom {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: min(100%, 460px);
+}
+
+.settings-font-note {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.settings-font-error {
+  font-size: 0.78rem;
+  color: var(--color-error, #ef4444);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.settings-font-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-font-notice {
+  margin: 4px 20px 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm, 8px);
+  background: color-mix(in srgb, var(--color-warning, #d97706) 14%, var(--bg-surface, #fff));
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.settings-font-preview {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.settings-font-preview--heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.25;
 }

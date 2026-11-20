@@ -10,7 +10,7 @@
   height: 100%;
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
   overflow: hidden;
 }
 
@@ -295,7 +295,7 @@
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
   color: var(--text-primary);
   z-index: 60;
 }

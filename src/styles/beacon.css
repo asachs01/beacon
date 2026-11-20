@@ -3,8 +3,9 @@
    Skylight-inspired light theme
    ============================================================ */
 
-/* --- Google Fonts Import --- */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+/* Built-in faces are loaded on demand from local woff2 files (see src/fonts).
+   Do not add a Google Fonts import here — that would call a CDN for the
+   default faces, including through Home Assistant ingress. */
 
 /* --- Custom Properties --- */
 :root {
@@ -62,8 +63,9 @@
 
   --transition: 200ms ease;
 
-  --font-display: 'Fraunces', -apple-system, BlinkMacSystemFont, serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Aliases of the tokens in tokens.css. User font choices set those tokens. */
+  --font-display: var(--font-family-heading);
+  --font-body: var(--font-family-body);
 
   --header-height: 64px;
   --time-axis-width: 64px;
@@ -85,7 +87,7 @@ html, body, #root {
 }
 
 body {
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
   background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -451,14 +453,17 @@ a:focus:not(:focus-visible) {
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
 }
 
 .header-family-name {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 1.35rem;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: -0.3px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .header-date {
@@ -580,7 +585,7 @@ a:focus:not(:focus-visible) {
 }
 
 .cal-sidebar-heading {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -742,7 +747,7 @@ a:focus:not(:focus-visible) {
 }
 
 .week-nav-label {
-  font-family: var(--font-display, inherit);
+  font-family: var(--font-family-heading);
   font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
@@ -948,7 +953,7 @@ a:focus:not(:focus-visible) {
 }
 
 .week-header-day-number {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -986,7 +991,7 @@ a:focus:not(:focus-visible) {
 }
 
 .week-header-weather-temps {
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
   font-weight: 400;
   white-space: nowrap;
 }
@@ -1449,7 +1454,7 @@ a:focus:not(:focus-visible) {
 }
 
 .modal-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -1829,7 +1834,7 @@ a:focus:not(:focus-visible) {
   }
 
   .mobile-more-title {
-    font-family: var(--font-display);
+    font-family: var(--font-family-heading);
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--text-primary);
