@@ -53,6 +53,8 @@ export interface BeaconSettings {
   alwaysOnDisplay: boolean;
   showSeconds: boolean;
   kioskMode: boolean;
+  /** When kiosk mode is on, the corner gesture can temporarily reveal navigation. */
+  kioskRevealGesture: boolean;
 
   // Chores
   choresEnabled: boolean;
@@ -112,6 +114,7 @@ function buildDefaults(): BeaconSettings {
     alwaysOnDisplay: false,
     showSeconds: false,
     kioskMode: false,
+    kioskRevealGesture: true,
 
     choresEnabled: true,
     choresResetTime: '00:00',

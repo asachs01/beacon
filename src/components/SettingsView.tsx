@@ -1610,6 +1610,16 @@ export function SettingsView({
             onChange={(v) => onUpdateSettings({ kioskMode: v })}
           />
         </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.display.kioskRevealLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.kioskRevealSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.kioskRevealGesture}
+            onChange={(v) => onUpdateSettings({ kioskRevealGesture: v })}
+          />
+        </div>
       </div>
 
       <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.display.kidDisplayTitle')}</h2>

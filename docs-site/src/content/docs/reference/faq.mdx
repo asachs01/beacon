@@ -134,6 +134,15 @@ Click the gear icon in the sidebar to open the Family Members modal. Click "+ Ad
 
 **Beacon's own sidebar**: Enable **Kiosk Mode** in **Settings > Display**. This hides Beacon's sidebar entirely and uses a full-width layout. (Fixed in [PR #51](https://github.com/asachs01/beacon/pull/51) — earlier versions had a non-functional toggle.)
 
+Nothing is shown until you reveal it. **Reveal navigation gesture** (same screen, on by default) is the way back:
+
+- **Touch or mouse**: long-press the top corner for about 2 seconds, or tap that corner 3 times quickly. The corner is the top-left, or the top-right when the sidebar position is set to the right.
+- **Keyboard**: hold Escape for about 2 seconds (outside a text field). You can also focus the same corner and hold Enter or Space, or press it 3 times quickly.
+
+The sidebar stays up for about 15 seconds after the last tap, click, or key press, then hides again. If any family member has a PIN, Beacon asks for that PIN before showing navigation. Turn the gesture off under **Settings > Display** when this screen should stay locked with no way back from the display itself.
+
+**Kid Display** is a different mode (one child's routines and chores). The same corner gesture — long-press or 3 quick taps, or holding Escape — is the way out. When a family PIN is set, it is required. When no PIN is set, Beacon asks you to confirm. Five taps on the clock still opens that same PIN or confirm step.
+
 **Home Assistant's sidebar** (when running as an HA add-on): Beacon cannot hide HA's sidebar when running inside Home Assistant ingress — that chrome is controlled by Home Assistant itself. For dedicated wall tablets or Windows kiosk setups, open Beacon's direct URL in full-screen mode instead:
 
 1. **Find the direct URL**: In HA, click "Open Web UI" on the Beacon add-on page, or use the direct ingress URL (typically `http://YOUR_HA_IP:8123/api/hassio_ingress/<addon-token>`)

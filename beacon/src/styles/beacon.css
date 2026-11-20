@@ -187,6 +187,101 @@ a:focus:not(:focus-visible) {
   grid-template-columns: 1fr;
 }
 
+/* Invisible top-corner target that reveals kiosk nav or exits Kid Display.
+   Opacity stays at 0 so children don't see a control; keyboard focus shows it. */
+.kiosk-reveal-hotzone {
+  position: fixed;
+  top: 0;
+  z-index: 40;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  opacity: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+}
+
+.kiosk-reveal-hotzone--left { left: 0; }
+.kiosk-reveal-hotzone--right { right: 0; }
+
+.kiosk-reveal-hotzone:focus-visible {
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent);
+}
+
+.kiosk-reveal-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.kiosk-reveal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.kiosk-reveal-dialog {
+  background: var(--bg-secondary, #fff);
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 360px;
+  width: calc(100% - 32px);
+  text-align: center;
+}
+
+.kiosk-reveal-title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+
+.kiosk-reveal-copy {
+  margin: 0 0 16px;
+  color: var(--text-muted, #666);
+}
+
+.kiosk-reveal-label {
+  display: block;
+  text-align: left;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.kiosk-reveal-dialog .settings-input {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  letter-spacing: 0.2em;
+}
+
+.kiosk-reveal-error {
+  color: var(--color-error, #ef4444);
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+}
+
+.kiosk-reveal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
 .beacon-main {
   display: flex;
   flex-direction: column;

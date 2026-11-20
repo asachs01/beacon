@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, CSSProperties } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, CSSProperties } from 'react';
 import { format } from 'date-fns';
 import { useFamily } from '../../hooks/useFamily';
 import { useChores } from '../../hooks/useChores';
@@ -8,6 +8,8 @@ import { ScreenSaver } from '../ScreenSaver';
 import { RoutineCard } from './RoutineCard';
 import { FocusChores } from './FocusChores';
 import { pickRoutine, getTimeOfDay } from './period';
+import { HiddenCornerGesture, type HiddenCornerGestureHandle } from '../HiddenCornerGesture';
+import { kioskHotCorner } from '../../display/hidden-gesture';
 
 interface FocusViewProps {
   memberId: string;
@@ -45,17 +47,21 @@ export function FocusView({ memberId, settings, onExit }: FocusViewProps) {
     return () => clearInterval(t);
   }, [refreshRoutines, refreshChores]);
 
-  // Exit gesture: 5 taps on the clock within 3 seconds
+  // Exit gesture: 5 taps on the clock within 3 seconds, or the hidden corner gesture.
+  // Both go through the same PIN (or confirm, when no PIN is set) gate.
   const taps = useRef<number[]>([]);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const exitGestureRef = useRef<HiddenCornerGestureHandle>(null);
   const handleClockTap = () => {
     const t = Date.now();
     taps.current = [...taps.current.filter((prev) => t - prev < 3000), t];
     if (taps.current.length >= 5) {
       taps.current = [];
-      setShowExitConfirm(true);
+      exitGestureRef.current?.request();
     }
   };
+  const handleExitGranted = useCallback((granted: boolean) => {
+    if (granted) onExit();
+  }, [onExit]);
 
   const memberChores = useMemo(
     () => choresApi.chores.filter((c) => c.assigned_to.includes(memberId)),
@@ -145,21 +151,14 @@ export function FocusView({ memberId, settings, onExit }: FocusViewProps) {
         )}
       </main>
 
-      {showExitConfirm && (
-        <div className="focus-exit-backdrop" onClick={() => setShowExitConfirm(false)}>
-          <div className="focus-exit-dialog" onClick={(e) => e.stopPropagation()}>
-            <p>Exit {member.name}&rsquo;s display?</p>
-            <div className="focus-exit-actions">
-              <button type="button" className="settings-btn" onClick={() => setShowExitConfirm(false)}>
-                Cancel
-              </button>
-              <button type="button" className="settings-btn settings-btn--primary" onClick={onExit}>
-                Exit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <HiddenCornerGesture
+        ref={exitGestureRef}
+        purpose="kid-display"
+        memberName={member.name}
+        corner={kioskHotCorner(settings.sidebarPosition || 'left')}
+        members={members}
+        onGrantedChange={handleExitGranted}
+      />
 
       <ScreenSaver
         enabled={settings.screenSaverEnabled}
