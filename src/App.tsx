@@ -37,6 +37,8 @@ import { getFocusMemberId, clearFocusMode, setDeviceFocusMember } from './focus'
 import { CalendarEvent, resolveCalendarColor } from './types';
 import { getConfig, patchConfig } from './config';
 import { I18nContext, createI18n } from './i18n';
+import { HiddenCornerGesture } from './components/HiddenCornerGesture';
+import { kioskHotCorner, kioskNavVisible, shouldOfferKioskGesture } from './display/hidden-gesture';
 
 const config = getConfig();
 
@@ -182,6 +184,7 @@ export function App() {
   }, [focusMemberId, members.length]);
 
   const focusInvalid = !!focusMemberId && !focusMember && (members.length > 0 || focusLoadTimedOut);
+  const [kioskNavRevealed, setKioskNavRevealed] = useState(false);
 
   const handleExitFocus = useCallback(() => {
     clearFocusMode();
@@ -502,6 +505,8 @@ export function App() {
       // Don't intercept when typing in inputs
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      // Number keys must not bypass a locked kiosk. Escape hold reveals nav first.
+      if (settings.kioskMode && !kioskNavRevealed) return;
 
       const view = viewMap[e.key];
       if (view) {
@@ -512,9 +517,11 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [settings.kioskMode, kioskNavRevealed]);
 
   const sidebarPos = settings.sidebarPosition || 'left';
+  const showNav = kioskNavVisible(settings.kioskMode, settings.kioskRevealGesture, kioskNavRevealed);
+  const offerKioskGesture = shouldOfferKioskGesture(settings.kioskMode, settings.kioskRevealGesture);
 
   // Show loading screen while checking stored credentials
   if (auth.state.loading) {
@@ -566,7 +573,7 @@ export function App() {
 
   return (
     <I18nContext.Provider value={i18n}>
-    <div className={`beacon ${settings.kioskMode ? 'beacon--kiosk' : `beacon--sidebar-${sidebarPos}`} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
+    <div className={`beacon ${showNav ? `beacon--sidebar-${sidebarPos}` : 'beacon--kiosk'} ${isIngress ? 'beacon--ingress' : ''} ${compact ? 'beacon--compact' : ''}`}>
       {focusInvalid && (
         <div className="focus-invalid-banner">
           {t('app.kidDisplayNotFound')}
@@ -575,8 +582,16 @@ export function App() {
           </button>
         </div>
       )}
-      {/* Sidebar — hidden entirely in Kiosk Mode (Settings > Display) */}
-      {!settings.kioskMode && (
+      {/* Kiosk hides the sidebar until the corner gesture (or Escape) reveals it. */}
+      {offerKioskGesture && (
+        <HiddenCornerGesture
+          purpose="kiosk"
+          corner={kioskHotCorner(sidebarPos)}
+          members={members}
+          onGrantedChange={setKioskNavRevealed}
+        />
+      )}
+      {showNav && (
         <Sidebar
           activeView={activeView}
           onChangeView={handleChangeView}

@@ -75,12 +75,17 @@ Routine task completions **reset every day** automatically. Chore completions fe
 
 ## Exiting Kid Display Mode
 
-Kid Display Mode is intentionally hard to exit by accident:
+Kid Display is separate from kiosk mode, and it is meant to be hard to leave by accident. Use the same hidden gesture as kiosk navigation:
 
-1. Tap the **clock** 5 times within 3 seconds
-2. Confirm the exit in the dialog that appears
+- **Touch or mouse**: long-press the top corner for about 2 seconds, or tap that corner 3 times quickly. The corner is the top-left, or the top-right when the sidebar position is set to the right.
+- **Keyboard**: hold Escape for about 2 seconds. Focusing that corner and holding Enter or Space, or pressing it 3 times quickly, works too.
+- **Clock**: tap the clock 5 times within 3 seconds. This opens the same step as the corner gesture.
+
+If any family member has a PIN, Beacon asks for it before leaving. If no PIN is set, it asks you to confirm. Cancel, press Escape, or wait about 15 seconds and the prompt goes away without exiting.
 
 Exiting clears the device's Kid Display assignment and strips the `?display=` parameter from the URL, returning the device to the full Beacon app.
+
+The way out is also described under [How do I hide the sidebar for wall tablets / kiosk setups?](/docs/reference/faq/#how-do-i-hide-the-sidebar-for-wall-tablets--kiosk-setups).
 
 ---
 
