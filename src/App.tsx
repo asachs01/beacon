@@ -14,6 +14,7 @@ import { EventModal, EventFormData } from './components/EventModal';
 import { FamilyFilter } from './components/FamilyFilter';
 import { SettingsView } from './components/SettingsView';
 import { useSettings } from './hooks/useSettings';
+import { useAppliedFonts } from './hooks/useAppliedFonts';
 import { ChoresView } from './components/ChoresView';
 import { Leaderboard } from './components/Leaderboard';
 import { Sidebar, SidebarView } from './components/Sidebar';
@@ -56,6 +57,7 @@ export function App() {
     importSettings,
     clearLocalStorage,
   } = useSettings();
+  const fontStatus = useAppliedFonts(settings.headingFont, settings.bodyFont);
 
   const i18n = useMemo(() => createI18n(settings.locale), [settings.locale]);
   const { t } = i18n;
@@ -697,6 +699,7 @@ export function App() {
             onExportSettings={exportSettings}
             onImportSettings={importSettings}
             onClearLocalStorage={clearLocalStorage}
+            fontStatus={fontStatus}
             members={members}
             onAddMember={addMember}
             onUpdateMember={updateMember}

@@ -16,9 +16,11 @@ import './styles/weather.css';
 import './styles/focus.css';
 import { initNativeBridge } from './native';
 import { applyStoredTheme } from './hooks/useTheme';
+import { bootstrapStoredFonts } from './fonts/apply';
 
-// Apply stored theme immediately (before first paint) to prevent flash
+// Apply stored theme and fonts immediately (before first paint) to prevent flash
 applyStoredTheme();
+bootstrapStoredFonts();
 
 // Initialize Capacitor native bridge (no-op on web)
 initNativeBridge();

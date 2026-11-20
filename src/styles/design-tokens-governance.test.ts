@@ -93,5 +93,15 @@ describe('design tokens are wired up, not orphaned', () => {
     const warningFallbackPattern = /--color-warning,\s*#f59e0b\)/i;
     expect(warningFallbackPattern.test(allOtherCss)).toBe(false);
   });
+
+  it('defines heading and body font tokens that end in the system font stack', () => {
+    expect(tokensCss).toMatch(/--font-family-heading:[^;]*system-ui[^;]*sans-serif/);
+    expect(tokensCss).toMatch(/--font-family-body:[^;]*system-ui[^;]*sans-serif/);
+  });
+
+  it('stylesheets consume --font-family-heading and --font-family-body', () => {
+    expect(allOtherCss).toContain('var(--font-family-heading)');
+    expect(allOtherCss).toContain('var(--font-family-body)');
+  });
 });
 

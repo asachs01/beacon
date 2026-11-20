@@ -62,7 +62,7 @@
 }
 
 .weather-current-temp {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 64px;
   font-weight: 700;
   line-height: 1;
@@ -128,7 +128,7 @@
 }
 
 .weather-forecast-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 20px;
   font-weight: 600;
   color: var(--text-primary);
@@ -255,7 +255,7 @@
 }
 
 .weather-hourly-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);

@@ -111,7 +111,7 @@
   color: var(--text-primary);
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
-  font-family: var(--font-body);
+  font-family: var(--font-family-body);
 }
 
 /* ---- Main FAB ---- */

@@ -24,6 +24,8 @@ import {
   Routine,
 } from '../types/family';
 import type { BeaconSettings } from '../hooks/useSettings';
+import type { FontApplyStatus } from '../hooks/useAppliedFonts';
+import { FontSettings } from './FontSettings';
 import { getConfig } from '../config';
 import { isAddOn } from '../utils/ha-env';
 import { buildFocusUrl } from '../focus';
@@ -52,6 +54,7 @@ interface SettingsViewProps {
   onExportSettings: () => string;
   onImportSettings: (json: string) => void;
   onClearLocalStorage: () => void;
+  fontStatus: FontApplyStatus;
   // Family
   members: FamilyMember[];
   onAddMember: (member: Omit<FamilyMember, 'id'>) => void;
@@ -201,6 +204,7 @@ export function SettingsView({
   onExportSettings,
   onImportSettings,
   onClearLocalStorage,
+  fontStatus,
   members,
   onAddMember,
   onUpdateMember,
@@ -644,6 +648,13 @@ export function SettingsView({
           />
         </div>
       </div>
+
+      <FontSettings
+        headingFont={settings.headingFont}
+        bodyFont={settings.bodyFont}
+        status={fontStatus}
+        onUpdate={onUpdateSettings}
+      />
 
       <div className="settings-group">
         <div className="settings-row">

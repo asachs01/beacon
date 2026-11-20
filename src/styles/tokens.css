@@ -1,6 +1,7 @@
 /* ============================================================
    Beacon — Design Tokens
-   Single source of truth for the 10-role color system.
+   Single source of truth for the 10-role color system and the
+   heading/body font stacks.
    See ADR: docs/design-tokens.md for the full reasoning behind
    this exact set (why 14 → 10, why Warning != Brand gold, etc).
 
@@ -31,4 +32,10 @@
                                 its own hue so a warning toast is never visually
                                 identical to the Beacon brand mark */
   --color-error: #ef4444;
+
+  /* Typography. Settings overrides these on :root at runtime.
+     Every stack ends in the system UI font stack so a missing face
+     still renders. Built-in faces load on demand; they are not in this file. */
+  --font-family-heading: "Fraunces", ui-serif, Georgia, "Times New Roman", serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }

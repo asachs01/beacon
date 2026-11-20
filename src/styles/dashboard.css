@@ -56,7 +56,7 @@
 }
 
 .dash-week-day-label {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -112,17 +112,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
+  min-width: 0;
 }
 
 .dash-topbar-left {
   display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
   gap: 16px;
+  min-width: 0;
 }
 
 .dash-topbar-time {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 48px;
   font-weight: 700;
   line-height: 1;
@@ -136,7 +140,7 @@
 }
 
 .dash-topbar-date {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 20px;
   font-weight: 400;
   color: var(--text-secondary);
@@ -174,7 +178,7 @@
 }
 
 .dash-topbar-weather-temp {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 24px;
   font-weight: 600;
   color: var(--text-primary);
@@ -253,11 +257,14 @@
 }
 
 .dash-member-name {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 15px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
 }
 
 .dash-member-events {
@@ -353,7 +360,7 @@
 }
 
 .dash-sidebar-heading {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -364,7 +371,7 @@
 
 /* ─── SHARED: Section title, events list, event cards ─── */
 .dashboard-section-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 18px;
   font-weight: 600;
   color: var(--text-secondary);
@@ -446,6 +453,8 @@
   gap: 4px;
   box-shadow: var(--shadow-sm);
   transition: transform 150ms ease, box-shadow 150ms ease;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .event-card:hover {
@@ -472,11 +481,13 @@
 }
 
 .event-card-title {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 15px;
   font-weight: 600;
   color: rgba(0, 0, 0, 0.85);
   line-height: 1.3;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .event-card-time {
@@ -963,10 +974,33 @@
 }
 
 .dash-ha-card-state {
-  font-family: var(--font-display);
+  font-family: var(--font-family-heading);
   font-size: 24px;
   font-weight: 600;
   color: var(--text-primary);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.dash-ha-card,
+.dash-sidebar-section {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dash-ha-toggle-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.dashboard-section-title,
+.dash-sidebar-heading,
+.dash-ha-card-subtitle {
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .dash-ha-card-unit {
@@ -986,22 +1020,32 @@
 .dash-ha-entities-item {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
   font-size: 13px;
 }
 
 .dash-ha-entities-name {
   color: var(--text-secondary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dash-ha-entities-state {
   font-weight: 600;
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .dash-ha-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border, #e5e5e5);
