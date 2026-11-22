@@ -50,7 +50,7 @@ export function FontSettings({ headingFont, bodyFont, status, onUpdate }: FontSe
         : null;
 
   return (
-    <div className="settings-group">
+    <div className="settings-group" id="settings-fonts">
       <div className="settings-group-title">{t('settings.appearance.fontsTitle')}</div>
       <p className="settings-font-intro">{t('settings.appearance.fontsDesc')}</p>
       {notice && (

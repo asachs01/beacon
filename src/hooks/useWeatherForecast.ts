@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ForecastDay } from '../types';
 import { callHaService, haFetch, hasToken } from '../api/ha-rest';
 import { getConfig } from '../config';
+import { DEMO_FORECAST } from '../demo/fixtures';
 
 const REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes
 
@@ -10,10 +11,11 @@ const REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes
  * Auto-discovers the weather entity if none is configured.
  */
 export function useWeatherForecast(): ForecastDay[] {
-  const [forecast, setForecast] = useState<ForecastDay[]>([]);
+  const demo = import.meta.env.VITE_DEMO === 'true';
+  const [forecast, setForecast] = useState<ForecastDay[]>(demo ? DEMO_FORECAST : []);
 
   const fetchForecast = useCallback(async () => {
-    if (!hasToken()) return;
+    if (demo || !hasToken()) return;
 
     try {
       // Resolve weather entity — try configured, then auto-discover
@@ -62,7 +64,7 @@ export function useWeatherForecast(): ForecastDay[] {
     } catch {
       // Silently ignore — weather is supplementary
     }
-  }, []);
+  }, [demo]);
 
   useEffect(() => {
     fetchForecast();

@@ -17,6 +17,12 @@ import './styles/focus.css';
 import { initNativeBridge } from './native';
 import { applyStoredTheme } from './hooks/useTheme';
 import { bootstrapStoredFonts } from './fonts/apply';
+import { installDemo } from './demo/install';
+
+// Demo builds seed fixtures before the first paint so screenshots are stable.
+if (import.meta.env.VITE_DEMO === 'true') {
+  installDemo();
+}
 
 // Apply stored theme and fonts immediately (before first paint) to prevent flash
 applyStoredTheme();

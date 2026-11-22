@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-label="Photo placeholder">
+  <rect width="1600" height="1000" fill="#1e3a5f"/>
+  <circle cx="1180" cy="220" r="90" fill="#f6c453"/>
+  <path d="M0 720 L280 520 L520 680 L860 400 L1240 700 L1600 480 L1600 1000 L0 1000 Z" fill="#2f6f4e"/>
+  <path d="M0 820 L360 640 L640 780 L980 560 L1600 860 L1600 1000 L0 1000 Z" fill="#3d8f64"/>
+  <rect x="80" y="80" width="360" height="64" rx="12" fill="#ffffff" fill-opacity="0.92"/>
+  <text x="110" y="124" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="600" fill="#1e3a5f">Photo placeholder</text>
+</svg>
