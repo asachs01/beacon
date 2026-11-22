@@ -64,7 +64,7 @@ const COPY = {
 
 /**
  * Add-on option → in-app setting, or a label/description when the option
- * is only in config.yaml (ha_token never appears in the settings screen).
+ * is only in beacon/config.yaml (ha_token never appears in the settings screen).
  * The Home Assistant add-on file is beacon/config.yaml.
  */
 const ADDON_TO_SETTING = {

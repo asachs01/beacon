@@ -1,6 +1,6 @@
 ---
 title: "Updating and Troubleshooting"
-description: "How to update Beacon, roll back a bad update, find the logs, and fix the most common problems: failed add-on builds, kiosk exits, wrong-day meals, and notifications."
+description: "How to update Beacon, roll back a bad update, find the logs, and fix the most common problems: failed add-on updates, kiosk exits, wrong-day meals, and notifications."
 order: 6
 ---
 
@@ -14,7 +14,9 @@ order: 6
 2. If you don't see an update yet, open the add-on store, then use the menu in the top-right corner and choose **Check for updates**.
 3. Click **Update**. Leave **Create backup before updating** turned on if Home Assistant offers it, so you can roll back.
 
-Home Assistant builds the add-on on your machine during the update, so it can take a few minutes on a Raspberry Pi.
+Home Assistant pulls a prebuilt image from GitHub Container Registry (`ghcr.io/asachs01/beacon`). It does not build the add-on on your machine. The image is published for 64-bit Intel/AMD, 64-bit ARM, and 32-bit ARM before that version shows up as an update.
+
+Home Assistant has deprecated 32-bit ARM (`armv7`). Beacon no longer lists it as a supported architecture. This release still publishes a `linux/arm/v7` image so an existing 32-bit ARM install can finish updating. Future releases may drop that image.
 
 Your family members, chores, settings and meal plans live in the add-on's `/data` folder. They survive updates and are included in Home Assistant backups.
 
@@ -36,7 +38,7 @@ Make sure the `-v beacon-data:/data` volume is there. Without it, removing the c
 
 **Add-on:** Go to **Settings → System → Backups** and restore the backup Home Assistant made before the update. You can restore only the Beacon add-on rather than the whole system.
 
-**Docker:** Run a specific version tag instead of `latest`, for example `ghcr.io/asachs01/beacon:1.40.2`. Not every release has an image, so pick a tag from the [package page](https://github.com/asachs01/beacon/pkgs/container/beacon).
+**Docker:** Run a specific version tag instead of `latest`, for example `ghcr.io/asachs01/beacon:1.40.2`. Each release publishes that image before the version is offered. Older tags are on the [package page](https://github.com/asachs01/beacon/pkgs/container/beacon).
 
 If an update breaks something, please [open an issue](https://github.com/asachs01/beacon/issues). We'd much rather hear about it than have you quietly roll back.
 
@@ -53,11 +55,15 @@ When you file a bug, include your Beacon version, your Home Assistant version, t
 
 ## Common problems
 
-### The update fails with "Could not build image" or "Docker build failed"
+### The update fails
 
-Home Assistant couldn't build the new version. The Supervisor log shows why: look for the first `error` line near the end of the build output.
+Current releases pull `ghcr.io/asachs01/beacon:<version>` instead of building on the device. If the pull fails, the Supervisor log names the registry error or the missing tag. Your installed version keeps running, so nothing is lost. Check for updates again, and if it still fails, open an issue with that log.
 
-This happened in **1.41.0**, when the custom fonts release was missing its font packages in the add-on build ([#70](https://github.com/asachs01/beacon/issues/70)). It's fixed in **1.41.1**. Your installed version keeps running when an update fails, so nothing is lost. Check for updates again, and if the newest version still fails, open an issue with the Supervisor log.
+Older releases built on the device. That failed in **1.41.0**, when the custom fonts release was missing its font packages in the add-on build ([#70](https://github.com/asachs01/beacon/issues/70)). It's fixed in **1.41.1**, and later versions do not use that build path.
+
+### 32-bit ARM (armv7)
+
+Home Assistant reports `armv7` as a deprecated architecture. Beacon's manifest lists amd64 and aarch64 only. The image for this release is still published for `linux/arm/v7` so an existing 32-bit ARM device is not left without a pullable update. Future releases may stop publishing that image.
 
 ### I turned on Kiosk Mode and can't get the menu back
 

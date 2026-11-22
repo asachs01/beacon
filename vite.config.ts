@@ -3,13 +3,11 @@ import react from '@vitejs/plugin-react';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 
-// Read the authoritative add-on version from config.yaml at the repo root
-// (kept in sync with beacon/config.yaml by the semantic-release pipeline —
-// see .releaserc.json's @semantic-release/exec prepareCmd). package.json's
-// "version" field is NOT the source of truth for this add-on; don't read it.
+// The only add-on manifest is beacon/config.yaml. package.json's "version"
+// field is NOT the source of truth for this add-on; don't read it.
 function getAppVersion(): string {
   try {
-    const configPath = fileURLToPath(new URL('./config.yaml', import.meta.url));
+    const configPath = fileURLToPath(new URL('./beacon/config.yaml', import.meta.url));
     const configYaml = readFileSync(configPath, 'utf-8');
     const match = configYaml.match(/^version:\s*["']?([^"'\n]+)["']?\s*$/m);
     if (match) return match[1].trim();

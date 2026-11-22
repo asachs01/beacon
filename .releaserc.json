@@ -7,10 +7,10 @@
       "changelogFile": "CHANGELOG.md"
     }],
     ["@semantic-release/exec", {
-      "prepareCmd": "sed -i 's/version: \".*\"/version: \"${nextRelease.version}\"/' config.yaml beacon/config.yaml && cp CHANGELOG.md beacon/CHANGELOG.md"
+      "prepareCmd": "bash scripts/prepare-addon-release.sh \"${nextRelease.version}\""
     }],
     ["@semantic-release/git", {
-      "assets": ["CHANGELOG.md", "beacon/CHANGELOG.md", "config.yaml", "beacon/config.yaml", "package.json"],
+      "assets": ["CHANGELOG.md", "beacon/CHANGELOG.md", "beacon/config.yaml", "package.json"],
       "message": "release: ${nextRelease.version}\n\n${nextRelease.notes}\n\nCo-Authored-By: claude-flow <ruv@ruv.net>"
     }],
     "@semantic-release/github"

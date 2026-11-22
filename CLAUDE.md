@@ -9,23 +9,17 @@
 ## Learnings - 2026-03-29
 
 ### Dual-Directory Structure
-HA builds from `beacon/` subdirectory, NOT the repo root. After ANY source change, sync:
+The only Home Assistant add-on manifest is `beacon/config.yaml`. It sets `image: ghcr.io/asachs01/beacon`, so Supervisor pulls the prebuilt image instead of building on the device. Do not add a second `config.yaml` / `config.yml` / `config.json` with `slug: beacon` anywhere else in the tree. Supervisor globs all of them, and a duplicate slug is last-write-wins.
+
+Keep `init: false`. The runtime image is `ghcr.io/hassio-addons/base`, whose s6-overlay must be PID 1. There is no `build.yaml`; that file is deprecated. The base image is `ARG BUILD_FROM` in the Dockerfile, and the release publish passes it again as a build-arg.
+
+After ANY source change, sync the add-on copy:
 ```bash
 rsync -av --delete src/ beacon/src/
 cp Dockerfile run.sh CHANGELOG.md beacon/
 ```
-Both `config.yaml` and `beacon/config.yaml` must have matching versions.
 
-**The root-level `Dockerfile` builds from repo-root context (`context: .` in
-`.github/workflows/build-addon.yml`), not from `beacon/`.** So anything that
-Dockerfile `COPY`s -- including `custom_intents/` and `custom_sentences/` --
-must also exist at the repo root, mirrored from `beacon/`, or the Docker
-build fails with `"failed to calculate checksum ... not found"`. This bit
-us once already: those two dirs existed only under `beacon/` and the image
-build silently never ran for months (see the CI/release-trigger bug below),
-so nobody caught it until the pipeline was fixed and the build actually
-executed. When adding root-level content Dockerfile depends on, sync it
-the same way:
+The published image is built from `beacon/` (`scripts/publish-addon-image.sh` and `build-addon.yml`). The root Dockerfile is kept identical so a root-context `docker build` still works. Anything that Dockerfile `COPY`s, including `custom_intents/` and `custom_sentences/`, must exist at the repo root as well:
 ```bash
 rsync -av --delete beacon/custom_intents/ custom_intents/
 rsync -av --delete beacon/custom_sentences/ custom_sentences/
@@ -47,4 +41,4 @@ Filter out `unavailable` entities during discovery. Calling get_items on unavail
 HA aggressively caches add-on repos. To force update visibility: create a git tag + GitHub release. If that fails, user must remove and re-add the repo URL. The `update_entity` service does NOT trigger a repo refresh.
 
 ### Semantic Release
-`.releaserc.json` and `.github/workflows/release.yml` handle automated versioning. Uses conventional commits (`fix:` → patch, `feat:` → minor, `BREAKING CHANGE:` → major). Bumps both config.yaml files, syncs changelogs, creates GitHub releases.
+`.releaserc.json` and `.github/workflows/release.yml` handle automated versioning. Uses conventional commits (`fix:` → patch, `feat:` → minor, `BREAKING CHANGE:` → major). The prepare step publishes the multi-arch GHCR image, and only then does `@semantic-release/git` commit the version bump in `beacon/config.yaml`. A failed image push leaves main unchanged.
