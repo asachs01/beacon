@@ -9,11 +9,12 @@ import { useWeather } from './hooks/useWeather';
 import { useChores } from './hooks/useChores';
 import { Clock } from './components/Clock';
 import { WeekCalendar } from './components/WeekCalendar';
+import { MonthCalendar } from './components/MonthCalendar';
 import { DashboardView } from './components/DashboardView';
 import { EventModal, EventFormData } from './components/EventModal';
 import { FamilyFilter } from './components/FamilyFilter';
 import { SettingsView } from './components/SettingsView';
-import { useSettings } from './hooks/useSettings';
+import { readStoredCalendarLayout, useSettings } from './hooks/useSettings';
 import { useAppliedFonts } from './hooks/useAppliedFonts';
 import { ChoresView } from './components/ChoresView';
 import { Leaderboard } from './components/Leaderboard';
@@ -37,7 +38,8 @@ import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView from './components/OnboardingView';
 import { FocusView } from './components/focus/FocusView';
 import { getFocusMemberId, clearFocusMode, setDeviceFocusMember } from './focus';
-import { CalendarEvent, resolveCalendarColor } from './types';
+import { CalendarEvent, resolveCalendarColor, normalizeCalendarLayout, type CalendarLayout } from './types';
+import { buildMonthGrid } from './utils/month-grid';
 import { getConfig, patchConfig } from './config';
 import { I18nContext, createI18n } from './i18n';
 import { HiddenCornerGesture } from './components/HiddenCornerGesture';
@@ -51,6 +53,7 @@ export function App() {
   const { isIngress, compact } = useIngressDetect();
   const {
     settings,
+    loaded: settingsLoaded,
     updateSettings,
     resetSettings,
     exportSettings,
@@ -207,20 +210,56 @@ export function App() {
     startOfWeek(new Date(), { weekStartsOn: settings.weekStartsOn }),
   );
 
+  // Session calendar layout. Starts from the saved default (read synchronously
+  // so the first paint matches) and keeps the last switcher choice until the
+  // user changes that default in Settings.
+  const [calendarLayout, setCalendarLayout] = useState<CalendarLayout>(() => readStoredCalendarLayout());
+  const calendarLayoutTouched = useRef(false);
+  const appliedCalendarDefault = useRef<CalendarLayout | null>(null);
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    const next = normalizeCalendarLayout(settings.defaultCalendarView);
+    const settingChanged = appliedCalendarDefault.current !== null
+      && appliedCalendarDefault.current !== next;
+    const firstApply = appliedCalendarDefault.current === null;
+    appliedCalendarDefault.current = next;
+    if (firstApply && calendarLayoutTouched.current) return;
+    if (!calendarLayoutTouched.current || settingChanged) {
+      setCalendarLayout(next);
+      if (settingChanged) calendarLayoutTouched.current = false;
+    }
+  }, [settingsLoaded, settings.defaultCalendarView]);
+
+  const handleCalendarLayoutChange = useCallback((layout: CalendarLayout) => {
+    calendarLayoutTouched.current = true;
+    setCalendarLayout(layout);
+  }, []);
+
+  const [visibleMonthStart, setVisibleMonthStart] = useState<Date>(() =>
+    buildMonthGrid(new Date(), settings.weekStartsOn).days[0],
+  );
+  const handleVisibleMonthChange = useCallback((gridStart: Date) => {
+    setVisibleMonthStart((current) => (
+      current.getTime() === gridStart.getTime() ? current : gridStart
+    ));
+  }, []);
+
   // Day currently selected on the Dashboard's day view
   const [dashboardDate, setDashboardDate] = useState<Date>(() => startOfDay(new Date()));
 
-  // Which windows to load. The calendar follows visibleWeekStart; the
-  // dashboard follows dashboardDate, so stepping more than a few days off
-  // today still requests the week that contains the day on screen.
+  // Which windows to load. The calendar week follows visibleWeekStart; the
+  // month grid follows visibleMonthStart (including adjacent-month days);
+  // the dashboard follows dashboardDate.
   const eventRanges = useMemo(
     () => rangesForView({
       activeView,
       dashboardDate,
       visibleWeekStart,
       weekStartsOn: settings.weekStartsOn,
+      calendarLayout,
+      visibleMonthStart,
     }),
-    [activeView, dashboardDate, visibleWeekStart, settings.weekStartsOn],
+    [activeView, dashboardDate, visibleWeekStart, settings.weekStartsOn, calendarLayout, visibleMonthStart],
   );
   const eventRangeKey = eventRanges.map((range) => `${range.startMs}:${range.endMs}`).join('|');
   const eventRangesRef = useRef(eventRanges);
@@ -761,15 +800,31 @@ export function App() {
             {/* Calendar Body — two-column on desktop */}
             <div className="beacon-body beacon-body--two-col">
               <div className="beacon-body-calendar">
-                <WeekCalendar
-                  events={events}
-                  hiddenCalendars={hiddenCalendars}
-                  onEventClick={handleEventClick}
-                  onSlotClick={handleSlotClick}
-                  onEventReschedule={handleEventReschedule}
-                  onVisibleWeekChange={setVisibleWeekStart}
-                  weekStartsOn={settings.weekStartsOn}
-                />
+                {calendarLayout === 'month' ? (
+                  <MonthCalendar
+                    events={events}
+                    hiddenCalendars={hiddenCalendars}
+                    onEventClick={handleEventClick}
+                    onSlotClick={handleSlotClick}
+                    onVisibleMonthChange={handleVisibleMonthChange}
+                    weekStartsOn={settings.weekStartsOn}
+                    calendarLayout={calendarLayout}
+                    onCalendarLayoutChange={handleCalendarLayoutChange}
+                    isDayLoaded={isDayLoaded}
+                  />
+                ) : (
+                  <WeekCalendar
+                    events={events}
+                    hiddenCalendars={hiddenCalendars}
+                    onEventClick={handleEventClick}
+                    onSlotClick={handleSlotClick}
+                    onEventReschedule={handleEventReschedule}
+                    onVisibleWeekChange={setVisibleWeekStart}
+                    weekStartsOn={settings.weekStartsOn}
+                    calendarLayout={calendarLayout}
+                    onCalendarLayoutChange={handleCalendarLayoutChange}
+                  />
+                )}
               </div>
               <CalendarSidebar
                 events={visibleEvents}

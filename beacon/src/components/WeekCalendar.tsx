@@ -10,10 +10,11 @@ import {
   getHours,
   getMinutes,
 } from 'date-fns';
-import { CalendarEvent } from '../types';
+import { CalendarEvent, type CalendarLayout } from '../types';
 import { computeOverlapLayout, type OverlapLayout } from '../utils/overlap-layout';
 import { EventBlock } from './EventBlock';
 import { EventDetailsPopover } from './EventDetailsPopover';
+import { CalendarViewSwitcher } from './CalendarViewSwitcher';
 import { useWeatherForecast } from '../hooks/useWeatherForecast';
 import { weatherIcon } from '../types/weather-icons';
 import { useTranslation } from '../i18n';
@@ -26,6 +27,8 @@ interface WeekCalendarProps {
   onEventReschedule?: (event: CalendarEvent, newDate: string, newHour: number) => void;
   onVisibleWeekChange?: (weekStart: Date) => void;
   weekStartsOn: 0 | 1;
+  calendarLayout?: CalendarLayout;
+  onCalendarLayoutChange?: (layout: CalendarLayout) => void;
 }
 
 const START_HOUR = 7;
@@ -69,7 +72,7 @@ interface MultiDaySpan {
   lane: number;
 }
 
-export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule, onVisibleWeekChange, weekStartsOn }: WeekCalendarProps) {
+export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule, onVisibleWeekChange, weekStartsOn, calendarLayout = 'week', onCalendarLayoutChange }: WeekCalendarProps) {
   const today = new Date();
   const todayWeekStart = startOfWeek(today, { weekStartsOn });
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -448,25 +451,30 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
           </button>
         </div>
         <div className="week-nav-label">{weekLabel}</div>
-        <div className="week-nav-jump">
-          <button
-            type="button"
-            className="week-nav-jump-btn"
-            onClick={() => setWeekOffset((o) => o - 4)}
-            aria-label={t('weekCalendar.back4WeeksAria')}
-            title={t('weekCalendar.back4WeeksAria')}
-          >
-            -4w
-          </button>
-          <button
-            type="button"
-            className="week-nav-jump-btn"
-            onClick={() => setWeekOffset((o) => o + 4)}
-            aria-label={t('weekCalendar.forward4WeeksAria')}
-            title={t('weekCalendar.forward4WeeksAria')}
-          >
-            +4w
-          </button>
+        <div className="week-nav-trailing">
+          {onCalendarLayoutChange && (
+            <CalendarViewSwitcher value={calendarLayout} onChange={onCalendarLayoutChange} />
+          )}
+          <div className="week-nav-jump">
+            <button
+              type="button"
+              className="week-nav-jump-btn"
+              onClick={() => setWeekOffset((o) => o - 4)}
+              aria-label={t('weekCalendar.back4WeeksAria')}
+              title={t('weekCalendar.back4WeeksAria')}
+            >
+              -4w
+            </button>
+            <button
+              type="button"
+              className="week-nav-jump-btn"
+              onClick={() => setWeekOffset((o) => o + 4)}
+              aria-label={t('weekCalendar.forward4WeeksAria')}
+              title={t('weekCalendar.forward4WeeksAria')}
+            >
+              +4w
+            </button>
+          </div>
         </div>
       </div>
 

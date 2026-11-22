@@ -1,12 +1,28 @@
 ---
 title: "Calendar"
-description: "Complete guide to Beacon's week calendar view — creating, editing, deleting, and rescheduling events, recurring events, multi-day events, and filtering."
+description: "Complete guide to Beacon's week and month calendar views — creating, editing, deleting, and rescheduling events, recurring events, multi-day events, and filtering."
 order: 2
 ---
 
 # Calendar
 
-The calendar is Beacon's core feature. It displays a full week view with support for timed events, all-day events, multi-day events, recurring events, drag-to-reschedule, and per-calendar filtering.
+The calendar is Beacon's core feature. It displays either a full week view or a standard month view, with support for timed events, all-day events, multi-day events, recurring events, drag-to-reschedule (week view), and per-calendar filtering.
+
+Use the **Week / Month** switcher in the calendar header to change the layout. Beacon remembers that choice until you leave the app. To make Month the layout you see every time you open the calendar, go to **Settings → Calendar** and set **Default Calendar View** to Month. The week-start preference (**Settings → General → Week Starts On**) applies to both layouts.
+
+---
+
+## Month view
+
+Month view is a 6-row by 7-column grid for the month on screen:
+
+- The grid always includes leading and trailing days from the adjacent months. Those days are dimmed.
+- Today is highlighted.
+- Each day shows event chips colored the same way as the week view (pastel fill, full-color stripe, one color per calendar or family member).
+- A day with more events than fit shows **+N more**. Tap it, or the day number, to open that day and see every event. Tap an event to edit it, or **Add event** to create one.
+- **Previous**, **Today**, and **Next** move by month.
+
+Events are loaded for the whole visible grid, including the dimmed days from the neighboring months, and reuse the same cache as the week and dashboard views. While that range is still loading, the calendar shows "Loading events..." instead of an empty month.
 
 ---
 
@@ -205,7 +221,7 @@ This is useful when you have many calendars and want to focus on a specific fami
 
 ### Google Calendar
 
-Events are fetched through Home Assistant's Google Calendar integration using the WebSocket API. Beacon calls `calendars/list` to discover calendars and `calendars/list_events` to fetch events for each calendar within the current week's date range.
+Events are fetched through Home Assistant's Google Calendar integration using the WebSocket API. Beacon calls `calendars/list` to discover calendars and `calendars/list_events` to fetch events for each calendar. Week view loads the visible week (with a one-day pad). Month view loads the full 6-week grid, including days from the previous and next month.
 
 - Events refresh automatically every 5 minutes
 - Creating, editing, or deleting an event triggers an immediate refresh
@@ -236,7 +252,7 @@ Set up the CalDAV integration in Home Assistant and Beacon will discover those c
 
 ### Events are missing or stale
 
-1. Events are fetched for the current week only (Sunday to Saturday)
+1. Week view fetches the visible week. Month view fetches the visible 6-week grid, which includes a few days of the neighboring months. Days outside that window are not loaded until you navigate to them.
 2. The auto-refresh interval is 5 minutes — wait or reload the page
 3. Check that the calendar entity has events in Home Assistant: go to **Developer Tools > Services**, call `calendar.list_events` on the entity with a date range, and verify events are returned
 

@@ -115,6 +115,18 @@ export const fr: Record<TranslationKey, string> = {
   'weekCalendar.dayGroup': 'Groupe de jours {n}',
   'weekCalendar.addEventOnAt': 'Ajouter un événement le {day} à {time}',
 
+  // ---- calendar layout (week / month) ----
+  'calendar.viewWeek': 'Semaine',
+  'calendar.viewMonth': 'Mois',
+  'calendar.viewSwitcherLabel': 'Présentation du calendrier',
+  'calendar.previousMonth': 'Mois précédent',
+  'calendar.nextMonth': 'Mois suivant',
+  'calendar.jumpToCurrentMonth': 'Aller au mois en cours',
+  'calendar.moreEvents': '+{count} de plus',
+  'calendar.dayEvents': 'Événements du {date}',
+  'calendar.showDay': 'Afficher le {date}',
+  'calendar.addEventOn': 'Ajouter un événement le {date}',
+
   // ---- event modal ----
   'eventModal.editTitle': "Détails de l'événement",
   'eventModal.newTitle': 'Nouvel événement',
@@ -294,6 +306,8 @@ export const fr: Record<TranslationKey, string> = {
   'settings.calendar.setColorTo': 'Définir {name} sur {color}',
   'settings.calendar.chooseCustomColorFor': 'Choisir une couleur personnalisée pour {name}',
   'settings.calendar.resetToAuto': 'Réinitialiser à automatique',
+  'settings.calendar.defaultViewLabel': 'Vue du calendrier par défaut',
+  'settings.calendar.defaultViewSublabel': 'Semaine ou mois affiché à l’ouverture du calendrier',
   'settings.calendar.defaultCalendarLabel': 'Calendrier par défaut',
   'settings.calendar.defaultEventDurationLabel': "Durée d'événement par défaut",
   'settings.calendar.min30': '30 min',

@@ -1,4 +1,6 @@
 import { addDays, parseISO, startOfDay, startOfWeek } from 'date-fns';
+import type { CalendarLayout } from '../types';
+import { MONTH_GRID_DAYS } from './month-grid';
 
 /**
  * How far around a calendar week we ask Home Assistant for events.
@@ -37,6 +39,13 @@ export interface ViewRangeInput {
   /** Week the calendar view is showing. Ignored while the Dashboard is active. */
   visibleWeekStart: Date;
   weekStartsOn: 0 | 1;
+  /** Week or month while the calendar tab is showing. Other views ignore this. */
+  calendarLayout?: CalendarLayout;
+  /**
+   * First cell of the month grid. May fall in the previous month.
+   * Used only when the calendar tab is in month layout.
+   */
+  visibleMonthStart?: Date;
 }
 
 /** Fetch window for a calendar week, including the bleed padding. */
@@ -44,6 +53,19 @@ export function weekEventRange(weekStart: Date): EventRange {
   return {
     startMs: addDays(weekStart, -WEEK_RANGE_LEAD_DAYS).getTime(),
     endMs: addDays(weekStart, WEEK_RANGE_END_OFFSET_DAYS).getTime(),
+  };
+}
+
+/**
+ * Fetch window for the month grid on screen.
+ * `gridStart` is the first cell (often the previous month). The window covers
+ * all 42 cells and stops at the start of the day after the last cell.
+ */
+export function monthEventRange(gridStart: Date): EventRange {
+  const start = startOfDay(gridStart);
+  return {
+    startMs: start.getTime(),
+    endMs: addDays(start, MONTH_GRID_DAYS).getTime(),
   };
 }
 
@@ -61,6 +83,13 @@ export function rangesForView(input: ViewRangeInput): EventRange[] {
     return [weekEventRange(
       startOfWeek(startOfDay(input.dashboardDate), { weekStartsOn: input.weekStartsOn }),
     )];
+  }
+  if (
+    input.activeView === 'calendar'
+    && input.calendarLayout === 'month'
+    && input.visibleMonthStart
+  ) {
+    return [monthEventRange(input.visibleMonthStart)];
   }
   return [weekEventRange(input.visibleWeekStart)];
 }

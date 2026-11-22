@@ -115,6 +115,18 @@ export const ja: Record<TranslationKey, string> = {
   'weekCalendar.dayGroup': '日付グループ{n}',
   'weekCalendar.addEventOnAt': '{day}の{time}に予定を追加',
 
+  // ---- calendar layout (week / month) ----
+  'calendar.viewWeek': '週',
+  'calendar.viewMonth': '月',
+  'calendar.viewSwitcherLabel': 'カレンダーの表示',
+  'calendar.previousMonth': '前の月',
+  'calendar.nextMonth': '次の月',
+  'calendar.jumpToCurrentMonth': '今月へ',
+  'calendar.moreEvents': '他{count}件',
+  'calendar.dayEvents': '{date}の予定',
+  'calendar.showDay': '{date}を表示',
+  'calendar.addEventOn': '{date}に予定を追加',
+
   // ---- event modal ----
   'eventModal.editTitle': '予定の詳細',
   'eventModal.newTitle': '新しい予定',
@@ -294,6 +306,8 @@ export const ja: Record<TranslationKey, string> = {
   'settings.calendar.setColorTo': '{name}を{color}に設定',
   'settings.calendar.chooseCustomColorFor': '{name}のカスタムカラーを選択',
   'settings.calendar.resetToAuto': '自動設定に戻す',
+  'settings.calendar.defaultViewLabel': 'カレンダーの初期表示',
+  'settings.calendar.defaultViewSublabel': 'カレンダーを開いたときに表示する週または月',
   'settings.calendar.defaultCalendarLabel': 'デフォルトカレンダー',
   'settings.calendar.defaultEventDurationLabel': 'デフォルトの予定の長さ',
   'settings.calendar.min30': '30分',

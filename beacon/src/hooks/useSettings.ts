@@ -7,6 +7,7 @@ import {
   normalizeFontSelection,
   type FontSelection,
 } from '../fonts/selection';
+import { normalizeCalendarLayout, type CalendarLayout } from '../types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,6 +35,8 @@ export interface BeaconSettings {
   sidebarPosition: 'left' | 'right' | 'bottom';
 
   // Calendar
+  /** Layout shown when the calendar tab opens. The switcher can change it for the session. */
+  defaultCalendarView: CalendarLayout;
   defaultCalendar: string;
   permanentlyHiddenCalendars: string[];
   calendarColors: Record<string, string>;
@@ -100,6 +103,7 @@ function buildDefaults(): BeaconSettings {
     bodyFont: DEFAULT_BODY_FONT,
     sidebarPosition: 'left',
 
+    defaultCalendarView: 'week',
     defaultCalendar: '',
     permanentlyHiddenCalendars: [],
     calendarColors: {},
@@ -161,7 +165,14 @@ function withNormalizedFonts(settings: BeaconSettings): BeaconSettings {
     ...settings,
     headingFont: normalizeFontSelection(settings.headingFont, DEFAULT_HEADING_FONT),
     bodyFont: normalizeFontSelection(settings.bodyFont, DEFAULT_BODY_FONT),
+    defaultCalendarView: normalizeCalendarLayout(settings.defaultCalendarView),
   };
+}
+
+/** Last saved calendar layout, read synchronously so the first paint can match it. */
+export function readStoredCalendarLayout(): CalendarLayout {
+  const stored = loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {});
+  return normalizeCalendarLayout(stored.defaultCalendarView);
 }
 
 function persistSettings(settings: BeaconSettings): void {
@@ -261,6 +272,8 @@ export function useSettings() {
 
   return {
     settings,
+    /** False until the first server/cache read finishes. */
+    loaded,
     defaults,
     updateSettings,
     resetSettings,

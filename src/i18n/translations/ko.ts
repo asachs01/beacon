@@ -115,6 +115,18 @@ export const ko: Record<TranslationKey, string> = {
   'weekCalendar.dayGroup': '날짜 그룹 {n}',
   'weekCalendar.addEventOnAt': '{day} {time}에 일정 추가',
 
+  // ---- calendar layout (week / month) ----
+  'calendar.viewWeek': '주',
+  'calendar.viewMonth': '월',
+  'calendar.viewSwitcherLabel': '캘린더 보기',
+  'calendar.previousMonth': '이전 달',
+  'calendar.nextMonth': '다음 달',
+  'calendar.jumpToCurrentMonth': '이번 달로 이동',
+  'calendar.moreEvents': '+{count}개 더보기',
+  'calendar.dayEvents': '{date} 일정',
+  'calendar.showDay': '{date} 보기',
+  'calendar.addEventOn': '{date}에 일정 추가',
+
   // ---- event modal ----
   'eventModal.editTitle': '일정 세부정보',
   'eventModal.newTitle': '새 일정',
@@ -294,6 +306,8 @@ export const ko: Record<TranslationKey, string> = {
   'settings.calendar.setColorTo': '{name}을(를) {color}(으)로 설정',
   'settings.calendar.chooseCustomColorFor': '{name}의 사용자 지정 색상 선택',
   'settings.calendar.resetToAuto': '자동으로 재설정',
+  'settings.calendar.defaultViewLabel': '기본 캘린더 보기',
+  'settings.calendar.defaultViewSublabel': '캘린더를 열 때 표시할 주 또는 월',
   'settings.calendar.defaultCalendarLabel': '기본 캘린더',
   'settings.calendar.defaultEventDurationLabel': '기본 일정 길이',
   'settings.calendar.min30': '30분',
