@@ -32,9 +32,9 @@
 
 Skylight is a polished wall calendar that charges for hardware **and** locks meal planning, photos, and other family features behind Calendar Plus (~$79/year). Beacon is the self-hosted answer: run it as a Home Assistant add-on (or standalone), keep data on your network, and use any tablet you already own.
 
-→ [Getting started](https://beacon-family-docs.netlify.app/docs/getting-started/welcome/) · [Beacon vs Skylight](https://beacon-family-docs.netlify.app/docs/getting-started/skylight-alternative/) · Install with the Home Assistant badge above
+→ [Getting started](https://beacon-family-docs.netlify.app/docs/getting-started/welcome/) · [Beacon vs Skylight](https://beacon-family-docs.netlify.app/docs/getting-started/skylight-alternative/) · [Android app](https://beacon-family-docs.netlify.app/docs/getting-started/android/) · Install with the Home Assistant badge above
 
-**Beacon is the free, MIT-licensed family command center that installs as a Home Assistant add-on in one click — open source all the way down, running in any tablet's browser, in your language.**
+**Beacon is the free, MIT-licensed family command center that installs as a Home Assistant add-on in one click — open source all the way down, running in any tablet's browser or as a signed Android app, in your language.**
 
 > **Looking at other self-hosted options?** [Kinboard](https://kinboard.app) is a self-hosted family dashboard with doorbell popups and "today" hints. It runs on Docker with Postgres and is free for noncommercial use under the [PolyForm Noncommercial license](https://github.com/svenger87/kinboard#license). Beacon is MIT-licensed, installs as a one-click Home Assistant add-on, and ships in nine languages. Pick the one that fits your setup.
 
