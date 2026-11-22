@@ -1,3 +1,10 @@
+# [1.44.0](https://github.com/asachs01/beacon/compare/v1.43.2...v1.44.0) (2026-11-22)
+
+
+### Features
+
+* **photos:** cache link-shared Google Photos albums ([42a2dcd](https://github.com/asachs01/beacon/commit/42a2dcd4689cf6a1b9eeb51a3670ae13b8b5db03))
+
 ## [1.43.2](https://github.com/asachs01/beacon/compare/v1.43.1...v1.43.2) (2026-11-22)
 
 
