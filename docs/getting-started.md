@@ -254,6 +254,7 @@ To change themes:
 
 ## Next Steps
 
+- **[Android app](https://beacon-family-docs.netlify.app/docs/getting-started/android/)** -- sideload the signed APK, verify the checksum, and point it at Home Assistant
 - **[README](../README.md)** -- installation, features overview, and project info
 - **[Changelog](../CHANGELOG.md)** -- release history
 - **[Contributing](../CONTRIBUTING.md)** -- how to contribute to Beacon

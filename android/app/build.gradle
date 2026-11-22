@@ -1,5 +1,27 @@
 apply plugin: 'com.android.application'
 
+// Release signing and versioning come from the environment or from Gradle
+// properties (-P / gradle.properties). CI sets the env vars from GitHub
+// Actions secrets and never writes them into the repo.
+def envOrProp = { String name ->
+    def fromEnv = System.getenv(name)
+    if (fromEnv != null && !fromEnv.toString().trim().isEmpty()) {
+        return fromEnv.toString()
+    }
+    def fromProp = project.findProperty(name)
+    if (fromProp != null && !fromProp.toString().trim().isEmpty()) {
+        return fromProp.toString()
+    }
+    return null
+}
+
+def releaseKeystorePath = envOrProp("ANDROID_KEYSTORE_PATH")
+def releaseKeystorePassword = envOrProp("ANDROID_KEYSTORE_PASSWORD")
+def releaseKeyAlias = envOrProp("ANDROID_KEY_ALIAS")
+def releaseKeyPassword = envOrProp("ANDROID_KEY_PASSWORD")
+def beaconVersionName = envOrProp("BEACON_VERSION_NAME") ?: "1.0"
+def beaconVersionCode = envOrProp("BEACON_VERSION_CODE") ?: "1"
+
 android {
     namespace = "com.sachshaus.beacon"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +29,8 @@ android {
         applicationId "com.sachshaus.beacon"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode beaconVersionCode.toInteger()
+        versionName beaconVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +38,30 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            // The release keystore is PKCS#12 (release.p12), decoded in CI
+            // from ANDROID_KEYSTORE_BASE64. storeType must be pkcs12.
+            storeType "pkcs12"
+            if (releaseKeystorePath) {
+                storeFile file(releaseKeystorePath)
+            }
+            if (releaseKeystorePassword) {
+                storePassword releaseKeystorePassword
+            }
+            if (releaseKeyAlias) {
+                keyAlias releaseKeyAlias
+            }
+            if (releaseKeyPassword) {
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (releaseKeystorePath) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

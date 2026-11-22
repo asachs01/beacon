@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       released: ${{ steps.semantic.outputs.released }}
+      tag: ${{ steps.semantic.outputs.tag }}
+      version: ${{ steps.semantic.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,9 +37,14 @@ jobs:
           # semantic-release doesn't set a step output itself; detect whether
           # it actually cut a release by checking if HEAD gained a new tag.
           if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
+            tag="$(git describe --tags --exact-match HEAD)"
             echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+            echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
           else
             echo "released=false" >> "$GITHUB_OUTPUT"
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            echo "version=" >> "$GITHUB_OUTPUT"
           fi
 
   # semantic-release creates GitHub releases using the default GITHUB_TOKEN,
@@ -53,3 +60,219 @@ jobs:
     permissions:
       contents: write
       packages: write
+
+  # semantic-release publishes with the default GITHUB_TOKEN, which does not
+  # trigger a separate release workflow. Build the signed APK in this same
+  # run and attach it to the release that job just created.
+  #
+  # Forks (and any repo that has not configured signing) do not have the
+  # four secrets. This job then emits a notice and succeeds without building,
+  # so a release is not failed by a missing keystore.
+  android-apk:
+    name: Signed Android APK
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check Android signing secrets
+        id: signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -z "${ANDROID_KEYSTORE_BASE64//[[:space:]]/}" ] && missing+=(ANDROID_KEYSTORE_BASE64)
+          [ -z "${ANDROID_KEYSTORE_PASSWORD//[[:space:]]/}" ] && missing+=(ANDROID_KEYSTORE_PASSWORD)
+          [ -z "${ANDROID_KEY_ALIAS//[[:space:]]/}" ] && missing+=(ANDROID_KEY_ALIAS)
+          [ -z "${ANDROID_KEY_PASSWORD//[[:space:]]/}" ] && missing+=(ANDROID_KEY_PASSWORD)
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Signed Android APK skipped::Android signing secrets are not configured (${missing[*]}). The APK was not built or uploaded. Add ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD to enable signed release APKs. Forks without these secrets skip this job."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout release tag
+        if: steps.signing.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+
+      - name: Setup Node
+        if: steps.signing.outputs.skip != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Capacitor 8 generates JavaVersion.VERSION_21 and AGP finalizes
+      # options.release at 21. JDK 17 cannot compile that language level.
+      - name: Setup JDK 21
+        if: steps.signing.outputs.skip != 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Android SDK
+        if: steps.signing.outputs.skip != 'true'
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools platforms;android-36 build-tools;35.0.0 build-tools;36.1.0
+
+      - name: Install npm dependencies
+        if: steps.signing.outputs.skip != 'true'
+        run: npm ci
+
+      - name: Build web assets
+        if: steps.signing.outputs.skip != 'true'
+        run: npm run build
+
+      - name: Sync Capacitor Android project
+        if: steps.signing.outputs.skip != 'true'
+        run: npx cap sync android
+
+      - name: Version from release tag
+        id: version
+        if: steps.signing.outputs.skip != 'true'
+        env:
+          RELEASE_VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          version="${RELEASE_VERSION#v}"
+          if [ -z "$version" ]; then
+            echo "Release version is empty"
+            exit 1
+          fi
+          base="${version%%-*}"
+          IFS=. read -r major minor patch <<< "$base"
+          major="${major:-0}"
+          minor="${minor:-0}"
+          patch="${patch:-0}"
+          patch="${patch%%[^0-9]*}"
+          patch="${patch:-0}"
+          code=$((10#$major * 1000000 + 10#$minor * 1000 + 10#$patch))
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "versionName=$version versionCode=$code"
+
+      - name: Decode release keystore
+        if: steps.signing.outputs.skip != 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          keystore="$RUNNER_TEMP/release.p12"
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > "$keystore"
+          if [ ! -s "$keystore" ]; then
+            echo "Decoded keystore is empty"
+            exit 1
+          fi
+          # PKCS#12 DER is an ASN.1 SEQUENCE (0x30).
+          sig="$(od -An -t x1 -N 1 "$keystore" | tr -d '[:space:]')"
+          if [ "$sig" != "30" ]; then
+            echo "Decoded ANDROID_KEYSTORE_BASE64 is not a PKCS#12 file"
+            exit 1
+          fi
+          keytool -list \
+            -keystore "$keystore" \
+            -storetype PKCS12 \
+            -alias "$ANDROID_KEY_ALIAS" \
+            -storepass:env ANDROID_KEYSTORE_PASSWORD
+          fingerprint="$(
+            keytool -list \
+              -keystore "$keystore" \
+              -storetype PKCS12 \
+              -alias "$ANDROID_KEY_ALIAS" \
+              -storepass:env ANDROID_KEYSTORE_PASSWORD \
+              | awk 'BEGIN{IGNORECASE=1} /SHA-?256/ {print $NF; exit}' \
+              | tr -d '[:space:]:' \
+              | tr '[:lower:]' '[:upper:]'
+          )"
+          echo "Keystore certificate SHA-256: $fingerprint"
+          case "$fingerprint" in
+            897969D7*3FB1AE)
+              echo "Keystore matches the Beacon release certificate."
+              ;;
+            *)
+              echo "::error::Keystore certificate SHA-256 does not match the Beacon release key."
+              exit 1
+              ;;
+          esac
+
+      - name: Assemble signed release APK
+        if: steps.signing.outputs.skip != 'true'
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          BEACON_VERSION_NAME: ${{ steps.version.outputs.version }}
+          BEACON_VERSION_CODE: ${{ steps.version.outputs.code }}
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Verify signature, checksum, and upload
+        if: steps.signing.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          tag="$RELEASE_TAG"
+          src="android/app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$src" ]; then
+            echo "Signed APK not found at $src"
+            ls -la android/app/build/outputs/apk/release || true
+            exit 1
+          fi
+          out="$RUNNER_TEMP/apk-out"
+          mkdir -p "$out"
+          apk_name="beacon-${tag}.apk"
+          cp "$src" "$out/$apk_name"
+          (
+            cd "$out"
+            sha256sum "$apk_name" > "${apk_name}.sha256"
+          )
+          sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          apksigner="$(find "$sdk/build-tools" -type f -name apksigner | sort | tail -1)"
+          if [ -z "$apksigner" ]; then
+            echo "apksigner not found under $sdk/build-tools"
+            exit 1
+          fi
+          "$apksigner" verify --print-certs "$out/$apk_name"
+          digest="$(
+            "$apksigner" verify --print-certs "$out/$apk_name" \
+              | awk 'BEGIN{IGNORECASE=1} /certificate SHA-256 digest:/ {print $NF; exit}' \
+              | tr -d '[:space:]:' \
+              | tr '[:lower:]' '[:upper:]'
+          )"
+          echo "APK certificate SHA-256: $digest"
+          case "$digest" in
+            897969D7*3FB1AE)
+              echo "APK is signed with the Beacon release certificate."
+              ;;
+            *)
+              echo "::error::APK certificate SHA-256 does not match the Beacon release key."
+              exit 1
+              ;;
+          esac
+          rm -f "$RUNNER_TEMP/release.p12"
+          gh release upload "$tag" \
+            "$out/$apk_name" \
+            "$out/${apk_name}.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,assets --jq '{tag: .tagName, assets: [.assets[].name]}'

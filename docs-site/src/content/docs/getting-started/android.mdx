@@ -1,0 +1,91 @@
+---
+title: "Android app"
+description: "Sideload the signed Beacon APK from a GitHub release, verify its checksum, and point it at your Home Assistant URL."
+order: 6
+---
+
+# Install the Android app
+
+Each Beacon release includes a signed Android APK. Install it on a tablet or phone by sideloading. The app is the Beacon interface, packaged with Capacitor, and it talks to your Home Assistant server.
+
+iOS builds are not published. App Store and TestFlight distribution need an Apple developer account.
+
+---
+
+## Download the APK
+
+1. Open the [Beacon releases](https://github.com/asachs01/beacon/releases) page.
+2. On the release you want, download both files:
+   - `beacon-vX.Y.Z.apk` — the app
+   - `beacon-vX.Y.Z.apk.sha256` — the SHA-256 checksum
+
+Copy both files into the same folder. The checksum file names the APK, so the names have to stay together.
+
+---
+
+## Verify the checksum
+
+Check the APK before you install it. The `.sha256` file is the output of `sha256sum`.
+
+**Linux:**
+
+```bash
+sha256sum -c beacon-vX.Y.Z.apk.sha256
+```
+
+**macOS:**
+
+```bash
+shasum -a 256 -c beacon-vX.Y.Z.apk.sha256
+```
+
+You want `beacon-vX.Y.Z.apk: OK`. If the check fails, delete the APK and download it again. Do not install a file that does not match.
+
+---
+
+## Allow install from unknown sources
+
+Android blocks APKs that do not come from the Play Store until you allow them.
+
+**Android 8 and newer:**
+
+1. Open **Settings → Apps → Special app access → Install unknown apps**.
+2. Pick the app you will use to open the APK (Chrome, Files, or your file manager).
+3. Turn on **Allow from this source**.
+
+**Older Android:**
+
+1. Open **Settings → Security**.
+2. Turn on **Unknown sources**.
+
+Then open `beacon-vX.Y.Z.apk` on the device and tap **Install**.
+
+You can turn the unknown-sources permission back off after the install.
+
+---
+
+## Point Beacon at your Home Assistant URL
+
+The APK already contains the Beacon UI. On first launch it asks where your data lives.
+
+1. Tap **Get Started**.
+2. Enter the **Home Assistant URL** the tablet can actually reach. Examples:
+   - `https://homeassistant.local:8123` on your LAN
+   - `http://192.168.1.20:8123` if you use the host's IP
+   - your Nabu Casa or reverse-proxy URL if the tablet is not on the same network
+3. Tap **Connect**.
+4. Create a long-lived access token in Home Assistant: open your profile, scroll to **Long-lived access tokens**, and choose **Create Token**. Paste that token into Beacon.
+
+Use the Home Assistant URL, including when Beacon itself runs as the Home Assistant add-on. The add-on's ingress path is for the browser panel. The Android app calls the Home Assistant API directly.
+
+The tablet and Home Assistant have to see each other. A URL that works on your laptop still has to resolve from the tablet.
+
+---
+
+## Updates
+
+Download the newer `beacon-vX.Y.Z.apk` from the next release, verify its checksum the same way, and open it. Android installs it over the existing app.
+
+That only works when the new APK is signed with the **same release key** as the copy already on the device. Beacon's release builds use one keystore for that reason. If a build were signed with a different key, Android would refuse the update. Uninstalling the old app would let the new one install, and the saved Home Assistant URL and token would be cleared.
+
+Keep that signing key. Losing it means later releases cannot update the copies people already installed.
