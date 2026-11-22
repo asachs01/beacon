@@ -86,7 +86,16 @@ if (smoke.includes('--init')) {
   console.error('smoke script must not pass Docker --init');
   process.exit(1);
 }
-requireIncludes('.github/workflows/ci.yml', ci, ['linux/amd64', 'linux/arm64', 'scripts/smoke-addon-image.sh']);
+requireIncludes('.github/workflows/ci.yml', ci, [
+  'linux/amd64',
+  'linux/arm64',
+  'ubuntu-24.04-arm',
+  'scripts/smoke-addon-image.sh',
+]);
+if (ci.includes('docker/setup-qemu-action')) {
+  console.error('ci.yml must smoke add-on images on native runners and must not set up QEMU');
+  process.exit(1);
+}
 
 // Same shell rule the prepare script uses: a failed command does not continue.
 const simulated = spawnSync(

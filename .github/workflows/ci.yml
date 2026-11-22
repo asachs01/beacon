@@ -61,19 +61,23 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Build beacon/ and start it the way Supervisor does with init: false
-  # (no Docker --init, s6 entrypoint is PID 1). amd64 is native. arm64 uses QEMU.
+  # (no Docker --init, s6 entrypoint is PID 1). amd64 and arm64 each build
+  # on a native runner. ubuntu-24.04-arm is a free standard runner on public
+  # repos and already has Docker, so this job does not set up QEMU.
+  # armv7 is published from the release workflow only; it is not smoked here.
   addon-image:
     name: Add-on image (${{ matrix.platform }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        platform: [linux/amd64, linux/arm64]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Smoke-run add-on image
         run: bash scripts/smoke-addon-image.sh "${{ matrix.platform }}"
