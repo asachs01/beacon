@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { loadWhatsNew, parseChangelog } from '../../docs-site/src/lib/whats-new';
+import { loadWhatsNew, parseChangelog } from './whats-new';
 
 const changelog = readFileSync('CHANGELOG.md', 'utf8');
 

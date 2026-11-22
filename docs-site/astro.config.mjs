@@ -14,6 +14,13 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      fs: {
+        // The What's New parser lives in the app tree so root tests do not
+        // load this site's Astro tsconfig.
+        allow: [".."],
+      },
+    },
     define: {
       "import.meta.env.GITHUB_EDIT_BASE": JSON.stringify(githubEditBase),
     },
