@@ -32,7 +32,7 @@ Copy your family photos (JPEG, PNG) into the directory:
 cp ~/family-photos/*.jpg /media/beacon/photos/
 ```
 
-You can organize photos in subdirectories if you prefer — Beacon scans the configured directory for image files.
+Beacon reads the images in the chosen folder. Nested folders are not included; point the setting at the folder that holds the pictures.
 
 ### Step 3: Configure the photo directory
 
@@ -41,6 +41,8 @@ Set the `photo_directory` option to point to your photos:
 - **Add-on**: Configuration tab > `photo_directory: "/media/beacon/photos"`
 - **Docker**: Environment variable `PHOTO_DIRECTORY=/media/beacon/photos`
 - **Development**: `.env` file > `VITE_PHOTO_DIRECTORY=/media/beacon/photos`
+
+In **Settings > Photos**, the same field accepts either that filesystem path or any Home Assistant media-source id (`media-source://...`). Use **Browse** to walk the media browser and pick a folder, including one exposed by another integration such as Immich or a NAS share. Beacon reads the images in that folder (not nested folders).
 
 ### Step 4: Verify in Home Assistant
 
@@ -149,16 +151,34 @@ The music overlay is always visible (it does not auto-hide with the photo contro
 
 ## Photo sources
 
-Beacon supports two photo sources, configured internally:
+Beacon combines three sources, then shuffles them:
 
 | Source | Description |
 |--------|-------------|
 | `ha_media` | Photos from HA's media browser root directory |
-| `local` | Photos from the configured `photo_directory` path |
+| `local` | Photos from the folder chosen in Settings (a `/media` path or any `media-source://` id) |
+| `google_photos` | Photos already downloaded from link-shared Google Photos albums |
 
-Both sources are enabled by default. Photos from both sources are combined and shuffled.
+## Google Photos shared albums
 
-> **Note**: Google Photos integration (`google_photos` source) is defined in the type system but not yet implemented. It would require OAuth authentication.
+Google's Photos Library API no longer lets an app read an existing album. Beacon does not sign in to Google. Instead, paste a **link-shared** album URL in **Settings > Photos**:
+
+- `https://photos.app.goo.gl/...`
+- `https://photos.google.com/share/...`
+
+The album must have link sharing turned on. Anyone with that link can open it, including the Beacon add-on. Beacon does not see the rest of the Google Photos library, and it does not live-sync the album.
+
+The add-on, not the browser, fetches the public album page and saves the pictures under:
+
+```text
+/data/photo-cache/google/<album-hash>/
+```
+
+`<album-hash>` is the first 16 hex characters of the SHA-256 of the album URL. Files are named from Google's photo id, so a refresh replaces the same file instead of duplicating it. Pictures are requested at a maximum width of 2560 pixels. Videos are skipped. A refresh runs about 15 seconds after the add-on starts, then every **6 hours**, and whenever you press **Refresh now**.
+
+This depends on the HTML Google embeds in the public share page. That format is unofficial and can change. If a refresh cannot fetch or parse the page, Beacon keeps the last successful download and shows a warning in Settings with the time of that download. The slideshow does not go blank.
+
+Photos that disappear from the album are removed from the cache on the next successful refresh. A single album is capped at 2000 photos so `/data` cannot fill without a bound. Up to 8 albums can be saved.
 
 ---
 
@@ -170,6 +190,10 @@ Both sources are enabled by default. Photos from both sources are combined and s
 2. Check that the `photo_directory` config option matches the actual path
 3. Verify the HA media browser can see the photos: go to **Media > Media Browser** in HA
 4. Check the browser console for "Failed to fetch" errors — this may indicate an authentication issue
+
+### A Google Photos album shows a warning
+
+The last good download is still on screen. Check that link sharing is still on, then press **Refresh now**. If Google has changed the share page, the refresh keeps failing until Beacon's parser is updated. Copying the pictures into `photo_directory` is the fallback that does not depend on that page.
 
 ### Photos load slowly or do not transition smoothly
 

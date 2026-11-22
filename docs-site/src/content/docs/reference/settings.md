@@ -58,7 +58,7 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | `groceryListIds` | Grocery Lists | `string[]` | [] | Select which HA todo entities are grocery/shopping lists |
 | `shoppingEntity` | Shopping Card Entity | `string` | (empty) | HA todo list for sidebar shopping card |
 | `musicDefaultPlayer` | Default Player | `string` | (empty) | Media player used by default |
-| `photoDirectory` | Source Directory | `string` | /media/beacon/photos | Path to photo directory on HA. Uses add-on option `photo_directory` when Home Assistant provides it. |
+| `photoDirectory` | Source Directory | `string` | /media/beacon/photos | A /media path, or any Home Assistant media-source id. Browse to pick a folder. Uses add-on option `photo_directory` when Home Assistant provides it. |
 | `photoInterval` | Slideshow Interval | `number` | 30 seconds | Seconds between photo changes. Uses add-on option `photo_interval` when Home Assistant provides it. |
 | `photoTransition` | Transition Style | `'fade' / 'slide'` | fade | How the photo frame moves between pictures. |
 
@@ -103,6 +103,6 @@ These are the options in `beacon/config.yaml`, which Home Assistant uses for the
 | `theme` | Theme | string | skylight | Color theme id. The in-app picker overrides the add-on option. Uses add-on option `theme` when Home Assistant provides it. |
 | `auto_dark_mode` | Auto Dark Mode | boolean | true | Switch themes based on time of day. Uses add-on option `auto_dark_mode` when Home Assistant provides it. |
 | `weather_entity` | Weather Entity | string | weather.home | Entity used for weather display. Uses add-on option `weather_entity` when Home Assistant provides it. |
-| `photo_directory` | Source Directory | string | /media/beacon/photos | Path to photo directory on HA. Uses add-on option `photo_directory` when Home Assistant provides it. |
+| `photo_directory` | Source Directory | string | /media/beacon/photos | A /media path, or any Home Assistant media-source id. Browse to pick a folder. Uses add-on option `photo_directory` when Home Assistant provides it. |
 | `photo_interval` | Slideshow Interval | integer | 30 | Seconds between photo changes. Uses add-on option `photo_interval` when Home Assistant provides it. |
 | `screen_saver_timeout` | Screen Saver After | integer | 5 | Minutes before screen saver activates. Uses add-on option `screen_saver_timeout` when Home Assistant provides it. |

@@ -769,6 +769,8 @@ export function App() {
           <WeatherView />
         ) : activeView === 'photos' ? (
           <PhotoFrame
+            intervalSeconds={settings.photoInterval}
+            photoDirectory={settings.photoDirectory}
             musicPlayer={music.activePlayer}
             onMusicPlay={() => music.activePlayer && music.play(music.activePlayer.entity_id)}
             onMusicPause={() => music.activePlayer && music.pause(music.activePlayer.entity_id)}

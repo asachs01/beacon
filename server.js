@@ -20,6 +20,10 @@ const HA_API_BASE = process.env.HA_API_BASE_OVERRIDE || 'http://supervisor/core'
 const HA_WS_URL = process.env.HA_WS_URL_OVERRIDE || 'ws://supervisor/core/api/websocket';
 // /data/ is HA add-on persistent storage (survives container rebuilds)
 const DATA_DIR = process.env.BEACON_DATA || '/data';
+const { createGooglePhotoCache, REFRESH_MS } = require('./lib/google-photos-cache.cjs');
+const googlePhotos = createGooglePhotoCache({
+  dataDir: path.join(DATA_DIR, 'photo-cache', 'google'),
+});
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -723,6 +727,12 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Google Photos shared-album cache. The browser never calls Google.
+  if (req.url.startsWith('/beacon-api/google-photos')) {
+    googlePhotos.handle(req, res);
+    return;
+  }
+
   // Proxy API requests to HA
   if (req.url.startsWith('/api/')) {
     if (SUPERVISOR_TOKEN) {
@@ -781,3 +791,18 @@ server.listen(PORT, () => {
   console.log(`Supervisor token: ${SUPERVISOR_TOKEN ? 'available' : 'NOT available'}`);
   console.log(`Data directory: ${DATA_DIR}`);
 });
+
+// Fill the photo cache soon after boot, then every 6 hours. A failed
+// refresh keeps the files already on disk.
+const googlePhotoBoot = setTimeout(() => {
+  googlePhotos.refresh().catch((err) => {
+    console.warn(`Google Photos refresh failed: ${err.message}`);
+  });
+}, 15_000);
+const googlePhotoTimer = setInterval(() => {
+  googlePhotos.refresh().catch((err) => {
+    console.warn(`Google Photos refresh failed: ${err.message}`);
+  });
+}, REFRESH_MS);
+googlePhotoBoot.unref?.();
+googlePhotoTimer.unref?.();

@@ -19,6 +19,19 @@ if ! diff -r src/ beacon/src/ --brief; then
   exit 1
 fi
 
+# server.js and lib/ are copied into the add-on image from beacon/.
+if ! diff -q server.js beacon/server.js > /dev/null 2>&1; then
+  echo "❌ ERROR: beacon/server.js is out of sync with root server.js"
+  echo "Run: cp server.js beacon/server.js"
+  exit 1
+fi
+
+if ! diff -rq lib beacon/lib > /dev/null 2>&1; then
+  echo "❌ ERROR: beacon/lib/ is out of sync with root lib/"
+  echo "Run: rsync -av --delete lib/ beacon/lib/"
+  exit 1
+fi
+
 # Check that required files are synced
 for file in Dockerfile run.sh CHANGELOG.md; do
   if ! diff "$file" "beacon/$file" > /dev/null 2>&1; then
