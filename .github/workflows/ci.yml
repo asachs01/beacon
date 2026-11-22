@@ -30,3 +30,17 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # The published GHCR workflow builds from the repo root. Home Assistant
+  # Supervisor does not: it builds beacon/Dockerfile with beacon/ as the
+  # context, so root package.json can be installable while the add-on image
+  # is not. Build that image on every pull request (amd64 matches the
+  # reported Supervisor failure). Dependency parity is the fast check in
+  # scripts/check-beacon-sync.sh; this job is the real install + vite build.
+  addon-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build add-on image from beacon/
+        run: docker build --platform linux/amd64 --tag beacon-addon:ci beacon/
