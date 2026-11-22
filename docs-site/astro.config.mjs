@@ -6,6 +6,9 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   site: "https://beacon-family-docs.netlify.app",
   integrations: [mdx(), sitemap()],
+  redirects: {
+    "/docs/appearance/fonts": "/docs/customization/fonts/",
+  },
   vite: {
     plugins: [tailwindcss()],
   },

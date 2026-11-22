@@ -1,6 +1,6 @@
 ---
 title: "Grocery"
-description: "Set up grocery list integration with Grocy or AnyList in Beacon — shopping lists, quick-add, expiring items, and meal planning."
+description: "Set up grocery list integration with Grocy or AnyList in Beacon — shopping lists, quick-add, and expiring items."
 order: 5
 ---
 
@@ -48,7 +48,6 @@ After the integration is set up, verify these entities exist:
 
 - `sensor.grocy_shopping_list` — your shopping list items
 - `sensor.grocy_expiring_products` — products nearing their best-before date
-- `sensor.grocy_meal_plan` — your meal plan (optional)
 
 Check in **Developer Tools > States** by searching for "grocy".
 
@@ -136,18 +135,7 @@ This feature is only available with Grocy (AnyList does not track expiration dat
 
 ## Meal plan display
 
-When using Grocy with a meal plan configured, Beacon can display today's planned meals. The meal plan bar shows:
-
-- **Meal type**: Breakfast, Lunch, or Dinner
-- **Recipe name**: The planned recipe
-- **Notes**: Any additional notes
-
-The meal plan data is fetched from `sensor.grocy_meal_plan` and filtered to the current day. The bar is collapsible — tap it to collapse to a small icon, tap again to expand.
-
-Meal types are mapped from Grocy's section labels:
-- Sections containing "breakfast" or "morning" map to Breakfast
-- Sections containing "lunch" or "noon" map to Lunch
-- Everything else maps to Dinner
+Today's meals show in the dashboard's **Menu** widget, not on the grocery screen. Beacon does not currently read Grocy's meal plan (`sensor.grocy_meal_plan`) into that widget. See [Meals](/docs/features/meals/) for how to get meals onto the display.
 
 ---
 
@@ -156,7 +144,6 @@ Meal types are mapped from Grocy's section labels:
 - The grocery list refreshes automatically every 2 minutes
 - Adding, checking, or unchecking an item triggers an immediate refresh
 - The expiring products alert refreshes with the list
-- The meal plan refreshes every 5 minutes
 
 ---
 
