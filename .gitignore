@@ -18,6 +18,12 @@ android/app/build
 android/build
 android/local.properties
 
+# Release signing material. CI decodes ANDROID_KEYSTORE_BASE64 to a temp
+# PKCS#12 file and never commits it.
+*.jks
+*.keystore
+*.p12
+
 # Video recording raw footage (too large for git)
 docs/video/raw/
 .superpowers/
