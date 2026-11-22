@@ -1,0 +1,51 @@
+# Beacon
+
+> Beacon is a free, MIT-licensed family command center for wall-mounted displays, and a self-hosted alternative to Skylight Calendar, Hearth Display, and DAKboard. Install it as a one-click Home Assistant add-on, or run it standalone with Docker. It runs in any tablet's browser, or as a signed Android APK sideloaded from GitHub releases (it is not on the Play Store, and there is no iOS build). The dashboard includes a calendar with month and week views, chores, grocery lists, weather, a photo screensaver, custom fonts and themes, Kid Display, kiosk mode, and multiple languages. Meal plans are display-only: they are filled in from MCP tools or an AnyList sync, and there is no in-app meal planner. Google Photos support works through pasted shared-album links, which the server caches and refreshes every 6 hours; that path relies on an unofficial Google page format. You can also use any Home Assistant media folder as a photo source.
+
+Docs: __SITE_URL__
+Source: https://github.com/asachs01/beacon
+Latest release: https://github.com/asachs01/beacon/releases
+
+## Install and setup
+
+- [Getting Started](__SITE_URL__/docs/getting-started/installation/): Install as a Home Assistant add-on, a Docker container, or a development server.
+- [Deployment](__SITE_URL__/docs/getting-started/deployment/): Standalone Docker, reverse proxy, hardware, kiosk mode, and performance notes.
+- [Android app](__SITE_URL__/docs/getting-started/android/): Sideload the signed APK from a GitHub release, verify the checksum, and point it at your Home Assistant URL. Not on the Play Store. No iOS build.
+- [Updating and Troubleshooting](__SITE_URL__/docs/getting-started/updating/): How to update (from v1.43.2, Home Assistant pulls a prebuilt image instead of building on the device), roll back, and fix common problems.
+
+## Comparison
+
+- [Beacon vs Skylight, Hearth, and DAKboard](__SITE_URL__/docs/getting-started/compare/): Side-by-side comparison of the three commercial products Beacon is meant to replace.
+- [Beacon vs Skylight](__SITE_URL__/docs/getting-started/skylight-alternative/): Focused Skylight Calendar comparison.
+
+## Guides
+
+- [Free Skylight alternative](__SITE_URL__/docs/guides/free-skylight-alternative/): Using Beacon as a free Skylight alternative.
+- [Home Assistant family calendar dashboard](__SITE_URL__/docs/guides/home-assistant-family-calendar/): Using Beacon as a family calendar dashboard in Home Assistant.
+- [Set up a wall tablet as a family calendar](__SITE_URL__/docs/guides/wall-tablet-family-calendar/): Install Beacon, open it in the tablet browser or the Android APK, and lock the screen in kiosk mode.
+
+## Features
+
+- [Calendar](__SITE_URL__/docs/features/calendar/): Month and week views, recurring events, and drag-to-reschedule.
+- [Chores](__SITE_URL__/docs/features/chores/): Assignments, streaks, and a family leaderboard.
+- [Grocery](__SITE_URL__/docs/features/grocery/): Shopping lists, including Home Assistant and AnyList sources.
+- [Photos](__SITE_URL__/docs/features/photos/): Local folders, Home Assistant media folders, and cached Google Photos shared albums.
+- [Screen Saver](__SITE_URL__/docs/features/screensaver/): Photo screensaver with clock overlay.
+- [Meals](__SITE_URL__/docs/features/meals/): Display-only meal plan (no in-app planner).
+- [Kid Display Mode](__SITE_URL__/docs/features/kid-display/): A simplified view for children.
+- [Dashboard](__SITE_URL__/docs/features/dashboard/): The home screen layout.
+- [Family Members](__SITE_URL__/docs/features/family/): People, colors, and calendars.
+- [Music](__SITE_URL__/docs/features/music/): Home Assistant media player controls.
+- [Timer](__SITE_URL__/docs/features/timer/): Named timers.
+- [Notifications](__SITE_URL__/docs/features/notifications/): Notification settings.
+
+## FAQ and reference
+
+- [FAQ](__SITE_URL__/docs/reference/faq/): Common questions about install, Android, calendars, photos, meals, and kiosk use.
+- [Welcome](__SITE_URL__/docs/getting-started/welcome/): What Beacon is.
+- [Visual Walkthrough](__SITE_URL__/docs/getting-started/walkthrough/): Screenshot tour of the main views.
+- [Settings](__SITE_URL__/docs/reference/settings/): Settings reference.
+- [Configuration](__SITE_URL__/docs/customization/configuration/): Add-on and environment configuration.
+- [Themes](__SITE_URL__/docs/customization/themes/) and [Fonts](__SITE_URL__/docs/customization/fonts/): Appearance customization.
+- [AI integration](__SITE_URL__/docs/reference/ai-integration/): MCP tools, including meal-plan updates.
+- [Full docs index for language models](__SITE_URL__/llms-full.txt)

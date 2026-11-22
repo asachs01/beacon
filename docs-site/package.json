@@ -9,6 +9,7 @@
     "prebuild": "node ../scripts/generate-settings-reference.mjs",
     "build": "astro build",
     "postbuild": "pagefind --site dist",
+    "check:urls": "node ../scripts/check-docs-site-urls.mjs --self-test && node ../scripts/check-docs-site-urls.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },

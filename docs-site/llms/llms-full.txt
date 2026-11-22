@@ -2,8 +2,8 @@
 
 > Beacon is a free, MIT-licensed family command center for wall-mounted displays, and a self-hosted alternative to Skylight Calendar, Hearth Display, and DAKboard. Install it as a one-click Home Assistant add-on, or run it standalone with Docker. It runs in any tablet's browser, or as a signed Android APK sideloaded from GitHub releases (it is not on the Play Store, and there is no iOS build). The dashboard includes a calendar with month and week views, chores, grocery lists, weather, a photo screensaver, custom fonts and themes, Kid Display, kiosk mode, and multiple languages. Meal plans are display-only: they are filled in from MCP tools or an AnyList sync, and there is no in-app meal planner. Google Photos support works through pasted shared-album links, which the server caches and refreshes every 6 hours; that path relies on an unofficial Google page format. You can also use any Home Assistant media folder as a photo source.
 
-- Docs: https://beacon-family-docs.netlify.app
-- Compact index: https://beacon-family-docs.netlify.app/llms.txt
+- Docs: __SITE_URL__
+- Compact index: __SITE_URL__/llms.txt
 - Source: https://github.com/asachs01/beacon
 - Releases (including the Android APK): https://github.com/asachs01/beacon/releases
 - Home Assistant community thread: https://community.home-assistant.io/t/beacon-free-family-command-center-add-on/1000220
@@ -20,108 +20,108 @@ This file uses the current Netlify docs host. The domain may change later; paths
 ## Install and setup
 
 ### Getting Started
-URL: https://beacon-family-docs.netlify.app/docs/getting-started/installation/
+URL: __SITE_URL__/docs/getting-started/installation/
 
 Install Beacon as a Home Assistant add-on (add the GitHub repo as an add-on repository, then install and start Beacon), as a standalone Docker container, or as a local development server. The goal is to get a calendar connected in under 10 minutes.
 
 ### Deployment
-URL: https://beacon-family-docs.netlify.app/docs/getting-started/deployment/
+URL: __SITE_URL__/docs/getting-started/deployment/
 
 Covers Home Assistant add-on vs standalone Docker, reverse proxy, hardware recommendations, kiosk mode on a wall tablet, and performance notes.
 
 ### Android app
-URL: https://beacon-family-docs.netlify.app/docs/getting-started/android/
+URL: __SITE_URL__/docs/getting-started/android/
 
 Each GitHub release attaches a signed APK (`beacon-vX.Y.Z.apk`) and a SHA-256 checksum. Sideload the APK, verify the checksum, and point the app at your Home Assistant URL. This is not a Play Store listing. There is no iOS app.
 
 ### Updating and Troubleshooting
-URL: https://beacon-family-docs.netlify.app/docs/getting-started/updating/
+URL: __SITE_URL__/docs/getting-started/updating/
 
 From v1.43.2, add-on updates download a prebuilt multi-arch image from `ghcr.io/asachs01/beacon` instead of building on the Home Assistant device. The first update after 1.43.2 swaps a locally built image for the published one; existing settings carry over. The page also covers rollbacks, logs, stale browser caches after an update, kiosk exits, and other common fixes.
 
 ## Comparison
 
 ### Beacon vs Skylight, Hearth, and DAKboard
-URL: https://beacon-family-docs.netlify.app/docs/getting-started/compare/
+URL: __SITE_URL__/docs/getting-started/compare/
 
 Compares Beacon with Skylight Calendar, Hearth Display, and DAKboard on cost, hosting, calendar, chores, lists, photos, and how you run it (any tablet browser, or the signed Android APK). Beacon is free and self-hosted.
 
 ### Beacon vs Skylight
-URL: https://beacon-family-docs.netlify.app/docs/getting-started/skylight-alternative/
+URL: __SITE_URL__/docs/getting-started/skylight-alternative/
 
 A shorter page aimed at people searching for a Skylight Calendar alternative.
 
 ## Guides
 
 ### Free Skylight alternative
-URL: https://beacon-family-docs.netlify.app/docs/guides/free-skylight-alternative/
+URL: __SITE_URL__/docs/guides/free-skylight-alternative/
 
 How to use Beacon as a free, MIT-licensed alternative to Skylight Calendar.
 
 ### Home Assistant family calendar dashboard
-URL: https://beacon-family-docs.netlify.app/docs/guides/home-assistant-family-calendar/
+URL: __SITE_URL__/docs/guides/home-assistant-family-calendar/
 
 How to install the add-on, connect Home Assistant calendars, and open Beacon on a tablet.
 
 ### Set up a wall tablet as a family calendar
-URL: https://beacon-family-docs.netlify.app/docs/guides/wall-tablet-family-calendar/
+URL: __SITE_URL__/docs/guides/wall-tablet-family-calendar/
 
 Install Beacon, open it in the tablet's browser or sideload the signed Android APK, and lock the screen in kiosk mode.
 
 ## Features
 
 ### Calendar
-URL: https://beacon-family-docs.netlify.app/docs/features/calendar/
+URL: __SITE_URL__/docs/features/calendar/
 
 Month and week views, creating and editing events, recurring events, and drag-to-reschedule. Calendars typically come from Home Assistant calendar entities.
 
 ### Chores
-URL: https://beacon-family-docs.netlify.app/docs/features/chores/
+URL: __SITE_URL__/docs/features/chores/
 
 Assign chores, track streaks, and show a family leaderboard. Chores can have dollar values for a weekly earnings view.
 
 ### Grocery
-URL: https://beacon-family-docs.netlify.app/docs/features/grocery/
+URL: __SITE_URL__/docs/features/grocery/
 
 Shopping lists from built-in local lists, Home Assistant to-do entities, or AnyList.
 
 ### Photos
-URL: https://beacon-family-docs.netlify.app/docs/features/photos/
+URL: __SITE_URL__/docs/features/photos/
 
 Photo sources include a local `photo_directory`, any Home Assistant media-source folder (useful for Immich, a NAS, or album_slideshow), and Google Photos shared-album links. For Google Photos, paste one or more link-shared album URLs (`https://photos.google.com/share/...`) in Settings > Photos. Beacon's server downloads the pictures into `/data/photo-cache/google/`, refreshes about 15 seconds after startup and then every 6 hours (or when you press Refresh now), and skips videos. This depends on the unofficial HTML of Google's public share page. If a refresh cannot fetch or parse the page, the last successful download stays on the frame and Settings shows a warning with that timestamp.
 
 ### Screen Saver
-URL: https://beacon-family-docs.netlify.app/docs/features/screensaver/
+URL: __SITE_URL__/docs/features/screensaver/
 
 A photo screensaver with crossfade transitions and an optional clock overlay.
 
 ### Meals
-URL: https://beacon-family-docs.netlify.app/docs/features/meals/
+URL: __SITE_URL__/docs/features/meals/
 
 Shows breakfast, lunch, dinner, and snacks on the dashboard. There is no in-app planner. Fill the plan with Beacon's MCP meal tools or the `scripts/sync-meals.mjs` AnyList sync script.
 
 ### Kid Display Mode
-URL: https://beacon-family-docs.netlify.app/docs/features/kid-display/
+URL: __SITE_URL__/docs/features/kid-display/
 
 A simplified view aimed at children. The docs also cover how to exit it.
 
 ### Other feature pages
 
-- [Dashboard](https://beacon-family-docs.netlify.app/docs/features/dashboard/): The home screen.
-- [Family Members](https://beacon-family-docs.netlify.app/docs/features/family/): People, colors, and which calendars belong to whom.
-- [Music](https://beacon-family-docs.netlify.app/docs/features/music/): Controls for Home Assistant media players.
-- [Timer](https://beacon-family-docs.netlify.app/docs/features/timer/): Named, simultaneous timers.
-- [Notifications](https://beacon-family-docs.netlify.app/docs/features/notifications/): Notification options.
+- [Dashboard](__SITE_URL__/docs/features/dashboard/): The home screen.
+- [Family Members](__SITE_URL__/docs/features/family/): People, colors, and which calendars belong to whom.
+- [Music](__SITE_URL__/docs/features/music/): Controls for Home Assistant media players.
+- [Timer](__SITE_URL__/docs/features/timer/): Named, simultaneous timers.
+- [Notifications](__SITE_URL__/docs/features/notifications/): Notification options.
 
 ## FAQ and reference
 
-- [FAQ](https://beacon-family-docs.netlify.app/docs/reference/faq/): Answers to common questions about install, the Android APK, calendars, photos, meals, Kid Display, and kiosk use.
-- [Welcome](https://beacon-family-docs.netlify.app/docs/getting-started/welcome/): Short product overview.
-- [Visual Walkthrough](https://beacon-family-docs.netlify.app/docs/getting-started/walkthrough/): Screenshot tour of the main views.
-- [Settings](https://beacon-family-docs.netlify.app/docs/reference/settings/): Generated settings reference.
-- [Configuration](https://beacon-family-docs.netlify.app/docs/customization/configuration/): Add-on options and environment variables.
-- [Themes](https://beacon-family-docs.netlify.app/docs/customization/themes/): Built-in themes and auto dark mode.
-- [Fonts](https://beacon-family-docs.netlify.app/docs/customization/fonts/): Custom heading and body fonts.
-- [AI integration](https://beacon-family-docs.netlify.app/docs/reference/ai-integration/): MCP server tools for LLM agents, including meal-plan updates, plus voice/Assist notes.
-- [API reference](https://beacon-family-docs.netlify.app/docs/reference/api-reference/): HTTP API.
-- [Contributing](https://beacon-family-docs.netlify.app/docs/reference/contributing/): How to contribute.
+- [FAQ](__SITE_URL__/docs/reference/faq/): Answers to common questions about install, the Android APK, calendars, photos, meals, Kid Display, and kiosk use.
+- [Welcome](__SITE_URL__/docs/getting-started/welcome/): Short product overview.
+- [Visual Walkthrough](__SITE_URL__/docs/getting-started/walkthrough/): Screenshot tour of the main views.
+- [Settings](__SITE_URL__/docs/reference/settings/): Generated settings reference.
+- [Configuration](__SITE_URL__/docs/customization/configuration/): Add-on options and environment variables.
+- [Themes](__SITE_URL__/docs/customization/themes/): Built-in themes and auto dark mode.
+- [Fonts](__SITE_URL__/docs/customization/fonts/): Custom heading and body fonts.
+- [AI integration](__SITE_URL__/docs/reference/ai-integration/): MCP server tools for LLM agents, including meal-plan updates, plus voice/Assist notes.
+- [API reference](__SITE_URL__/docs/reference/api-reference/): HTTP API.
+- [Contributing](__SITE_URL__/docs/reference/contributing/): How to contribute.

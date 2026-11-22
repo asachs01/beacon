@@ -9,6 +9,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +27,13 @@ jobs:
         run: npm run build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SITE_URL: ${{ vars.SITE_URL }}
+
+      - name: Check docs site URLs match SITE_URL
+        working-directory: docs-site
+        run: npm run check:urls
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
 
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v3

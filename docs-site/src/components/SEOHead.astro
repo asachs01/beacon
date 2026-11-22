@@ -1,4 +1,6 @@
 ---
+import { absoluteUrl } from "../../site.config.mjs";
+
 interface Props {
   title: string;
   description: string;
@@ -11,18 +13,16 @@ interface Props {
 const {
   title,
   description,
-  canonicalURL = Astro.url.href,
-  ogImage = '/og-image.png',
-  ogType = 'website',
-  twitterCard = 'summary_large_image'
+  canonicalURL = absoluteUrl(Astro.url.pathname),
+  ogImage = "/og-image.png",
+  ogType = "website",
+  twitterCard = "summary_large_image",
 } = Astro.props;
 
-const siteName = 'Beacon Docs';
+const siteName = "Beacon Docs";
 const fullTitle = `${title} | ${siteName}`;
 
-const ogImageURL = ogImage.startsWith('http')
-  ? ogImage
-  : new URL(ogImage, Astro.site || Astro.url.origin).href;
+const ogImageURL = /^https?:\/\//i.test(ogImage) ? ogImage : absoluteUrl(ogImage);
 ---
 
 <title>{fullTitle}</title>
