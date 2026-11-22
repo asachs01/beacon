@@ -115,6 +115,18 @@ export const nl: Record<TranslationKey, string> = {
   'weekCalendar.dayGroup': 'Dagengroep {n}',
   'weekCalendar.addEventOnAt': 'Afspraak toevoegen op {day} om {time}',
 
+  // ---- calendar layout (week / month) ----
+  'calendar.viewWeek': 'Week',
+  'calendar.viewMonth': 'Maand',
+  'calendar.viewSwitcherLabel': 'Kalenderweergave',
+  'calendar.previousMonth': 'Vorige maand',
+  'calendar.nextMonth': 'Volgende maand',
+  'calendar.jumpToCurrentMonth': 'Naar de huidige maand',
+  'calendar.moreEvents': '+{count} meer',
+  'calendar.dayEvents': 'Afspraken op {date}',
+  'calendar.showDay': '{date} tonen',
+  'calendar.addEventOn': 'Afspraak toevoegen op {date}',
+
   // ---- event modal ----
   'eventModal.editTitle': 'Afspraakgegevens',
   'eventModal.newTitle': 'Nieuwe afspraak',
@@ -294,6 +306,8 @@ export const nl: Record<TranslationKey, string> = {
   'settings.calendar.setColorTo': '{name} instellen op {color}',
   'settings.calendar.chooseCustomColorFor': 'Kies een aangepaste kleur voor {name}',
   'settings.calendar.resetToAuto': 'Terugzetten naar automatisch',
+  'settings.calendar.defaultViewLabel': 'Standaard kalenderweergave',
+  'settings.calendar.defaultViewSublabel': 'Week of maand bij het openen van de kalender',
   'settings.calendar.defaultCalendarLabel': 'Standaardagenda',
   'settings.calendar.defaultEventDurationLabel': 'Standaardduur van afspraak',
   'settings.calendar.min30': '30 min',

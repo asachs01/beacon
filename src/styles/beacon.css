@@ -692,11 +692,19 @@ a:focus:not(:focus-visible) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-surface);
   flex-shrink: 0;
+}
+
+.week-nav-trailing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .week-nav-controls,
@@ -2220,6 +2228,357 @@ a:focus:not(:focus-visible) {
 
 .beacon--compact .mobile-tab-bar {
   display: flex;
+}
+
+/* ============================================================
+   Month calendar
+   ============================================================ */
+
+.month-calendar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.month-loading {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  background: var(--bg-today);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.month-grid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.month-weekdays,
+.month-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.month-weekdays {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.month-week {
+  flex: 1 1 0;
+  min-height: 76px;
+}
+
+.month-weekday {
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.month-day {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  min-height: 0;
+  padding: 4px;
+  border-top: 1px solid var(--border-subtle);
+  border-left: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  cursor: pointer;
+}
+
+.month-week > .month-day:first-child {
+  border-left: none;
+}
+
+.month-day--outside {
+  background: var(--bg-secondary, var(--bg-sidebar));
+}
+
+.month-day--outside .month-day-number {
+  color: var(--text-muted);
+}
+
+.month-day--today {
+  background: var(--bg-today);
+}
+
+.month-day-number {
+  align-self: flex-start;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-family-heading);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.month-day--today .month-day-number {
+  background: var(--color-blue-full);
+  color: #ffffff;
+}
+
+.month-day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.month-event-chip,
+.month-popover-event {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-primary);
+  touch-action: manipulation;
+}
+
+.month-event-chip-stripe {
+  width: 3px;
+  flex-shrink: 0;
+}
+
+.month-event-chip-title {
+  padding: 2px 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.month-more {
+  flex-shrink: 0;
+  margin-top: auto;
+  min-height: 28px;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.month-more:hover,
+.month-day-number:hover,
+.month-event-chip:hover {
+  background: var(--bg-hover);
+}
+
+.month-day--today .month-day-number:hover {
+  background: var(--color-blue-full);
+}
+
+.calendar-view-switcher {
+  display: inline-flex;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.calendar-view-switcher-btn {
+  min-height: 36px;
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.calendar-view-switcher-btn + .calendar-view-switcher-btn {
+  border-left: 1px solid var(--border);
+}
+
+.calendar-view-switcher-btn--active {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.month-day-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.month-day-popover {
+  width: min(420px, 100%);
+  max-height: min(80vh, 640px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.18));
+  overflow: hidden;
+}
+
+.month-day-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.month-day-popover-header h2 {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.month-day-popover-close,
+.month-day-popover-add {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.month-day-popover-add {
+  margin: 12px 16px 16px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.month-day-popover-list {
+  list-style: none;
+  margin: 0;
+  padding: 12px 16px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.month-day-popover-empty {
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
+.month-popover-event {
+  min-height: 48px;
+  align-items: center;
+}
+
+.month-popover-event-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px 10px;
+}
+
+.month-popover-event-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-popover-event-time {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* Wall tablets: large tap targets. Short landscape phones keep the grid usable. */
+@media (pointer: coarse) {
+  .calendar-view-switcher-btn,
+  .month-more,
+  .month-calendar .week-nav-btn,
+  .month-calendar .week-nav-today {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .month-day-number {
+    width: 44px;
+    height: 44px;
+  }
+
+  .month-event-chip {
+    min-height: 32px;
+  }
+
+  .month-week {
+    min-height: 96px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 700px) {
+  .month-week {
+    min-height: 64px;
+  }
+
+  .month-day-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (orientation: portrait) {
+  .month-calendar .week-nav-label {
+    font-size: 1.05rem;
+  }
 }
 
 /* ============================================================

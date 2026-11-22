@@ -3,6 +3,7 @@ import { act, render, renderHook, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { addDays, startOfWeek } from 'date-fns';
+import { buildMonthGrid } from './month-grid';
 import { FamilyCalendarCard } from '../components/cards/FamilyCalendarCard';
 import { AgendaTodayCard } from '../components/cards/AgendaTodayCard';
 import { AgendaWeekCard } from '../components/cards/AgendaWeekCard';
@@ -13,6 +14,7 @@ import {
   EVENT_FETCH_DEBOUNCE_MS,
   isInstantCovered,
   mergeEventsForRange,
+  monthEventRange,
   rangesForView,
   weekEventRange,
   type LoadedEventRange,
@@ -97,7 +99,48 @@ describe('dashboard event fetch range (issue 62)', () => {
   it('App asks for ranges from the dashboard date, not only the visible week', () => {
     const source = readFileSync(path.resolve(__dirname, '../App.tsx'), 'utf8');
     expect(source).toMatch(/rangesForView\(\{[\s\S]*?dashboardDate/);
+    expect(source).toMatch(/calendarLayout/);
+    expect(source).toMatch(/visibleMonthStart/);
     expect(source).not.toContain('refetchEventsForWeek(visibleWeekStart)');
+  });
+});
+
+describe('month event fetch range', () => {
+  it('covers every visible grid day, including the adjacent-month cells', () => {
+    const grid = buildMonthGrid(new Date(2026, 9, 15), 0); // October 2026
+    const ranges = rangesForView({
+      activeView: 'calendar',
+      dashboardDate: addDays(NOW, 40),
+      visibleWeekStart: startOfWeek(NOW, { weekStartsOn: 0 }),
+      weekStartsOn: 0,
+      calendarLayout: 'month',
+      visibleMonthStart: grid.days[0],
+    });
+
+    expect(ranges).toEqual([monthEventRange(grid.days[0])]);
+    for (const day of grid.days) {
+      expect(covers(ranges, day)).toBe(true);
+    }
+    expect(covers(ranges, addDays(grid.days[0], -1))).toBe(false);
+    expect(covers(ranges, addDays(grid.days[41], 1))).toBe(false);
+    // Leading September day and trailing November day are both inside the window.
+    expect(covers(ranges, new Date(2026, 8, 27))).toBe(true);
+    expect(covers(ranges, new Date(2026, 10, 7))).toBe(true);
+  });
+
+  it('keeps the week window for the calendar week layout and for the dashboard', () => {
+    const grid = buildMonthGrid(new Date(2026, 9, 15), 1);
+    const input = {
+      activeView: 'calendar',
+      dashboardDate: addDays(NOW, 20),
+      visibleWeekStart: startOfWeek(NOW, { weekStartsOn: 0 }),
+      weekStartsOn: 0 as const,
+      calendarLayout: 'week' as const,
+      visibleMonthStart: grid.days[0],
+    };
+    expect(rangesForView(input)).toEqual([weekEventRange(input.visibleWeekStart)]);
+    expect(rangesForView({ ...input, activeView: 'dashboard', calendarLayout: 'month' }))
+      .toEqual(viewRanges('dashboard', input.dashboardDate));
   });
 });
 

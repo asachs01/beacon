@@ -1276,6 +1276,20 @@ export function SettingsView({
 
       <div className="settings-group">
         <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.calendar.defaultViewLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.calendar.defaultViewSublabel')}</div>
+          </div>
+          <Segment
+            value={settings.defaultCalendarView}
+            options={[
+              { value: 'week', label: t('calendar.viewWeek') },
+              { value: 'month', label: t('calendar.viewMonth') },
+            ]}
+            onChange={(v) => onUpdateSettings({ defaultCalendarView: v })}
+          />
+        </div>
+        <div className="settings-row">
           <div className="settings-row-label">{t('settings.calendar.defaultCalendarLabel')}</div>
           <select
             className="settings-select"

@@ -120,6 +120,18 @@ export const en = {
   'weekCalendar.dayGroup': 'Day group {n}',
   'weekCalendar.addEventOnAt': 'Add event on {day} at {time}',
 
+  // ---- calendar layout (week / month) ----
+  'calendar.viewWeek': 'Week',
+  'calendar.viewMonth': 'Month',
+  'calendar.viewSwitcherLabel': 'Calendar layout',
+  'calendar.previousMonth': 'Previous month',
+  'calendar.nextMonth': 'Next month',
+  'calendar.jumpToCurrentMonth': 'Jump to current month',
+  'calendar.moreEvents': '+{count} more',
+  'calendar.dayEvents': 'Events on {date}',
+  'calendar.showDay': 'Show {date}',
+  'calendar.addEventOn': 'Add event on {date}',
+
   // ---- event modal ----
   'eventModal.editTitle': 'Event Details',
   'eventModal.newTitle': 'New Event',
@@ -299,6 +311,8 @@ export const en = {
   'settings.calendar.setColorTo': 'Set {name} to {color}',
   'settings.calendar.chooseCustomColorFor': 'Choose a custom color for {name}',
   'settings.calendar.resetToAuto': 'Reset to auto',
+  'settings.calendar.defaultViewLabel': 'Default Calendar View',
+  'settings.calendar.defaultViewSublabel': 'Week or month shown when you open the calendar',
   'settings.calendar.defaultCalendarLabel': 'Default Calendar',
   'settings.calendar.defaultEventDurationLabel': 'Default Event Duration',
   'settings.calendar.min30': '30 min',

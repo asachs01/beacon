@@ -32,6 +32,13 @@ export interface CalendarInfo {
   color: string;
 }
 
+/** Layout of the calendar tab. Week is the historical default. */
+export type CalendarLayout = 'week' | 'month';
+
+export function normalizeCalendarLayout(value: unknown): CalendarLayout {
+  return value === 'month' ? 'month' : 'week';
+}
+
 export interface WeatherData {
   temperature: number;
   temperatureUnit: string;

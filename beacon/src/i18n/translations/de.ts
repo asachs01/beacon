@@ -115,6 +115,18 @@ export const de: Record<TranslationKey, string> = {
   'weekCalendar.dayGroup': 'Tagesgruppe {n}',
   'weekCalendar.addEventOnAt': 'Termin hinzufügen am {day} um {time}',
 
+  // ---- calendar layout (week / month) ----
+  'calendar.viewWeek': 'Woche',
+  'calendar.viewMonth': 'Monat',
+  'calendar.viewSwitcherLabel': 'Kalenderansicht',
+  'calendar.previousMonth': 'Vorheriger Monat',
+  'calendar.nextMonth': 'Nächster Monat',
+  'calendar.jumpToCurrentMonth': 'Zum aktuellen Monat',
+  'calendar.moreEvents': '+{count} weitere',
+  'calendar.dayEvents': 'Termine am {date}',
+  'calendar.showDay': '{date} anzeigen',
+  'calendar.addEventOn': 'Termin am {date} hinzufügen',
+
   // ---- event modal ----
   'eventModal.editTitle': 'Termindetails',
   'eventModal.newTitle': 'Neuer Termin',
@@ -294,6 +306,8 @@ export const de: Record<TranslationKey, string> = {
   'settings.calendar.setColorTo': '{name} auf {color} setzen',
   'settings.calendar.chooseCustomColorFor': 'Benutzerdefinierte Farbe für {name} wählen',
   'settings.calendar.resetToAuto': 'Auf automatisch zurücksetzen',
+  'settings.calendar.defaultViewLabel': 'Standard-Kalenderansicht',
+  'settings.calendar.defaultViewSublabel': 'Woche oder Monat beim Öffnen des Kalenders',
   'settings.calendar.defaultCalendarLabel': 'Standardkalender',
   'settings.calendar.defaultEventDurationLabel': 'Standard-Termindauer',
   'settings.calendar.min30': '30 Min.',
