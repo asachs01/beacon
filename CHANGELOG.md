@@ -1,3 +1,10 @@
+# [1.43.0](https://github.com/asachs01/beacon/compare/v1.42.0...v1.43.0) (2026-11-22)
+
+
+### Features
+
+* add a month view to the calendar ([#76](https://github.com/asachs01/beacon/issues/76)) ([2df5ca3](https://github.com/asachs01/beacon/commit/2df5ca3de4449f72e3970868d663f2d26c55d2de)), closes [#61](https://github.com/asachs01/beacon/issues/61)
+
 # [1.42.0](https://github.com/asachs01/beacon/compare/v1.41.1...v1.42.0) (2026-11-22)
 
 
