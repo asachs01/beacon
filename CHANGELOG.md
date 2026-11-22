@@ -1,3 +1,10 @@
+## [1.41.1](https://github.com/asachs01/beacon/compare/v1.41.0...v1.41.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **addon:** include font packages in add-on build ([#70](https://github.com/asachs01/beacon/issues/70)) ([2acd876](https://github.com/asachs01/beacon/commit/2acd8760d3627a13563347aff4f99b385710a868))
+
 # [1.41.0](https://github.com/asachs01/beacon/compare/v1.40.3...v1.41.0) (2026-11-20)
 
 
