@@ -1,3 +1,10 @@
+# [1.42.0](https://github.com/asachs01/beacon/compare/v1.41.1...v1.42.0) (2026-11-22)
+
+
+### Features
+
+* **android:** attach signed APK to releases ([#64](https://github.com/asachs01/beacon/issues/64)) ([e573210](https://github.com/asachs01/beacon/commit/e573210d76b81c3c82ff96915c0d7e288da26d14)), closes [PKCS#12-signed](https://github.com/PKCS/issues/12-signed)
+
 ## [1.41.1](https://github.com/asachs01/beacon/compare/v1.41.0...v1.41.1) (2026-11-22)
 
 
