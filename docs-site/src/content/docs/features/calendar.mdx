@@ -10,9 +10,13 @@ The calendar is Beacon's core feature. It displays either a full week view or a 
 
 Use the **Week / Month** switcher in the calendar header to change the layout. Beacon remembers that choice until you leave the app. To make Month the layout you see every time you open the calendar, go to **Settings → Calendar** and set **Default Calendar View** to Month. The week-start preference (**Settings → General → Week Starts On**) applies to both layouts.
 
+![Settings, Calendar section, with Default Calendar View](/docs/images/screenshots/settings-calendar.png)
+
 ---
 
 ## Month view
+
+![Month view on a wall tablet (June 2026, demo data)](/docs/images/screenshots/calendar-month.png)
 
 Month view is a 6-row by 7-column grid for the month on screen:
 
@@ -24,9 +28,15 @@ Month view is a 6-row by 7-column grid for the month on screen:
 
 Events are loaded for the whole visible grid, including the dimmed days from the neighboring months, and reuse the same cache as the week and dashboard views. While that range is still loading, the calendar shows "Loading events..." instead of an empty month.
 
+On a portrait tablet (768px wide) the month grid stays seven columns and shows fewer chips per day:
+
+![Month view on a portrait tablet (demo data)](/docs/images/screenshots/calendar-month-portrait.png)
+
 ---
 
 ## Week view overview
+
+![Week view on a wall tablet (demo data)](/docs/images/screenshots/calendar-week.png)
 
 The calendar view shows 7 days starting from Sunday of the current week. The layout consists of:
 
