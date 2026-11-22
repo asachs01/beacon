@@ -1,3 +1,10 @@
+## [1.43.1](https://github.com/asachs01/beacon/compare/v1.43.0...v1.43.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* **mcp:** use local day for meal plan today ([b9ce466](https://github.com/asachs01/beacon/commit/b9ce46676479a94f869d98d8d45849f0151c065f))
+
 # [1.43.0](https://github.com/asachs01/beacon/compare/v1.42.0...v1.43.0) (2026-11-22)
 
 
