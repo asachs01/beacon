@@ -1,3 +1,10 @@
+## [1.43.2](https://github.com/asachs01/beacon/compare/v1.43.1...v1.43.2) (2026-11-22)
+
+
+### Bug Fixes
+
+* **addon:** pull the prebuilt multi-arch image from GHCR ([e60d52b](https://github.com/asachs01/beacon/commit/e60d52baedd25367010bb7324b4e01b74e949270))
+
 ## [1.43.1](https://github.com/asachs01/beacon/compare/v1.43.0...v1.43.1) (2026-11-22)
 
 
