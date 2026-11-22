@@ -1,10 +1,42 @@
 ---
 title: "FAQ"
-description: "Answers to 20+ common questions about Beacon — calendar support, hardware, privacy, features, and troubleshooting."
+description: "Answers to common questions about Beacon: cost, Beacon vs Skylight, which tablets work, offline use, privacy, updates, features and troubleshooting."
 order: 3
 ---
 
 # Frequently Asked Questions
+
+---
+
+## Quick answers
+
+### What is Beacon?
+
+Beacon is a free, open-source family command center for a wall-mounted tablet or spare screen. It shows your shared calendar, chores, today's meals, lists, photos and weather, and runs on your own network as a Home Assistant add-on or a Docker container.
+
+### How much does Beacon cost?
+
+**Nothing.** Beacon is free and MIT-licensed, with no subscription, premium tier or account. Your only costs are a display (a tablet you already own works) and whatever runs Home Assistant or Docker.
+
+### How is Beacon different from Skylight?
+
+Skylight sells its own screen, and meal planning, photos and some other features need Calendar Plus (about $79 a year). Beacon runs on any tablet's browser, keeps your data on your network, and has no paid tier. The trade-off is that you set it up yourself. See [Beacon vs Skylight](/docs/getting-started/skylight-alternative/).
+
+### Which tablets work?
+
+**Any tablet or screen with a modern web browser.** Popular picks are an Amazon Fire HD, a Samsung Galaxy Tab or a Lenovo Tab, usually with Fully Kiosk Browser on Android. An old monitor with a Raspberry Pi works too. See [Deployment](/docs/getting-started/deployment/) for hardware with prices.
+
+### Does Beacon work offline?
+
+**Mostly.** Beacon runs entirely on your local network and never needs its own cloud service. The display keeps a local copy of its data, and the built-in fonts and themes need no internet. Anything that comes from the internet still needs it: Google Calendar sync and weather reach you through Home Assistant, and Google Fonts are downloaded when you pick one.
+
+### Is my family's data private?
+
+**Yes.** Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account. See [Does Beacon send my data anywhere?](#does-beacon-send-my-data-anywhere)
+
+### How do I update Beacon?
+
+On the add-on, go to **Settings → Add-ons → Beacon** and click **Update**. For Docker, rolling back, and fixing a failed update, see [Updating and Troubleshooting](/docs/getting-started/updating/).
 
 ---
 
@@ -26,13 +58,9 @@ Beacon also works with **any calendar source** Home Assistant supports, includin
 
 Data flow: `Google/CalDAV -> Home Assistant -> Beacon (local only)`
 
-### Is there a subscription?
-
-**No.** Beacon is free and open-source under the MIT license. No subscriptions, no premium tiers, no free trial.
-
 ### Can I use this without Home Assistant?
 
-Not currently. Beacon relies on Home Assistant for calendar data, weather, media players, and grocery integrations. If you do not have Home Assistant, [HA OS](https://www.home-assistant.io/installation/) is free and runs on a Raspberry Pi, old PC, or virtual machine.
+**Partly.** Beacon has a standalone mode with its own local calendar, lists and tasks, so it works without Home Assistant. Google Calendar sync, weather, music control and grocery integrations all come through Home Assistant, though, so you'd miss those. [HA OS](https://www.home-assistant.io/installation/) is free and runs on a Raspberry Pi, old PC or virtual machine.
 
 ---
 
@@ -156,32 +184,15 @@ See the [Installation guide](/docs/getting-started/installation/#mounting-and-di
 
 ## Updates and Maintenance
 
-### How do I update Beacon?
-
-**Add-on**: Go to **Settings > Add-ons > Beacon** and click **Update** if available.
-
-**Docker**: Pull the latest image and recreate the container:
-```bash
-docker pull ghcr.io/asachs01/beacon:latest
-docker stop beacon && docker rm beacon
-docker run -d --name beacon ... ghcr.io/asachs01/beacon:latest
-```
-
 ### Is my data preserved across updates?
 
-**Add-on**: Yes. Configuration and add-on data are preserved.
+**Yes.** On the add-on, family members, chores, routines, settings and meal plans are saved by Beacon's server in the add-on's `/data` folder, and the display keeps a copy in the browser. Updates don't touch `/data`.
 
-**Browser data**: Family members, chores, and theme preferences are stored in the browser's localStorage and persist across updates. Clearing browser data will remove this information.
+On Docker, your data survives only if you mounted a volume at `/data`, for example `-v beacon-data:/data`. See [Updating and Troubleshooting](/docs/getting-started/updating/#docker).
 
 ### Can I back up my data?
 
-The browser localStorage data is not easily backed up. For critical family and chore data, consider exporting the localStorage keys:
-- `beacon_family_members`
-- `beacon_chores`
-- `beacon_completions`
-- `beacon_streaks`
-
-You can view and copy these values in the browser's Developer Tools (F12 > Application > Local Storage).
+**Yes.** On the add-on, Beacon's data is included in Home Assistant backups (**Settings → System → Backups**). On Docker, back up the volume you mounted at `/data`.
 
 ---
 
@@ -211,7 +222,8 @@ This means Beacon cannot connect to Home Assistant. Check:
 
 1. Check the browser console (F12) for error messages
 2. Check the add-on logs (**Settings > Add-ons > Beacon > Log**)
-3. Open a [GitHub issue](https://github.com/asachs01/beacon/issues) with your HA version, browser, device, and relevant logs
+3. Check [Updating and Troubleshooting](/docs/getting-started/updating/) for known problems
+4. Open a [GitHub issue](https://github.com/asachs01/beacon/issues) with your HA version, browser, device, and relevant logs
 
 ---
 
