@@ -2,6 +2,21 @@
 title: "FAQ"
 description: "Answers to common questions about Beacon: cost, Beacon vs Skylight, which tablets work, offline use, privacy, updates, features and troubleshooting."
 order: 3
+faq:
+  - question: "What is Beacon?"
+    answer: "Beacon is a free, open-source family command center for a wall-mounted tablet or spare screen. It shows your shared calendar, chores, today's meals, lists, photos and weather, and runs on your own network as a Home Assistant add-on or a Docker container."
+  - question: "How much does Beacon cost?"
+    answer: "Nothing. Beacon is free and MIT-licensed, with no subscription, premium tier or account. Your only costs are a display (a tablet you already own works) and whatever runs Home Assistant or Docker."
+  - question: "How is Beacon different from Skylight?"
+    answer: "Skylight sells its own screen, and meal planning, photos and some other features need Calendar Plus (about $79 a year). Beacon runs on any tablet's browser, keeps your data on your network, and has no paid tier. The trade-off is that you set it up yourself."
+  - question: "Which tablets work?"
+    answer: "Any tablet or screen with a modern web browser. Popular picks are an Amazon Fire HD, a Samsung Galaxy Tab or a Lenovo Tab, usually with Fully Kiosk Browser on Android. An old monitor with a Raspberry Pi works too."
+  - question: "Does Beacon work offline?"
+    answer: "Mostly. Beacon runs entirely on your local network and never needs its own cloud service. The display keeps a local copy of its data, and the built-in fonts and themes need no internet. Anything that comes from the internet still needs it: Google Calendar sync and weather reach you through Home Assistant, and Google Fonts are downloaded when you pick one."
+  - question: "Is my family's data private?"
+    answer: "Yes. Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account."
+  - question: "How do I update Beacon?"
+    answer: "On the add-on, go to Settings → Add-ons → Beacon and click Update. For Docker, rolling back, and fixing a failed update, see the Updating and Troubleshooting docs page."
 ---
 
 # Frequently Asked Questions

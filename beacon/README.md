@@ -52,7 +52,7 @@ Skylight is a polished wall calendar that charges for hardware **and** locks mea
 - **8+ Themes** -- Skylight, Midnight, Midnight Light, Nord, Dracula, Monokai, Rose, Forest, and dark mode (automatic or manual)
 - **Custom Fonts** -- Choose separate heading and body typefaces: bundled faces (including dyslexia-friendly Atkinson Hyperlegible and rounded Nunito), a Google Fonts family name, or an uploaded `.woff2`. Built-in and uploaded fonts work offline.
 - **Family Management** -- Per-member colors, calendar filtering, and PIN-based profiles
-- **Meal Planning** -- Meal plan bar with weekly dinner overview
+- **Meal plan display** -- Dashboard Menu widget shows today's meals. The plan is filled from MCP tools or the AnyList sync; there is no in-app meal planner yet.
 - **Standalone Mode** -- Works without Home Assistant using local calendars, lists, and tasks
 
 ## Installation

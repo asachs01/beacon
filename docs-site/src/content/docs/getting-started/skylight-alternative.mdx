@@ -1,27 +1,28 @@
 ---
 title: "Beacon vs Skylight"
-description: "Free open-source Skylight Calendar alternative. Home Assistant add-on or Docker. Calendar, chores, meals, photos — no subscription, no cloud lock-in."
+description: "Free open-source Skylight Calendar alternative. Home Assistant add-on or Docker. Calendar, chores, lists, and photos on any tablet's browser — no subscription."
 order: 2
 ---
 
 # A free Skylight alternative that runs on Home Assistant
 
-Beacon is a self-hosted family command center for wall-mounted tablets. Same kitchen-wall job as Skylight Calendar — shared calendar, chores, meals, lists, photos — without the proprietary screen or the yearly Calendar Plus fee.
+Beacon is a free, MIT-licensed Skylight Calendar alternative that installs as a Home Assistant add-on and runs in any tablet's browser. You get a shared calendar, chores, lists, and photos on a tablet you already own, without buying a Skylight display or paying for [Calendar Plus at $79/year](https://skylight.zendesk.com/hc/en-us/articles/35984779668379-What-does-a-Skylight-Calendar-cost). Beacon can [display a meal plan](/docs/features/meals/), filled from AnyList or an AI assistant, but it does not have a meal planner of its own.
+
+For Hearth Display and DAKboard as well as Skylight, see [Beacon vs Skylight, Hearth, and DAKboard](/docs/getting-started/compare/).
 
 ## Quick comparison
 
 | | Skylight Calendar | Beacon |
 |---|---|---|
-| Cost | Hardware ~$300–$650+ | Free (MIT); bring your own tablet |
-| Subscription | Calendar Plus ~$79/yr for meals, photos, extras | $0 |
-| Privacy | Vendor cloud account | Local / Home Assistant; data stays on your network |
-| Smart home | No Home Assistant | Native HA add-on + standalone mode |
-| Hardware | Proprietary display | Any wall tablet or spare screen |
-| Voice / AI | Vendor features | MCP server, voice API, HA Assist |
+| Hardware | A [dedicated Skylight display](https://myskylight.com/products/skylight-calendar); [prices vary by model and retailer](https://skylight.zendesk.com/hc/en-us/articles/35984779668379-What-does-a-Skylight-Calendar-cost) | Free ([MIT](https://github.com/asachs01/beacon/blob/main/LICENSE)); bring your own tablet |
+| Subscription | [Not required for basic calendar, chores, and lists](https://skylight.zendesk.com/hc/en-us/articles/36009559376795-Does-Skylight-Calendar-require-a-subscription). [Calendar Plus is $79/year](https://skylight.zendesk.com/hc/en-us/articles/35984779668379-What-does-a-Skylight-Calendar-cost) for [meal planning, recipes, rewards, photo screensaver, and Magic Import](https://skylight.zendesk.com/hc/en-us/articles/57326775089691-Calendar-Plus) | $0 |
+| Meals | [Meal planning and recipes are Calendar Plus features](https://skylight.zendesk.com/hc/en-us/articles/57326775089691-Calendar-Plus) | [Displays a meal plan](/docs/features/meals/) filled from MCP tools or the AnyList sync; no in-app meal planner |
+| Photos | [Photo/video screensaver requires Calendar Plus](https://skylight.zendesk.com/hc/en-us/articles/57326775089691-Calendar-Plus) | Included; see [Photos](/docs/features/photos/) |
+| Hardware platform | Skylight's display, plus a [free mobile app](https://myskylight.com/products/skylight-calendar) | Any tablet's browser, as a Home Assistant add-on or standalone |
 
 ## Custom fonts
 
-Beacon lets you choose separate heading and body typefaces in Settings → Appearance. Built-in faces (including dyslexia-friendly Atkinson Hyperlegible and rounded Nunito) are bundled in the app and work offline, including through Home Assistant ingress. You can also enter a Google Fonts family name (needs internet) or upload a `.woff2` file (stored on that device, works offline). See the [Fonts](/docs/appearance/fonts/) guide.
+Beacon lets you choose separate heading and body typefaces in Settings → Appearance. Built-in faces (including dyslexia-friendly Atkinson Hyperlegible and rounded Nunito) are bundled in the app and work offline, including through Home Assistant ingress. You can also enter a Google Fonts family name (needs internet) or upload a `.woff2` file (stored on that device, works offline). See the [Fonts](/docs/customization/fonts/) guide.
 
 ## Who should buy Skylight
 
@@ -39,25 +40,27 @@ You already run (or will run) Home Assistant, want a wall tablet without a subsc
 
 ## FAQ
 
-**Is Beacon a Skylight alternative?**  
+**Is Beacon a Skylight alternative?**
 Yes — same wall-display family calendar job, open source and self-hosted.
 
-**Does Beacon require a subscription?**  
+**Does Beacon require a subscription?**
 No. MIT licensed, no cloud account required for core use.
 
-**Do I need Home Assistant?**  
+**Do I need Home Assistant?**
 Recommended for the richest integration. Standalone mode works with local calendars, lists, and tasks.
 
-**What tablet works?**  
+**What tablet works?**
 Any browser-capable wall tablet or spare screen. Point it at Beacon's URL (or open via HA sidebar / direct add-on URL).
 
-**Is the "Skylight" theme the Skylight product?**  
+**Is the "Skylight" theme the Skylight product?**
 No. It's a visual theme inspired by that clean bright look — not affiliated with Skylight.
 
 ---
 
 ## Next steps
 
+- **[Beacon vs Skylight, Hearth, and DAKboard](/docs/getting-started/compare/)** — sourced comparison with Hearth Display and DAKboard too
 - **[Installation guide](/docs/getting-started/installation/)** — install as a Home Assistant add-on or Docker container
-- **[Full FAQ](/docs/reference/faq/)** — 20+ common questions answered
+- **[Free Skylight alternative](/docs/guides/free-skylight-alternative/)** — practical switch-over steps
+- **[Full FAQ](/docs/reference/faq/)** — common questions answered
 - **[Hardware recommendations](/docs/getting-started/deployment/)** — tablet and mount options

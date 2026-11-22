@@ -1,0 +1,77 @@
+---
+title: "Beacon vs Skylight, Hearth, and DAKboard"
+description: "Compare Beacon with Skylight Calendar, Hearth Display, and DAKboard. Beacon is a free, MIT-licensed Home Assistant add-on that runs in any tablet's browser."
+order: 2.5
+---
+
+# Beacon vs Skylight, Hearth Display, and DAKboard
+
+Beacon is a free, MIT-licensed family command center that installs as a Home Assistant add-on and runs in any tablet's browser. Skylight Calendar and Hearth Display are dedicated wall displays with paid plans for many family features, and DAKboard is a hosted screen service with a free plan and paid Essential and Plus tiers.
+
+Competitor prices and plan details below were checked against each company's own site or help center on November 22, 2026 (America/New_York). They can change. Every competitor claim is linked to its source. Claims that could not be verified are left out. For a shorter Skylight-only write-up, see [Beacon vs Skylight](/docs/getting-started/skylight-alternative/).
+
+## Quick comparison
+
+| | [Beacon](https://github.com/asachs01/beacon) | [Skylight Calendar](https://myskylight.com/products/skylight-calendar) | [Hearth Display](https://hearthdisplay.com/products/hearth-display) | [DAKboard](https://dakboard.com/pricing) |
+|---|---|---|---|---|
+| Cost to use the software | Free ([MIT license](https://github.com/asachs01/beacon/blob/main/LICENSE)) | [Calendar Plus is $79/year](https://skylight.zendesk.com/hc/en-us/articles/35984779668379-What-does-a-Skylight-Calendar-cost) for extras; [basic calendar, chores, and lists work without a subscription](https://skylight.zendesk.com/hc/en-us/articles/36009559376795-Does-Skylight-Calendar-require-a-subscription) | [Family Membership from $5.76/month (multi-year) to $9/month (monthly)](https://hearthdisplay.com/products/hearth-display) | [Free plan](https://dakboard.com/pricing), then [Essential at $5/month billed annually](https://dakboard.com/pricing) or [Plus at $8/month billed annually](https://dakboard.com/pricing) |
+| Display hardware | Any tablet or screen with a browser | A [dedicated Skylight display](https://myskylight.com/products/skylight-calendar); [hardware prices vary by model and retailer](https://skylight.zendesk.com/hc/en-us/articles/35984779668379-What-does-a-Skylight-Calendar-cost) | A [dedicated 27-inch Hearth Display](https://hearthdisplay.com/products/hearth-display), [listed at $699](https://hearthdisplay.com/products/hearth-display) (promotions may apply) | [Your own screen or a DAKboard display](https://dakboard.com/c/family/) |
+| Meals | [Displays a meal plan](/docs/features/meals/) filled from MCP tools or the AnyList sync; no in-app meal planner | [Meal planning and recipes require Calendar Plus](https://skylight.zendesk.com/hc/en-us/articles/57326775089691-Calendar-Plus) | [Meal planning is included with Family Membership](https://hearthdisplay.com/products/hearth-display) | [Can display meal plans from tools such as Plan to Eat and Nutrislice](https://dakboard.com/c/family/) |
+| Home Assistant | One-click Home Assistant add-on, or standalone | — | — | [Can show a Home Assistant dashboard on the screen, on every plan including Free](https://dakboard.com/c/family/) |
+| Where it runs | Any tablet's browser | Skylight's display, plus [a free mobile app](https://myskylight.com/products/skylight-calendar) | [Hearth's display](https://hearthdisplay.com/products/hearth-display), plus a [companion app](https://hearthdisplay.com/products/hearth-display) | [Any screen you already own, or a DAKboard wall display](https://dakboard.com/c/family/) |
+
+A dash (—) means the company's own site did not document that point clearly enough to include it here.
+
+## Beacon
+
+Beacon is free and open source under the [MIT license](https://github.com/asachs01/beacon/blob/main/LICENSE). It installs as a [one-click Home Assistant add-on](/docs/getting-started/installation/), and it also runs standalone in Docker. You open it in any tablet's browser — there are no store app builds yet.
+
+It includes a shared calendar, chores, photos, custom fonts, and translations in nine languages (English, German, Spanish, French, Italian, Japanese, Korean, Dutch, and Portuguese). The dashboard can [display a meal plan](/docs/features/meals/), which you fill from MCP tools or the AnyList sync — Beacon does not have a meal planner of its own. Data stays on your Home Assistant instance or your own server. See the [installation guide](/docs/getting-started/installation/) and the [Fonts](/docs/customization/fonts/) page.
+
+## Skylight Calendar
+
+[Skylight Calendar](https://myskylight.com/products/skylight-calendar) is sold as a dedicated wall display. Skylight's help center says [hardware pricing varies by model and retailer](https://skylight.zendesk.com/hc/en-us/articles/35984779668379-What-does-a-Skylight-Calendar-cost), and the store currently lists models such as the 15-inch Calendar 2 and the 27-inch Calendar Max.
+
+You do [not need a subscription for basic use](https://skylight.zendesk.com/hc/en-us/articles/36009559376795-Does-Skylight-Calendar-require-a-subscription). Without Plus you can add and sync calendar events, keep track of chores and routines, and make lists. [Calendar Plus costs $79 per year](https://skylight.zendesk.com/hc/en-us/articles/35984779668379-What-does-a-Skylight-Calendar-cost) and unlocks [meal planning and recipes, chore rewards, a photo/video screensaver, and Magic Import](https://skylight.zendesk.com/hc/en-us/articles/57326775089691-Calendar-Plus).
+
+A more detailed Skylight-only page lives at [Beacon vs Skylight](/docs/getting-started/skylight-alternative/).
+
+## Hearth Display
+
+[Hearth Display](https://hearthdisplay.com/products/hearth-display) is a 27-inch wall display. Hearth's product page lists the display at $699 (sale pricing may apply) and describes a Family Membership billed [from $5.76/month with multi-year plans to $9/month billed monthly](https://hearthdisplay.com/products/hearth-display). The first month is included, and [you can cancel during the trial to avoid being charged](https://hearthdisplay.com/pages/membership).
+
+[Every display includes a shared calendar, Google, iCal, and Outlook syncing, and unlimited profiles](https://hearthdisplay.com/products/hearth-display). If you cancel the membership, [the calendar, calendar syncing, and unlimited profiles keep working](https://hearthdisplay.com/products/hearth-display). The membership adds [Hearth Helper, routines, to-dos, meal planning, stars and rewards, the companion app, and future software updates](https://hearthdisplay.com/products/hearth-display).
+
+## DAKboard
+
+[DAKboard](https://dakboard.com/c/family/) turns a screen you already own — or a DAKboard wall display — into a family calendar and photo board. [A free plan is always available](https://dakboard.com/pricing): one predefined screen, up to two calendars, photos, weather, news/RSS, and TouchHub, with DAKboard branding. [Essential is $5 per month billed annually](https://dakboard.com/pricing) (two custom screens included) and adds custom layouts, up to five calendars, integrations, templates, and custom CSS. [Plus is $8 per month billed annually](https://dakboard.com/pricing) and adds unlimited calendars, a media library, screen loops, scheduling, and faster updates.
+
+You can [connect a Home Assistant dashboard on every plan, including Free](https://dakboard.com/c/family/). That is a dashboard shown on the DAKboard screen, not a Home Assistant add-on. [The built-in Family Chores Manager requires an Essential or Plus plan](https://dakboard.com/c/family/). DAKboard can [display meal plans from tools such as Plan to Eat and Nutrislice](https://dakboard.com/c/family/).
+
+## Which one fits
+
+- **Choose Beacon** if you already run Home Assistant (or will), want a free MIT-licensed dashboard, and prefer to use a tablet you already have.
+- **Choose Skylight** if you want a sealed consumer display and are comfortable buying their hardware, with [Plus at $79/year](https://skylight.zendesk.com/hc/en-us/articles/35984779668379-What-does-a-Skylight-Calendar-cost) for meals, photos, and other extras.
+- **Choose Hearth** if you want their 27-inch display and Family Membership software as a packaged product.
+- **Choose DAKboard** if you want a hosted, highly customizable screen layout, and you are fine with their [free or paid plans](https://dakboard.com/pricing).
+
+## Next steps
+
+- [Beacon vs Skylight](/docs/getting-started/skylight-alternative/) — shorter Skylight-focused comparison
+- [Installation guide](/docs/getting-started/installation/) — install as a Home Assistant add-on or Docker container
+- [Set up a wall tablet as a family calendar](/docs/guides/wall-tablet-family-calendar/) — kiosk and mounting pointers
+- [Free Skylight alternative](/docs/guides/free-skylight-alternative/) — practical switch-over steps
+
+## Sources
+
+Prices and features were taken from these official pages on November 22, 2026 (America/New_York):
+
+- [What does a Skylight Calendar cost?](https://skylight.zendesk.com/hc/en-us/articles/35984779668379-What-does-a-Skylight-Calendar-cost)
+- [Does Skylight Calendar require a subscription?](https://skylight.zendesk.com/hc/en-us/articles/36009559376795-Does-Skylight-Calendar-require-a-subscription)
+- [Calendar Plus](https://skylight.zendesk.com/hc/en-us/articles/57326775089691-Calendar-Plus)
+- [Skylight Calendar product page](https://myskylight.com/products/skylight-calendar)
+- [Hearth Display product page](https://hearthdisplay.com/products/hearth-display)
+- [Hearth Membership](https://hearthdisplay.com/pages/membership)
+- [DAKboard pricing](https://dakboard.com/pricing)
+- [DAKboard for family](https://dakboard.com/c/family/)
+- [Beacon MIT license](https://github.com/asachs01/beacon/blob/main/LICENSE)

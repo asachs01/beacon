@@ -1,0 +1,31 @@
+---
+/**
+ * SoftwareApplication JSON-LD for the docs homepage.
+ * Keep claims factual: Beacon is free, MIT-licensed, and runs in a browser.
+ */
+const site = Astro.site ? Astro.site.href : Astro.url.origin + "/";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Beacon",
+  description:
+    "A free, MIT-licensed family command center that installs as a Home Assistant add-on and runs in any tablet's browser.",
+  url: site,
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Any device with a modern web browser",
+  license: "https://opensource.org/licenses/MIT",
+  isAccessibleForFree: true,
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  codeRepository: "https://github.com/asachs01/beacon",
+  softwareHelp: site,
+};
+
+const json = JSON.stringify(jsonLd).replace(/</g, "\\u003c");
+---
+
+<script type="application/ld+json" set:html={json} />
