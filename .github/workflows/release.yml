@@ -8,6 +8,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  packages: write
 
 jobs:
   release:
@@ -28,38 +29,56 @@ jobs:
 
       - run: npm ci
 
+      # prepareCmd in .releaserc.json pushes ghcr.io/asachs01/beacon:<version>
+      # (linux/amd64, linux/arm64, linux/arm/v7) before @semantic-release/git
+      # commits the beacon/config.yaml bump. Login and buildx have to be ready
+      # first. A failed push fails this step, so no bump commit and no tag.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Release
         id: semantic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npx semantic-release
-          # semantic-release doesn't set a step output itself; detect whether
-          # it actually cut a release by checking if HEAD gained a new tag.
-          if git describe --tags --exact-match HEAD >/dev/null 2>&1; then
-            tag="$(git describe --tags --exact-match HEAD)"
+          set -euo pipefail
+          tags_before="$(mktemp)"
+          git tag --list | sort > "$tags_before"
+          npx semantic-release 2>&1 | tee "$RUNNER_TEMP/semantic-release.log"
+          # The release tag is created on the analyzed commit. The version bump
+          # commit is pushed earlier, during prepare, so HEAD itself may not
+          # wear the tag. A failed image push fails semantic-release before any
+          # new tag exists, and this step stops there.
+          new_tag="$(comm -13 "$tags_before" <(git tag --list | sort) | tail -1)"
+          if [ -z "$new_tag" ]; then
+            version="$(sed -n 's/.*Published release \([0-9][^ ]*\).*/\1/p' "$RUNNER_TEMP/semantic-release.log" | tail -1)"
+            if [ -n "$version" ]; then
+              new_tag="v${version}"
+            fi
+          fi
+          if [ -n "$new_tag" ]; then
             echo "released=true" >> "$GITHUB_OUTPUT"
-            echo "tag=$tag" >> "$GITHUB_OUTPUT"
-            echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+            echo "tag=${new_tag}" >> "$GITHUB_OUTPUT"
+            echo "version=${new_tag#v}" >> "$GITHUB_OUTPUT"
           else
             echo "released=false" >> "$GITHUB_OUTPUT"
             echo "tag=" >> "$GITHUB_OUTPUT"
             echo "version=" >> "$GITHUB_OUTPUT"
           fi
 
-  # semantic-release creates GitHub releases using the default GITHUB_TOKEN,
-  # and GitHub deliberately does not fire downstream `release`/`push: tags`
-  # workflow events for GITHUB_TOKEN-authored activity (loop prevention).
-  # That silently starved build-addon.yml of its trigger for every release
-  # since ~v1.3.0 — the Docker image hasn't been rebuilt in months. Calling
-  # it directly here closes that gap without needing a PAT.
-  build-addon:
-    needs: release
-    if: needs.release.outputs.released == 'true'
-    uses: ./.github/workflows/build-addon.yml
-    permissions:
-      contents: write
-      packages: write
+  # The add-on image is published inside the release job, before the version
+  # bump. A later build-addon call would only run after that bump and would
+  # publish the tag a second time. Manual tags still use build-addon.yml.
 
   # semantic-release publishes with the default GITHUB_TOKEN, which does not
   # trigger a separate release workflow. Build the signed APK in this same

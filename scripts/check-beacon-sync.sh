@@ -98,3 +98,6 @@ console.log('✅ beacon/package.json dependencies cover the add-on build');
 EOF
 
 echo "✅ beacon/ directory is in sync with root"
+
+node scripts/check-addon-manifests.mjs
+node scripts/check-release-image-order.mjs

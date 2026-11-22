@@ -16,6 +16,8 @@ The simplest deployment. See [Getting Started](/docs/getting-started/installatio
 
 **How it works under the hood:**
 
+Home Assistant pulls `ghcr.io/asachs01/beacon` for the version in `beacon/config.yaml`. It does not build the add-on on the device. CI builds that image from `beacon/Dockerfile` before the version is published.
+
 1. The Dockerfile uses a two-stage build:
    - **Build stage**: Node.js 20 Alpine builds the Vite/React app (`npm ci && npm run build`)
    - **Runtime stage**: Based on `ghcr.io/hassio-addons/base:16.3.2`, installs Node.js and the `serve` static file server

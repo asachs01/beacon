@@ -1,7 +1,12 @@
 name: Build & Publish Add-on
 
+# Manual tags and GitHub releases created outside semantic-release.
+# Releases cut from main publish the image in scripts/prepare-addon-release.sh
+# before the version bump is pushed. This workflow uses the same order: the
+# image push step is above the version-sync commit, so a failed push never
+# updates beacon/config.yaml on main.
+
 on:
-  workflow_call:
   release:
     types: [published]
   push:
@@ -11,6 +16,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: asachs01/beacon
+  BUILD_FROM: ghcr.io/hassio-addons/base:16.3.2
 
 jobs:
   build:
@@ -20,42 +26,10 @@ jobs:
       packages: write
 
     steps:
-      # actions/checkout@v4 defaults to github.sha, which is PINNED to
-      # whatever commit triggered this workflow run. When invoked via
-      # workflow_call right after the `release` job, semantic-release has
-      # already pushed a NEW commit (the version bump to config.yaml) --
-      # but that new commit is invisible to this checkout unless we
-      # explicitly ask for the branch HEAD instead of the frozen sha.
-      # Without this, the image gets built one version behind every time
-      # (confirmed: v1.32.3's release run built and tagged the image as
-      # 1.32.2, the pre-bump version, because of exactly this).
-      #
-      # github.ref_name is 'main' for the workflow_call path (the caller was
-      # triggered by a push to main) and a tag name (e.g. 'v1.32.3') for the
-      # legacy manual release/push-tag path -- so it reliably distinguishes
-      # the two cases without relying on github.event_name, which doesn't
-      # behave as expected inside a called reusable workflow (see PR #9).
-      - name: Checkout (post-release main HEAD)
-        if: github.ref_name == 'main'
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: main
+          fetch-depth: 0
 
-      - name: Checkout (manual release/tag)
-        if: github.ref_name != 'main'
-        uses: actions/checkout@v4
-
-      # release/push-tag triggers (e.g. a manually-created tag/release) may
-      # predate a config.yaml version bump, so sync config.yaml to the tag
-      # first. When invoked via workflow_call (our own release.yml, right
-      # after semantic-release already committed the bump to main), GITHUB_REF
-      # is a branch ref (refs/heads/main), not a tag — config.yaml on that
-      # commit is already correct, so skip the tag-parsing/sync steps.
-      #
-      # NOTE: don't gate this on `github.event_name != 'workflow_call'` --
-      # empirically, github.event_name inside a called reusable workflow does
-      # NOT read back as 'workflow_call' the way you'd expect, so that
-      # condition silently never skips. Check the actual ref shape instead.
       - name: Extract version from tag
         id: tag_version
         if: startsWith(github.ref, 'refs/tags/')
@@ -64,15 +38,16 @@ jobs:
           VERSION="${TAG#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Sync config.yaml to tag version
+      # Local edit only. It is committed after the image push succeeds.
+      - name: Sync beacon/config.yaml to tag version
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          sed -i "s/^version:.*/version: \"${{ steps.tag_version.outputs.version }}\"/" config.yaml
+          sed -i "s/^version:.*/version: \"${{ steps.tag_version.outputs.version }}\"/" beacon/config.yaml
 
       - name: Read version to build
         id: version
         run: |
-          VERSION=$(grep '^version:' config.yaml | sed -E 's/version:[[:space:]]*"?([^"]*)"?/\1/')
+          VERSION=$(grep '^version:' beacon/config.yaml | sed -E 's/version:[[:space:]]*"?([^"]*)"?/\1/')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
@@ -91,20 +66,20 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: beacon
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7
+          build-args: |
+            BUILD_FROM=${{ env.BUILD_FROM }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
-      - name: Commit synced config.yaml (release/push-tag triggers only)
+      - name: Commit synced beacon/config.yaml
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add config.yaml
+          git add beacon/config.yaml
           git diff --cached --quiet || git commit -m "chore: bump version to ${{ steps.version.outputs.version }}"
           git push origin HEAD:main || true

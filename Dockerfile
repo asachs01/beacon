@@ -1,3 +1,5 @@
+# Base image for the add-on. Passed again as a build-arg by the release
+# publish. build.yaml is deprecated by Supervisor and must not come back.
 ARG BUILD_FROM=ghcr.io/hassio-addons/base:16.3.2
 
 # ---------- Build stage ----------

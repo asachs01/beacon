@@ -96,7 +96,7 @@ docker run -d -p 3000:3000 \
 
 ```
 beacon/
-  config.yaml               # HA add-on manifest
+  config.yaml               # only HA add-on manifest (beacon/config.yaml; no root copy)
   Dockerfile                 # Multi-stage Docker build
   run.sh                     # Container entry point (runtime config injection)
   package.json               # Dependencies and scripts

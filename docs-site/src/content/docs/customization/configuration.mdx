@@ -181,18 +181,19 @@ All Beacon styles use CSS custom properties (see [Themes](/docs/customization/th
 
 ## config.yaml reference (add-on manifest)
 
-The `config.yaml` file in the repository root defines the add-on metadata for Home Assistant:
+The only add-on manifest is `beacon/config.yaml`. Supervisor globs every `config.yaml` in the repository, so there is no second copy at the repo root.
 
 ```yaml
 name: Beacon
-version: "1.0.0"
+version: "1.43.1"
 slug: beacon
 description: "Family command center for wall-mounted displays"
 url: "https://github.com/asachs01/beacon"
+image: ghcr.io/asachs01/beacon
 arch:
   - amd64
   - aarch64
-  - armv7
+init: false
 startup: application
 boot: auto
 ingress: true
@@ -205,7 +206,9 @@ auth_api: true
 
 | Field | Description |
 |-------|-------------|
-| `arch` | Supported CPU architectures (AMD64, ARM64, ARMv7) |
+| `image` | Prebuilt multi-arch image. Supervisor pulls this instead of building on the device |
+| `init` | `false` so the base image's s6-overlay stays PID 1 |
+| `arch` | amd64 and aarch64. Home Assistant has deprecated armv7. This release still publishes a `linux/arm/v7` image; future releases may drop it |
 | `ingress: true` | Beacon is accessible through HA's ingress proxy (sidebar panel) |
 | `ingress_port: 3000` | The internal port Beacon listens on |
 | `panel_icon` | The icon shown in HA's sidebar (`mdi:calendar-clock`) |

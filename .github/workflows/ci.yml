@@ -22,6 +22,11 @@ jobs:
       - name: Check beacon/ sync
         run: bash scripts/check-beacon-sync.sh
 
+      - name: Check add-on manifest and release image order
+        run: |
+          node scripts/check-addon-manifests.mjs
+          node scripts/check-release-image-order.mjs
+
       - name: Type check
         run: npx tsc --noEmit
 
@@ -55,16 +60,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # The published GHCR workflow builds from the repo root. Home Assistant
-  # Supervisor does not: it builds beacon/Dockerfile with beacon/ as the
-  # context, so root package.json can be installable while the add-on image
-  # is not. Build that image on every pull request (amd64 matches the
-  # reported Supervisor failure). Dependency parity is the fast check in
-  # scripts/check-beacon-sync.sh; this job is the real install + vite build.
+  # Build beacon/ and start it the way Supervisor does with init: false
+  # (no Docker --init, s6 entrypoint is PID 1). amd64 is native. arm64 uses QEMU.
   addon-image:
+    name: Add-on image (${{ matrix.platform }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux/amd64, linux/arm64]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build add-on image from beacon/
-        run: docker build --platform linux/amd64 --tag beacon-addon:ci beacon/
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Smoke-run add-on image
+        run: bash scripts/smoke-addon-image.sh "${{ matrix.platform }}"
