@@ -3,6 +3,9 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 
+/** "Edit this page" links. DocsLayout reads this via Vite define. */
+const githubEditBase = "https://github.com/asachs01/beacon/edit/main/";
+
 export default defineConfig({
   site: "https://beacon-family-docs.netlify.app",
   integrations: [mdx(), sitemap()],
@@ -11,6 +14,9 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    define: {
+      "import.meta.env.GITHUB_EDIT_BASE": JSON.stringify(githubEditBase),
+    },
   },
   markdown: {
     shikiConfig: {

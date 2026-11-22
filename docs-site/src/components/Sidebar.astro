@@ -55,6 +55,16 @@ function sectionHasActive(children: { href: string }[]): boolean {
 
 <aside class="w-64 shrink-0 hidden lg:block">
   <nav class="sidebar-nav sticky top-20 max-h-[calc(100vh-5rem)] overflow-y-auto py-6 pr-4">
+    <ul class="sidebar-section-list mb-3">
+      <li>
+        <a
+          href="/whats-new/"
+          class={isActive('/whats-new/') ? 'sidebar-link-active sidebar-link' : 'sidebar-link'}
+        >
+          What's New
+        </a>
+      </li>
+    </ul>
     {sidebarSections.map(section => (
       <details class="sidebar-section mb-2" open={sectionHasActive(section.children) || section.order <= 2}>
         <summary class="sidebar-section-toggle">
