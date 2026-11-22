@@ -1,6 +1,6 @@
 ---
 title: "Updating and Troubleshooting"
-description: "How to update Beacon, roll back a bad update, find the logs, and fix the most common problems: failed add-on updates, kiosk exits, wrong-day meals, and notifications."
+description: "How to update Beacon, roll back a bad update, find the logs, and fix the most common problems: failed add-on updates, a stale screen after updating, kiosk exits, wrong-day meals, and notifications."
 order: 6
 ---
 
@@ -14,7 +14,9 @@ order: 6
 2. If you don't see an update yet, open the add-on store, then use the menu in the top-right corner and choose **Check for updates**.
 3. Click **Update**. Leave **Create backup before updating** turned on if Home Assistant offers it, so you can roll back.
 
-Home Assistant pulls a prebuilt image from GitHub Container Registry (`ghcr.io/asachs01/beacon`). It does not build the add-on on your machine. The image is published for 64-bit Intel/AMD, 64-bit ARM, and 32-bit ARM before that version shows up as an update.
+From **1.43.2** on, Home Assistant pulls a prebuilt image from GitHub Container Registry (`ghcr.io/asachs01/beacon`) instead of building the add-on on your machine, so updates are a quick download. The image is published for 64-bit Intel/AMD, 64-bit ARM, and 32-bit ARM before that version shows up as an update.
+
+**Coming from 1.43.1 or earlier?** Your first update after 1.43.2 swaps the image Home Assistant built on your machine for the downloaded one. It's a one-time change that happens automatically. Your settings, family members, chores and meal plans carry over.
 
 Home Assistant has deprecated 32-bit ARM (`armv7`). Beacon no longer lists it as a supported architecture. This release still publishes a `linux/arm/v7` image so an existing 32-bit ARM install can finish updating. Future releases may drop that image.
 
@@ -57,9 +59,11 @@ When you file a bug, include your Beacon version, your Home Assistant version, t
 
 ### The update fails
 
-Current releases pull `ghcr.io/asachs01/beacon:<version>` instead of building on the device. If the pull fails, the Supervisor log names the registry error or the missing tag. Your installed version keeps running, so nothing is lost. Check for updates again, and if it still fails, open an issue with that log.
+Updates pull `ghcr.io/asachs01/beacon:<version>`. If the pull fails, the Supervisor log names the registry error or the missing tag. Your installed version keeps running, so nothing is lost. Check that Home Assistant can reach `ghcr.io`, check for updates again, and if it still fails, open an issue with that log.
 
-Older releases built on the device. That failed in **1.41.0**, when the custom fonts release was missing its font packages in the add-on build ([#70](https://github.com/asachs01/beacon/issues/70)). It's fixed in **1.41.1**, and later versions do not use that build path.
+### The update finished but the screen looks the same or says it can't connect
+
+The add-on restarts at the end of an update, and for a few seconds the Beacon panel can show a "Cannot connect" error. Wait a moment and reload. If a wall tablet still shows the old version, it is holding a cached copy: hard-refresh the page, or restart the kiosk browser (in Fully Kiosk Browser, use **Clear cache** and reload). The add-on's **Log** tab shows the version that's actually running.
 
 ### 32-bit ARM (armv7)
 
