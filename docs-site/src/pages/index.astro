@@ -3,6 +3,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import Card from '@/components/Card.astro';
+import SoftwareApplicationSchema from '@/components/SoftwareApplicationSchema.astro';
 
 const features = [
   {
@@ -29,13 +30,17 @@ const features = [
 
 const docLinks = [
   { title: 'Getting Started', description: 'Install Beacon and connect your calendar in under 10 minutes.', href: '/docs/getting-started/installation/' },
+  { title: 'Compare Beacon', description: 'How Beacon compares with Skylight, Hearth Display, and DAKboard.', href: '/docs/getting-started/compare/' },
   { title: 'Calendar', description: 'Week view, creating events, recurring events, drag-to-reschedule.', href: '/docs/features/calendar/' },
-  { title: 'Configuration', description: 'Complete reference for all configuration options.', href: '/docs/customization/configuration/' },
   { title: 'FAQ', description: 'Answers to 20+ common questions.', href: '/docs/reference/faq/' },
 ];
+
+const homeTitle = "Beacon — your family's daily signal";
+const homeDescription = "Free, MIT-licensed family command center that installs as a Home Assistant add-on and runs in any tablet's browser. Docs for setup, calendars, chores, and more.";
 ---
 
-<BaseLayout title="Home">
+<BaseLayout title={homeTitle} description={homeDescription}>
+  <SoftwareApplicationSchema />
   <Header />
 
   <!-- Hero -->
@@ -48,7 +53,7 @@ const docLinks = [
         Your family's daily signal.
       </p>
       <p class="text-lg text-[var(--td-text-muted)] max-w-2xl mx-auto mb-8">
-        An open-source, self-hosted family dashboard for wall-mounted displays. Replace your $650 Skylight with something better.
+        An open-source, self-hosted family dashboard for wall-mounted displays. A free Skylight alternative that runs in any tablet's browser.
       </p>
 
       <div class="flex flex-wrap justify-center gap-4">

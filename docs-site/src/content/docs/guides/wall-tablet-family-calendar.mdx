@@ -1,0 +1,39 @@
+---
+title: "Set up a wall tablet as a family calendar"
+description: "Turn a wall tablet into a family calendar with Beacon: install it, open it in the tablet's browser, and lock the screen in kiosk mode."
+order: 2
+---
+
+# Set up a wall tablet as a family calendar
+
+To use a wall tablet as a family calendar, install Beacon (as a Home Assistant add-on or in Docker), open it in the tablet's browser, and lock the tablet in kiosk mode so it stays on the dashboard. Beacon is free and MIT-licensed, and it works on a tablet you already have — there is no dedicated display to buy.
+
+The detailed hardware lists, Fully Kiosk settings, and iPad Guided Access steps live in the existing docs. This page is only the short path.
+
+## 1. Install Beacon
+
+Follow the [Getting Started](/docs/getting-started/installation/) guide to install the Home Assistant add-on (recommended) or the standalone Docker container. When the add-on is running, open the web UI or enable **Show in sidebar** so the dashboard is one tap away.
+
+## 2. Connect calendars and family members
+
+Connect your calendars and add family members during [first-time setup](/docs/getting-started/installation/#first-time-setup). The [Calendar](/docs/features/calendar/) and [Family Members](/docs/features/family/) pages cover day-to-day use.
+
+## 3. Pick a tablet and a mount
+
+Any browser-capable tablet or spare screen works. The [hardware recommendations](/docs/getting-started/installation/#hardware-recommendations) and the longer [deployment hardware](/docs/getting-started/deployment/#hardware-recommendations) section list common tablet, monitor, and mount options.
+
+## 4. Open Beacon in the tablet's browser
+
+Point the tablet at your Beacon URL (or open it from the Home Assistant sidebar). Then use the kiosk instructions for your device:
+
+- [Android tablets, including Fire tablets](/docs/getting-started/installation/#mounting-and-displaying-on-a-tablet) — Fully Kiosk Browser is the usual choice; more options are in [deployment](/docs/getting-started/deployment/#android-fully-kiosk-browser)
+- [iPads](/docs/getting-started/installation/#mounting-and-displaying-on-a-tablet) — Add to Home Screen and Guided Access; see also [iPad Guided Access](/docs/getting-started/deployment/#ipad-guided-access)
+- [Raspberry Pi or a mini PC](/docs/getting-started/deployment/#chrome-kiosk-mode-desktopraspberry-pi) — Chromium or Firefox kiosk mode
+
+Beacon also has its own kiosk setting to hide the sidebar on the wall display. That is covered in the [deployment kiosk section](/docs/getting-started/deployment/#kiosk-mode-setup) and the [FAQ](/docs/reference/faq/#how-do-i-hide-the-sidebar-for-wall-tablets--kiosk-setups).
+
+## Related guides
+
+- [Home Assistant family calendar dashboard](/docs/guides/home-assistant-family-calendar/)
+- [Beacon vs Skylight, Hearth, and DAKboard](/docs/getting-started/compare/)
+- [Visual Walkthrough](/docs/getting-started/walkthrough/)

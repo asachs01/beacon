@@ -1,12 +1,12 @@
 ---
 title: "Beacon — Your family's daily signal"
-description: "A beautiful, open-source family command center for wall-mounted displays. Replace your $650 Skylight with something better."
+description: "A free, open-source family command center for wall-mounted displays. A Skylight alternative that runs in any tablet's browser."
 order: 1
 ---
 
 # A better family command center
 
-Beacon is an open-source, self-hosted family dashboard built for wall-mounted displays. It gives your household a single, glanceable view of the day — calendars, chores, weather, music, photos, and more — without subscriptions, cloud lock-in, or a $650 price tag.
+Beacon is an open-source, self-hosted family dashboard built for wall-mounted displays. It gives your household a single, glanceable view of the day — calendars, chores, weather, music, photos, and more — without a subscription or a dedicated vendor display.
 
 Beacon runs as a **Home Assistant add-on** or as a standalone **Docker container**, so if you already have a smart home hub, you are most of the way there.
 
@@ -24,7 +24,7 @@ The dashboard view shows a large clock, a personalized greeting ("Good morning, 
 Add up to 8 family members with custom avatars (55+ emoji options across 5 categories), colors, roles (parent or child), and optional PINs. Assign chores with dollar values and track completion streaks on a leaderboard.
 
 ### Grocery lists
-Connect Grocy or AnyList through Home Assistant to manage shopping lists directly from the display. Quick-add items, check them off, and get alerts when products are about to expire. Meal plan display is included when using Grocy.
+Connect Grocy or AnyList through Home Assistant to manage shopping lists directly from the display. Quick-add items, check them off, and get alerts when products are about to expire. Today's meals can appear on the dashboard; the plan is filled from AnyList or an AI assistant, not from Grocy. See [Meals](/docs/features/meals/).
 
 ### Music controls
 Control any Music Assistant or media player entity in Home Assistant. See album art, track info, and a progress bar. Switch between multiple speakers. A persistent "Now Playing" bar appears at the bottom of any view when music is playing.
@@ -54,25 +54,9 @@ Beacon is open source under the MIT license. No subscriptions, no premium tiers,
 
 ## How it compares
 
-| Feature | Beacon | Skylight Calendar | DAKBoard | MagicMirror |
-|---------|--------|-------------------|----------|-------------|
-| Price | Free | $649 | $20/mo | Free |
-| Calendar sync | Google, CalDAV, ICS, local | Google only | Google, Outlook | Google, iCal |
-| Create/edit events on device | Yes | No | No | No |
-| Drag-to-reschedule | Yes | No | No | No |
-| Recurring events | Yes | No (view only) | No | No |
-| Chore tracking | Yes (with $ values, streaks) | Yes (basic) | No | No |
-| Grocery list | Yes (Grocy + AnyList) | No | No | No |
-| Music controls | Yes (any HA media player) | No | No | No |
-| Photo frame | Yes | Yes ($40/yr for sharing) | Yes | Yes |
-| Themes | 7 + auto dark mode | 1 | Limited | Community |
-| Timer/stopwatch | Yes | No | No | No |
-| Notifications | Browser + HA mobile | Push (proprietary) | No | No |
-| Screen saver | Yes (anti-burn-in) | No | No | Module |
-| Self-hosted | Yes | No | No | Yes |
-| Open source | Yes (MIT) | No | No | Yes |
-| Subscription | None | None (hardware) | Required | None |
-| Touch-first | Yes | Yes | No | Partial |
+Beacon is a free, MIT-licensed family command center you install yourself. Skylight Calendar and Hearth Display are dedicated wall displays with paid plans for many family features, and DAKboard is a hosted screen service with a free plan and paid tiers.
+
+Competitor prices and features change, so the sourced tables live on [Beacon vs Skylight](/docs/getting-started/skylight-alternative/) and [Beacon vs Skylight, Hearth, and DAKboard](/docs/getting-started/compare/). Those pages only include claims checked against each company's own site.
 
 ---
 

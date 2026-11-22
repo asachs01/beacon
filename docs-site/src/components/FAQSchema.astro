@@ -1,0 +1,52 @@
+---
+/**
+ * Emits FAQPage JSON-LD for search and AI crawlers.
+ *
+ * Harbor (or anyone adding FAQ content) can attach questions in page
+ * frontmatter — the docs layout injects this component automatically:
+ *
+ *   ---
+ *   title: "FAQ"
+ *   description: "..."
+ *   faq:
+ *     - question: "Does Beacon require a subscription?"
+ *       answer: "No. Beacon is free and MIT-licensed."
+ *   ---
+ *
+ * Do not invent FAQ copy here; only emit schema for questions already
+ * written on the page. Answers should be plain text (no markdown).
+ */
+export interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+interface Props {
+  items: FAQItem[];
+}
+
+const { items } = Astro.props;
+
+const jsonLd =
+  items.length === 0
+    ? null
+    : {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: items.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      };
+
+// Escape "<" so a literal "</script>" in an answer cannot break the tag.
+const json = jsonLd
+  ? JSON.stringify(jsonLd).replace(/</g, "\\u003c")
+  : null;
+---
+
+{json && <script type="application/ld+json" set:html={json} />}
