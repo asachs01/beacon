@@ -516,6 +516,45 @@
   background: var(--bg-hover);
 }
 
+.photo-source-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(440px, 100%);
+}
+
+.photo-source-actions,
+.photo-album-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.photo-album-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-album-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.photo-album-note--warn {
+  color: var(--color-error, #b45309);
+}
+
+.media-folder-browser {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow: auto;
+}
+
 .settings-btn--primary {
   background: var(--accent);
   border-color: var(--accent);

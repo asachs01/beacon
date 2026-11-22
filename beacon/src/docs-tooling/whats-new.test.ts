@@ -9,8 +9,8 @@ describe('what\'s new notes', () => {
     const releases = parseChangelog(changelog);
     expect(releases.length).toBeGreaterThan(0);
     expect(releases.length).toBeLessThanOrEqual(20);
-    expect(releases[0]).toMatchObject({ version: '1.43.1', date: '2026-11-22' });
-    expect(releases[0].notes).toContain('meal plan');
+    expect(releases[0]).toMatchObject({ version: '1.43.2', date: '2026-11-22' });
+    expect(releases[0].notes).toContain('GHCR');
   });
 
   it('falls back to the changelog when GitHub fails', async () => {
@@ -21,7 +21,7 @@ describe('what\'s new notes', () => {
       },
     });
     expect(result.source).toBe('changelog');
-    expect(result.releases[0].version).toBe('1.43.1');
+    expect(result.releases[0].version).toBe('1.43.2');
   });
 
   it('uses the GitHub payload when the API responds', async () => {

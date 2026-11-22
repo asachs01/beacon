@@ -15,6 +15,7 @@ interface PhotoFrameProps {
   showClock?: boolean;
   showWeather?: boolean;
   intervalSeconds?: number;
+  photoDirectory?: string;
   weatherText?: string;
   /** Music state — pass these to show NowPlayingBar over photos */
   musicPlayer?: MediaPlayer | null;
@@ -44,6 +45,7 @@ export function PhotoFrame({
   showClock = true,
   showWeather = false,
   intervalSeconds = 30,
+  photoDirectory,
   weatherText,
   musicPlayer,
   onMusicPlay,
@@ -61,7 +63,7 @@ export function PhotoFrame({
     isActive,
     setActive,
     photoCount,
-  } = usePhotos(['ha_media', 'local'], intervalSeconds);
+  } = usePhotos(['ha_media', 'local', 'google_photos'], intervalSeconds, photoDirectory);
 
   const [showControls, setShowControls] = useState(false);
   const [clock, setClock] = useState(formatClock());

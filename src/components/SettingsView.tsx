@@ -33,6 +33,7 @@ import { useRoutines } from '../hooks/useRoutines';
 import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { demoSettingsSection } from '../demo/location';
+import { PhotoSourceSettings } from './PhotoSourceSettings';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1513,19 +1514,10 @@ export function SettingsView({
 
       <div className="settings-group">
         <div className="settings-group-title">{t('settings.integrations.photosTitle')}</div>
-        <div className="settings-row">
-          <div>
-            <div className="settings-row-label">{t('settings.integrations.sourceDirectoryLabel')}</div>
-            <div className="settings-row-sublabel">{t('settings.integrations.sourceDirectorySublabel')}</div>
-          </div>
-          <input
-            type="text"
-            className="settings-input settings-input--wide"
-            value={settings.photoDirectory}
-            onChange={(e) => onUpdateSettings({ photoDirectory: e.target.value })}
-            placeholder="/media/beacon/photos"
-          />
-        </div>
+        <PhotoSourceSettings
+          photoDirectory={settings.photoDirectory}
+          onPhotoDirectory={(photoDirectory) => onUpdateSettings({ photoDirectory })}
+        />
         <div className="settings-row">
           <div>
             <div className="settings-row-label">{t('settings.integrations.slideshowIntervalLabel')}</div>

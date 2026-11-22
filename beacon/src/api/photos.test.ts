@@ -110,6 +110,58 @@ describe('getPhotos', () => {
     expect(photos).toEqual([{ url: 'https://ha.local/ok', caption: 'ok', source: 'local' }]);
   });
 
+  it('browses a media-source id as given, including sources other than local media', async () => {
+    mockHasToken.mockReturnValue(true);
+    const folder = 'media-source://immich/user/album-1';
+    mockHaFetch.mockImplementation(async (path: string) => {
+      if (path.startsWith('/api/media_source/browse_media/')) {
+        return {
+          children: [
+            { media_content_id: `${folder}/pic`, title: 'pic', media_content_type: 'image/jpeg' },
+          ],
+        };
+      }
+      if (path.startsWith('/api/media_source/resolve_media/')) {
+        return { url: 'https://ha.local/immich-pic' };
+      }
+      throw new Error(`unexpected path: ${path}`);
+    });
+
+    const photos = await getPhotos(['local'], folder);
+
+    const browseCall = mockHaFetch.mock.calls.find(([p]) => p.includes('browse_media'));
+    expect(browseCall?.[0]).toBe(
+      `/api/media_source/browse_media/${encodeURIComponent(folder)}`,
+    );
+    expect(photos).toEqual([
+      { url: 'https://ha.local/immich-pic', caption: 'pic', source: 'local' },
+    ]);
+  });
+
+  it('merges cached Google Photos with the other sources', async () => {
+    mockHasToken.mockReturnValue(false);
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      expect(url).toBe('/beacon-api/google-photos/photos');
+      return {
+        ok: true,
+        json: async () => ({
+          photos: [{ url: '/beacon-api/google-photos/file/abc/one.jpg?v=1', caption: 'Picnic' }],
+        }),
+      };
+    }));
+
+    const photos = await getPhotos(['local', 'google_photos']);
+
+    expect(photos).toEqual([
+      {
+        url: '/beacon-api/google-photos/file/abc/one.jpg?v=1',
+        caption: 'Picnic',
+        source: 'google_photos',
+      },
+    ]);
+    vi.unstubAllGlobals();
+  });
+
   it('does not blow up the whole call when browse_media itself fails', async () => {
     mockHasToken.mockReturnValue(true);
     mockHaFetch.mockRejectedValue(new Error('network error'));
