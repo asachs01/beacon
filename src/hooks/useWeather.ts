@@ -3,14 +3,17 @@ import { HomeAssistantClient } from '../api/homeassistant';
 import { WeatherData } from '../types';
 import { getConfig } from '../config';
 import { haFetch, hasToken } from '../api/ha-rest';
+import { DEMO_WEATHER } from '../demo/fixtures';
 
 const REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
 export function useWeather(getClient: () => HomeAssistantClient | null) {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const demo = import.meta.env.VITE_DEMO === 'true';
+  const [weather, setWeather] = useState<WeatherData | null>(demo ? DEMO_WEATHER : null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchWeather = useCallback(async () => {
+    if (demo) return;
     const client = getClient();
     const configEntity = getConfig().weather_entity;
 
@@ -68,7 +71,7 @@ export function useWeather(getClient: () => HomeAssistantClient | null) {
         setError(err instanceof Error ? err.message : 'Failed to fetch weather');
       }
     }
-  }, [getClient]);
+  }, [demo, getClient]);
 
   useEffect(() => {
     fetchWeather();

@@ -1,6 +1,19 @@
 ---
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getCollection, render } from 'astro:content';
 import DocsLayout from '@/layouts/DocsLayout.astro';
+
+/** Docs content, whether the site is built from docs-site/ or the repo root. */
+function contentDir(): string {
+  const candidates = [
+    path.resolve(process.cwd(), 'src/content/docs'),
+    path.resolve(process.cwd(), 'docs-site/src/content/docs'),
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../content/docs'),
+  ];
+  return candidates.find((dir) => existsSync(dir)) ?? candidates[0];
+}
 
 export async function getStaticPaths() {
   const docs = await getCollection('docs');
@@ -12,6 +25,23 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+
+function repoEditPath(filePath: string | undefined, id: string): string {
+  const dir = contentDir();
+  if (existsSync(path.join(dir, `${id}.md`))) {
+    return `docs-site/src/content/docs/${id}.md`;
+  }
+  if (existsSync(path.join(dir, `${id}.mdx`))) {
+    return `docs-site/src/content/docs/${id}.mdx`;
+  }
+  if (filePath) {
+    const normalized = filePath.replace(/\\/g, '/');
+    const marker = 'docs-site/';
+    const index = normalized.lastIndexOf(marker);
+    if (index >= 0) return normalized.slice(index);
+  }
+  return `docs-site/src/content/docs/${id}.mdx`;
+}
 ---
 
 <DocsLayout
@@ -19,6 +49,7 @@ const { Content } = await render(entry);
   description={entry.data.description}
   ogImage={entry.data.ogImage}
   faq={entry.data.faq}
+  editPath={repoEditPath(entry.filePath, entry.id)}
 >
   <Content />
 </DocsLayout>

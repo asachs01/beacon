@@ -12,10 +12,16 @@ interface Props {
   description?: string;
   ogImage?: string;
   faq?: FAQItem[];
+  /** Repo path on main, for example docs-site/src/content/docs/features/calendar.mdx */
+  editPath?: string;
 }
 
-const { title, description, ogImage, faq } = Astro.props;
+const { title, description, ogImage, faq, editPath } = Astro.props;
 const pagePath = Astro.url.pathname;
+const editBase = String(import.meta.env.GITHUB_EDIT_BASE || 'https://github.com/asachs01/beacon/edit/main/');
+const editUrl = editPath
+  ? `${editBase.endsWith('/') ? editBase : `${editBase}/`}${editPath.replace(/^\//, '')}`
+  : undefined;
 ---
 
 <BaseLayout title={title} description={description} ogImage={ogImage}>
@@ -25,6 +31,16 @@ const pagePath = Astro.url.pathname;
     <main class="flex-1 min-w-0 py-8 lg:pl-8 lg:border-l lg:border-[var(--td-border)]">
       {faq && faq.length > 0 && <FAQSchema items={faq} />}
       <article class="prose">
+        {editUrl && (
+          <p class="not-prose mb-6 text-right">
+            <a
+              href={editUrl}
+              class="text-sm text-[var(--td-text-muted)] hover:text-[var(--td-accent)]"
+            >
+              Edit this page on GitHub
+            </a>
+          </p>
+        )}
         <slot />
       </article>
       <Feedback pageTitle={title} pagePath={pagePath} />

@@ -4,13 +4,14 @@ import ThemeSwitcher from './ThemeSwitcher.astro';
 const currentPath = Astro.url.pathname;
 
 const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/docs/welcome/', label: 'Docs' },
+  { href: '/', label: 'Home', activePrefix: '/' },
+  { href: '/docs/getting-started/welcome/', label: 'Docs', activePrefix: '/docs/' },
+  { href: '/whats-new/', label: "What's New", activePrefix: '/whats-new' },
 ];
 
-function isActive(href: string): boolean {
+function isActive(href: string, activePrefix: string): boolean {
   if (href === '/') return currentPath === '/';
-  return currentPath.startsWith(href);
+  return currentPath.startsWith(activePrefix);
 }
 ---
 
@@ -32,7 +33,7 @@ function isActive(href: string): boolean {
         {navLinks.map(link => (
           <a
             href={link.href}
-            class={isActive(link.href) ? 'nav-link-active' : 'nav-link'}
+            class={isActive(link.href, link.activePrefix) ? 'nav-link-active' : 'nav-link'}
           >
             {link.label}
           </a>

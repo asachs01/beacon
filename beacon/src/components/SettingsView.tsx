@@ -32,6 +32,7 @@ import { buildFocusUrl } from '../focus';
 import { useRoutines } from '../hooks/useRoutines';
 import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
 import { useTranslation, type TranslationKey } from '../i18n';
+import { demoSettingsSection } from '../demo/location';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -216,7 +217,7 @@ export function SettingsView({
 }: SettingsViewProps) {
   const { t } = useTranslation();
   const { setTheme: applyTheme } = useTheme();
-  const [activeSection, setActiveSection] = useState<SettingsSection>('general');
+  const [activeSection, setActiveSection] = useState<SettingsSection>(() => demoSettingsSection('general'));
   const [editingMember, setEditingMember] = useState<string | null>(null);
   const [memberForm, setMemberForm] = useState<MemberForm>(EMPTY_FORM);
   const [memberFormMode, setMemberFormMode] = useState<'list' | 'add' | 'edit'>('list');

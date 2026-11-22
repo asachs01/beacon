@@ -44,6 +44,8 @@ import { getConfig, patchConfig } from './config';
 import { I18nContext, createI18n } from './i18n';
 import { HiddenCornerGesture } from './components/HiddenCornerGesture';
 import { kioskHotCorner, kioskNavVisible, shouldOfferKioskGesture } from './display/hidden-gesture';
+import { DEMO_CALENDARS, DEMO_EVENTS } from './demo/fixtures';
+import { demoInitialView } from './demo/location';
 
 const config = getConfig();
 
@@ -94,17 +96,24 @@ export function App() {
     defaultColor: localCal.calendar.color,
   });
 
-  // Merge HA + local calendars and events
+  const demoMode = import.meta.env.VITE_DEMO === 'true';
+
+  // Merge HA + local calendars and events. The screenshot build substitutes
+  // the fictional Rivera calendars so each family column has its own color.
   const calendars = useMemo(
-    () => [{ ...localCal.calendar, color: localCalendarColor }, ...haCalendars],
-    [localCal.calendar, localCalendarColor, haCalendars],
+    () => (demoMode
+      ? DEMO_CALENDARS
+      : [{ ...localCal.calendar, color: localCalendarColor }, ...haCalendars]),
+    [demoMode, localCal.calendar, localCalendarColor, haCalendars],
   );
   const events = useMemo(
-    () => [
-      ...localCal.events.map((ev) => ({ ...ev, color: localCalendarColor })),
-      ...haEvents,
-    ].sort((a, b) => a.start.localeCompare(b.start)),
-    [localCal.events, localCalendarColor, haEvents],
+    () => (demoMode
+      ? DEMO_EVENTS
+      : [
+          ...localCal.events.map((ev) => ({ ...ev, color: localCalendarColor })),
+          ...haEvents,
+        ].sort((a, b) => a.start.localeCompare(b.start))),
+    [demoMode, localCal.events, localCalendarColor, haEvents],
   );
 
   // Route create/update/delete to local or HA based on calendar ID
@@ -170,8 +179,8 @@ export function App() {
   const [showModal, setShowModal] = useState(false);
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [prefillTime, setPrefillTime] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<SidebarView>(
-    (settings.defaultView as SidebarView) || 'dashboard'
+  const [activeView, setActiveView] = useState<SidebarView>(() =>
+    demoInitialView((settings.defaultView as SidebarView) || 'dashboard')
   );
 
   // Kid Display (focus) mode — URL param wins, then device-local storage
@@ -620,7 +629,7 @@ export function App() {
     window !== window.parent ||
     window.location.pathname.includes('/ingress/')
   );
-  if (!isHaManaged && !auth.state.isOnboarded) {
+  if (!demoMode && !isHaManaged && !auth.state.isOnboarded) {
     return (
       <OnboardingView
         onComplete={handleOnboardingComplete}
@@ -776,7 +785,7 @@ export function App() {
                 <span className="header-family-name">{settings.familyName}</span>
                 <span className="header-separator" />
                 <span className="header-date">{format(new Date(), 'EEEE, MMMM d, yyyy', { locale: i18n.dateLocale })}</span>
-                {!connected && (
+                {!connected && !demoMode && (
                   <div className="connection-status">
                     <span className="connection-dot" />
                     {t('app.connecting')}
@@ -898,7 +907,7 @@ export function App() {
       />
 
       {/* Demo indicator — only show outside of add-on ingress */}
-      {!connected && !isHaManaged && (
+      {!connected && !isHaManaged && !demoMode && (
         <div className="demo-badge">{t('app.demoMode')}</div>
       )}
     </div>

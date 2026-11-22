@@ -187,8 +187,17 @@ function persistSettings(settings: BeaconSettings): void {
 // Hook
 // ---------------------------------------------------------------------------
 
+function initialSettings(): BeaconSettings {
+  const defaults = buildDefaults();
+  // The screenshot build writes fixtures before React starts. Read them on
+  // the first paint so views don't flash the empty defaults.
+  if (import.meta.env.VITE_DEMO !== 'true') return defaults;
+  const stored = loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {});
+  return withNormalizedFonts({ ...defaults, ...stored });
+}
+
 export function useSettings() {
-  const [settings, setSettingsState] = useState<BeaconSettings>(buildDefaults);
+  const [settings, setSettingsState] = useState<BeaconSettings>(initialSettings);
   const [loaded, setLoaded] = useState(false);
 
   /** Re-fetch settings from server. */

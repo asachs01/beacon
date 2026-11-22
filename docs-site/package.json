@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
+    "prebuild": "node ../scripts/generate-settings-reference.mjs",
     "build": "astro build",
     "postbuild": "pagefind --site dist",
     "preview": "astro preview",
@@ -14,7 +15,8 @@
   "dependencies": {
     "@astrojs/mdx": "^4.2.6",
     "@astrojs/sitemap": "^3.3.1",
-    "astro": "^5.5.5"
+    "astro": "^5.5.5",
+    "marked": "^15.0.7"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.16",

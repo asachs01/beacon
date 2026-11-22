@@ -276,3 +276,14 @@ jobs:
             --clobber
           gh release view "$tag" --repo "$GITHUB_REPOSITORY" \
             --json tagName,assets --jq '{tag: .tagName, assets: [.assets[].name]}'
+
+  # Same GITHUB_TOKEN loop-prevention note as build-addon: a release created
+  # by semantic-release does not emit a downstream `release` event, so call
+  # the screenshot refresh directly when a version was published.
+  docs-screenshots:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    uses: ./.github/workflows/docs-screenshots.yml
+    permissions:
+      contents: write
+      pull-requests: write

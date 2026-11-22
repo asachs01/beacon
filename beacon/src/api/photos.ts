@@ -1,6 +1,7 @@
 import { Photo } from '../types/photos';
 import { getConfig } from '../config';
 import { haFetch, hasToken } from './ha-rest';
+import { DEMO_PHOTOS } from '../demo/fixtures';
 
 const { photo_directory: PHOTOS_PATH } = getConfig();
 
@@ -109,6 +110,8 @@ async function fetchLocalPhotos(): Promise<Photo[]> {
 export async function getPhotos(
   sources: Array<'local' | 'google_photos' | 'ha_media'> = ['ha_media', 'local'],
 ): Promise<Photo[]> {
+  if (import.meta.env.VITE_DEMO === 'true') return DEMO_PHOTOS;
+
   const fetchers: Promise<Photo[]>[] = [];
 
   if (sources.includes('ha_media')) {

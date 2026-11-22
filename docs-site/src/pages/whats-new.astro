@@ -1,0 +1,46 @@
+---
+import DocsLayout from '@/layouts/DocsLayout.astro';
+import { formatReleaseDate, loadWhatsNew } from '@/lib/whats-new';
+import { marked } from 'marked';
+
+marked.use({ gfm: true });
+
+const whatsNew = await loadWhatsNew();
+const releases = whatsNew.releases.slice(0, 20).map((release) => ({
+  ...release,
+  headingDate: formatReleaseDate(release.date),
+  html: String(marked.parse(release.notes || '_No notes for this release._', { async: false }))
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, ''),
+}));
+---
+
+<DocsLayout
+  title="What's New"
+  description="The latest Beacon releases, with the date, version, and notes."
+  editPath="docs-site/src/pages/whats-new.astro"
+>
+  <h1>What's New</h1>
+  <p>
+    {whatsNew.source === 'github'
+      ? 'The latest releases from GitHub, newest first.'
+      : 'GitHub releases were unavailable for this build, so these notes come from CHANGELOG.md.'}
+  </p>
+
+  {releases.length === 0 ? (
+    <p>No releases to show yet.</p>
+  ) : (
+    releases.map((release) => (
+      <section>
+        <h2 id={`v${release.version}`}>
+          {release.version}
+        </h2>
+        {release.date && (
+          <p>
+            <time datetime={release.date}>{release.headingDate}</time>
+          </p>
+        )}
+        <div set:html={release.html} />
+      </section>
+    ))
+  )}
+</DocsLayout>
