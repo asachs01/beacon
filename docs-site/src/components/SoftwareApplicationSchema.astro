@@ -1,7 +1,7 @@
 ---
 /**
  * SoftwareApplication JSON-LD for the docs homepage.
- * Keep claims factual: Beacon is free, MIT-licensed, and runs in a browser.
+ * Keep claims factual: Beacon is free, MIT-licensed, and runs in a browser or as a signed Android APK (sideload; not on Play Store yet).
  */
 const site = Astro.site ? Astro.site.href : Astro.url.origin + "/";
 
@@ -10,10 +10,10 @@ const jsonLd = {
   "@type": "SoftwareApplication",
   name: "Beacon",
   description:
-    "A free, MIT-licensed family command center that installs as a Home Assistant add-on and runs in any tablet's browser.",
+    "A free, MIT-licensed family command center that installs as a Home Assistant add-on and runs in any tablet's browser or as a signed Android app.",
   url: site,
   applicationCategory: "LifestyleApplication",
-  operatingSystem: "Any device with a modern web browser",
+  operatingSystem: "Android, any device with a modern web browser",
   license: "https://opensource.org/licenses/MIT",
   isAccessibleForFree: true,
   offers: {
