@@ -19,18 +19,8 @@
  *
  * An empty or unparseable value returns "" (matching the prior `''.slice(0,10)`
  * sentinel used for "never completed").
+ *
+ * Implemented in `local-day-key.cjs` so the CommonJS MCP server can require the
+ * same function. This module re-exports it.
  */
-const BARE_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
-
-export function localDayKey(value: string | number | Date = new Date()): string {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (BARE_DATE.test(trimmed)) return trimmed;
-  }
-  const d = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(d.getTime())) return '';
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+export { localDayKey } from './local-day-key.cjs';
