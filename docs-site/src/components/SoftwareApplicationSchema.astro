@@ -1,9 +1,11 @@
 ---
+import { absoluteUrl } from "../../site.config.mjs";
+
 /**
  * SoftwareApplication JSON-LD for the docs homepage.
  * Keep claims factual: Beacon is free, MIT-licensed, and runs in a browser or as a signed Android APK (sideload; not on Play Store yet).
  */
-const site = Astro.site ? Astro.site.href : Astro.url.origin + "/";
+const site = absoluteUrl("/");
 
 const jsonLd = {
   "@context": "https://schema.org",
