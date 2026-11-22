@@ -18,6 +18,9 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+// Same local-day rule as src/api/date-keys.ts. That module is TypeScript; this
+// server is CommonJS, so it loads the shared .cjs implementation directly.
+const { addCalendarDays, localDayKey } = require('./src/api/local-day-key.cjs');
 
 // ---------------------------------------------------------------------------
 // Config
@@ -608,15 +611,18 @@ async function handleTool(name, args) {
           const now = new Date();
           let periodStart;
           if (chore.frequency === 'daily') {
-            periodStart = now.toISOString().slice(0, 10);
+            periodStart = localDayKey(now);
           } else if (chore.frequency === 'weekly') {
-            const d = new Date(now);
-            d.setDate(d.getDate() - d.getDay());
-            periodStart = d.toISOString().slice(0, 10);
+            const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+            periodStart = localDayKey(d);
           }
           if (periodStart) {
             const periodCount = completions.filter(
-              (c) => c.chore_id === chore.id && c.member_id === member.id && c.completed_at.slice(0, 10) >= periodStart
+              (c) =>
+                c.chore_id === chore.id &&
+                c.member_id === member.id &&
+                c.completed_at &&
+                localDayKey(c.completed_at) >= periodStart
             ).length;
             if (periodCount >= chore.max_completions) {
               return {
@@ -758,17 +764,16 @@ async function handleTool(name, args) {
       const members = loadJson('beacon_family_members.json');
       const completions = loadJson('beacon_completions.json');
 
-      // Filter to today's completions
-      const todayStr = new Date().toISOString().slice(0, 10);
+      // Today's completions, on the household's local calendar day (not UTC).
+      const todayStr = localDayKey();
       const todayCompletions = completions.filter(
-        (c) => c.completed_at && c.completed_at.startsWith(todayStr)
+        (c) => c.completed_at && localDayKey(c.completed_at) === todayStr
       );
 
       // Also compute period completions for chores with max_completions
       const now = new Date();
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - now.getDay());
-      const weekStartStr = weekStart.toISOString().slice(0, 10);
+      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+      const weekStartStr = localDayKey(weekStart);
 
       const result = chores.map((chore) => {
         const entry = {
@@ -783,7 +788,7 @@ async function handleTool(name, args) {
         if (chore.max_completions) {
           const periodStart = chore.frequency === 'daily' ? todayStr : weekStartStr;
           const periodCompletions = completions.filter(
-            (c) => c.chore_id === chore.id && c.completed_at.slice(0, 10) >= periodStart
+            (c) => c.chore_id === chore.id && c.completed_at && localDayKey(c.completed_at) >= periodStart
           );
           entry.period_completions = {};
           for (const memberId of chore.assigned_to) {
@@ -864,15 +869,15 @@ async function handleTool(name, args) {
 
     case 'beacon_get_meal_plan': {
       const allEntries = loadJson('beacon_meal_plans.json');
-      const targetDate = args.date || new Date().toISOString().slice(0, 10);
+      // Stored meals are local YYYY-MM-DD keys. UTC's date is already tomorrow
+      // at 18:00 in America/Phoenix and at 23:30 in America/New_York.
+      const targetDate = args.date ? localDayKey(args.date) : localDayKey();
       const days = args.days || 1;
 
-      // Build date range
       const dates = new Set();
       for (let i = 0; i < days; i++) {
-        const d = new Date(targetDate);
-        d.setDate(d.getDate() + i);
-        dates.add(d.toISOString().slice(0, 10));
+        const key = addCalendarDays(targetDate, i);
+        if (key) dates.add(key);
       }
 
       const filtered = allEntries.filter((e) => dates.has(e.date));
@@ -964,174 +969,183 @@ async function handleMessage(msg) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Transport selection: --http or MCP_TRANSPORT=http → Streamable HTTP
-//                      otherwise → stdio (default)
-// ---------------------------------------------------------------------------
+module.exports = { handleTool };
 
-const USE_HTTP = process.argv.includes('--http') || process.env.MCP_TRANSPORT === 'http';
-const MCP_PORT = parseInt(process.env.MCP_PORT || '3001', 10);
-const MCP_API_KEY = process.env.MCP_API_KEY || '';
+// Tests require this file. Only the CLI process should listen on stdio or HTTP.
+function startMcpServer() {
+  if (require.main !== module) return;
 
-if (USE_HTTP) {
-  // ─── Streamable HTTP transport ───────────────────────────────────────────
-  //
-  // POST /mcp   — JSON-RPC request → JSON-RPC response
-  // GET  /mcp   — SSE stream (kept for backwards compat with older clients)
-  // GET  /health — simple health check
-  //
-  // Auth: Bearer token or X-API-Key header (if MCP_API_KEY is set)
+  // ---------------------------------------------------------------------------
+  // Transport selection: --http or MCP_TRANSPORT=http → Streamable HTTP
+  //                      otherwise → stdio (default)
+  // ---------------------------------------------------------------------------
 
-  /** Per-session SSE connections keyed by session ID */
-  const sseClients = new Map();
+  const USE_HTTP = process.argv.includes('--http') || process.env.MCP_TRANSPORT === 'http';
+  const MCP_PORT = parseInt(process.env.MCP_PORT || '3001', 10);
+  const MCP_API_KEY = process.env.MCP_API_KEY || '';
 
-  function checkAuth(req, res) {
-    if (!MCP_API_KEY) return true;
-    const auth = req.headers['authorization'] || '';
-    const apiKey = req.headers['x-api-key'] || '';
-    if (auth === `Bearer ${MCP_API_KEY}` || apiKey === MCP_API_KEY) return true;
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Unauthorized' }));
-    return false;
-  }
+  if (USE_HTTP) {
+    // ─── Streamable HTTP transport ───────────────────────────────────────────
+    //
+    // POST /mcp   — JSON-RPC request → JSON-RPC response
+    // GET  /mcp   — SSE stream (kept for backwards compat with older clients)
+    // GET  /health — simple health check
+    //
+    // Auth: Bearer token or X-API-Key header (if MCP_API_KEY is set)
 
-  function collectBody(req) {
-    return new Promise((resolve, reject) => {
-      const chunks = [];
-      let size = 0;
-      req.on('data', (c) => {
-        size += c.length;
-        if (size > 1024 * 1024) { req.destroy(); reject(new Error('Too large')); return; }
-        chunks.push(c);
-      });
-      req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-      req.on('error', reject);
-    });
-  }
+    /** Per-session SSE connections keyed by session ID */
+    const sseClients = new Map();
 
-  const mcpHttpServer = http.createServer(async (req, res) => {
-    // CORS headers for browser-based clients
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
-
-    if (req.method === 'OPTIONS') {
-      res.writeHead(204);
-      res.end();
-      return;
+    function checkAuth(req, res) {
+      if (!MCP_API_KEY) return true;
+      const auth = req.headers['authorization'] || '';
+      const apiKey = req.headers['x-api-key'] || '';
+      if (auth === `Bearer ${MCP_API_KEY}` || apiKey === MCP_API_KEY) return true;
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      return false;
     }
 
-    // Health check
-    if (req.url === '/health' && req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'ok', server: MCP_SERVER_INFO }));
-      return;
-    }
-
-    // MCP endpoint
-    if (req.url === '/mcp' || req.url === '/v1/mcp') {
-      if (!checkAuth(req, res)) return;
-
-      // GET → SSE stream (for clients that need server-sent events)
-      if (req.method === 'GET') {
-        const sessionId = Math.random().toString(36).slice(2);
-        res.writeHead(200, {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'X-Session-Id': sessionId,
+    function collectBody(req) {
+      return new Promise((resolve, reject) => {
+        const chunks = [];
+        let size = 0;
+        req.on('data', (c) => {
+          size += c.length;
+          if (size > 1024 * 1024) { req.destroy(); reject(new Error('Too large')); return; }
+          chunks.push(c);
         });
-        res.write(`data: ${JSON.stringify({ type: 'session', sessionId })}\n\n`);
-        sseClients.set(sessionId, res);
-        req.on('close', () => sseClients.delete(sessionId));
-        return;
-      }
-
-      // POST → JSON-RPC request/response
-      if (req.method === 'POST') {
-        try {
-          const body = await collectBody(req);
-          const msg = JSON.parse(body);
-          const response = await handleMessage(msg);
-
-          if (response) {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(response));
-          } else {
-            // Notification — no response body
-            res.writeHead(202);
-            res.end();
-          }
-        } catch (err) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(makeError(null, -32700, `Parse error: ${err.message}`)));
-        }
-        return;
-      }
+        req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+        req.on('error', reject);
+      });
     }
 
-    // 404
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Not found' }));
-  });
+    const mcpHttpServer = http.createServer(async (req, res) => {
+      // CORS headers for browser-based clients
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
 
-  mcpHttpServer.listen(MCP_PORT, () => {
-    log(`Beacon MCP server (HTTP) listening on port ${MCP_PORT}`);
-    log(`Endpoints: POST /mcp, GET /mcp (SSE), GET /health`);
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+
+      // Health check
+      if (req.url === '/health' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', server: MCP_SERVER_INFO }));
+        return;
+      }
+
+      // MCP endpoint
+      if (req.url === '/mcp' || req.url === '/v1/mcp') {
+        if (!checkAuth(req, res)) return;
+
+        // GET → SSE stream (for clients that need server-sent events)
+        if (req.method === 'GET') {
+          const sessionId = Math.random().toString(36).slice(2);
+          res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'X-Session-Id': sessionId,
+          });
+          res.write(`data: ${JSON.stringify({ type: 'session', sessionId })}\n\n`);
+          sseClients.set(sessionId, res);
+          req.on('close', () => sseClients.delete(sessionId));
+          return;
+        }
+
+        // POST → JSON-RPC request/response
+        if (req.method === 'POST') {
+          try {
+            const body = await collectBody(req);
+            const msg = JSON.parse(body);
+            const response = await handleMessage(msg);
+
+            if (response) {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(response));
+            } else {
+              // Notification — no response body
+              res.writeHead(202);
+              res.end();
+            }
+          } catch (err) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(makeError(null, -32700, `Parse error: ${err.message}`)));
+          }
+          return;
+        }
+      }
+
+      // 404
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Not found' }));
+    });
+
+    mcpHttpServer.listen(MCP_PORT, () => {
+      log(`Beacon MCP server (HTTP) listening on port ${MCP_PORT}`);
+      log(`Endpoints: POST /mcp, GET /mcp (SSE), GET /health`);
+      log(`HA URL: ${HA_URL}`);
+      log(`Token: ${SUPERVISOR_TOKEN ? 'configured' : 'NOT configured'}`);
+      log(`API Key: ${MCP_API_KEY ? 'required' : 'none (open)'}`);
+    });
+
+  } else {
+    // ─── stdio transport (default) ───────────────────────────────────────────
+
+    function send(obj) {
+      const json = JSON.stringify(obj);
+      process.stdout.write(json + '\n');
+    }
+
+    const rl = readline.createInterface({ input: process.stdin, terminal: false });
+
+    let buffer = '';
+
+    rl.on('line', async (line) => {
+      buffer += line;
+
+      // Try to parse — MCP messages are one JSON object per line
+      let msg;
+      try {
+        msg = JSON.parse(buffer);
+        buffer = '';
+      } catch {
+        // Incomplete JSON — accumulate more lines
+        return;
+      }
+
+      try {
+        const response = await handleMessage(msg);
+        if (response) {
+          send(response);
+        }
+      } catch (err) {
+        log('Unhandled error:', err.message);
+        if (msg.id != null) {
+          send(makeError(msg.id, -32603, `Internal error: ${err.message}`));
+        }
+      }
+    });
+
+    rl.on('close', () => {
+      log('stdin closed, shutting down');
+      process.exit(0);
+    });
+
+    log('Beacon MCP server (stdio) started');
     log(`HA URL: ${HA_URL}`);
     log(`Token: ${SUPERVISOR_TOKEN ? 'configured' : 'NOT configured'}`);
-    log(`API Key: ${MCP_API_KEY ? 'required' : 'none (open)'}`);
-  });
-
-} else {
-  // ─── stdio transport (default) ───────────────────────────────────────────
-
-  function send(obj) {
-    const json = JSON.stringify(obj);
-    process.stdout.write(json + '\n');
   }
 
-  const rl = readline.createInterface({ input: process.stdin, terminal: false });
-
-  let buffer = '';
-
-  rl.on('line', async (line) => {
-    buffer += line;
-
-    // Try to parse — MCP messages are one JSON object per line
-    let msg;
-    try {
-      msg = JSON.parse(buffer);
-      buffer = '';
-    } catch {
-      // Incomplete JSON — accumulate more lines
-      return;
-    }
-
-    try {
-      const response = await handleMessage(msg);
-      if (response) {
-        send(response);
-      }
-    } catch (err) {
-      log('Unhandled error:', err.message);
-      if (msg.id != null) {
-        send(makeError(msg.id, -32603, `Internal error: ${err.message}`));
-      }
-    }
+  // Prevent unhandled rejections from crashing the server
+  process.on('unhandledRejection', (err) => {
+    log('Unhandled rejection:', err?.message || err);
   });
-
-  rl.on('close', () => {
-    log('stdin closed, shutting down');
-    process.exit(0);
-  });
-
-  log('Beacon MCP server (stdio) started');
-  log(`HA URL: ${HA_URL}`);
-  log(`Token: ${SUPERVISOR_TOKEN ? 'configured' : 'NOT configured'}`);
 }
 
-// Prevent unhandled rejections from crashing the server
-process.on('unhandledRejection', (err) => {
-  log('Unhandled rejection:', err?.message || err);
-});
+startMcpServer();

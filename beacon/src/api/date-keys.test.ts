@@ -8,6 +8,8 @@ import { localDayKey } from './date-keys';
  */
 const PHOENIX_EVENING = new Date('2026-11-20T18:00:00-07:00');
 const PHOENIX_BEFORE_UTC_ROLLOVER = new Date('2026-11-20T16:59:00-07:00');
+/** 23:30 America/New_York (EST, UTC-5) is already the next UTC date. */
+const NEW_YORK_LATE = new Date('2026-11-20T23:30:00-05:00');
 
 describe('localDayKey', () => {
   const originalTz = process.env.TZ;
@@ -26,6 +28,15 @@ describe('localDayKey', () => {
   it('uses the local calendar day at 18:00 in America/Phoenix, not the UTC date', () => {
     vi.setSystemTime(PHOENIX_EVENING);
     expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe('America/Phoenix');
+    expect(new Date().toISOString().slice(0, 10)).toBe('2026-11-21');
+    expect(localDayKey()).toBe('2026-11-20');
+    expect(localDayKey(new Date())).toBe('2026-11-20');
+  });
+
+  it('uses the local calendar day at 23:30 in America/New_York, not the UTC date', () => {
+    process.env.TZ = 'America/New_York';
+    vi.setSystemTime(NEW_YORK_LATE);
+    expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe('America/New_York');
     expect(new Date().toISOString().slice(0, 10)).toBe('2026-11-21');
     expect(localDayKey()).toBe('2026-11-20');
     expect(localDayKey(new Date())).toBe('2026-11-20');
