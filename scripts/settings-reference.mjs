@@ -421,6 +421,13 @@ export function buildSettingsReference() {
     lines.push('');
   }
 
+  lines.push('## Family member fields', '');
+  lines.push('These live on each person under **Settings → Family Members**, not in the tables above. Name, avatar, color, role, PIN, and calendars are described on [Family Members](/docs/features/family/).', '');
+  lines.push('| Field | Label | Type | Default | Description |');
+  lines.push('| --- | --- | --- | --- | --- |');
+  lines.push('| `privilegeEntityId` | Privilege switch | `string` (optional) | (omitted) | Children only, Beacon 1.45.0 and later. A Home Assistant `switch`, `input_boolean`, `light`, or `fan` that turns on when this child finishes today\'s chores. Clearing the picker removes the field. Existing members, settings, and add-on options are left unchanged. See [Chore privileges](/docs/features/chore-privileges/). |');
+  lines.push('');
+
   lines.push('## Add-on options', '');
   lines.push('These are the options in `beacon/config.yaml`, which Home Assistant uses for the add-on. The schema type is the add-on schema.', '');
   lines.push('| Option | Label | Type | Default | Description |');
