@@ -340,13 +340,51 @@ export class HomeAssistantClient {
     return Array.isArray(result?.agents) ? result.agents : [];
   }
 
+  /**
+   * Agents plus the one conversation.process runs when agent_id is omitted.
+   * Older cores omit default_agent; the preferred Assist pipeline names it then.
+   */
+  async describeConversationAgents(): Promise<{
+    agents: Array<{ id: string; name?: string }>;
+    defaultAgentId: string | null;
+  }> {
+    const result = await this.sendMessage({ type: 'conversation/agent/list' }) as {
+      agents?: Array<{ id: string; name?: string }>;
+      default_agent?: unknown;
+    };
+    const agents = Array.isArray(result?.agents) ? result.agents : [];
+    let defaultAgentId = typeof result.default_agent === 'string' && result.default_agent
+      ? result.default_agent
+      : null;
+    if (!defaultAgentId) {
+      try {
+        const pipelines = await this.sendMessage({ type: 'assist_pipeline/pipeline/list' }) as {
+          pipelines?: Array<{ id?: string; conversation_engine?: unknown }>;
+          preferred_pipeline?: unknown;
+        };
+        const list = Array.isArray(pipelines?.pipelines) ? pipelines.pipelines : [];
+        const preferredId = typeof pipelines?.preferred_pipeline === 'string'
+          ? pipelines.preferred_pipeline
+          : '';
+        const preferred = list.find((pipeline) => pipeline.id === preferredId) ?? list[0];
+        if (typeof preferred?.conversation_engine === 'string' && preferred.conversation_engine) {
+          defaultAgentId = preferred.conversation_engine;
+        }
+      } catch {
+        /* Assist pipeline is optional on older cores */
+      }
+    }
+    return { agents, defaultAgentId };
+  }
+
   /** conversation/process over the websocket. The REST fallback lives in the voice UI. */
-  async processConversation(text: string, language?: string): Promise<unknown> {
-    const message: { type: string; text: string; language?: string } = {
+  async processConversation(text: string, language?: string, agentId?: string): Promise<unknown> {
+    const message: { type: string; text: string; language?: string; agent_id?: string } = {
       type: 'conversation/process',
       text,
     };
     if (language) message.language = language;
+    if (agentId) message.agent_id = agentId;
     return this.sendMessage(message);
   }
 
