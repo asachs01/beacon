@@ -26,6 +26,7 @@ const { readStoredResetTime } = require('./lib/chore-day.cjs');
 const { parseIntent, resolveTodoEntity } = require('./lib/voice-intents.cjs');
 const { completeStoredChore, handleCompleteChore } = require('./lib/complete-chore.cjs');
 const { listStoredChores, handleChoresLeft } = require('./lib/chores-left.cjs');
+const { backupMealPlanFile } = require('./lib/meal-plan-files.cjs');
 const googlePhotos = createGooglePhotoCache({
   dataDir: path.join(DATA_DIR, 'photo-cache', 'google'),
 });
@@ -398,6 +399,10 @@ async function handleDataApi(req, res) {
       const bodyBuf = await collectBody(req);
       const body = (bodyBuf || '{}').toString('utf8');
       JSON.parse(body); // validate JSON
+      // The first rewrite of the meal plan keeps the previous file.
+      if (key === 'beacon_meal_plans') {
+        try { backupMealPlanFile(DATA_DIR); } catch { /* backup is best-effort */ }
+      }
       await fsp.writeFile(filePath, body, 'utf8');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));

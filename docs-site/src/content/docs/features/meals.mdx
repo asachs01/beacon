@@ -15,13 +15,15 @@ Beacon shows today's planned meals in the **Menu** widget on the dashboard. Meal
 | Dinner | 🌙 |
 | Snack | 🍎 |
 
-If nothing is planned for today, the widget is hidden.
+The Menu card stays on the dashboard even when today has no meals, with a row for Breakfast, Lunch, Dinner, and Snack so you can add one.
 
 ## How meals get onto the display
 
 ![Menu widget showing today's meals (demo data)](/docs/images/screenshots/meals.png)
 
-Beacon displays a meal plan, but you don't plan meals on the display itself. There's no add or edit screen for meals yet. Instead, the plan is written to Beacon's data store, and the dashboard re-reads it every 5 minutes.
+Open **Meals** in the sidebar to plan the week. Each day has Breakfast, Lunch, Dinner, and Snack. Tap a cell to add, edit, or delete a meal, and pick a recipe you saved in Beacon. From a recipe, **Add ingredients to grocery list** sends the ingredients through the same grocery list Beacon already uses.
+
+The dashboard also re-reads the plan when you come back to the app, and every 5 minutes.
 
 There are two supported ways to fill it.
 
@@ -36,7 +38,7 @@ Beacon's [MCP server](/docs/reference/ai-integration/#mcp-server-for-llm-agents)
 
 With the Beacon plugin for Claude Code, `/whats-for-dinner` shows today's plan. You can also just ask your assistant something like "put tacos on Tuesday for dinner".
 
-`beacon_set_meal_plan` **replaces the whole plan** with the entries you send. To add a single meal, read the current plan first, add to it, and send the full list back. If meals seem to disappear, this is usually why.
+`beacon_set_meal_plan` **merges by default**. Each entry adds or updates the one slot for that date and meal type. An entry with no id still matches on date and meal type. A null or empty name clears that slot. Meals on other dates stay put. Pass `replace: true` to replace the whole plan with the entries you send — that is the previous replace-all behavior.
 
 ### 2. Syncing from AnyList
 
@@ -71,6 +73,6 @@ Beacon's grocery integration works with Grocy, but Grocy's own meal plan doesn't
 
 ## Troubleshooting
 
-**The Menu widget isn't showing.** Nothing is planned for today. Check that an entry exists with today's date in `YYYY-MM-DD` form, and wait up to 5 minutes or reload the page.
+**The Menu card is empty.** Nothing is planned for today. Add a meal on the card or in the Meals week view. Dates are `YYYY-MM-DD` local calendar days.
 
 **Meals show on the wrong day in the evening.** Versions before 1.40.1 compared meal dates against UTC, so in US time zones the widget could jump to tomorrow's meals in the afternoon or evening. Update to the latest version.

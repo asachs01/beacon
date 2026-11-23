@@ -15,7 +15,7 @@ Show today's planned meals from the Beacon meal plan.
 
 1. Call `beacon_get_meal_plan` with the date (or today by default)
 2. Format the results showing meal type and name
-3. If no meals are planned, suggest checking AnyList or adding meals manually
+3. If no meals are planned, suggest adding one in the Beacon Meals view or with `beacon_set_meal_plan` (that tool merges by default; pass `replace: true` only when replacing the whole plan)
 
 ## Example Output
 

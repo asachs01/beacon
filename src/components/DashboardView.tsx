@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { isSameDay, startOfDay, addDays, parseISO } from 'date-fns';
 import { CalendarEvent, WeatherData } from '../types';
 import { Chore, FamilyMember } from '../types/family';
@@ -18,6 +18,7 @@ import { TasksCard } from './cards/TasksCard';
 import type { TaskmateUser } from '../types/taskmate';
 import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
 import { useTranslation } from '../i18n';
+import { addIngredientsToGroceryList } from '../api/grocery-write';
 
 export type { TodoItem } from '../types/dashboard-cards';
 
@@ -41,6 +42,8 @@ interface DashboardViewProps {
   /** Selected day is not in the fetched window yet. */
   eventsLoading?: boolean;
   isDayLoaded?: (day: Date) => boolean;
+  onPlanMeals?: () => void;
+  groceryListId?: string;
 }
 
 function renderCard(card: DashboardCard, context: DashboardCardContext) {
@@ -69,6 +72,8 @@ export function DashboardView({
   onSelectedDateChange,
   eventsLoading = false,
   isDayLoaded,
+  onPlanMeals,
+  groceryListId = 'beacon-shopping',
 }: DashboardViewProps) {
   const { t } = useTranslation();
   const [now, setNow] = useState(new Date());
@@ -94,7 +99,11 @@ export function DashboardView({
   }, []);
 
   const { byMember, other } = useFamilyEvents(events, members, selectedDate);
-  const { todaysMenu } = useMealPlans();
+  const mealPlans = useMealPlans();
+  const { todaysMenu } = mealPlans;
+  const addIngredients = useCallback(async (ingredients: string[]) => {
+    await addIngredientsToGroceryList(ingredients, groceryListId);
+  }, [groceryListId]);
   const { layout: regions, updateLayout, views, activeViewId, setActiveViewId, addView, renameView, removeView } = useDashboardLayout(layout);
 
   const updateRegion = (region: keyof DashboardRegionLayout, cards: DashboardCard[]) => {
@@ -143,6 +152,14 @@ export function DashboardView({
     todayEvents,
     weekEvents,
     todaysMenu,
+    mealPlan: {
+      recipes: mealPlans.recipes,
+      upsertMeal: mealPlans.upsertMeal,
+      deleteMeal: mealPlans.deleteMeal,
+      saveRecipe: mealPlans.saveRecipe,
+      addIngredients,
+    },
+    onPlanMeals,
     todoItems,
     onToggleTodo,
     taskmateUsers,

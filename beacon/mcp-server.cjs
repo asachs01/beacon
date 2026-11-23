@@ -22,6 +22,7 @@ const readline = require('readline');
 // server is CommonJS, so it loads the shared .cjs implementation directly.
 const { addCalendarDays, localDayKey } = require('./src/api/local-day-key.cjs');
 const { choreDayKey, resetTimeFromSettings } = require('./src/api/chore-day.cjs');
+const { applyMealMigration, mergeMealPlan, writeMealPlan } = require('./lib/meal-plan-files.cjs');
 
 // ---------------------------------------------------------------------------
 // Config
@@ -413,7 +414,7 @@ const TOOLS = [
   },
   {
     name: 'beacon_set_meal_plan',
-    description: 'Write meal plan entries to the Beacon data store. Used by sync scripts to populate meal data from AnyList or other sources.',
+    description: 'Update meals in Beacon\'s meal plan. Default mode is merge: each entry upserts the one slot for its date and meal_type, and an entry with no id still matches on date and meal_type. A null or empty name clears that slot, removing every entry for that date and meal_type. Meals on other dates are left untouched. Set replace to true to replace the whole plan with the entries array, which is the previous replace-all behavior.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -424,12 +425,18 @@ const TOOLS = [
             properties: {
               date: { type: 'string', description: 'YYYY-MM-DD' },
               meal_type: { type: 'string', enum: ['Breakfast', 'Lunch', 'Dinner', 'Snack'] },
-              name: { type: 'string', description: 'Meal name' },
+              name: { type: 'string', description: 'Meal name. Null or an empty string clears the date + meal_type slot.' },
               recipe_id: { type: 'string', description: 'Optional recipe ID' },
+              id: { type: 'string', description: 'Optional entry id. Entries with no id match on date and meal_type.' },
+              notes: { type: 'string', description: 'Optional note' },
             },
-            required: ['date', 'meal_type', 'name'],
+            required: ['date', 'meal_type'],
           },
-          description: 'Array of meal plan entries to store',
+          description: 'Meals to merge into the plan. With replace: true, this array becomes the entire plan.',
+        },
+        replace: {
+          type: 'boolean',
+          description: 'When true, replace the whole plan with entries. When omitted or false, merge by date and meal_type.',
         },
       },
       required: ['entries'],
@@ -887,7 +894,8 @@ async function handleTool(name, args) {
     }
 
     case 'beacon_get_meal_plan': {
-      const allEntries = loadJson('beacon_meal_plans.json');
+      const migrated = applyMealMigration(DATA_DIR);
+      const allEntries = migrated.planMalformed ? [] : migrated.plan;
       // Stored meals are local YYYY-MM-DD keys. UTC's date is already tomorrow
       // at 18:00 in America/Phoenix and at 23:30 in America/New_York.
       const targetDate = args.date ? localDayKey(args.date) : localDayKey();
@@ -908,9 +916,21 @@ async function handleTool(name, args) {
       if (!Array.isArray(newEntries)) {
         return { success: false, error: 'entries must be an array' };
       }
-      // Replace all entries — caller is responsible for sending the full set
-      saveJson('beacon_meal_plans.json', newEntries);
-      return { success: true, count: newEntries.length };
+      const migrated = applyMealMigration(DATA_DIR);
+      if (args.replace === true) {
+        // Previous replace-all behavior. The first rewrite is backed up.
+        writeMealPlan(DATA_DIR, newEntries);
+        return { success: true, count: newEntries.length };
+      }
+      if (migrated.planMalformed) {
+        return {
+          success: false,
+          error: 'beacon_meal_plans.json is not a JSON array and was left unchanged',
+        };
+      }
+      const merged = mergeMealPlan(migrated.plan, newEntries);
+      writeMealPlan(DATA_DIR, merged);
+      return { success: true, count: merged.length };
     }
 
     default:

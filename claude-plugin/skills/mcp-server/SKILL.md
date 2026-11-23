@@ -56,7 +56,7 @@ The Beacon MCP server exposes 17 tools for controlling a family dashboard that r
 
 ### Meal Plans
 - `beacon_get_meal_plan` — Get meal plan entries for a date range
-- `beacon_set_meal_plan` — Write meal plan data
+- `beacon_set_meal_plan` — Merge meals by date and meal_type (empty name clears that slot; `replace: true` replaces the whole plan)
 
 ## Data Files
 

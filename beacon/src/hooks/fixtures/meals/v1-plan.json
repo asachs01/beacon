@@ -1,0 +1,17 @@
+[
+  {
+    "id": "bm_tacos",
+    "date": "2026-11-20",
+    "meal_type": "Dinner",
+    "name": "Tacos",
+    "recipe_id": "r_tacos",
+    "notes": "extra salsa",
+    "source": "anylist"
+  },
+  {
+    "id": "bm_oats",
+    "date": "2026-11-21",
+    "meal_type": "Breakfast",
+    "name": "Oatmeal"
+  }
+]
