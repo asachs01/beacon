@@ -55,7 +55,7 @@ Skylight is a polished wall calendar that charges for hardware **and** locks mea
 - **8+ Themes** -- Skylight, Midnight, Midnight Light, Nord, Dracula, Monokai, Rose, Forest, and dark mode (automatic or manual)
 - **Custom Fonts** -- Choose separate heading and body typefaces: bundled faces (including dyslexia-friendly Atkinson Hyperlegible and rounded Nunito), a Google Fonts family name, or an uploaded `.woff2`. Built-in and uploaded fonts work offline.
 - **Family Management** -- Per-member colors, calendar filtering, and PIN-based profiles
-- **Meal plan display** -- Dashboard Menu widget shows today's meals. The plan is filled from MCP tools or the AnyList sync; there is no in-app meal planner yet.
+- **Meal planner** ([docs](https://beacon-family-docs.netlify.app/docs/features/meals/), [v1.48.0](https://github.com/asachs01/beacon/releases/tag/v1.48.0)) -- Plan breakfast, lunch, dinner, and snacks on a week grid (it follows Settings → General → Week Starts On), or edit today's meals from the dashboard Menu card (it also shows on empty days). Meals can use a Beacon recipe; Add ingredients to grocery list writes to the default list or the built-in Shopping List, including Home Assistant to-do lists, not Grocy. The MCP tool `beacon_set_meal_plan` merges by default; a null or empty name clears one slot, and `replace: true` restores the old replace-everything behavior.
 - **Standalone Mode** -- Works without Home Assistant using local calendars, lists, and tasks
 
 ## Installation
