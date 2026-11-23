@@ -22,6 +22,8 @@ Home Assistant has deprecated 32-bit ARM (`armv7`). Beacon no longer lists it as
 
 Your family members, chores, settings and meal plans live in the add-on's `/data` folder. They survive updates and are included in Home Assistant backups.
 
+The first time a release with the in-app meal planner rewrites an existing meal plan, it copies `beacon_meal_plans.json` to `beacon_meal_plans.bak.json` in that same folder. The backup is not replaced later. A leftover `meal-plan.json` is imported once and is not deleted. A malformed plan file is left unchanged. See [Meals](/docs/features/meals/).
+
 ### Docker
 
 ```bash
