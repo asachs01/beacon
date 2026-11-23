@@ -1,3 +1,10 @@
+# [1.45.0](https://github.com/asachs01/beacon/compare/v1.44.0...v1.45.0) (2026-11-23)
+
+
+### Features
+
+* **chores:** turn on a privilege switch when today's chores are done ([771ff1f](https://github.com/asachs01/beacon/commit/771ff1f7e73b2fc36c43797aa61c7c36fc44fda4))
+
 # [1.44.0](https://github.com/asachs01/beacon/compare/v1.43.2...v1.44.0) (2026-11-22)
 
 
