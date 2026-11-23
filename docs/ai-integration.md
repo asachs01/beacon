@@ -289,14 +289,23 @@ beacon/scripts/install-voice-intents.sh
 
 # Or specify it explicitly
 beacon/scripts/install-voice-intents.sh /config
+
+# Print the plan without writing files
+beacon/scripts/install-voice-intents.sh --dry-run /config
 ```
 
-This copies two files into your HA config:
+The script copies these files into your HA config:
 - `custom_sentences/en/beacon.yaml` -- sentence patterns that HA Assist will recognize
 - `custom_intents/beacon.yaml` -- intent handlers that call HA services in response
+- `beacon_rest_command.yaml` -- the `rest_command` used to complete Beacon chores and read what's left
 
-After installing, reload the Conversation integration:
-**Developer Tools > YAML configuration reloading > Conversation**
+When `configuration.yaml` has no top-level `rest_command:` key, the script appends `rest_command: !include beacon_rest_command.yaml`. When it has no top-level `intent_script:` key, the same run appends `intent_script: !include_dir_merge_named custom_intents`. If it appends either line, it first makes one timestamped backup of `configuration.yaml`. If a top-level `rest_command:` key or the Beacon rest include is already there, or if a top-level `intent_script:` key is already there, that part of the file is left unchanged and the script prints the lines to merge by hand.
+
+`--dry-run` prints the plan without copying files, editing `configuration.yaml`, or running `ha core check`.
+
+After a real run, merge any lines the script prints, then restart Home Assistant. Reloading Conversation is not enough for a new `rest_command`. Sentence-only changes can reload under **Developer Tools > YAML configuration reloading > Conversation**.
+
+Full upgrade and setup steps are in `docs-site/src/content/docs/features/press-to-talk.mdx`.
 
 ### Prerequisites
 
