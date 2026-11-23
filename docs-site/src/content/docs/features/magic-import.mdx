@@ -19,9 +19,11 @@ This needs Beacon **TODO: version after [#104](https://github.com/asachs01/beaco
 
 The button is hidden in kiosk mode, and it is not on [Kid Display](/docs/features/kid-display/). To show or hide it, use **Settings → Display → Magic Import**.
 
-## The Magic Import setting
+## Settings
 
-The setting is on by default in the Home Assistant add-on. In a standalone browser, it starts off until you turn it on. A saved on or off choice wins on later visits.
+**Settings → Display → Magic Import** shows or hides the Import button. It is on by default in the Home Assistant add-on. In a standalone browser, it starts off until you turn it on. A saved on or off choice wins on later visits.
+
+**Settings → Display → Magic Import: use Home Assistant conversation agent** is on by default, including when the setting has never been saved. When it is on, pasted text is processed by your Home Assistant conversation agent, or a local parser if that agent is unavailable. Turning it off forces the local parser.
 
 ## Paste, review, and approve
 
@@ -30,23 +32,27 @@ The setting is on by default in the Home Assistant add-on. In a standalone brows
 3. Check each draft. You can edit the fields, change the calendar or list, or remove a draft you do not want.
 4. Choose **Approve** to save what's left, or **Reject** to discard everything and close the dialog.
 
+The paste screen and the review screen both name the path that will run or that already ran. When Home Assistant will read the text, they show the conversation agent's name and entity id, and label it **local**, **cloud**, or **may be cloud**. When the local parser will run, they say a local parser will read it (or already did).
+
 If any family member has a PIN, Approve and Reject ask for a family PIN first. It is the same digits used to reveal kiosk navigation and to leave Kid Display. If no family PIN is set, Approve saves immediately.
 
 Drafts exist only while the dialog is open. Closing it without approving discards them. Existing calendar events, list items, and other stored records are not rewritten.
 
 ## Privacy
 
-Pasted text is processed by your Home Assistant conversation agent, or a local parser. Beacon does not call a third-party model itself.
-
-When a conversation agent is available, Beacon sends the pasted text to that agent through Home Assistant (the same `conversation.process` path [press-to-talk](/docs/features/press-to-talk/) uses) and asks for a JSON reply. If that agent is a cloud service — for example the OpenAI or Google AI Home Assistant integrations — the pasted text is sent to that provider. Only the local parser, or a local conversation agent, keeps the text in the home.
-
-After reading, the review screen says **Home Assistant read this.** or **Read on this device.** It does not name the agent or say whether that agent is local or cloud.
+Pasted text is processed by your Home Assistant conversation agent, or a local parser. Beacon itself sends the text nowhere. Home Assistant sends it to a provider only when the conversation agent is a cloud service — for example the OpenAI or Google AI integrations. Only the local parser, or a local conversation agent, keeps the text in the home.
 
 ## Home Assistant agent or local parser
 
-Beacon uses the Home Assistant conversation agent when one is available. If there is no agent, the agent errors, or the reply is not valid JSON in the expected shape, Beacon uses the local parser instead.
+When **Magic Import: use Home Assistant conversation agent** is on and a conversation agent is available, Beacon asks that agent for a JSON reply through Home Assistant (the same `conversation.process` path [press-to-talk](/docs/features/press-to-talk/) uses). If the setting is off, there is no agent, the agent errors, or the reply is not valid JSON in the expected shape, Beacon uses the local parser instead.
 
-The review screen tells you which path ran, as noted above.
+Beacon labels the named agent using its entity id and name:
+
+- **Local:** built-in Assist (`conversation.home_assistant`, or an agent named Home Assistant), plus known on-device integrations such as Ollama, LocalAI, a local LLM, and llama.cpp.
+- **Cloud:** hosted integrations such as OpenAI, ChatGPT, Google, Gemini, Google Generative AI, Anthropic, Claude, Groq, OpenRouter, Mistral, Perplexity, Amazon Bedrock, Azure, Nabu Casa, and Home Assistant Cloud.
+- **May be cloud:** any other agent Beacon does not recognize, and the case where Home Assistant has conversation set up but Beacon cannot see the agent id.
+
+A cloud hint in the agent's entity id is treated as cloud. A local hint in the entity id is treated as local even when the display name looks like a hosted model.
 
 ### What the local parser can find
 
