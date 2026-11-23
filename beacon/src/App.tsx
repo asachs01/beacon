@@ -968,6 +968,7 @@ export function App() {
           locale={settings.locale}
           grocyEnabled={settings.grocyEnabled}
           useHaAgent={settings.magicImportUseHaAgent}
+          aiTaskEntityId={settings.magicImportAiTaskEntity}
           getClient={client}
           onCreateEvent={createEvent}
           onClose={() => setShowImport(false)}

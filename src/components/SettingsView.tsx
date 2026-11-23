@@ -1610,6 +1610,21 @@ export function SettingsView({
             onChange={(v) => onUpdateSettings({ magicImportUseHaAgent: v })}
           />
         </div>
+        <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+          <div>
+            <div className="settings-row-label">{t('settings.display.magicImportAiTaskLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.magicImportAiTaskSublabel')}</div>
+          </div>
+          <div style={{ minWidth: 240, maxWidth: 360, flex: 1 }}>
+            <EntityPicker
+              id="magic-import-ai-task"
+              value={settings.magicImportAiTaskEntity}
+              domains={['ai_task']}
+              emptyLabel={t('common.none')}
+              onChange={(entityId) => onUpdateSettings({ magicImportAiTaskEntity: entityId })}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="settings-group">

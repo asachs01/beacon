@@ -25,6 +25,7 @@ describe('magic import setting', () => {
     expect(result.current.settings.choresResetTime).toBe('06:30');
     expect(result.current.settings.magicImport).toBe(false);
     expect(result.current.settings.magicImportUseHaAgent).toBe(true);
+    expect(result.current.settings.magicImportAiTaskEntity).toBe('');
 
     const stored = JSON.parse(localStorage.getItem('beacon-settings') ?? '{}') as Record<string, unknown>;
     expect(stored.familyName).toBe('Sachs');
@@ -33,6 +34,7 @@ describe('magic import setting', () => {
     expect(stored.choresResetTime).toBe('06:30');
     expect(stored.magicImport).toBe(false);
     expect(stored.magicImportUseHaAgent).toBe(true);
+    expect(stored.magicImportAiTaskEntity).toBe('');
   });
 
   it('turns magic import on for an add-on that has never stored the key', async () => {
@@ -63,5 +65,18 @@ describe('magic import setting', () => {
     expect(result.current.settings.magicImportUseHaAgent).toBe(false);
     expect(result.current.settings.familyName).toBe('Sachs');
     expect(result.current.settings.voiceButton).toBe(false);
+  });
+
+  it('keeps a saved AI Task entity and stays empty when the key was never stored', async () => {
+    localStorage.setItem('beacon-settings', JSON.stringify({
+      familyName: 'Sachs',
+      magicImportAiTaskEntity: 'ai_task.ollama_ai_task',
+    }));
+
+    const { result } = renderHook(() => useSettings());
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    expect(result.current.settings.magicImportAiTaskEntity).toBe('ai_task.ollama_ai_task');
+    expect(result.current.settings.familyName).toBe('Sachs');
+    expect(result.current.settings.magicImportUseHaAgent).toBe(true);
   });
 });

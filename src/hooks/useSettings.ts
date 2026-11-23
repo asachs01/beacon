@@ -88,6 +88,11 @@ export interface BeaconSettings {
    * local parser. A saved true/false wins and does not rewrite other keys.
    */
   magicImportUseHaAgent: boolean;
+  /**
+   * AI Task entity that reads photos and scanned PDFs. Empty until a parent
+   * picks an ai_task entity. Pasted text and text PDFs do not use it.
+   */
+  magicImportAiTaskEntity: string;
 
   // Chores
   choresEnabled: boolean;
@@ -154,6 +159,7 @@ function buildDefaults(): BeaconSettings {
     voiceButton: true,
     magicImport: true,
     magicImportUseHaAgent: true,
+    magicImportAiTaskEntity: '',
 
     choresEnabled: true,
     choresResetTime: '00:00',
