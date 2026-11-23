@@ -1,3 +1,10 @@
+## [1.46.1](https://github.com/asachs01/beacon/compare/v1.46.0...v1.46.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* **voice:** teach Assist to check off and uncheck to-do items ([#96](https://github.com/asachs01/beacon/issues/96)) ([98ff6c1](https://github.com/asachs01/beacon/commit/98ff6c130e08aff44c39614186d80aaa51c4589a))
+
 # [1.46.0](https://github.com/asachs01/beacon/compare/v1.45.0...v1.46.0) (2026-11-23)
 
 
