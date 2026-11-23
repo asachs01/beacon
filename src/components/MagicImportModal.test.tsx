@@ -198,3 +198,216 @@ describe('Magic Import review PIN gate', () => {
     )).toBeInTheDocument();
   });
 });
+
+const HEIC_ERROR = "This photo format (HEIC) can't be read on this device. Try a JPEG or PNG, or change your camera to Most Compatible.";
+
+function renderFileModal(options: {
+  useHaAgent?: boolean;
+  aiTaskEntityId?: string;
+  aiTaskEntityName?: string;
+  members?: { pin?: string }[];
+  convertHeic?: (file: Blob) => Promise<Blob>;
+  readPdf?: (data: ArrayBuffer) => Promise<{
+    pageTexts: string[];
+    route: 'text' | 'scan';
+    text: string;
+    renderFirstPage: () => Promise<Blob>;
+  }>;
+  extract?: (text: string) => Promise<Extraction>;
+  extractImage?: (image: { blob: Blob; mime: string; filename: string }) => Promise<Extraction & { mediaLeftBehind?: boolean }>;
+  showCamera?: boolean;
+} = {}) {
+  const onCreateEvent = vi.fn(async () => {});
+  const onClose = vi.fn();
+  const extract = options.extract ?? vi.fn(async () => extraction);
+  const extractImage = options.extractImage ?? vi.fn(async () => ({
+    ...extraction,
+    source: 'home-assistant' as const,
+    agent: {
+      id: 'ai_task.openai_ai_task',
+      name: 'OpenAI',
+      locality: 'cloud' as const,
+    },
+  }));
+  render(
+    <MagicImportModal
+      calendars={[{ id: 'cal-1', name: 'Family' }]}
+      lists={[{ id: 'beacon-shopping', name: 'Shopping' }]}
+      members={options.members ?? []}
+      defaultCalendarId="cal-1"
+      defaultGroceryListId="beacon-shopping"
+      defaultTodoListId="beacon-todo"
+      defaultDurationMinutes={60}
+      locale="en-US"
+      grocyEnabled={false}
+      useHaAgent={options.useHaAgent ?? true}
+      aiTaskEntityId={options.aiTaskEntityId ?? ''}
+      aiTaskEntityName={options.aiTaskEntityName ?? (options.aiTaskEntityId ? 'OpenAI' : undefined)}
+      getClient={() => null}
+      onCreateEvent={onCreateEvent}
+      onClose={onClose}
+      planRoute={async () => ({ source: 'local', agent: null })}
+      extract={extract}
+      extractImage={extractImage}
+      convertHeic={options.convertHeic}
+      readPdf={options.readPdf}
+      showCamera={options.showCamera}
+    />,
+  );
+  return { onCreateEvent, onClose, extract, extractImage };
+}
+
+function pickFile(name: string, type: string, bytes = 32) {
+  const file = new File([new Uint8Array(bytes)], name, { type });
+  fireEvent.change(screen.getByLabelText('Add a photo or PDF'), { target: { files: [file] } });
+  return file;
+}
+
+describe('Magic Import photos and PDFs', () => {
+  it('shows a plain HEIC error and does not continue', async () => {
+    const { extract, extractImage } = renderFileModal({
+      aiTaskEntityId: 'ai_task.openai_ai_task',
+      convertHeic: async () => {
+        throw new Error('The source image cannot be decoded.');
+      },
+    });
+    pickFile('IMG_1.heic', 'image/heic');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(HEIC_ERROR);
+    expect(alert).not.toHaveTextContent('cannot be decoded');
+    expect(screen.queryByText('A local parser on this device will read this.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Read by a local parser on this device.')).not.toBeInTheDocument();
+    expect(screen.queryByText(/never leaves your device/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Find items' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Find items' }));
+    expect(extract).not.toHaveBeenCalled();
+    expect(extractImage).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+  });
+
+  it('names a cloud AI Task entity and still requires the family PIN', async () => {
+    const { onCreateEvent, extract, extractImage } = renderFileModal({
+      aiTaskEntityId: 'ai_task.openai_ai_task',
+      members: [{ pin: '1234' }],
+    });
+    pickFile('flyer.jpg', 'image/jpeg');
+    expect(await screen.findByText(
+      'This will be processed by OpenAI (ai_task.openai_ai_task), a cloud Home Assistant AI Task entity.',
+    )).toBeInTheDocument();
+    expect(screen.getByText(/processed by your Home Assistant AI Task entity/)).toBeInTheDocument();
+    expect(screen.getByText(/Beacon itself sends the file nowhere else/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Find items' }));
+    expect(await screen.findByText(
+      'Processed by OpenAI (ai_task.openai_ai_task), a cloud Home Assistant AI Task entity.',
+    )).toBeInTheDocument();
+    expect(extract).not.toHaveBeenCalled();
+    expect(extractImage).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    expect(onCreateEvent).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await waitFor(() => expect(onCreateEvent).toHaveBeenCalled());
+  });
+
+  it('explains that photos are unavailable when no AI Task entity is set', async () => {
+    const { extractImage } = renderFileModal({ useHaAgent: true, aiTaskEntityId: '' });
+    pickFile('flyer.png', 'image/png');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Photo and scanned-PDF import needs an AI Task entity.',
+    );
+    expect(screen.queryByText(/local parser will read this/)).not.toBeInTheDocument();
+    expect(extractImage).not.toHaveBeenCalled();
+  });
+
+  it('explains that photos are unavailable when the local parser is forced', async () => {
+    const { extractImage } = renderFileModal({
+      useHaAgent: false,
+      aiTaskEntityId: 'ai_task.ollama_ai_task',
+    });
+    pickFile('flyer.jpg', 'image/jpeg');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The local parser reads text, not photos.',
+    );
+    expect(screen.queryByText(/Read by a local parser/)).not.toBeInTheDocument();
+    expect(extractImage).not.toHaveBeenCalled();
+  });
+
+  it('rejects more than one file, files over 10 MB, and other formats', async () => {
+    const { extractImage } = renderFileModal({ aiTaskEntityId: 'ai_task.openai_ai_task' });
+    const big = new File([new Uint8Array(8)], 'big.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(big, 'size', { value: 10 * 1024 * 1024 + 1 });
+    fireEvent.change(screen.getByLabelText('Add a photo or PDF'), { target: { files: [big] } });
+    expect(await screen.findByRole('alert')).toHaveTextContent('larger than 10 MB');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove file' }));
+    fireEvent.change(screen.getByLabelText('Add a photo or PDF'), {
+      target: { files: [
+        new File(['a'], 'a.jpg', { type: 'image/jpeg' }),
+        new File(['b'], 'b.jpg', { type: 'image/jpeg' }),
+      ] },
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('one file at a time');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove file' }));
+    pickFile('notes.gif', 'image/gif');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Choose a JPEG, PNG, HEIC, or PDF.');
+    expect(extractImage).not.toHaveBeenCalled();
+  });
+
+  it('sends a text PDF through the text pipeline and a scan through the image path', async () => {
+    const text = 'Field trip Friday December 5 at 9am at the museum. Please bring lunch.';
+    const renderFirstPage = vi.fn(async () => new Blob([new Uint8Array([1])], { type: 'image/jpeg' }));
+    const extract = vi.fn(async () => extraction);
+    const { extractImage } = renderFileModal({
+      useHaAgent: false,
+      aiTaskEntityId: '',
+      readPdf: async () => ({ pageTexts: [text], route: 'text', text, renderFirstPage }),
+      extract,
+    });
+    pickFile('notice.pdf', 'application/pdf');
+    expect(await screen.findByText('notice.pdf is ready. Remove it to use pasted text instead.')).toBeInTheDocument();
+    expect(await screen.findByText('A local parser on this device will read this.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Find items' }));
+    await screen.findByDisplayValue('Practice');
+    expect(extract).toHaveBeenCalledWith(text);
+    expect(extractImage).not.toHaveBeenCalled();
+    expect(renderFirstPage).not.toHaveBeenCalled();
+  });
+
+  it('renders page 1 of a scan only when an AI Task entity is available', async () => {
+    const renderFirstPage = vi.fn(async () => new Blob([new Uint8Array([1])], { type: 'image/jpeg' }));
+    const blocked = renderFileModal({
+      useHaAgent: true,
+      aiTaskEntityId: '',
+      readPdf: async () => ({ pageTexts: [''], route: 'scan', text: '', renderFirstPage }),
+    });
+    pickFile('scan.pdf', 'application/pdf');
+    expect(await screen.findByRole('alert')).toHaveTextContent('needs an AI Task entity');
+    expect(renderFirstPage).not.toHaveBeenCalled();
+    expect(blocked.extractImage).not.toHaveBeenCalled();
+
+    const ready = renderFileModal({
+      aiTaskEntityId: 'ai_task.ollama_ai_task',
+      aiTaskEntityName: 'Ollama',
+      readPdf: async () => ({ pageTexts: ['Page'], route: 'scan', text: 'Page', renderFirstPage }),
+    });
+    const inputs = screen.getAllByLabelText('Add a photo or PDF');
+    fireEvent.change(inputs[1], {
+      target: { files: [new File(['%PDF'], 'scan.pdf', { type: 'application/pdf' })] },
+    });
+    expect(await screen.findByText(
+      'This will be processed by Ollama (ai_task.ollama_ai_task), a local Home Assistant AI Task entity.',
+    )).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Find items' })[1]);
+    await waitFor(() => expect(ready.extractImage).toHaveBeenCalledOnce());
+    expect(renderFirstPage).toHaveBeenCalledOnce();
+    expect(ready.extract).not.toHaveBeenCalled();
+  });
+
+  it('offers the camera capture control on mobile', async () => {
+    renderFileModal({ showCamera: true, aiTaskEntityId: 'ai_task.openai_ai_task' });
+    expect(screen.getByLabelText('Take a photo')).toHaveAttribute('capture', 'environment');
+    await screen.findByText('A local parser on this device will read this.');
+  });
+});

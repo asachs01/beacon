@@ -388,6 +388,22 @@ export class HomeAssistantClient {
     return this.sendMessage(message);
   }
 
+  /** media_source/browse_media. Used to find the local folder for an upload. */
+  async browseMedia(mediaContentId: string): Promise<unknown> {
+    return this.sendMessage({
+      type: 'media_source/browse_media',
+      media_content_id: mediaContentId,
+    });
+  }
+
+  /** media_source/local_source/remove. Deletes one uploaded file. Admin only. */
+  async removeLocalMedia(mediaContentId: string): Promise<void> {
+    await this.sendMessage({
+      type: 'media_source/local_source/remove',
+      media_content_id: mediaContentId,
+    });
+  }
+
   async subscribeEvents(eventType: string, handler: MessageHandler): Promise<number> {
     const id = this.msgId++;
     this.subscriptions.set(id, handler);

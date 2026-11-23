@@ -417,6 +417,131 @@ async function handleDataApi(req, res) {
   res.end(JSON.stringify({ error: 'Method not allowed' }));
 }
 
+/**
+ * Forward a raw body to Home Assistant without writing it to /data.
+ * The media upload keeps the original multipart Content-Type.
+ */
+function haForward(method, apiPath, bodyBuf, contentType) {
+  return new Promise((resolve, reject) => {
+    if (!SUPERVISOR_TOKEN) {
+      reject(new Error('No Supervisor token available'));
+      return;
+    }
+    const url = new URL(`${HA_API_BASE}${apiPath}`);
+    const headers = { Authorization: `Bearer ${SUPERVISOR_TOKEN}` };
+    if (contentType) headers['Content-Type'] = contentType;
+    if (bodyBuf) headers['Content-Length'] = bodyBuf.length;
+    const r = http.request({
+      hostname: url.hostname,
+      port: url.port || 80,
+      path: url.pathname + url.search,
+      method,
+      headers,
+    }, (resp) => {
+      const chunks = [];
+      resp.on('data', (c) => chunks.push(c));
+      resp.on('end', () => resolve({ status: resp.statusCode, body: Buffer.concat(chunks) }));
+    });
+    r.on('error', reject);
+    if (bodyBuf) r.write(bodyBuf);
+    r.end();
+  });
+}
+
+const MAX_MEDIA_UPLOAD = 12 * 1024 * 1024;
+
+/**
+ * POST /beacon-action/media-upload
+ * Forwards the multipart body to HA's local media upload. The bytes stay
+ * in this request buffer and are never written under /data.
+ */
+function handleMediaUpload(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+  const chunks = [];
+  let total = 0;
+  let rejected = false;
+  req.on('data', (chunk) => {
+    if (rejected) return;
+    total += chunk.length;
+    if (total > MAX_MEDIA_UPLOAD) {
+      rejected = true;
+      res.writeHead(413, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'This file is larger than 10 MB.' }));
+      req.destroy();
+      return;
+    }
+    chunks.push(chunk);
+  });
+  req.on('end', () => {
+    if (rejected) return;
+    const body = chunks.length > 0 ? Buffer.concat(chunks) : Buffer.alloc(0);
+    haForward('POST', '/api/media_source/local_source/upload', body, req.headers['content-type'])
+      .then((result) => {
+        res.writeHead(result.status || 502, { 'Content-Type': 'application/json' });
+        res.end(result.body.length > 0 ? result.body : JSON.stringify({ error: 'Empty upload response' }));
+      })
+      .catch((err) => {
+        if (res.headersSent) return;
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      });
+  });
+  req.on('error', () => {
+    if (res.headersSent) return;
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Upload failed' }));
+  });
+}
+
+function handleMediaBrowse(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+  collectBody(req).then(() => haWsCommand({
+    type: 'media_source/browse_media',
+    media_content_id: 'media-source://media_source',
+  })).then((result) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(result ?? {}));
+  }).catch((err) => {
+    if (res.headersSent) return;
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: err.message }));
+  });
+}
+
+function handleMediaRemove(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+  collectBody(req).then(async (bodyBuf) => {
+    const { media_content_id: mediaContentId } = JSON.parse((bodyBuf || '{}').toString('utf8'));
+    if (typeof mediaContentId !== 'string' || !mediaContentId.startsWith('media-source://media_source/')) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing local media id' }));
+      return;
+    }
+    await haWsCommand({
+      type: 'media_source/local_source/remove',
+      media_content_id: mediaContentId,
+    });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+  }).catch((err) => {
+    if (res.headersSent) return;
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: err.message }));
+  });
+}
+
 /** Helper: make a request to the HA Supervisor API and return parsed JSON. */
 function haRequest(method, apiPath, body) {
   return new Promise((resolve, reject) => {
@@ -833,6 +958,22 @@ const server = http.createServer((req, res) => {
   // Remaining chores on today's chart (used by HA Assist and the voice API).
   if (req.url.split('?')[0] === '/beacon-action/chores-left') {
     handleChoresLeftFromServer(req, res);
+    return;
+  }
+
+  // Local media upload for AI Task attachments. Not under /api, so ingress
+  // does not rewrite the multipart body. The handler does not touch /data.
+  const mediaPath = req.url.split('?')[0];
+  if (mediaPath === '/beacon-action/media-upload') {
+    handleMediaUpload(req, res);
+    return;
+  }
+  if (mediaPath === '/beacon-action/media-browse') {
+    handleMediaBrowse(req, res);
+    return;
+  }
+  if (mediaPath === '/beacon-action/media-remove') {
+    handleMediaRemove(req, res);
     return;
   }
 

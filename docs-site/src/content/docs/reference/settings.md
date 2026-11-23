@@ -83,6 +83,7 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | `voiceButton` | Voice button | `boolean` | true | Show hold-to-talk on the wall. On by default in the Home Assistant add-on. The mic needs HTTPS or localhost; ingress over HTTPS works, and a plain HTTP kiosk keeps the text box. |
 | `magicImport` | Magic Import | `boolean` | true | Show Import on the dashboard and calendar. On by default in the Home Assistant add-on. Pasted text is processed by your Home Assistant conversation agent, or a local parser. |
 | `magicImportUseHaAgent` | Magic Import: use Home Assistant conversation agent | `boolean` | true | On by default. When on, pasted text is processed by your Home Assistant conversation agent, or a local parser if that agent is unavailable. When off, Beacon always uses the local parser. Beacon itself sends the text nowhere. It stays in your home unless your Home Assistant conversation agent is a cloud service; in that case HA sends it to that provider. |
+| `magicImportAiTaskEntity` | Magic Import: AI Task entity for photos | `string` | (empty) | Empty by default. Photos and scanned PDFs are processed by this Home Assistant AI Task entity. Beacon itself sends the file nowhere else. A cloud entity sends the file to that provider. Needs Home Assistant 2025.8 or newer and an admin token so the photo can be uploaded to the local media source for the task, then removed. Text in a PDF still uses the conversation agent or the local parser. |
 
 ### Chores
 

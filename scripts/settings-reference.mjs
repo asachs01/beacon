@@ -58,6 +58,7 @@ const COPY = {
   voiceButton: { labelKey: 'settings.display.voiceButtonLabel', descriptionKey: 'settings.display.voiceButtonSublabel' },
   magicImport: { labelKey: 'settings.display.magicImportLabel', descriptionKey: 'settings.display.magicImportSublabel' },
   magicImportUseHaAgent: { labelKey: 'settings.display.magicImportHaAgentLabel', descriptionKey: 'settings.display.magicImportHaAgentSublabel' },
+  magicImportAiTaskEntity: { labelKey: 'settings.display.magicImportAiTaskLabel', descriptionKey: 'settings.display.magicImportAiTaskSublabel' },
   choresEnabled: { labelKey: 'settings.chores.enableLabel', descriptionKey: 'settings.chores.enableSublabel' },
   choresResetTime: { labelKey: 'settings.chores.dailyResetTimeLabel', description: 'When the chore day starts (HH:mm). Privilege switches, chore-event local_date, "what chores are left," and streaks use this same day. Unset, empty, or invalid values are treated as 00:00 (local midnight).' },
   streakDays: { labelKey: 'settings.chores.streakDurationLabel', descriptionKey: 'settings.chores.streakDurationSublabel', unit: 'days' },

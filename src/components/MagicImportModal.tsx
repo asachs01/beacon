@@ -1,14 +1,26 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { AnyListClient } from '../api/anylist';
 import { GrocyClient } from '../api/grocy';
 import { hasToken } from '../api/ha-rest';
 import type { HomeAssistantClient } from '../api/homeassistant';
+import { useEntityOptions } from './cards/EntityPicker';
 import { calendarWriteFromDraft, pickCalendarId, pickListId, type ListTarget } from '../import/commit';
 import { extractMagicImport, planMagicImport, type Extraction } from '../import/extract';
 import type { NamedAgent } from '../import/agent';
 import { conversationDeps } from '../import/ha';
+import { readImageWithHomeAssistant } from '../import/ha-media';
 import { householdTimeZone } from '../import/calendar';
+import {
+  MAX_IMPORT_BYTES,
+  beaconMediaFilename,
+  fileProblem,
+  importFileKind,
+} from '../import/files';
+import { heicToJpeg } from '../import/heic';
+import { readPdfDocument, type PdfRead } from '../import/pdf-read';
+import { nameAiTaskEntity, photoImportUnavailable } from '../import/photo-route';
 import { importPinDecision } from '../import/pin-gate';
+import { cameraCaptureAvailable } from '../native';
 import { useLocalTasks } from '../hooks/useLocalTasks';
 import { useTranslation, type TranslationKey } from '../i18n';
 
@@ -45,6 +57,18 @@ interface MagicImportModalProps {
   extract?: (text: string) => Promise<Extraction>;
   /** Tests supply the reader the paste screen should name. */
   planRoute?: () => Promise<Pick<Extraction, 'source' | 'agent'>>;
+  /** AI Task entity for photos and scanned PDFs. Empty leaves that path off. */
+  aiTaskEntityId?: string;
+  /** Friendly name when the entity list has not loaded. Tests pass this. */
+  aiTaskEntityName?: string;
+  /** Tests force the camera control. Otherwise native and touch devices show it. */
+  showCamera?: boolean;
+  /** Tests replace HEIC decoding. A failure must surface import.heicError. */
+  convertHeic?: (file: Blob) => Promise<Blob>;
+  /** Tests replace pdfjs. The real reader lazy-loads pdfjs. */
+  readPdf?: (data: ArrayBuffer) => Promise<PdfRead>;
+  /** Tests replace the Home Assistant image task. */
+  extractImage?: (image: { blob: Blob; mime: string; filename: string }) => Promise<Extraction & { mediaLeftBehind?: boolean }>;
   onAddListItem?: (listId: string, title: string) => Promise<void> | void;
   now?: Date;
   timeZone?: string;
@@ -84,6 +108,20 @@ function readerKey(
   if (agent.locality === 'local') return done ? 'import.pathHaLocalDone' : 'import.pathHaLocal';
   if (agent.locality === 'cloud') return done ? 'import.pathHaCloudDone' : 'import.pathHaCloud';
   return done ? 'import.pathHaMaybeDone' : 'import.pathHaMaybe';
+}
+
+function taskKey(agent: NamedAgent, done: boolean): TranslationKey {
+  if (agent.locality === 'local') return done ? 'import.pathTaskLocalDone' : 'import.pathTaskLocal';
+  if (agent.locality === 'cloud') return done ? 'import.pathTaskCloudDone' : 'import.pathTaskCloud';
+  return done ? 'import.pathTaskMaybeDone' : 'import.pathTaskMaybe';
+}
+
+interface PreparedFile {
+  kind: 'text' | 'image';
+  text?: string;
+  blob?: Blob;
+  mime?: string;
+  filename?: string;
 }
 
 function buildDrafts(
@@ -136,12 +174,19 @@ export function MagicImportModal({
   lists: listsProp,
   extract,
   planRoute,
+  aiTaskEntityId = '',
+  aiTaskEntityName,
+  showCamera,
+  convertHeic,
+  readPdf,
+  extractImage,
   onAddListItem,
   now,
   timeZone,
 }: MagicImportModalProps) {
   const { t } = useTranslation();
   const localTasks = useLocalTasks();
+  const entityOptions = useEntityOptions();
   const [haLists, setHaLists] = useState<ListTarget[]>([]);
   const [text, setText] = useState('');
   const [phase, setPhase] = useState<'paste' | 'review'>('paste');
@@ -149,11 +194,23 @@ export function MagicImportModal({
   const [planned, setPlanned] = useState<Pick<Extraction, 'source' | 'agent'> | null>(null);
   const [source, setSource] = useState<Extraction['source']>('local');
   const [agent, setAgent] = useState<NamedAgent | null>(null);
+  const [routeKind, setRouteKind] = useState<'text' | 'image'>('text');
+  const [prepared, setPrepared] = useState<PreparedFile | null>(null);
+  const [fileName, setFileName] = useState('');
+  const [fileBlocked, setFileBlocked] = useState(false);
+  const [mediaNote, setMediaNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [pinOpen, setPinOpen] = useState<'approve' | 'reject' | null>(null);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
+  const cameraOn = showCamera ?? cameraCaptureAvailable();
+
+  const taskAgent = useMemo(() => {
+    if (photoImportUnavailable(useHaAgent, aiTaskEntityId)) return null;
+    const match = entityOptions.find((option) => option.entity_id === aiTaskEntityId);
+    return nameAiTaskEntity(aiTaskEntityId, aiTaskEntityName || match?.label);
+  }, [aiTaskEntityId, aiTaskEntityName, entityOptions, useHaAgent]);
 
   useEffect(() => {
     let cancelled = false;
@@ -201,22 +258,161 @@ export function MagicImportModal({
     setDrafts((prev) => prev.map((draft) => (draft.id === id ? { ...draft, ...patch } as Draft : draft)));
   };
 
+  const blockPhoto = (reason: 'local-only' | 'no-entity') => {
+    setPrepared(null);
+    setFileName('');
+    setFileBlocked(true);
+    setError(t(reason === 'local-only' ? 'import.photoOff' : 'import.photoNoEntity'));
+  };
+
+  const holdImage = (image: { blob: Blob; mime: string; filename: string }, name: string) => {
+    const unavailable = photoImportUnavailable(useHaAgent, aiTaskEntityId);
+    if (unavailable) {
+      blockPhoto(unavailable);
+      return;
+    }
+    setFileBlocked(false);
+    setPrepared({ kind: 'image', ...image });
+    setFileName(name);
+    setError('');
+  };
+
+  const clearFile = () => {
+    setPrepared(null);
+    setFileName('');
+    setFileBlocked(false);
+    setError('');
+  };
+
+  const acceptFiles = async (list: FileList | null) => {
+    setPrepared(null);
+    setFileName('');
+    setFileBlocked(false);
+    setError('');
+    if (!list || list.length === 0) return;
+    const problem = fileProblem(list);
+    if (problem) {
+      setFileBlocked(true);
+      setError(t(problem));
+      return;
+    }
+    const file = list[0];
+    const kind = importFileKind(file);
+    if (!kind) {
+      setFileBlocked(true);
+      setError(t('import.badType'));
+      return;
+    }
+    try {
+      if (kind === 'heic') {
+        let jpeg: Blob;
+        try {
+          jpeg = await (convertHeic ?? heicToJpeg)(file);
+        } catch {
+          setFileBlocked(true);
+          setError(t('import.heicError'));
+          return;
+        }
+        if (!jpeg || jpeg.size < 1) {
+          setFileBlocked(true);
+          setError(t('import.heicError'));
+          return;
+        }
+        if (jpeg.size > MAX_IMPORT_BYTES) {
+          setFileBlocked(true);
+          setError(t('import.tooLarge'));
+          return;
+        }
+        holdImage({ blob: jpeg, mime: 'image/jpeg', filename: beaconMediaFilename('jpg') }, file.name);
+        return;
+      }
+      if (kind === 'jpeg' || kind === 'png') {
+        holdImage({
+          blob: file,
+          mime: kind === 'png' ? 'image/png' : 'image/jpeg',
+          filename: beaconMediaFilename(kind === 'png' ? 'png' : 'jpg'),
+        }, file.name);
+        return;
+      }
+      const doc = await (readPdf ?? readPdfDocument)(await file.arrayBuffer());
+      if (doc.route === 'text') {
+        const body = doc.text.trim();
+        if (!body) {
+          setFileBlocked(true);
+          setError(t('import.imageFailed'));
+          return;
+        }
+        setPrepared({ kind: 'text', text: body });
+        setFileName(file.name);
+        return;
+      }
+      const unavailable = photoImportUnavailable(useHaAgent, aiTaskEntityId);
+      if (unavailable) {
+        setFileBlocked(true);
+        setError(t(unavailable === 'local-only' ? 'import.photoOff' : 'import.photoNoEntity'));
+        return;
+      }
+      const blob = await doc.renderFirstPage();
+      if (!blob || blob.size < 1) {
+        setFileBlocked(true);
+        setError(t('import.imageFailed'));
+        return;
+      }
+      if (blob.size > MAX_IMPORT_BYTES) {
+        setFileBlocked(true);
+        setError(t('import.tooLarge'));
+        return;
+      }
+      setPrepared({
+        kind: 'image',
+        blob,
+        mime: 'image/jpeg',
+        filename: beaconMediaFilename('jpg'),
+      });
+      setFileName(file.name);
+    } catch (err) {
+      setFileBlocked(true);
+      setPrepared(null);
+      setFileName('');
+      setError(err instanceof Error && err.message ? err.message : t('import.imageFailed'));
+    }
+  };
+
+  const onPickFile = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    event.target.value = '';
+    void acceptFiles(files);
+  };
+
   const extractText = async () => {
-    const trimmed = text.trim();
-    if (!trimmed || busy) return;
+    if (busy || fileBlocked) return;
+    const image = prepared?.kind === 'image' && prepared.blob && prepared.mime && prepared.filename
+      ? { blob: prepared.blob, mime: prepared.mime, filename: prepared.filename }
+      : null;
+    const body = prepared?.kind === 'text' ? (prepared.text ?? '').trim() : text.trim();
+    if (!image && !body) return;
     setBusy(true);
     setError('');
+    setMediaNote('');
     try {
       const ctx = {
         now: now ?? new Date(),
         timeZone: timeZone ?? householdTimeZone(),
         locale,
       };
-      const result = extract
-        ? await extract(trimmed)
-        : await extractMagicImport(trimmed, ctx, conversationDeps(getClient, useHaAgent));
+      const result = image
+        ? (extractImage
+          ? await extractImage(image)
+          : await readImageWithHomeAssistant(getClient, aiTaskEntityId, taskAgent?.name, image, ctx))
+        : (extract
+          ? await extract(body)
+          : await extractMagicImport(body, ctx, conversationDeps(getClient, useHaAgent)));
+      setRouteKind(image ? 'image' : 'text');
       setSource(result.source);
       setAgent(result.agent);
+      if (image && 'mediaLeftBehind' in result && result.mediaLeftBehind) {
+        setMediaNote(t('import.mediaLeft', { name: image.filename }));
+      }
       setDrafts(buildDrafts(result, calendars, lists, {
         calendarId: defaultCalendarId,
         groceryListId: defaultGroceryListId,
@@ -224,7 +420,7 @@ export function MagicImportModal({
       }));
       setPhase('review');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('import.saveError'));
+      setError(err instanceof Error && err.message ? err.message : t(image ? 'import.imageFailed' : 'import.saveError'));
     } finally {
       setBusy(false);
     }
@@ -324,9 +520,45 @@ export function MagicImportModal({
         <div className="modal-body">
           {phase === 'paste' ? (
             <>
+              <div className="magic-import-file">
+                <label className="settings-btn">
+                  {t('import.addFile')}
+                  <input
+                    aria-label={t('import.addFile')}
+                    type="file"
+                    accept="image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif,application/pdf,.pdf"
+                    onChange={onPickFile}
+                  />
+                </label>
+                {cameraOn && (
+                  <label className="settings-btn">
+                    {t('import.takePhoto')}
+                    <input
+                      aria-label={t('import.takePhoto')}
+                      type="file"
+                      accept="image/jpeg,image/png,image/heic,image/heif,.jpg,.jpeg,.png,.heic,.heif"
+                      capture="environment"
+                      onChange={onPickFile}
+                    />
+                  </label>
+                )}
+                {(fileName || fileBlocked) && (
+                  <button type="button" className="settings-btn" onClick={clearFile}>
+                    {t('import.removeFile')}
+                  </button>
+                )}
+              </div>
+              {fileName && (
+                <p className="magic-import-hint">{t('import.fileSelected', { name: fileName })}</p>
+              )}
               <label className="magic-import-label" htmlFor="magic-import-text">{t('import.pasteLabel')}</label>
               <p className="magic-import-hint">{t('import.pasteHint')}</p>
-              {planned && (
+              {!fileBlocked && prepared?.kind === 'image' && taskAgent && (
+                <p className="magic-import-hint">
+                  {t(taskKey(taskAgent, false), { name: taskAgent.name, id: taskAgent.id })}
+                </p>
+              )}
+              {!fileBlocked && prepared?.kind !== 'image' && planned && (
                 <p className="magic-import-hint">
                   {t(readerKey(planned, false), {
                     name: planned.agent?.name ?? '',
@@ -334,7 +566,10 @@ export function MagicImportModal({
                   })}
                 </p>
               )}
-              {planned?.source === 'home-assistant' && (
+              {!fileBlocked && prepared?.kind === 'image' && (
+                <p className="magic-import-privacy">{t('import.privacyFile')}</p>
+              )}
+              {!fileBlocked && prepared?.kind !== 'image' && planned?.source === 'home-assistant' && (
                 <p className="magic-import-privacy">{t('import.privacy')}</p>
               )}
               <textarea
@@ -349,14 +584,19 @@ export function MagicImportModal({
           ) : (
             <>
               <p className="magic-import-hint">
-                {t(readerKey({ source, agent }, true), {
-                  name: agent?.name ?? '',
-                  id: agent?.id ?? '',
-                })}
+                {routeKind === 'image' && agent
+                  ? t(taskKey(agent, true), { name: agent.name, id: agent.id })
+                  : t(readerKey({ source, agent }, true), {
+                    name: agent?.name ?? '',
+                    id: agent?.id ?? '',
+                  })}
               </p>
-              {source === 'home-assistant' && (
+              {routeKind === 'image' ? (
+                <p className="magic-import-privacy">{t('import.privacyFile')}</p>
+              ) : source === 'home-assistant' && (
                 <p className="magic-import-privacy">{t('import.privacy')}</p>
               )}
+              {mediaNote && <p className="magic-import-hint">{mediaNote}</p>}
               {drafts.length === 0 ? (
                 <p>{t('import.empty')}</p>
               ) : (
@@ -483,7 +723,7 @@ export function MagicImportModal({
           )}
           <div className="modal-footer-right">
             {phase === 'paste' ? (
-              <button type="button" className="settings-btn settings-btn--primary" onClick={() => { void extractText(); }} disabled={busy || !text.trim()}>
+              <button type="button" className="settings-btn settings-btn--primary" onClick={() => { void extractText(); }} disabled={busy || fileBlocked || (!prepared && !text.trim())}>
                 {busy ? t('import.extracting') : t('import.extract')}
               </button>
             ) : (
