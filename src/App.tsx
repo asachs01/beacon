@@ -26,6 +26,7 @@ import { NowPlayingBar } from './components/NowPlayingBar';
 import { useMusic } from './hooks/useMusic';
 import { useNotifications } from './hooks/useNotifications';
 import { ScreenSaver } from './components/ScreenSaver';
+import { NightMode } from './components/NightMode';
 import { GroceryView } from './components/GroceryView';
 import { MealsView } from './components/MealsView';
 import { OmniAdd } from './components/OmniAdd';
@@ -37,6 +38,8 @@ import { WeatherView } from './components/WeatherView';
 import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
+import { NIGHT_THEME_ID } from './display/night-mode';
+import { useNightScheduleActive } from './display/use-night-schedule';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView from './components/OnboardingView';
@@ -162,8 +165,21 @@ export function App() {
 
   const dashboardTasks = useDashboardTasks(connected, settings.groceryListIds);
 
-  // Apply theme at App level so it stays active regardless of which view is shown
-  const { setTheme } = useTheme();
+  // Apply theme at App level so it stays active regardless of which view is shown.
+  // Night mode forces the dark theme without rewriting the saved theme id.
+  const nightSchedule = useMemo(() => ({
+    enabled: settings.nightModeEnabled,
+    start: settings.nightModeStart,
+    end: settings.nightModeEnd,
+    override: settings.nightModeOverride,
+  }), [
+    settings.nightModeEnabled,
+    settings.nightModeStart,
+    settings.nightModeEnd,
+    settings.nightModeOverride,
+  ]);
+  const nightActive = useNightScheduleActive(nightSchedule, settingsLoaded);
+  const { setTheme } = useTheme({ forceId: nightActive ? NIGHT_THEME_ID : null });
   useEffect(() => {
     setTheme(settings.themeId);
   }, [settings.themeId, setTheme]);
@@ -649,6 +665,15 @@ export function App() {
   const sidebarPos = settings.sidebarPosition || 'left';
   const showNav = kioskNavVisible(settings.kioskMode, settings.kioskRevealGesture, kioskNavRevealed);
   const offerKioskGesture = shouldOfferKioskGesture(settings.kioskMode, settings.kioskRevealGesture);
+  const nightMode = (
+    <NightMode
+      active={nightActive}
+      brightness={settings.nightModeBrightness}
+      clockOnly={settings.nightModeClockOnly}
+      timeFormat={settings.timeFormat}
+      hotCorner={kioskHotCorner(sidebarPos)}
+    />
+  );
 
   // Show loading screen while checking stored credentials
   if (auth.state.loading) {
@@ -703,6 +728,7 @@ export function App() {
             onRefreshChores={() => { void refreshChores(); }}
           />
         )}
+        {nightMode}
       </I18nContext.Provider>
     );
   }
@@ -713,6 +739,7 @@ export function App() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
+        {nightMode}
       </div>
     );
   }
@@ -1004,6 +1031,7 @@ export function App() {
       )}
 
       {/* Screen saver / dim mode */}
+      {nightMode}
       <ScreenSaver
         enabled={settings.screenSaverEnabled}
         dimTimeoutMin={settings.dimTimeout}

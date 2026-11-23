@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { NIGHT_THEME_ID, isNightModeActive, nightScheduleFromUnknown } from '../display/night-mode';
 import { themes, getTheme, type Theme } from '../styles/themes';
 
 export type ThemeMode = 'auto' | string; // 'auto' or a theme id
@@ -81,6 +82,17 @@ function persist(key: string, value: string): void {
 // ---------------------------------------------------------------------------
 
 export function applyStoredTheme(): void {
+  try {
+    const raw = localStorage.getItem('beacon-settings');
+    if (raw) {
+      const schedule = nightScheduleFromUnknown(JSON.parse(raw));
+      if (schedule && isNightModeActive(schedule, new Date())) {
+        applyThemeToDOM(getTheme(NIGHT_THEME_ID));
+        return;
+      }
+    }
+  } catch { /* ignore */ }
+
   const storedId = loadStored(THEME_STORAGE_KEY, 'skylight');
   // Also check the settings object for themeId (useSettings stores it there)
   let themeId = storedId;
@@ -104,7 +116,8 @@ export function applyStoredTheme(): void {
 // Hook
 // ---------------------------------------------------------------------------
 
-export function useTheme() {
+export function useTheme(options?: { forceId?: string | null }) {
+  const forceId = options?.forceId ?? null;
   const [themeId, setThemeIdState] = useState<string>(() =>
     loadStored(THEME_STORAGE_KEY, 'skylight'),
   );
@@ -116,11 +129,12 @@ export function useTheme() {
 
   /** Resolve the active theme object based on current mode and time */
   const resolvedTheme = useMemo<Theme>(() => {
+    if (forceId) return getTheme(forceId);
     if (themeId === 'auto') {
       return getTheme(isDaytime() ? 'skylight' : autoDarkId);
     }
     return getTheme(themeId);
-  }, [themeId, autoDarkId]);
+  }, [themeId, autoDarkId, forceId]);
 
   const setTheme = useCallback((id: string) => {
     setThemeIdState(id);
@@ -134,7 +148,7 @@ export function useTheme() {
 
   // For auto mode, re-evaluate every 60 seconds so day/night flips on time
   useEffect(() => {
-    if (themeId !== 'auto') return;
+    if (forceId || themeId !== 'auto') return;
 
     const interval = setInterval(() => {
       const next = getTheme(isDaytime() ? 'skylight' : autoDarkId);
@@ -142,7 +156,7 @@ export function useTheme() {
     }, 60_000);
 
     return () => clearInterval(interval);
-  }, [themeId, autoDarkId]);
+  }, [themeId, autoDarkId, forceId]);
 
   const availableThemes = useMemo(
     () => themes.map(({ id, name }) => ({ id, name })),
