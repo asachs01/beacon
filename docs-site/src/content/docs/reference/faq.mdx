@@ -73,7 +73,9 @@ Beacon also works with **any calendar source** Home Assistant supports, includin
 
 ### Does Beacon send my data anywhere?
 
-**No.** Beacon runs entirely on your local network. It communicates only with your Home Assistant instance — never with any external server. There is no telemetry, analytics, or cloud dependency.
+**No, with one caveat.** Beacon itself sends nothing to outside servers. It runs on your local network and talks only to your Home Assistant instance. There is no telemetry, analytics, or cloud dependency of Beacon's own.
+
+The exception is [Magic Import](/docs/features/magic-import/). Only if Magic Import is on, and your Home Assistant conversation agent is a cloud service, does Home Assistant send the pasted text to that provider. To force the local parser, turn off **Settings → Display → Magic Import: use Home Assistant conversation agent**.
 
 Data flow: `Google/CalDAV -> Home Assistant -> Beacon (local only)`
 
