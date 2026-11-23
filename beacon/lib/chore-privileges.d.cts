@@ -2,7 +2,11 @@ export const PRIVILEGE_DOMAINS: readonly string[];
 export const CHORE_COMPLETED_EVENT: 'beacon_chore_completed';
 export const ALL_CHORES_DONE_EVENT: 'beacon_all_chores_done';
 
-export function dayKey(value?: unknown, timeZone?: string | null): string;
+export function dayKey(
+  value?: unknown,
+  timeZone?: string | null,
+  resetTime?: string | null,
+): string;
 
 export function memberProgress(
   memberId: string,
@@ -10,6 +14,7 @@ export function memberProgress(
   completions: unknown,
   localDate: string,
   timeZone?: string | null,
+  resetTime?: string | null,
 ): { completed: number; total: number };
 
 export function isMemberDayComplete(
@@ -22,6 +27,7 @@ export function privilegeDecision(
   completions: unknown,
   localDate: string,
   timeZone?: string | null,
+  resetTime?: string | null,
 ): {
   memberId: string;
   entityId: string;
@@ -37,6 +43,7 @@ export function privilegeDecisions(
   completions: unknown,
   localDate: string,
   timeZone?: string | null,
+  resetTime?: string | null,
 ): Array<{
   memberId: string;
   entityId: string;
@@ -59,6 +66,7 @@ export function acceptedChoreEvents(events: unknown): Array<{
 export function createPrivilegeScheduler(deps: {
   now?: () => Date;
   getTimeZone?: () => Promise<string | null>;
+  getResetTime?: () => Promise<string | null>;
   readSnapshot?: () => Promise<{ members: unknown; chores: unknown; completions: unknown }>;
   apply?: (decisions: unknown, info: { reason: string; localDate: string; timeZone: string | null }) => Promise<void>;
   hasToken?: () => boolean;

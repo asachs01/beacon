@@ -25,3 +25,4 @@
  * function. This module re-exports it.
  */
 export { localDayKey } from './local-day-key.cjs';
+export { choreDayKey } from './chore-day.cjs';

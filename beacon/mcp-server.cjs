@@ -21,6 +21,7 @@ const readline = require('readline');
 // Same local-day rule as src/api/date-keys.ts. That module is TypeScript; this
 // server is CommonJS, so it loads the shared .cjs implementation directly.
 const { addCalendarDays, localDayKey } = require('./src/api/local-day-key.cjs');
+const { choreDayKey, resetTimeFromSettings } = require('./src/api/chore-day.cjs');
 
 // ---------------------------------------------------------------------------
 // Config
@@ -148,6 +149,20 @@ async function resolveCalendarEntityId(calendarName) {
 // ---------------------------------------------------------------------------
 // Chore data helpers (reads/writes JSON files in DATA_DIR)
 // ---------------------------------------------------------------------------
+
+function readChoreResetTime() {
+  try {
+    const raw = fs.readFileSync(path.join(DATA_DIR, 'beacon-settings.json'), 'utf8');
+    return resetTimeFromSettings(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+function completionDayKey(completedAt, resetTime, daily) {
+  if (!daily) return localDayKey(completedAt);
+  return choreDayKey(completedAt, null, resetTime);
+}
 
 function loadJson(filename) {
   const fp = path.join(DATA_DIR, filename);
@@ -609,9 +624,11 @@ async function handleTool(name, args) {
         // Enforce max_completions per period
         if (chore.max_completions) {
           const now = new Date();
+          const resetTime = readChoreResetTime();
+          const daily = chore.frequency === 'daily';
           let periodStart;
-          if (chore.frequency === 'daily') {
-            periodStart = localDayKey(now);
+          if (daily) {
+            periodStart = choreDayKey(now, null, resetTime);
           } else if (chore.frequency === 'weekly') {
             const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
             periodStart = localDayKey(d);
@@ -622,7 +639,7 @@ async function handleTool(name, args) {
                 c.chore_id === chore.id &&
                 c.member_id === member.id &&
                 c.completed_at &&
-                localDayKey(c.completed_at) >= periodStart
+                completionDayKey(c.completed_at, resetTime, daily) >= periodStart
             ).length;
             if (periodCount >= chore.max_completions) {
               return {
@@ -764,10 +781,11 @@ async function handleTool(name, args) {
       const members = loadJson('beacon_family_members.json');
       const completions = loadJson('beacon_completions.json');
 
-      // Today's completions, on the household's local calendar day (not UTC).
-      const todayStr = localDayKey();
+      // Today's completions, on the chore day (reset time, or local midnight).
+      const resetTime = readChoreResetTime();
+      const todayStr = choreDayKey(undefined, null, resetTime);
       const todayCompletions = completions.filter(
-        (c) => c.completed_at && localDayKey(c.completed_at) === todayStr
+        (c) => c.completed_at && choreDayKey(c.completed_at, null, resetTime) === todayStr
       );
 
       // Also compute period completions for chores with max_completions
@@ -786,9 +804,10 @@ async function handleTool(name, args) {
         };
         // Add period completion counts when max_completions is set
         if (chore.max_completions) {
-          const periodStart = chore.frequency === 'daily' ? todayStr : weekStartStr;
+          const daily = chore.frequency === 'daily';
+          const periodStart = daily ? todayStr : weekStartStr;
           const periodCompletions = completions.filter(
-            (c) => c.chore_id === chore.id && c.completed_at && localDayKey(c.completed_at) >= periodStart
+            (c) => c.chore_id === chore.id && c.completed_at && completionDayKey(c.completed_at, resetTime, daily) >= periodStart
           );
           entry.period_completions = {};
           for (const memberId of chore.assigned_to) {

@@ -1,8 +1,10 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useSyncExternalStore } from 'react';
 import { FamilyStore } from '../api/family';
+import { getChoreResetTime, subscribeChoreResetTime } from '../api/chore-reset-time';
 import { Chore, ChoreCompletion, Streak, MemberEarnings } from '../types/family';
 
 export function useChores() {
+  const resetTime = useSyncExternalStore(subscribeChoreResetTime, getChoreResetTime, getChoreResetTime);
   const store = useMemo(() => new FamilyStore(), []);
   // Initialize with localStorage data immediately
   const [chores, setChores] = useState<Chore[]>(() => store.getChoresSync());
@@ -13,13 +15,13 @@ export function useChores() {
   const refresh = useCallback(async () => {
     const [c, ct, s] = await Promise.all([
       store.getChores(),
-      store.getCompletionsToday(),
+      store.getCompletionsToday(resetTime),
       store.getStreaks(),
     ]);
     setChores(c);
     setCompletionsToday(ct);
     setStreaks(s);
-  }, [store]);
+  }, [store, resetTime]);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,18 +59,18 @@ export function useChores() {
 
   const completeChore = useCallback(
     async (choreId: string, memberId: string) => {
-      await store.completeChore(choreId, memberId);
+      await store.completeChore(choreId, memberId, undefined, resetTime);
       await refresh();
     },
-    [store, refresh]
+    [store, refresh, resetTime]
   );
 
   const uncompleteChore = useCallback(
     async (choreId: string, memberId: string) => {
-      await store.uncompleteChore(choreId, memberId);
+      await store.uncompleteChore(choreId, memberId, resetTime);
       await refresh();
     },
-    [store, refresh]
+    [store, refresh, resetTime]
   );
 
   const isChoreCompletedToday = useCallback(
