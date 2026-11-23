@@ -1,3 +1,10 @@
+## [1.46.4](https://github.com/asachs01/beacon/compare/v1.46.3...v1.46.4) (2026-11-23)
+
+
+### Bug Fixes
+
+* **chores:** count streaks by the daily reset time ([e0ff6fd](https://github.com/asachs01/beacon/commit/e0ff6fd74f9727f23fdfaaed76f1d8a6aec0aa0c))
+
 ## [1.46.3](https://github.com/asachs01/beacon/compare/v1.46.2...v1.46.3) (2026-11-23)
 
 
