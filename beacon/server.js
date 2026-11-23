@@ -22,6 +22,7 @@ const HA_WS_URL = process.env.HA_WS_URL_OVERRIDE || 'ws://supervisor/core/api/we
 const DATA_DIR = process.env.BEACON_DATA || '/data';
 const { createGooglePhotoCache, REFRESH_MS } = require('./lib/google-photos-cache.cjs');
 const { acceptedChoreEvents, createPrivilegeScheduler } = require('./lib/chore-privileges.cjs');
+const { readStoredResetTime } = require('./lib/chore-day.cjs');
 const { parseIntent, resolveTodoEntity } = require('./lib/voice-intents.cjs');
 const { completeStoredChore, handleCompleteChore } = require('./lib/complete-chore.cjs');
 const { listStoredChores, handleChoresLeft } = require('./lib/chores-left.cjs');
@@ -515,12 +516,14 @@ async function applyStoredPrivileges(decisions, info) {
   }
 }
 
-// Re-apply privilege switches at startup and when the local day changes.
-// The day key is Home Assistant's time_zone when /api/config answers, and
-// otherwise localDayKey in the add-on process zone. It is never the UTC date.
+// Re-apply privilege switches at startup and when the chore day changes.
+// The day starts at choresResetTime (local midnight when unset), in Home
+// Assistant's time_zone when /api/config answers, and otherwise in the
+// add-on process zone. It is never the UTC date.
 const privilegeTick = createPrivilegeScheduler({
   now: () => new Date(),
   getTimeZone: readHaTimeZone,
+  getResetTime: () => readStoredResetTime(DATA_DIR),
   readSnapshot: readPrivilegeSnapshot,
   apply: applyStoredPrivileges,
   hasToken: () => !!SUPERVISOR_TOKEN,
@@ -560,6 +563,7 @@ function completeChoreDeps() {
         return null;
       }
     },
+    readResetTime: () => readStoredResetTime(DATA_DIR),
     publishEvents: publishStoredChoreEvents,
     applyPrivileges: (decisions) => applyStoredPrivileges(decisions, { reason: 'voice', localDate: '' }),
     log: (message) => console.warn(message),
@@ -932,7 +936,7 @@ googlePhotoBoot.unref?.();
 googlePhotoTimer.unref?.();
 
 // Privilege switches: once shortly after boot (so today's chores survive a
-// restart) and every 30s thereafter, which is what notices local midnight.
+// restart) and every 30s thereafter, which is what notices the chore reset.
 const privilegeBoot = setTimeout(() => {
   privilegeTick().catch((err) => console.warn(`[beacon] privilege sync failed: ${err.message}`));
 }, 15_000);

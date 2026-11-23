@@ -53,6 +53,23 @@ describe('chore matching', () => {
     expect(result.decisions[0]).toMatchObject({ entityId: 'switch.ada_wifi', service: 'turn_off' });
   });
 
+  it('stamps beacon events with the chore day when reset is 04:00', () => {
+    const result = planChoreCompletion({
+      members,
+      chores: chores.filter((chore) => chore.id === 'vacuum'),
+      completions: [],
+      streaks: [],
+      chore: 'vacuum',
+      name: 'Ada',
+      now: new Date('2026-11-21T07:30:00.000Z'),
+      timeZone: 'America/Phoenix',
+      resetTime: '04:00',
+    });
+    expect(result.events[0].data.local_date).toBe('2026-11-20');
+    expect(result.events[1].data.local_date).toBe('2026-11-20');
+    expect(result.decisions[0]).toMatchObject({ service: 'turn_on' });
+  });
+
   it('fuzzy-matches a title and turns the privilege on when it is the last chore', () => {
     const halfway = plan('vaccum');
     expect(halfway.member_id).toBe('ada');

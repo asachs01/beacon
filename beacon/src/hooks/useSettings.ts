@@ -9,6 +9,7 @@ import {
 } from '../fonts/selection';
 import { normalizeCalendarLayout, type CalendarLayout } from '../types';
 import { isAddOn } from '../utils/ha-env';
+import { publishChoreResetTime } from '../api/chore-reset-time';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -251,10 +252,16 @@ export function useSettings() {
     };
   }, [refresh]);
 
-  // Persist whenever settings change
+  // Persist whenever settings change, and publish the reset time the
+  // chore chart and privilege switches read.
   useEffect(() => {
     if (loaded) persistSettings(settings);
   }, [settings, loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    publishChoreResetTime(settings.choresResetTime);
+  }, [loaded, settings.choresResetTime]);
 
   /** Update one or more settings fields. Changes apply immediately. */
   const updateSettings = useCallback(

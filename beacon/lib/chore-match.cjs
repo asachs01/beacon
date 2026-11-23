@@ -252,13 +252,13 @@ function matchChore({ chores, members, chore, name }) {
   };
 }
 
-function doneToday(completions, choreId, memberId, now, timeZone) {
-  const today = dayKey(now, timeZone || null);
+function doneToday(completions, choreId, memberId, now, timeZone, resetTime) {
+  const today = dayKey(now, timeZone || null, resetTime);
   return (Array.isArray(completions) ? completions : []).some((entry) => (
     entry
     && entry.chore_id === choreId
     && entry.member_id === memberId
-    && dayKey(entry.completed_at, timeZone || null) === today
+    && dayKey(entry.completed_at, timeZone || null, resetTime) === today
   ));
 }
 
@@ -283,14 +283,14 @@ function bumpStreak(streaks, memberId, now, timeZone) {
  * Apply one matched assignment. Does not write files.
  * `already` completions do not emit events or change privilege state.
  */
-function applyChoreCompletion({ members, chores, completions, streaks, pair, now, timeZone }) {
+function applyChoreCompletion({ members, chores, completions, streaks, pair, now, timeZone, resetTime }) {
   const member = pair.member;
   const chore = pair.chore;
   const title = chore.name || chore.id;
   const who = memberLabel(member);
   const zone = timeZone || null;
-  const today = dayKey(now, zone);
-  if (doneToday(completions, chore.id, member.id, now, zone)) {
+  const today = dayKey(now, zone, resetTime);
+  if (doneToday(completions, chore.id, member.id, now, zone, resetTime)) {
     return {
       already: true,
       response: `${title} is already done for ${who} today.`,
@@ -307,14 +307,14 @@ function applyChoreCompletion({ members, chores, completions, streaks, pair, now
   }
 
   const before = Array.isArray(completions) ? completions : [];
-  const progressBefore = memberProgress(member.id, chores, before, today, zone);
+  const progressBefore = memberProgress(member.id, chores, before, today, zone, resetTime);
   const completion = {
     chore_id: chore.id,
     member_id: member.id,
     completed_at: now.toISOString(),
   };
   const nextCompletions = before.concat(completion);
-  const progressAfter = memberProgress(member.id, chores, nextCompletions, today, zone);
+  const progressAfter = memberProgress(member.id, chores, nextCompletions, today, zone, resetTime);
   const memberRecord = (Array.isArray(members) ? members : []).find((entry) => entry && entry.id === member.id) || member;
   const events = eventsForChoreChange({
     member: memberRecord,
@@ -324,7 +324,7 @@ function applyChoreCompletion({ members, chores, completions, streaks, pair, now
     progressBefore,
     progressAfter,
   });
-  const decision = privilegeDecision(memberRecord, chores, nextCompletions, today, zone);
+  const decision = privilegeDecision(memberRecord, chores, nextCompletions, today, zone, resetTime);
   return {
     already: false,
     response: `Marked ${title} as done for ${who}.`,
@@ -344,7 +344,7 @@ function applyChoreCompletion({ members, chores, completions, streaks, pair, now
  * Match and, when the match is unique, build the FamilyStore write.
  * Callers persist `completions` / `streaks` only when `write` is true.
  */
-function planChoreCompletion({ members, chores, completions, streaks, chore, name, now, timeZone }) {
+function planChoreCompletion({ members, chores, completions, streaks, chore, name, now, timeZone, resetTime }) {
   const match = matchChore({ chores, members, chore, name });
   if (match.status !== 'one') {
     return {
@@ -368,6 +368,7 @@ function planChoreCompletion({ members, chores, completions, streaks, chore, nam
     pair: match.pair,
     now,
     timeZone,
+    resetTime,
   });
   return {
     success: true,
