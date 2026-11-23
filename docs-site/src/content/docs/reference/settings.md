@@ -87,7 +87,7 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | Setting | Label | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `choresEnabled` | Enable Chores | `boolean` | true | Show chore tracking and rewards |
-| `choresResetTime` | Daily Reset Time | `string` | 00:00 | When the chore day starts (HH:mm). Privilege switches, chore-event local_date, and "what chores are left" use this same day. Unset, empty, or invalid values are treated as 00:00 (local midnight). |
+| `choresResetTime` | Daily Reset Time | `string` | 00:00 | When the chore day starts (HH:mm). Privilege switches, chore-event local_date, "what chores are left," and streaks use this same day. Unset, empty, or invalid values are treated as 00:00 (local midnight). |
 | `streakDays` | Streak Duration | `number` | 7 days | Days needed to maintain a streak |
 | `currencySymbol` | Currency Symbol | `string` | $ | Symbol shown beside chore rewards. |
 | `payoutSchedule` | Payout Schedule | `'weekly' / 'monthly'` | weekly | How often chore earnings are totaled. |
