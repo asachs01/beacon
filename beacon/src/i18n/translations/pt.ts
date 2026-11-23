@@ -295,6 +295,8 @@ export const pt: Record<TranslationKey, string> = {
   'settings.family.removeTask': 'Remover tarefa',
   'settings.family.addTask': '+ Adicionar tarefa',
   'settings.family.saveRoutine': 'Guardar rotina',
+  'settings.family.privilegeLabel': 'Interruptor de privilégio',
+  'settings.family.privilegeSublabel': 'Liga quando esta criança termina as tarefas de hoje. Interruptor, toggle, luz ou ventoinha.',
 
   // ---- settings: calendar ----
   'settings.calendar.title': 'Calendário',

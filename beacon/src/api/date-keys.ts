@@ -20,7 +20,8 @@
  * An empty or unparseable value returns "" (matching the prior `''.slice(0,10)`
  * sentinel used for "never completed").
  *
- * Implemented in `local-day-key.cjs` so the CommonJS MCP server can require the
- * same function. This module re-exports it.
+ * Implemented in `lib/local-day-key.cjs` (re-exported by `local-day-key.cjs`)
+ * so the CommonJS MCP server and the add-on process can require the same
+ * function. This module re-exports it.
  */
 export { localDayKey } from './local-day-key.cjs';

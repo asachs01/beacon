@@ -300,6 +300,8 @@ export const en = {
   'settings.family.removeTask': 'Remove task',
   'settings.family.addTask': '+ Add Task',
   'settings.family.saveRoutine': 'Save Routine',
+  'settings.family.privilegeLabel': 'Privilege switch',
+  'settings.family.privilegeSublabel': 'Turns on when this child finishes today\'s chores. Switch, toggle, light, or fan.',
 
   // ---- settings: calendar ----
   'settings.calendar.title': 'Calendar',

@@ -21,6 +21,7 @@ const HA_WS_URL = process.env.HA_WS_URL_OVERRIDE || 'ws://supervisor/core/api/we
 // /data/ is HA add-on persistent storage (survives container rebuilds)
 const DATA_DIR = process.env.BEACON_DATA || '/data';
 const { createGooglePhotoCache, REFRESH_MS } = require('./lib/google-photos-cache.cjs');
+const { acceptedChoreEvents, createPrivilegeScheduler } = require('./lib/chore-privileges.cjs');
 const googlePhotos = createGooglePhotoCache({
   dataDir: path.join(DATA_DIR, 'photo-cache', 'google'),
 });
@@ -302,6 +303,59 @@ function handleCalendarEventAction(req, res) {
 }
 
 /**
+ * POST /beacon-action/chore-events
+ * Body: { events: [{ event, data }] }
+ * Fires beacon_chore_completed / beacon_all_chores_done on the HA event bus
+ * with the Supervisor token. Missing token or an HA error is logged and
+ * returned as a soft failure so the chore toggle is never blocked.
+ */
+function handleChoreEvents(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+
+  collectBody(req).then(async (bodyBuf) => {
+    let payload;
+    try {
+      payload = JSON.parse((bodyBuf || '{}').toString('utf8'));
+    } catch {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Invalid JSON' }));
+      return;
+    }
+
+    const events = acceptedChoreEvents(payload.events);
+    if (!SUPERVISOR_TOKEN) {
+      console.warn('[beacon] chore events skipped: no Supervisor token');
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, skipped: true, fired: 0 }));
+      return;
+    }
+
+    let fired = 0;
+    for (const entry of events) {
+      try {
+        const result = await haRequestTimed('POST', `/api/events/${entry.event}`, entry.data);
+        if (result.status >= 200 && result.status < 300) fired += 1;
+        else console.warn(`[beacon] ${entry.event} failed: HTTP ${result.status}`);
+      } catch (err) {
+        console.warn(`[beacon] ${entry.event} failed: ${err.message}`);
+      }
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, fired, accepted: events.length }));
+  }).catch((err) => {
+    if (!res.headersSent) {
+      res.writeHead(413, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+  });
+}
+
+/**
  * Persistent data API — stores JSON in /data/ (survives add-on rebuilds).
  *
  * GET  /beacon-data/:key  → read stored JSON
@@ -495,6 +549,90 @@ function haRequest(method, apiPath, body) {
     r.end();
   });
 }
+
+/** haRequest with a deadline so a hung Home Assistant call cannot stall the server. */
+function haRequestTimed(method, apiPath, body, timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Home Assistant request timed out')), timeoutMs);
+    haRequest(method, apiPath, body).then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
+let haTimeZone = null;
+let haTimeZoneKnown = false;
+
+async function readHaTimeZone() {
+  if (haTimeZoneKnown) return haTimeZone;
+  const result = await haRequestTimed('GET', '/api/config');
+  const tz = result.data && typeof result.data.time_zone === 'string' ? result.data.time_zone.trim() : '';
+  // Cache a successful read, including an empty zone, so a missing field does
+  // not hit /api/config every 30s. A thrown request stays uncached and retries.
+  haTimeZone = tz || null;
+  haTimeZoneKnown = true;
+  return haTimeZone;
+}
+
+async function readJsonList(name) {
+  try {
+    const raw = await fsp.readFile(path.join(DATA_DIR, name), 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new Error(`${name} is not a list`);
+    return parsed;
+  } catch (err) {
+    if (err.code === 'ENOENT') return [];
+    throw err;
+  }
+}
+
+async function readPrivilegeSnapshot() {
+  const [members, chores, completions] = await Promise.all([
+    readJsonList('beacon_family_members.json'),
+    readJsonList('beacon_chores.json'),
+    readJsonList('beacon_completions.json'),
+  ]);
+  return { members, chores, completions };
+}
+
+async function applyStoredPrivileges(decisions, info) {
+  for (const decision of decisions) {
+    try {
+      const result = await haRequestTimed(
+        'POST',
+        `/api/services/${decision.domain}/${decision.service}`,
+        { entity_id: decision.entityId },
+      );
+      if (result.status < 200 || result.status >= 300) {
+        console.warn(`[beacon] privilege ${decision.service} ${decision.entityId} failed: HTTP ${result.status} (${info.reason})`);
+      }
+    } catch (err) {
+      console.warn(`[beacon] privilege ${decision.service} ${decision.entityId} failed: ${err.message} (${info.reason})`);
+    }
+  }
+  if (decisions.length > 0) {
+    console.log(`[beacon] privilege sync (${info.reason}) ${info.localDate}: ${decisions.map((decision) => `${decision.entityId}=${decision.service}`).join(', ')}`);
+  }
+}
+
+// Re-apply privilege switches at startup and when the local day changes.
+// The day key is Home Assistant's time_zone when /api/config answers, and
+// otherwise localDayKey in the add-on process zone. It is never the UTC date.
+const privilegeTick = createPrivilegeScheduler({
+  now: () => new Date(),
+  getTimeZone: readHaTimeZone,
+  readSnapshot: readPrivilegeSnapshot,
+  apply: applyStoredPrivileges,
+  hasToken: () => !!SUPERVISOR_TOKEN,
+  log: (message) => console.warn(message),
+});
 
 /**
  * POST /beacon-action/voice
@@ -715,6 +853,12 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Chore completion events for Home Assistant automations
+  if (req.url === '/beacon-action/chore-events') {
+    handleChoreEvents(req, res);
+    return;
+  }
+
   // Calendar event update/delete (WS-only commands in current HA core)
   if (req.url === '/beacon-action/calendar-event') {
     handleCalendarEventAction(req, res);
@@ -806,3 +950,14 @@ const googlePhotoTimer = setInterval(() => {
 }, REFRESH_MS);
 googlePhotoBoot.unref?.();
 googlePhotoTimer.unref?.();
+
+// Privilege switches: once shortly after boot (so today's chores survive a
+// restart) and every 30s thereafter, which is what notices local midnight.
+const privilegeBoot = setTimeout(() => {
+  privilegeTick().catch((err) => console.warn(`[beacon] privilege sync failed: ${err.message}`));
+}, 15_000);
+const privilegeTimer = setInterval(() => {
+  privilegeTick().catch((err) => console.warn(`[beacon] privilege sync failed: ${err.message}`));
+}, 30_000);
+privilegeBoot.unref?.();
+privilegeTimer.unref?.();

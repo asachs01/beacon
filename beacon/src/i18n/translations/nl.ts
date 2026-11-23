@@ -295,6 +295,8 @@ export const nl: Record<TranslationKey, string> = {
   'settings.family.removeTask': 'Taak verwijderen',
   'settings.family.addTask': '+ Taak toevoegen',
   'settings.family.saveRoutine': 'Routine opslaan',
+  'settings.family.privilegeLabel': 'Privilege-schakelaar',
+  'settings.family.privilegeSublabel': 'Gaat aan wanneer dit kind de klusjes van vandaag af heeft. Schakelaar, toggle, lamp of ventilator.',
 
   // ---- settings: calendar ----
   'settings.calendar.title': 'Agenda',

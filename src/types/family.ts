@@ -5,6 +5,13 @@ export interface FamilyMember {
   color: string; // hex color
   pin?: string; // 4-6 digit PIN
   role: 'parent' | 'child';
+  /**
+   * Optional Home Assistant entity turned on when this child finishes today's
+   * chores and off when they don't. Only `switch`, `input_boolean`, `light`,
+   * and `fan` are honored. Omitted for members that don't use it — existing
+   * member records stay valid without this field.
+   */
+  privilegeEntityId?: string;
   calendar_entity?: string; // HA calendar entity_id (primary calendar)
   /** Additional HA calendar entity_ids linked to this member (e.g. a
    *  kid's sports team calendar), so their events group under this member

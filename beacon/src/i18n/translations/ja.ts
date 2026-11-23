@@ -295,6 +295,8 @@ export const ja: Record<TranslationKey, string> = {
   'settings.family.removeTask': 'タスクを削除',
   'settings.family.addTask': '+ タスクを追加',
   'settings.family.saveRoutine': 'ルーティンを保存',
+  'settings.family.privilegeLabel': 'ごほうびスイッチ',
+  'settings.family.privilegeSublabel': 'この子が今日の用事をすべて終えるとオンになります。スイッチ、トグル、ライト、ファン。',
 
   // ---- settings: calendar ----
   'settings.calendar.title': 'カレンダー',

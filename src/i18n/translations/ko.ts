@@ -295,6 +295,8 @@ export const ko: Record<TranslationKey, string> = {
   'settings.family.removeTask': '작업 제거',
   'settings.family.addTask': '+ 작업 추가',
   'settings.family.saveRoutine': '루틴 저장',
+  'settings.family.privilegeLabel': '특권 스위치',
+  'settings.family.privilegeSublabel': '이 아이가 오늘 할 일을 모두 끝내면 켜집니다. 스위치, 토글, 조명 또는 선풍기.',
 
   // ---- settings: calendar ----
   'settings.calendar.title': '캘린더',

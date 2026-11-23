@@ -1,0 +1,130 @@
+---
+title: "Chore privileges"
+description: "Turn on a Home Assistant switch when a child finishes today's chores, and the events Beacon fires for automations."
+order: 4.5
+---
+
+# Chore privileges
+
+Beacon can turn on a Home Assistant entity when a child finishes the chores assigned to them today, and it fires events that automations can listen for. Both are optional. Families that never pick a privilege switch and never import the blueprint keep the same chore behavior as before.
+
+The check uses the same local calendar day as the rest of Beacon (`localDayKey`). It does not use the UTC date. An evening in US time zones is still "today" even though the stored timestamp is already the next day in UTC.
+
+---
+
+## Privilege switch
+
+The setting is per child, not a global Settings toggle.
+
+1. Open **Settings** (gear icon; on a phone, **More** then **Settings**)
+2. Open **Family Members** and edit a member whose role is **Child**
+3. Set **Privilege switch**
+
+The picker lists only these Home Assistant domains:
+
+| Domain | Typical use |
+|--------|-------------|
+| `switch` | A Wi-Fi plug, a smart outlet, or a template switch |
+| `input_boolean` | A toggle helper an automation already watches |
+| `light` | A lamp |
+| `fan` | A fan |
+
+The default is **None**. Nothing is stored until you pick an entity. Clearing the picker removes the field. Parents do not get this control; changing a child to a parent clears it. Existing family members, chores, and completions are left as they are. There is no migration.
+
+**PIN.** This does not add a PIN and does not change the one you already have. Checking a chore does not ask for a PIN. The family PIN still only reveals kiosk navigation and exits Kid Display. If nobody has a PIN, those actions stay on the gesture or the confirm button, the same as before.
+
+### When the entity turns on and off
+
+Beacon calls Home Assistant `turn_on` or `turn_off` on that entity:
+
+| Situation | Service |
+|-----------|---------|
+| Every chore assigned to that child today is checked | `turn_on` |
+| A chore is unchecked, or some of today's chores are still open | `turn_off` |
+| The child has no chores assigned | `turn_off` (zero chores is not "all done") |
+| The local day rolls over to midnight | `turn_off` |
+| Beacon loads, or the add-on process starts | Whichever of the above matches today |
+
+A manual toggle in Home Assistant is left alone until the next one of those moments. Beacon does not keep forcing the entity every few seconds during the day.
+
+"Today" is the chores assigned to that member, completed on the local calendar day. Weekly and one-time chores count the same way once they are assigned: if they are on the child's list, they have to be checked today for the switch to turn on.
+
+### Where the call runs
+
+- An open Beacon page calls the service itself. In the add-on that goes through the add-on's Home Assistant proxy. In standalone mode it uses the long-lived access token, if one is configured.
+- The add-on server also sets the switches about 15 seconds after it starts, and again when its local day changes, even if no screen is open. It checks every 30 seconds, so midnight can be up to half a minute late.
+- The server asks Home Assistant for `time_zone` (`GET /api/config`) and uses that zone for the day. If that request fails, it uses the add-on process timezone via the same `localDayKey` helper. It does not use UTC. The page uses the device timezone. Those should be the same zone as Home Assistant. If they are not, the screen and the add-on can disagree about midnight.
+- Standalone Beacon (the browser or Android app talking to Home Assistant without the add-on server) has no background scheduler. Midnight turns the switch off only while a Beacon page is open. If the page is closed overnight, the switch stays where it was until the next time Beacon opens and re-evaluates.
+- If Home Assistant cannot be reached, the chore still saves. Beacon logs the failed service call and continues.
+
+---
+
+## Events
+
+Events are fired by the **add-on server**, with the Supervisor token, when someone checks or unchecks a chore in Beacon. The browser tells the add-on (`POST /beacon-action/chore-events`) after the completion is saved. Any client using the add-on — the wall tablet, another browser on the ingress URL, Kid Display — goes through that path.
+
+Standalone mode does not fire these events. There is no add-on process to post them. The chore still saves. Beacon logs that the events were skipped.
+
+A failed post never undoes the checkmark.
+
+Checking a chore that is already complete today does not fire again. Unchecking a chore that was not complete today does not fire.
+
+### `beacon_chore_completed`
+
+Fired on every real check and uncheck.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `member_id` | string | Beacon family member id |
+| `member_name` | string | Name shown in Settings |
+| `chore_id` | string | Chore id |
+| `chore_title` | string | Chore name |
+| `completed` | boolean | `true` when checked, `false` when unchecked |
+| `local_date` | string | Local day, `YYYY-MM-DD` |
+
+### `beacon_all_chores_done`
+
+Fired only when a check is what makes that member's chores for `local_date` complete (every assigned chore is done, and they have at least one). It is not fired when a chore is unchecked, when the member has no chores, or when today's list was already complete.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `member_id` | string | Beacon family member id |
+| `member_name` | string | Name shown in Settings |
+| `local_date` | string | Local day, `YYYY-MM-DD` |
+
+In an automation, `trigger.event.data.member_name` (and the other fields) are those values.
+
+```yaml
+trigger:
+  - platform: event
+    event_type: beacon_all_chores_done
+action:
+  - service: switch.turn_on
+    target:
+      entity_id: switch.ada_wifi
+```
+
+---
+
+## Example blueprint
+
+The repo includes one automation blueprint:
+
+`blueprints/automation/beacon/chores_unlock_wifi.yaml`
+
+It listens for `beacon_all_chores_done` and turns on an entity you pick. You can limit it to one child by typing that child's name exactly as it appears in Beacon. Leave the name blank to run for every member.
+
+It does **not** turn the device off at midnight or when a chore is unchecked. Use the Privilege switch in Settings for that, or write a second automation on `beacon_chore_completed` with `completed: false`.
+
+Import it in Home Assistant:
+
+1. **Settings → Automations & scenes → Blueprints → Import blueprint**
+2. Paste:
+
+```text
+https://github.com/asachs01/beacon/blob/main/blueprints/automation/beacon/chores_unlock_wifi.yaml
+```
+
+3. Create an automation from the blueprint and choose the entity.
+
+The URL works after this file is on the default branch. Home Assistant reads the blueprint from GitHub; it is not installed into `/config` by the add-on.
