@@ -266,6 +266,8 @@ The response shape is unchanged: `{ "date", "days", "entries" }`.
 
 **`beacon_set_meal_plan`** -- Update the meal plan. The default mode is **merge**:
 
+**Changed in 1.48.0.** `beacon_set_meal_plan` now adds or updates only the meals you send instead of replacing the whole plan. Pass `replace: true` for the old behavior. A null or empty name clears that one date and meal slot.
+
 - Each entry upserts the one slot for its `date` and `meal_type`.
 - An entry with no `id` still matches on `date` and `meal_type`.
 - A `null` or empty `name` clears that slot and removes every entry for that date and meal type.
