@@ -88,39 +88,42 @@ export function ChoreCard({
       <div className="chore-card-body">
         <span className={`chore-card-name ${isCompleted ? 'chore-card-name--done' : ''}`}>
           {chore.icon && <span className="chore-card-icon">{chore.icon}</span>}
-          {chore.name}
+          <span className="chore-card-title">{chore.name}</span>
         </span>
-        {value && <span className="chore-card-value">{value}</span>}
+        {(value || onEdit || onDelete) && (
+          <div className="chore-card-meta">
+            {value && <span className="chore-card-value">{value}</span>}
+            {(onEdit || onDelete) && (
+              <div className="chore-card-actions">
+                {onEdit && (
+                  <button
+                    type="button"
+                    className="chore-card-action-btn"
+                    onClick={onEdit}
+                    aria-label={`Edit ${chore.name}`}
+                  >
+                    <Pencil size={15} />
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    type="button"
+                    className="chore-card-action-btn chore-card-action-btn--danger"
+                    onClick={handleDeleteClick}
+                    aria-label={`Delete ${chore.name}`}
+                  >
+                    {confirmDelete ? (
+                      <span className="chore-card-action-confirm">Sure?</span>
+                    ) : (
+                      <Trash2 size={15} />
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-
-      {(onEdit || onDelete) && (
-        <div className="chore-card-actions">
-          {onEdit && (
-            <button
-              type="button"
-              className="chore-card-action-btn"
-              onClick={onEdit}
-              aria-label={`Edit ${chore.name}`}
-            >
-              <Pencil size={15} />
-            </button>
-          )}
-          {onDelete && (
-            <button
-              type="button"
-              className="chore-card-action-btn chore-card-action-btn--danger"
-              onClick={handleDeleteClick}
-              aria-label={`Delete ${chore.name}`}
-            >
-              {confirmDelete ? (
-                <span className="chore-card-action-confirm">Sure?</span>
-              ) : (
-                <Trash2 size={15} />
-              )}
-            </button>
-          )}
-        </div>
-      )}
 
       <button
         type="button"

@@ -68,7 +68,7 @@ function UnassignedChoreCard({
       <div className="chore-card-body">
         <span className="chore-card-name">
           {chore.icon && <span className="chore-card-icon">{chore.icon}</span>}
-          {chore.name}
+          <span className="chore-card-title">{chore.name}</span>
         </span>
         {value && <span className="chore-card-value">{value}</span>}
       </div>
