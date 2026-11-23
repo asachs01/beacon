@@ -338,7 +338,7 @@ The intents reference these entities by default. Create or rename them to match:
 
 If your entities have different names, edit the installed YAML files in your HA config directory (`custom_intents/beacon.yaml` and `custom_sentences/en/beacon.yaml`).
 
-Chores do not use a todo list. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to `/beacon-action/complete-chore`. `BeaconChoreStatus` and `BeaconChoreStatusByPerson` call `rest_command.beacon_chores_left`, which GETs `/beacon-action/chores-left`. Copy `custom_intents/beacon_rest_command.yaml` into `configuration.yaml`, replace `ADDON_SLUG` with the slug from the add-on page URL, and restart Home Assistant.
+Chores do not use a todo list. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to `/beacon-action/complete-chore`. `BeaconChoreStatus` and `BeaconChoreStatusByPerson` call `rest_command.beacon_chores_left`, which GETs `/beacon-action/chores-left`. The install script copies `beacon_rest_command.yaml` and, when it can, adds the `rest_command` and `intent_script` includes to `configuration.yaml`. Replace `ADDON_SLUG` in that rest command file with the slug from the add-on page URL, then restart Home Assistant. See [Press-to-talk](/docs/features/press-to-talk/) for the upgrade steps.
 
 ### Customizing
 
