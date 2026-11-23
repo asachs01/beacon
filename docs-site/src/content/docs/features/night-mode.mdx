@@ -1,0 +1,57 @@
+---
+title: "Night mode"
+description: "Dim a wall display on a local schedule, switch to the Midnight theme, and optionally show a clock-only screen."
+order: 11.5
+---
+
+# Night mode
+
+Night mode dims a wall display between times you choose. While it is on, Beacon switches to the Midnight theme and lays a dim overlay over the dashboard. You can also hide the dashboard and show only a large clock and the date.
+
+It stays off until you turn it on, so existing installs look the same until you change the setting.
+
+This needs Beacon **TODO: version after [#116](https://github.com/asachs01/beacon/pull/116) ships**, or later.
+
+## Turn it on
+
+Open **Settings → Display → Night mode** and turn **Night mode** on. The other controls appear after that.
+
+- **Starts** and **Ends** are the device's local time, written as hours and minutes. Night mode includes the start minute and turns off when the clock reaches the end minute. If the start is later than the end, the window crosses midnight. The default window is 9:00 PM to 6:30 AM. If the two times are the same, or either time is invalid, the schedule does not turn night mode on.
+- **Manual override** chooses what happens while Night mode is enabled. **Schedule** follows the times. **On** keeps the dim screen up. **Off** keeps it down until you switch back to Schedule. The Night mode switch still has to be on; the override cannot turn it on by itself.
+- **Brightness** is how bright the dashboard stays while it is dimmed. The default is 30%. In Settings the slider runs from 5% to 100% in steps of 5%.
+- **Clock only** hides the dashboard and shows a large clock with the date. The clock follows your 12-hour or 24-hour time format.
+
+The schedule is checked against the device clock about once a minute, and again when you bring the page back to the foreground. Your saved theme is left as it was; Midnight is used only while night mode is active.
+
+## Waking the screen
+
+A tap anywhere on the screen brings the normal dashboard back, still in the Midnight theme, for 60 seconds. The dim overlay and the clock-only screen stay down for that minute, then return if the schedule (or a manual On override) is still active.
+
+A finished [countdown timer](/docs/features/timer/) wakes the screen the same way and holds it until the alarm is dismissed, and for at least 60 seconds even if you dismiss it sooner.
+
+## Kid Display and kiosk
+
+[Kid Display](/docs/features/kid-display/) and kiosk mode keep working as they do now. The dim overlay does not capture taps, so you can still complete items on a kid display. The hidden corner used to leave kiosk mode or Kid Display stays open, including when Clock only is on.
+
+## Night mode is not the screen saver
+
+The [Screen Saver](/docs/features/screensaver/) is separate. It still dims the display after a period of inactivity, and it can still show its moving clock, according to your usual Display settings. Night mode is the scheduled (or manual) dim you set under **Settings → Display → Night mode**.
+
+## How the screen is dimmed
+
+Beacon dims the screen with a black overlay. The Brightness setting controls how much of the dashboard still shows through that overlay (30% brightness means a 70% overlay). Beacon does not ship a screen-brightness plugin, so a typical install does not change the tablet's hardware brightness. If a custom Capacitor build already registers a `ScreenBrightness` plugin, night mode will also use it while the dim overlay is up, and restore the system brightness when the overlay goes down. On the web, and on a stock Beacon build, only the overlay is used.
+
+## Urgent wake (for contributors)
+
+`requestNightWake(reason)` and `releaseNightWake(reason)` live in `src/display/night-wake.ts`.
+
+Call `requestNightWake` when an urgent item starts, and `releaseNightWake` with the same reason when someone dismisses it. The dim overlay and clock-only screen stay down while any reason is held, and for at least 60 seconds after the request even if it is dismissed sooner.
+
+A finished timer in `src/components/Timer.tsx` already does this with the reason `timer:<id>`. It releases the wake when the alarm is dismissed, cancelled, or the timer screen unmounts.
+
+The same calls are available as window events, for code that should not import the module:
+
+- `beacon:urgent-wake` with `{ detail: { reason } }`
+- `beacon:urgent-wake-release` with `{ detail: { reason } }`
+
+Shared timers and Family Bell should use a stable reason such as `shared-timer:<id>` or `family-bell`.
