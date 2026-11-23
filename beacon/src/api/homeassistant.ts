@@ -333,6 +333,23 @@ export class HomeAssistantClient {
     };
   }
 
+  async listConversationAgents(): Promise<Array<{ id: string; name?: string }>> {
+    const result = await this.sendMessage({ type: 'conversation/agent/list' }) as {
+      agents?: Array<{ id: string; name?: string }>;
+    };
+    return Array.isArray(result?.agents) ? result.agents : [];
+  }
+
+  /** conversation/process over the websocket. The REST fallback lives in the voice UI. */
+  async processConversation(text: string, language?: string): Promise<unknown> {
+    const message: { type: string; text: string; language?: string } = {
+      type: 'conversation/process',
+      text,
+    };
+    if (language) message.language = language;
+    return this.sendMessage(message);
+  }
+
   async subscribeEvents(eventType: string, handler: MessageHandler): Promise<number> {
     const id = this.msgId++;
     this.subscriptions.set(id, handler);

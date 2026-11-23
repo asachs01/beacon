@@ -40,9 +40,9 @@ Content-Type: application/json
 
 | Say | What happens |
 |-----|-------------|
-| `add <item> to <list>` | Adds an item to a todo list (fuzzy name match) |
-| `check off <item>` / `mark <item> as done` | Marks a todo item as completed |
-| `complete <item>` / `finish <item>` | Same as above |
+| `add <item> to <list>` / `put <item> on <list>` | Adds an item to a todo list (fuzzy name match) |
+| `mark <chore> as done` / `I finished <chore>` / `<name> finished <chore>` | Completes a Beacon chore in FamilyStore |
+| `check off <item>` / `complete <item>` / `finish <item>` | Marks a todo item as completed |
 
 ```bash
 # Add an item
@@ -277,6 +277,7 @@ Beacon ships with custom sentence and intent handler files for [Home Assistant A
 | **BeaconSetTimer** | "Set a timer for 5 minutes", "Start a 10 minute timer" |
 | **BeaconGroceryList** | "What's on the grocery list", "What do we need from the store" |
 | **BeaconChoreStatus** | "What chores are left", "What needs to be done" |
+| **BeaconChoreStatusByPerson** | "What chores does Ada have left", "What's left for Ada" |
 
 ### Installation
 
@@ -304,7 +305,7 @@ The intent handlers reference these entities by default:
 | Entity | Purpose | How to create |
 |--------|---------|---------------|
 | `todo.grocery` | Grocery list | Any HA todo integration (Shopping List, Todoist, etc.) |
-| `todo.chores` | Chore tracking list | Same as above |
+| Beacon chore chart | "What chores are left" and completing a chore. Not `todo.chores`. | Stored in the add-on. Voice uses `GET /beacon-action/chores-left` and `POST /beacon-action/complete-chore`. |
 | `calendar.family` | Family calendar | Google Calendar, CalDAV, or Local Calendar integration |
 | `timer.beacon_voice` | Voice timer | **Settings > Helpers > + Create Helper > Timer**, name it "Beacon Voice" |
 

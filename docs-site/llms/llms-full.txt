@@ -85,6 +85,11 @@ URL: __SITE_URL__/docs/features/chore-privileges/
 
 Optional per-child Home Assistant entity (switch, input_boolean, light, or fan) that turns on when today's assigned chores are complete and off when they are not, including at local midnight. The add-on also fires `beacon_chore_completed` and `beacon_all_chores_done`. Standalone mode does not fire those events. Existing members are unchanged until a parent sets the switch.
 
+### Press-to-talk
+URL: __SITE_URL__/docs/features/press-to-talk/
+
+Hold-to-talk on the wall display. There is no wake word and the microphone is not always on. When a Home Assistant conversation agent is available in add-on mode, the utterance goes to `conversation.process`. Otherwise it goes to `POST /beacon-action/voice`. The reply shows in an overlay that dismisses itself. "Mark dishes as done" completes the chore in FamilyStore (not `todo.chores`), fires the same chore events, and re-evaluates privilege switches. An ambiguous title asks which chore or which person. Adding a grocery item uses the existing todo list path. "What's on the calendar today" reads today's events. "What chores are left" reads today's remaining chores from Beacon's chart, and a person's name limits that list. It does not read `todo.chores`. The Voice button setting is on by default in the add-on and off in a standalone browser until enabled. The mic needs HTTPS or localhost; Home Assistant ingress over HTTPS works, and a plain HTTP kiosk keeps the text box. Checking a chore by voice does not ask for a PIN.
+
 ### Grocery
 URL: __SITE_URL__/docs/features/grocery/
 

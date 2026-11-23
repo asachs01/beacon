@@ -11,6 +11,7 @@ import './styles/photos.css';
 import './styles/screensaver.css';
 import './styles/widgets.css';
 import './styles/omni-add.css';
+import './styles/voice-assist.css';
 import './styles/settings.css';
 import './styles/weather.css';
 import './styles/focus.css';

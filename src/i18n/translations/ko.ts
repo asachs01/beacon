@@ -34,6 +34,20 @@ export const ko: Record<TranslationKey, string> = {
   'nav.more': '더보기',
   'nav.closeMenu': '메뉴 닫기',
   'nav.mainNavigation': '기본 탐색',
+  'nav.voice': '음성',
+
+  // ---- press-to-talk ----
+  'voice.holdToTalk': '누르고 말하기',
+  'voice.typeCommand': '명령 입력',
+  'voice.placeholder': '예: “설거지 완료로 표시”',
+  'voice.send': '보내기',
+  'voice.listening': '듣는 중…',
+  'voice.working': '처리 중…',
+  'voice.youSaid': '말한 내용',
+  'voice.reply': '응답',
+  'voice.dismiss': '닫기',
+  'voice.noSpeech': '알아듣지 못했습니다. 마이크를 누르거나 입력하세요.',
+  'voice.micNeedsHttps': '마이크는 HTTPS 또는 localhost가 필요합니다. 명령을 입력하세요.',
 
   // ---- app chrome ----
   'app.kidDisplayNotFound': '어린이 화면 구성원을 찾을 수 없습니다 — 전체 앱을 표시합니다.',
@@ -393,6 +407,8 @@ export const ko: Record<TranslationKey, string> = {
   'settings.display.kioskModeSublabel': '더 깔끔한 화면을 위해 사이드바를 숨깁니다',
   'settings.display.kioskRevealLabel': '탐색 메뉴를 표시하는 제스처',
   'settings.display.kioskRevealSublabel': '기본적으로 켜져 있습니다. 키오스크 모드에서 위쪽 모서리를 2초간 길게 누르거나 빠르게 3번 탭하면 사이드바가 나타납니다. 키보드에서는 Escape를 길게 누르세요. 15초간 사용하지 않으면 다시 숨겨집니다. 가족 PIN이 설정되어 있으면 PIN이 필요합니다.',
+  'settings.display.voiceButtonLabel': '음성 버튼',
+  'settings.display.voiceButtonSublabel': '벽에 누르고 말하기 버튼을 표시합니다. Home Assistant 애드온에서는 기본으로 켜져 있습니다. 마이크는 HTTPS 또는 localhost가 필요합니다. HTTPS 인그레스에서는 동작하고, HTTP만 쓰는 키오스크는 텍스트만 남습니다.',
   'settings.display.kidDisplayTitle': '어린이 화면',
   'settings.display.kidDisplayDesc': '벽걸이 화면을 한 명의 가족 구성원에게 고정하고, 그 사람의 루틴과 집안일만 표시합니다.',
   'settings.display.familyMemberLabel': '가족 구성원',

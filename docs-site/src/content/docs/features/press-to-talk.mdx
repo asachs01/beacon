@@ -1,0 +1,103 @@
+---
+title: "Press-to-talk"
+description: "Hold a button on the wall to talk to Home Assistant Assist or Beacon, see the reply, and complete Beacon chores."
+order: 4.6
+---
+
+# Press-to-talk
+
+The wall display has a hold-to-talk control. Press and hold the microphone, say one command, and let go. Beacon shows what it heard and the reply, then the card goes away on its own. Nothing listens until you hold the button. There is no wake word.
+
+A keyboard button next to the mic opens the same card with a text box. That box is always there when the voice button is on.
+
+## Where the button is
+
+The buttons sit at the lower left of the wall, including in kiosk mode and on a Kid Display. The quick-add button stays at the lower right.
+
+Turn it off under **Settings → Display → Voice button**.
+
+| Where Beacon is running | Default, until you save a choice |
+| --- | --- |
+| Home Assistant add-on | On |
+| Standalone browser or the Android app | Off |
+
+A saved on or off value stays as you set it. Resetting settings returns to that same default for the place Beacon is running.
+
+## Microphone permission
+
+The Web Speech API, and `getUserMedia` behind it, only runs in a secure context.
+
+| How you open Beacon | Mic |
+| --- | --- |
+| Home Assistant ingress over HTTPS | Shown. The browser asks for the microphone the first time you hold the button. |
+| `localhost` | Shown. |
+| Plain HTTP on a wall tablet (a kiosk pointed at `http://192.168.x.x`) | Hidden. The text box stays. |
+
+Beacon never opens the microphone on its own.
+
+## What happens to the words
+
+1. In the Home Assistant add-on, if a conversation agent is available, Beacon calls `conversation.process` (websocket when the wall is signed in, otherwise the REST service through the add-on).
+2. If that reply is an error, or there is no agent, or Beacon is not the add-on, Beacon POSTs the same text to `/beacon-action/voice`.
+
+The overlay shows the transcript and the reply for about seven seconds.
+
+These are the commands the first version handles:
+
+| Say | Result |
+| --- | --- |
+| "Mark dishes as done", "I finished vacuuming", "Alex finished vacuuming" | Completes that Beacon chore |
+| "Add milk to the grocery list", "Put eggs on the shopping list" | Adds the item on the matching Home Assistant todo list |
+| "What's on the calendar today", "Any events today" | Reads today's events |
+| "What chores are left", "What does Ada have left" | Reads today's remaining chores from Beacon's chart |
+
+"Show the calendar" switches the wall to that view. The wall also subscribes to the Home Assistant event `beacon_navigate` with `HomeAssistantClient.subscribeEvents` and switches views when Assist fires it from another device. That subscription needs the wall's websocket, which needs the add-on long-lived token or an ingress token. The wall's own "show the …" command still navigates from the voice reply when the websocket is not connected.
+
+"Check off milk" and "finish the report" still mark a todo item. They are not chore completions.
+
+## Completing a chore
+
+The completion is stored in Beacon's family data (`beacon_completions.json`), the same place a tap on the chore screen writes. It matches the chore title loosely, and a person's name when you say one.
+
+- One matching assignment: Beacon marks it done, updates that person's streak, fires `beacon_chore_completed`, and re-evaluates their privilege switch. If this completion finishes every chore assigned to them today, Beacon also fires `beacon_all_chores_done` and turns the switch on. Those are the same events and the same switch call as checking the chore on the wall.
+- The title matches one chore assigned to more than one person: the reply asks who finished it, and nothing is saved.
+- Several chores match: the reply lists them and asks which one.
+- It was already done today: the reply says so, and Beacon does not fire the events again.
+
+**What's left.** "What chores are left" reads Beacon's chore chart for today in the household's time zone. Say a name ("what does Ada have left") to limit it to one person. It does not read `todo.chores`.
+
+**PIN.** Speaking a chore does not ask for a PIN. The family PIN still only reveals kiosk navigation and exits Kid Display. Voice does not change that.
+
+Assist uses the same endpoint. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to `/beacon-action/complete-chore` on the add-on. The spoken reply is whatever that endpoint returns, including the question when more than one chore matches.
+
+## Home Assistant setup
+
+1. Install or update the sentence files:
+
+   ```bash
+   beacon/scripts/install-voice-intents.sh /config
+   ```
+
+   That copies `custom_sentences/en/beacon.yaml`, `custom_intents/beacon.yaml`, and `beacon_rest_command.yaml`.
+
+2. Load the intents if `configuration.yaml` does not already:
+
+   ```yaml
+   intent_script: !include_dir_merge_named custom_intents
+   ```
+
+3. Copy the `rest_command` block from `beacon_rest_command.yaml` into `configuration.yaml`. Replace `ADDON_SLUG` with the slug at the end of the add-on page URL (Settings → Add-ons → Beacon). From Home Assistant, the add-on listens on port 3000 of the Supervisor network. Chore completion is `POST /beacon-action/complete-chore`. "What chores are left" is `GET /beacon-action/chores-left?member=`.
+
+4. Restart Home Assistant so the new rest command exists. Then reload Conversation under **Developer Tools → YAML** if you only changed sentences.
+
+5. A conversation agent has to be set up (the built-in Home Assistant agent is enough). **Settings → Voice assistants**.
+
+6. Optional: set the add-on's long-lived access token if you want the wall to follow `beacon_navigate` from a speaker in another room.
+
+Grocery adds still use your Home Assistant todo list (`todo.grocery` unless you renamed it in the intent file). "What's on the calendar today" from Assist reads `calendar.family`. Beacon's own voice API reads every calendar. "What chores are left" reads Beacon's chart, not `todo.chores`.
+
+If the rest command is not installed yet, Assist answers with an error and the wall falls back to `/beacon-action/voice`, which completes the chore itself. A speaker that is not the wall still needs the rest command.
+
+## Plain HTTP kiosks
+
+Point the tablet at Beacon through Home Assistant's HTTPS ingress when you want the microphone. A bookmark to `http://homeassistant.local:8123` or a raw LAN IP hides the mic and leaves the text box. The commands are the same either way.

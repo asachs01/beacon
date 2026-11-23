@@ -1581,6 +1581,19 @@ export function SettingsView({
       <div className="settings-group">
         <div className="settings-row">
           <div>
+            <div className="settings-row-label">{t('settings.display.voiceButtonLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.voiceButtonSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.voiceButton}
+            onChange={(v) => onUpdateSettings({ voiceButton: v })}
+          />
+        </div>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-row">
+          <div>
             <div className="settings-row-label">{t('settings.display.screenSaverLabel')}</div>
             <div className="settings-row-sublabel">{t('settings.display.screenSaverSublabel')}</div>
           </div>

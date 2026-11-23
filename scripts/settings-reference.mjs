@@ -55,6 +55,7 @@ const COPY = {
   showSeconds: { labelKey: 'settings.display.showSecondsLabel', descriptionKey: 'settings.display.showSecondsSublabel' },
   kioskMode: { labelKey: 'settings.display.kioskModeLabel', descriptionKey: 'settings.display.kioskModeSublabel' },
   kioskRevealGesture: { labelKey: 'settings.display.kioskRevealLabel', descriptionKey: 'settings.display.kioskRevealSublabel' },
+  voiceButton: { labelKey: 'settings.display.voiceButtonLabel', descriptionKey: 'settings.display.voiceButtonSublabel' },
   choresEnabled: { labelKey: 'settings.chores.enableLabel', descriptionKey: 'settings.chores.enableSublabel' },
   choresResetTime: { labelKey: 'settings.chores.dailyResetTimeLabel', descriptionKey: 'settings.chores.dailyResetTimeSublabel' },
   streakDays: { labelKey: 'settings.chores.streakDurationLabel', descriptionKey: 'settings.chores.streakDurationSublabel', unit: 'days' },

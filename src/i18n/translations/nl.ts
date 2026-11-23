@@ -34,6 +34,20 @@ export const nl: Record<TranslationKey, string> = {
   'nav.more': 'Meer',
   'nav.closeMenu': 'Menu sluiten',
   'nav.mainNavigation': 'Hoofdnavigatie',
+  'nav.voice': 'Stem',
+
+  // ---- press-to-talk ----
+  'voice.holdToTalk': 'Ingedrukt houden om te praten',
+  'voice.typeCommand': 'Typ een opdracht',
+  'voice.placeholder': 'Probeer “afwas als klaar markeren”',
+  'voice.send': 'Verstuur',
+  'voice.listening': 'Luistert…',
+  'voice.working': 'Bezig…',
+  'voice.youSaid': 'Je zei',
+  'voice.reply': 'Antwoord',
+  'voice.dismiss': 'Sluiten',
+  'voice.noSpeech': 'Niet verstaan. Houd de microfoon ingedrukt of typ het.',
+  'voice.micNeedsHttps': 'De microfoon heeft HTTPS of localhost nodig. Typ de opdracht.',
 
   // ---- app chrome ----
   'app.kidDisplayNotFound': 'Lid voor kinderscherm niet gevonden — de volledige app wordt getoond.',
@@ -393,6 +407,8 @@ export const nl: Record<TranslationKey, string> = {
   'settings.display.kioskModeSublabel': 'Verbergt de zijbalk voor een opgeruimder scherm',
   'settings.display.kioskRevealLabel': 'Gebaar om navigatie te tonen',
   'settings.display.kioskRevealSublabel': 'Standaard aan. Houd in kioskmodus de bovenhoek 2 seconden ingedrukt of tik er 3 keer snel op om de zijbalk te tonen. Houd Escape ingedrukt op een toetsenbord. De zijbalk verdwijnt weer na 15 seconden inactiviteit. Een gezins-PIN is vereist als die is ingesteld.',
+  'settings.display.voiceButtonLabel': 'Spraakknop',
+  'settings.display.voiceButtonSublabel': 'Toon ingedrukt-houden-om-te-praten op de muur. Standaard aan in de Home Assistant-add-on. De microfoon heeft HTTPS of localhost nodig; ingress via HTTPS werkt, een gewone HTTP-kiosk houdt alleen het tekstvak.',
   'settings.display.kidDisplayTitle': 'Kinderscherm',
   'settings.display.kidDisplayDesc': 'Vergrendel een wandscherm voor één gezinslid — toont alleen diens routines en klusjes.',
   'settings.display.familyMemberLabel': 'Gezinslid',

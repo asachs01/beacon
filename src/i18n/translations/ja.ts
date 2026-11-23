@@ -34,6 +34,20 @@ export const ja: Record<TranslationKey, string> = {
   'nav.more': 'その他',
   'nav.closeMenu': 'メニューを閉じる',
   'nav.mainNavigation': 'メインナビゲーション',
+  'nav.voice': '音声',
+
+  // ---- press-to-talk ----
+  'voice.holdToTalk': '押しながら話す',
+  'voice.typeCommand': 'コマンドを入力',
+  'voice.placeholder': '例: 「皿を終わったにして」',
+  'voice.send': '送信',
+  'voice.listening': '聞いています…',
+  'voice.working': '処理しています…',
+  'voice.youSaid': '話した内容',
+  'voice.reply': '返答',
+  'voice.dismiss': '閉じる',
+  'voice.noSpeech': '聞き取れませんでした。マイクを押したまま話すか、入力してください。',
+  'voice.micNeedsHttps': 'マイクには HTTPS か localhost が必要です。コマンドを入力してください。',
 
   // ---- app chrome ----
   'app.kidDisplayNotFound': '子供用ディスプレイのメンバーが見つかりません — 通常のアプリを表示します。',
@@ -393,6 +407,8 @@ export const ja: Record<TranslationKey, string> = {
   'settings.display.kioskModeSublabel': 'サイドバーを非表示にしてすっきり表示します',
   'settings.display.kioskRevealLabel': 'ナビゲーションを表示するジェスチャー',
   'settings.display.kioskRevealSublabel': '既定でオンです。キオスクモードでは、上の角を2秒間長押しするか、3回すばやくタップするとサイドバーが表示されます。キーボードでは Escape を長押しします。15秒間操作がないと再び隠れます。家族の PIN が設定されている場合は入力が必要です。',
+  'settings.display.voiceButtonLabel': '音声ボタン',
+  'settings.display.voiceButtonSublabel': '壁の画面に押しながら話すボタンを表示します。Home Assistant アドオンでは初期状態でオンです。マイクには HTTPS か localhost が必要です。HTTPS の ingress では使え、HTTP だけのキオスクはテキストのみになります。',
   'settings.display.kidDisplayTitle': '子供用ディスプレイ',
   'settings.display.kidDisplayDesc': '壁掛けディスプレイを1人の家族メンバーに固定し、その人のルーティンと家事のみを表示します。',
   'settings.display.familyMemberLabel': '家族メンバー',
