@@ -57,7 +57,7 @@ const COPY = {
   kioskRevealGesture: { labelKey: 'settings.display.kioskRevealLabel', descriptionKey: 'settings.display.kioskRevealSublabel' },
   voiceButton: { labelKey: 'settings.display.voiceButtonLabel', descriptionKey: 'settings.display.voiceButtonSublabel' },
   choresEnabled: { labelKey: 'settings.chores.enableLabel', descriptionKey: 'settings.chores.enableSublabel' },
-  choresResetTime: { labelKey: 'settings.chores.dailyResetTimeLabel', descriptionKey: 'settings.chores.dailyResetTimeSublabel' },
+  choresResetTime: { labelKey: 'settings.chores.dailyResetTimeLabel', description: 'When the chore day starts (HH:mm). Privilege switches, chore-event local_date, and "what chores are left" use this same day. Unset, empty, or invalid values are treated as 00:00 (local midnight).' },
   streakDays: { labelKey: 'settings.chores.streakDurationLabel', descriptionKey: 'settings.chores.streakDurationSublabel', unit: 'days' },
   currencySymbol: { labelKey: 'settings.chores.currencySymbolLabel', description: 'Symbol shown beside chore rewards.' },
   payoutSchedule: { labelKey: 'settings.chores.payoutScheduleLabel', description: 'How often chore earnings are totaled.' },
