@@ -34,7 +34,7 @@ Latest release: https://github.com/asachs01/beacon/releases
 - [Grocery](__SITE_URL__/docs/features/grocery/): Shopping lists, including Home Assistant and AnyList sources.
 - [Photos](__SITE_URL__/docs/features/photos/): Local folders, Home Assistant media folders, and cached Google Photos shared albums.
 - [Screen Saver](__SITE_URL__/docs/features/screensaver/): Photo screensaver with clock overlay.
-- [Meals](__SITE_URL__/docs/features/meals/): In-app meal planner with a week grid for breakfast, lunch, dinner, and snacks (follows Settings → General → Week Starts On), an editable Menu card (including on empty days), Beacon recipes, and MCP beacon_set_meal_plan (merges by default; a null or empty name clears one slot; replace: true replaces the whole plan). Add ingredients to grocery list writes to the default list or the built-in Shopping List, including Home Assistant to-do lists, not Grocy.
+- [Meals](__SITE_URL__/docs/features/meals/) ([v1.48.0](https://github.com/asachs01/beacon/releases/tag/v1.48.0)): In-app meal planner with a week grid for breakfast, lunch, dinner, and snacks (follows Settings → General → Week Starts On), an editable Menu card (including on empty days), Beacon recipes, and MCP beacon_set_meal_plan (merges by default; a null or empty name clears one slot; replace: true replaces the whole plan). Add ingredients to grocery list writes to the default list or the built-in Shopping List, including Home Assistant to-do lists, not Grocy.
 - [Kid Display Mode](__SITE_URL__/docs/features/kid-display/): A simplified view for children.
 - [Dashboard](__SITE_URL__/docs/features/dashboard/): The home screen layout.
 - [Family Members](__SITE_URL__/docs/features/family/): People, colors, and calendars.
