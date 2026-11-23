@@ -1,3 +1,10 @@
+# [1.48.0](https://github.com/asachs01/beacon/compare/v1.47.0...v1.48.0) (2026-11-23)
+
+
+### Features
+
+* **meals:** add an in-app meal planner ([#109](https://github.com/asachs01/beacon/issues/109)) ([6101465](https://github.com/asachs01/beacon/commit/61014651a4e769afdc652c514ee85159b6f6d503))
+
 # [1.47.0](https://github.com/asachs01/beacon/compare/v1.46.4...v1.47.0) (2026-11-23)
 
 
