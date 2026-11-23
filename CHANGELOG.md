@@ -1,3 +1,10 @@
+# [1.47.0](https://github.com/asachs01/beacon/compare/v1.46.4...v1.47.0) (2026-11-23)
+
+
+### Features
+
+* **import:** add local magic import for pasted text ([#104](https://github.com/asachs01/beacon/issues/104)) ([f1f8bd8](https://github.com/asachs01/beacon/commit/f1f8bd8ade40df8f113b2211b1614e91614c0b31))
+
 ## [1.46.4](https://github.com/asachs01/beacon/compare/v1.46.3...v1.46.4) (2026-11-23)
 
 
