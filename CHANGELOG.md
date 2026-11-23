@@ -1,3 +1,11 @@
+## [1.46.2](https://github.com/asachs01/beacon/compare/v1.46.1...v1.46.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* **chores:** follow the daily reset time for privilege and chores-left days ([99bce4f](https://github.com/asachs01/beacon/commit/99bce4f812a83a9d6209c66b4cfbd12038e90784))
+* **chores:** show full chore names in stacked and landscape columns ([#98](https://github.com/asachs01/beacon/issues/98)) ([cc4c23d](https://github.com/asachs01/beacon/commit/cc4c23db896a3b1501120d29c37e612556da39c3))
+
 ## [1.46.1](https://github.com/asachs01/beacon/compare/v1.46.0...v1.46.1) (2026-11-23)
 
 
