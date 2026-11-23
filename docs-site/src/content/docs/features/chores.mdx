@@ -174,9 +174,15 @@ This data persists across page reloads but is tied to the specific browser/devic
 
 ---
 
+## Daily Reset Time
+
+Under **Settings → Chores → Daily Reset Time**, you set when the chore day starts. The default is `00:00` (local midnight). If the setting is unset, empty, or not a valid `HH:mm`, Beacon treats it as midnight.
+
+From **1.46.2**, that same chore day is what the chore chart means by "today". Privilege switches, the `local_date` on `beacon_chore_completed` and `beacon_all_chores_done`, and "what chores are left" all use it too. A completion at 23:00 with the reset set to 04:00 stays on that chore day until 04:00. Stored completions and settings are not migrated.
+
 ## Home Assistant privileges and events
 
-From **1.45.0**, when a child finishes today's chores, Beacon can turn on a switch, toggle, light, or fan, and it fires `beacon_chore_completed` and `beacon_all_chores_done` for automations. See [Chore privileges](/docs/features/chore-privileges/).
+From **1.45.0**, when a child finishes today's chores, Beacon can turn on a switch, toggle, light, or fan, and it fires `beacon_chore_completed` and `beacon_all_chores_done` for automations. "Today" follows Daily Reset Time, as of **1.46.2**. See [Chore privileges](/docs/features/chore-privileges/).
 
 ---
 
@@ -188,7 +194,7 @@ For example, you can say: "Hey, create a chore for Lennon to feed the dog every 
 
 See the [AI and Voice Control](/docs/reference/ai-integration/) reference for the complete list of chore tools and setup instructions.
 
-From **1.46.0**, Home Assistant Assist and the wall's hold-to-talk button can complete a Beacon chore, and "what chores are left" reads today's chart from the same family data. "Mark dishes as done" and "Alex finished vacuuming" write the completion in Beacon, fire the chore events, and re-check privilege switches. They do not update `todo.chores`. The microphone only works over HTTPS or localhost. See [Press-to-talk](/docs/features/press-to-talk/).
+From **1.46.0**, Home Assistant Assist and the wall's hold-to-talk button can complete a Beacon chore, and "what chores are left" reads the current chore day's chart from the same family data (the day set by Daily Reset Time, as of **1.46.2**). "Mark dishes as done" and "Alex finished vacuuming" write the completion in Beacon, fire the chore events, and re-check privilege switches. They do not update `todo.chores`. The microphone only works over HTTPS or localhost. See [Press-to-talk](/docs/features/press-to-talk/).
 
 ---
 
