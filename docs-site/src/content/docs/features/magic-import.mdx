@@ -1,0 +1,80 @@
+---
+title: "Magic Import"
+description: "Paste a school email, a text, or a list, review the draft events and list items, and save the ones you want."
+order: 2.5
+---
+
+# Magic Import
+
+Paste a school email, a text message, or a list into Beacon. It finds calendar events and grocery or to-do items, shows you the drafts, and waits for you to approve them. Nothing is saved until you do.
+
+Pasted text is processed by your Home Assistant conversation agent, or a local parser.
+
+This needs Beacon **TODO: version after [#104](https://github.com/asachs01/beacon/pull/104) ships**, or later.
+
+## Where to find it
+
+- On the dashboard, **Import** sits at the lower left.
+- On the calendar, **Import** is in the header, next to the clock.
+
+The button is hidden in kiosk mode, and it is not on [Kid Display](/docs/features/kid-display/). To show or hide it, use **Settings → Display → Magic Import**.
+
+## The Magic Import setting
+
+The setting is on by default in the Home Assistant add-on. In a standalone browser, it starts off until you turn it on. A saved on or off choice wins on later visits.
+
+## Paste, review, and approve
+
+1. Open **Import** and paste the message into **Paste a message**.
+2. Choose **Find items**. Beacon reads the text, then shows a review list.
+3. Check each draft. You can edit the fields, change the calendar or list, or remove a draft you do not want.
+4. Choose **Approve** to save what's left, or **Reject** to discard everything and close the dialog.
+
+If any family member has a PIN, Approve and Reject ask for a family PIN first. It is the same digits used to reveal kiosk navigation and to leave Kid Display. If no family PIN is set, Approve saves immediately.
+
+Drafts exist only while the dialog is open. Closing it without approving discards them. Existing calendar events, list items, and other stored records are not rewritten.
+
+## Privacy
+
+Pasted text is processed by your Home Assistant conversation agent, or a local parser. Beacon does not call a third-party model itself.
+
+When a conversation agent is available, Beacon sends the pasted text to that agent through Home Assistant (the same `conversation.process` path [press-to-talk](/docs/features/press-to-talk/) uses) and asks for a JSON reply. If that agent is a cloud service — for example the OpenAI or Google AI Home Assistant integrations — the pasted text is sent to that provider. Only the local parser, or a local conversation agent, keeps the text in the home.
+
+After reading, the review screen says **Home Assistant read this.** or **Read on this device.** It does not name the agent or say whether that agent is local or cloud.
+
+## Home Assistant agent or local parser
+
+Beacon uses the Home Assistant conversation agent when one is available. If there is no agent, the agent errors, or the reply is not valid JSON in the expected shape, Beacon uses the local parser instead.
+
+The review screen tells you which path ran, as noted above.
+
+### What the local parser can find
+
+These kinds of phrases parse well on the local path:
+
+- `Field trip Fri Dec 5 at 9am at the museum.`
+- `Practice tomorrow at 3pm`
+- `Lesson next Tuesday`
+- `Piano 12/5 from 3pm to 4:30pm`
+- A bullet list under a heading such as `Please bring:` becomes grocery items. A heading such as `Homework:` becomes to-do items.
+- A short stack of lines such as `milk` / `eggs` / `bread` becomes list items.
+
+Relative dates such as `today`, `tomorrow`, and `next Tuesday` use the display's timezone, not UTC. Numeric dates such as `12/5` follow the display locale (month-first in `en-US`).
+
+The conversation agent can often read messier prose. It is still limited to the same kinds of drafts: events and grocery or to-do items. Beacon does not invent items that are not in the message, and it rejects an agent reply that does not match the expected shape.
+
+## Draft fields
+
+Event drafts include a title, date, start and end time or all-day, and optional location and notes. Each draft can be assigned to a calendar. If a timed event has no end time, Beacon uses the default event duration from settings (one hour when that value is missing or not positive). Local calendar events can store a location when one is provided.
+
+List drafts are grocery or to-do items. Each one can be assigned to a list. Grocery items go to your default grocery list when it is available, otherwise the built-in shopping list, then the first list Beacon can use. To-do items follow the same rule with the built-in to-do list. Items can be saved to a local list, a Home Assistant to-do list, or Grocy when Grocy is enabled.
+
+## Limits and troubleshooting
+
+- This version does not read photos, PDFs, or incoming email on its own. Paste the text into the dialog.
+- When Home Assistant reads the text, Beacon sends the first 8,000 characters to the conversation agent.
+- If nothing is found, the review screen says to include a date like “Fri Dec 5” or a bullet list.
+- If some drafts cannot be saved, those stay in the list with an error so you can fix them and try again.
+- Events need a calendar to write to. List items need a list. A blank title is not saved.
+
+See also [Calendar](/docs/features/calendar/) and [Grocery](/docs/features/grocery/).
