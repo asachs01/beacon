@@ -447,6 +447,7 @@ export const en = {
   'settings.chores.enableSublabel': 'Show chore tracking and rewards',
   'settings.chores.dailyResetTimeLabel': 'Daily Reset Time',
   'settings.chores.dailyResetTimeSublabel': 'When daily chores reset',
+  'settings.chores.dailyResetTimeInvalid': 'Enter a time as HH:mm, from 00:00 to 23:59.',
   'settings.chores.streakDurationLabel': 'Streak Duration',
   'settings.chores.streakDurationSublabel': 'Days needed to maintain a streak',
   'settings.chores.rewardsTitle': 'Rewards',

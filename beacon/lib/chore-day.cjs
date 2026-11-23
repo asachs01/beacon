@@ -19,7 +19,7 @@
 
 const fs = require('fs/promises');
 const path = require('path');
-const { localDayKey } = require('./local-day-key.cjs');
+const { addCalendarDays, localDayKey } = require('./local-day-key.cjs');
 
 const BARE_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const RESET_TIME = /^(\d{1,2}):(\d{2})$/;
@@ -171,7 +171,56 @@ async function resolveResetTime(deps) {
   return null;
 }
 
+function storedChoreDay(streak) {
+  if (!streak || typeof streak.last_chore_day !== 'string') return '';
+  const trimmed = streak.last_chore_day.trim();
+  return BARE_DATE.test(trimmed) ? trimmed : '';
+}
+
+/**
+ * Chore day a streak row already counted.
+ * Rows written before streaks followed Daily Reset Time have no
+ * `last_chore_day`. Those were counted at calendar midnight. Read them
+ * that way so a later reset change does not recount the same day.
+ * Do not backfill the field.
+ */
+function creditedChoreDay(streak, timeZone) {
+  const saved = storedChoreDay(streak);
+  if (saved) return saved;
+  if (!streak || typeof streak.last_completed !== 'string' || !streak.last_completed.trim()) return '';
+  return choreDayKey(streak.last_completed, timeZone, null);
+}
+
+/**
+ * Apply one completion to a streak row.
+ * Today and yesterday are chore days (Daily Reset Time), stepped on the
+ * calendar date so a DST transition does not skip or repeat a day.
+ * Returns the same object when this chore day was already counted, so
+ * callers can skip writing. Existing rows are not rewritten until a new
+ * chore day counts.
+ */
+function advanceStreak(streak, now, timeZone, resetTime) {
+  const today = choreDayKey(now, timeZone, resetTime);
+  const lastDate = creditedChoreDay(streak, timeZone);
+  if (today !== '' && lastDate === today) return streak;
+  const yesterday = addCalendarDays(today, -1);
+  const base = streak && typeof streak === 'object' ? streak : {};
+  const current = lastDate !== '' && lastDate === yesterday
+    ? (Number(base.current) || 0) + 1
+    : 1;
+  const longest = Math.max(Number(base.longest) || 0, current);
+  const instant = now instanceof Date ? now : new Date(now);
+  return {
+    ...base,
+    current,
+    longest,
+    last_completed: Number.isNaN(instant.getTime()) ? new Date().toISOString() : instant.toISOString(),
+    last_chore_day: today,
+  };
+}
+
 module.exports = {
+  advanceStreak,
   choreDayKey,
   normalizeResetTime,
   parseResetMinutes,

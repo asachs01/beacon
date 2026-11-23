@@ -130,6 +130,7 @@
 }
 
 .settings-row-label {
+  display: block;
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-primary);
@@ -705,6 +706,30 @@
 .settings-time-input:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.settings-time-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.settings-time-field .settings-time-input {
+  width: 8.5rem;
+}
+
+.settings-time-input[aria-invalid="true"] {
+  border-color: var(--color-error, #ef4444);
+}
+
+.settings-field-error {
+  font-size: 0.78rem;
+  color: var(--color-error, #ef4444);
+  line-height: 1.4;
+  margin: 0;
+  text-align: right;
+  max-width: 220px;
 }
 
 /* --- Responsive --- */

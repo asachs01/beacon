@@ -441,6 +441,7 @@ export const de: Record<TranslationKey, string> = {
   'settings.chores.enableSublabel': 'Zeigt Aufgabenverfolgung und Belohnungen an',
   'settings.chores.dailyResetTimeLabel': 'Tägliche Rücksetzzeit',
   'settings.chores.dailyResetTimeSublabel': 'Wann tägliche Aufgaben zurückgesetzt werden',
+  'settings.chores.dailyResetTimeInvalid': 'Gib eine Uhrzeit im Format HH:mm ein, von 00:00 bis 23:59.',
   'settings.chores.streakDurationLabel': 'Serien-Dauer',
   'settings.chores.streakDurationSublabel': 'Tage, die für eine Serie nötig sind',
   'settings.chores.rewardsTitle': 'Belohnungen',

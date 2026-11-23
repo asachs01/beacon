@@ -441,6 +441,7 @@ export const ja: Record<TranslationKey, string> = {
   'settings.chores.enableSublabel': '家事の記録と報酬を表示します',
   'settings.chores.dailyResetTimeLabel': '毎日のリセット時刻',
   'settings.chores.dailyResetTimeSublabel': '毎日の家事がリセットされる時刻',
+  'settings.chores.dailyResetTimeInvalid': '時刻は HH:mm 形式（00:00〜23:59）で入力してください。',
   'settings.chores.streakDurationLabel': '連続記録の日数',
   'settings.chores.streakDurationSublabel': '連続記録を維持するために必要な日数',
   'settings.chores.rewardsTitle': '報酬',

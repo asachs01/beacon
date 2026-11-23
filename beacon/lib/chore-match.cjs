@@ -13,6 +13,7 @@ const {
   privilegeDecision,
   eventsForChoreChange,
 } = require('./chore-privileges.cjs');
+const { advanceStreak } = require('./chore-day.cjs');
 
 const STOP = new Set(['the', 'a', 'an', 'my', 'our', 'to']);
 
@@ -262,20 +263,17 @@ function doneToday(completions, choreId, memberId, now, timeZone, resetTime) {
   ));
 }
 
-function bumpStreak(streaks, memberId, now, timeZone) {
-  const next = (Array.isArray(streaks) ? streaks : []).map((entry) => ({ ...entry }));
-  const today = dayKey(now, timeZone || null);
-  const yesterday = dayKey(new Date(now.getTime() - 86400000), timeZone || null);
-  let streak = next.find((entry) => entry && entry.member_id === memberId);
-  if (!streak) {
-    streak = { member_id: memberId, current: 0, longest: 0, last_completed: '' };
-    next.push(streak);
-  }
-  const lastDate = dayKey(streak.last_completed, timeZone || null);
-  if (lastDate === today) return next;
-  streak.current = lastDate === yesterday ? streak.current + 1 : 1;
-  streak.longest = Math.max(streak.longest || 0, streak.current);
-  streak.last_completed = now.toISOString();
+function bumpStreak(streaks, memberId, now, timeZone, resetTime) {
+  const list = Array.isArray(streaks) ? streaks : [];
+  const index = list.findIndex((entry) => entry && entry.member_id === memberId);
+  const existing = index === -1
+    ? { member_id: memberId, current: 0, longest: 0, last_completed: '' }
+    : list[index];
+  const updated = advanceStreak(existing, now, timeZone || null, resetTime);
+  if (updated === existing) return list;
+  const next = list.slice();
+  if (index === -1) next.push(updated);
+  else next[index] = updated;
   return next;
 }
 
@@ -330,7 +328,7 @@ function applyChoreCompletion({ members, chores, completions, streaks, pair, now
     response: `Marked ${title} as done for ${who}.`,
     completion,
     completions: nextCompletions,
-    streaks: bumpStreak(streaks, member.id, now, zone),
+    streaks: bumpStreak(streaks, member.id, now, zone, resetTime),
     events,
     decisions: decision ? [decision] : [],
     chore_id: chore.id,

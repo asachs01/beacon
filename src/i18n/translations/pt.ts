@@ -441,6 +441,7 @@ export const pt: Record<TranslationKey, string> = {
   'settings.chores.enableSublabel': 'Mostra o registo de tarefas e recompensas',
   'settings.chores.dailyResetTimeLabel': 'Hora de reinício diário',
   'settings.chores.dailyResetTimeSublabel': 'Quando as tarefas diárias reiniciam',
+  'settings.chores.dailyResetTimeInvalid': 'Introduza uma hora no formato HH:mm, das 00:00 às 23:59.',
   'settings.chores.streakDurationLabel': 'Duração da sequência',
   'settings.chores.streakDurationSublabel': 'Dias necessários para manter uma sequência',
   'settings.chores.rewardsTitle': 'Recompensas',
