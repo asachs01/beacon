@@ -266,7 +266,7 @@ The response shape is unchanged: `{ "date", "days", "entries" }`.
 
 **`beacon_set_meal_plan`** -- Update the meal plan. The default mode is **merge**:
 
-**Changed in TODO: version after [#109](https://github.com/asachs01/beacon/pull/109) ships.** The tool used to replace the whole plan every time. It now adds or updates only the meals you send. Pass `replace: true` for the old behavior. A null or empty name clears that one date and meal slot.
+**Changed in 1.48.0.** `beacon_set_meal_plan` now adds or updates only the meals you send instead of replacing the whole plan. Pass `replace: true` for the old behavior. A null or empty name clears that one date and meal slot.
 
 - Each entry upserts the one slot for its `date` and `meal_type`.
 - An entry with no `id` still matches on `date` and `meal_type`.

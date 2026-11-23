@@ -285,7 +285,7 @@ For volume, also pass `volume_level` (0.0 to 1.0).
 | `beacon_get_meal_plan` | Get meal plan entries. Response shape is `{ date, days, entries }`. | `date` (optional), `days` (optional) |
 | `beacon_set_meal_plan` | Merge meals by default. Each entry upserts one `date` + `meal_type` slot (an entry with no id still matches on date and meal type). A null or empty `name` clears that slot. Other dates stay. `replace: true` replaces the whole plan with `entries`. | `entries`; optional `replace` |
 
-**Changed in TODO: version after [#109](https://github.com/asachs01/beacon/pull/109) ships.** `beacon_set_meal_plan` used to replace the whole plan every time. It now adds or updates only the meals you send. Pass `replace: true` for the old behavior. A null or empty name clears that one date and meal slot.
+**Changed in 1.48.0.** `beacon_set_meal_plan` now adds or updates only the meals you send instead of replacing the whole plan. Pass `replace: true` for the old behavior. A null or empty name clears that one date and meal slot.
 
 ### Example conversation
 
