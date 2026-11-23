@@ -7,6 +7,7 @@ import { rangesForView } from './utils/event-fetch-range';
 import { useFamily } from './hooks/useFamily';
 import { useWeather } from './hooks/useWeather';
 import { useChores } from './hooks/useChores';
+import { useChorePrivileges } from './hooks/useChorePrivileges';
 import { Clock } from './components/Clock';
 import { WeekCalendar } from './components/WeekCalendar';
 import { MonthCalendar } from './components/MonthCalendar';
@@ -69,6 +70,7 @@ export function App() {
 
   const {
     members,
+    loaded: familyLoaded,
     addMember,
     updateMember,
     removeMember,
@@ -146,9 +148,12 @@ export function App() {
   const {
     chores,
     completionsToday,
+    loaded: choresLoaded,
     completeChore,
     uncompleteChore,
   } = useChores();
+
+  useChorePrivileges(members, chores, familyLoaded && choresLoaded);
 
   const dashboardTasks = useDashboardTasks(connected, settings.groceryListIds);
 

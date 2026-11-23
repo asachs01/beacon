@@ -8,6 +8,12 @@ import {
 } from '../types/family';
 import { loadData, loadDataSync, saveData } from './beacon-store';
 import { localDayKey } from './date-keys';
+import { applyPrivilegeDecision, publishChoreEvents } from './chore-bridge';
+import {
+  eventsForChoreChange,
+  memberProgress,
+  privilegeDecision,
+} from './chore-privileges';
 
 const STORAGE_KEYS = {
   members: 'beacon_family_members',
@@ -140,6 +146,8 @@ export class FamilyStore {
         localDayKey(c.completed_at) === today
     );
     if (existing) return existing;
+    const chores = this.getChoresSync();
+    const progressBefore = memberProgress(memberId, chores, completions, today);
     const completion: ChoreCompletion = {
       chore_id: choreId,
       member_id: memberId,
@@ -151,6 +159,17 @@ export class FamilyStore {
 
     // Update streaks
     await this.updateStreakForMember(memberId);
+
+    const progressAfter = memberProgress(memberId, chores, completions, today);
+    void this.emitChoreChange({
+      choreId,
+      memberId,
+      completed: true,
+      localDate: today,
+      completions,
+      progressBefore,
+      progressAfter,
+    });
 
     return completion;
   }
@@ -165,9 +184,68 @@ export class FamilyStore {
         localDayKey(c.completed_at) === today
     );
     if (index === -1) return false;
+    const chores = this.getChoresSync();
+    const progressBefore = memberProgress(memberId, chores, completions, today);
     completions.splice(index, 1);
     await saveData(STORAGE_KEYS.completions, completions);
+    const progressAfter = memberProgress(memberId, chores, completions, today);
+    void this.emitChoreChange({
+      choreId,
+      memberId,
+      completed: false,
+      localDate: today,
+      completions,
+      progressBefore,
+      progressAfter,
+    });
     return true;
+  }
+
+  /**
+   * Fire HA events and set the privilege switch after the completion list is
+   * saved. Errors are logged and never reject the chore toggle.
+   */
+  private async emitChoreChange(args: {
+    choreId: string;
+    memberId: string;
+    completed: boolean;
+    localDate: string;
+    completions: ChoreCompletion[];
+    progressBefore: { completed: number; total: number };
+    progressAfter: { completed: number; total: number };
+  }): Promise<void> {
+    try {
+      const members = this.getMembersSync();
+      const chores = this.getChoresSync();
+      const member = members.find((entry) => entry.id === args.memberId) ?? {
+        id: args.memberId,
+        name: '',
+        avatar: '',
+        color: '',
+        role: 'child' as const,
+      };
+      const chore = chores.find((entry) => entry.id === args.choreId) ?? {
+        id: args.choreId,
+        name: '',
+        assigned_to: [args.memberId],
+        frequency: 'daily' as const,
+        value_cents: 0,
+      };
+      const events = eventsForChoreChange({
+        member,
+        chore,
+        completed: args.completed,
+        localDate: args.localDate,
+        progressBefore: args.progressBefore,
+        progressAfter: args.progressAfter,
+      });
+      await publishChoreEvents(events);
+      await applyPrivilegeDecision(
+        privilegeDecision(member, chores, args.completions, args.localDate),
+      );
+    } catch (err) {
+      console.warn('[beacon] chore side effects failed', err);
+    }
   }
 
   // --- Streaks ---

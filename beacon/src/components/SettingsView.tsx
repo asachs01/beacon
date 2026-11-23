@@ -34,6 +34,8 @@ import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { demoSettingsSection } from '../demo/location';
 import { PhotoSourceSettings } from './PhotoSourceSettings';
+import { EntityPicker } from './cards/EntityPicker';
+import { PRIVILEGE_DOMAINS } from '../api/chore-privileges';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -181,6 +183,7 @@ interface MemberForm {
   color: string;
   role: 'parent' | 'child';
   pin: string;
+  privilegeEntityId: string;
   calendar_entity: string;
   additional_calendar_entities: string[];
 }
@@ -191,6 +194,7 @@ const EMPTY_FORM: MemberForm = {
   color: MEMBER_COLORS[0],
   role: 'child',
   pin: '',
+  privilegeEntityId: '',
   calendar_entity: '',
   additional_calendar_entities: [],
 };
@@ -287,6 +291,7 @@ export function SettingsView({
       color: member.color,
       role: member.role,
       pin: member.pin ?? '',
+      privilegeEntityId: member.privilegeEntityId ?? '',
       calendar_entity: member.calendar_entity ?? '',
       additional_calendar_entities: member.additional_calendar_entities ?? [],
     });
@@ -302,6 +307,9 @@ export function SettingsView({
       color: memberForm.color,
       role: memberForm.role,
       pin: memberForm.pin || undefined,
+      privilegeEntityId: memberForm.role === 'child' && memberForm.privilegeEntityId
+        ? memberForm.privilegeEntityId
+        : undefined,
       calendar_entity: memberForm.calendar_entity || undefined,
       additional_calendar_entities: memberForm.additional_calendar_entities.length > 0
         ? memberForm.additional_calendar_entities
@@ -1062,6 +1070,23 @@ export function SettingsView({
               maxLength={6}
             />
           </div>
+          {memberForm.role === 'child' && (
+            <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+              <div>
+                <div className="settings-row-label">{t('settings.family.privilegeLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.family.privilegeSublabel')}</div>
+              </div>
+              <div style={{ minWidth: 240, maxWidth: 360, flex: 1 }}>
+                <EntityPicker
+                  id="member-privilege-entity"
+                  value={memberForm.privilegeEntityId}
+                  domains={PRIVILEGE_DOMAINS}
+                  emptyLabel={t('common.none')}
+                  onChange={(entityId) => setMemberForm((f) => ({ ...f, privilegeEntityId: entityId }))}
+                />
+              </div>
+            </div>
+          )}
           <div className="settings-row">
             <div>
               <div className="settings-row-label">{t('settings.family.calendarLabel')}</div>

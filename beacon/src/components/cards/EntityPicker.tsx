@@ -103,22 +103,30 @@ interface EntityPickerProps {
   value: string;
   onChange: (entityId: string) => void;
   id?: string;
+  /** When set, the list and the domain filter only include these domains. */
+  domains?: readonly string[];
+  emptyLabel?: string;
 }
 
 /** Single-entity picker dropdown, like Lovelace's entity config field. */
-export function EntityPicker({ value, onChange, id }: EntityPickerProps) {
+export function EntityPicker({ value, onChange, id, domains: domainAllowList, emptyLabel }: EntityPickerProps) {
   const options = useEntityOptions();
-  const domains = useDomains(options);
+  const scoped = useMemo(() => {
+    if (!domainAllowList || domainAllowList.length === 0) return options;
+    const allowed = new Set(domainAllowList);
+    return options.filter((option) => allowed.has(option.domain));
+  }, [options, domainAllowList]);
+  const domains = useDomains(scoped);
   const [search, setSearch] = useState('');
   const [domain, setDomain] = useState('');
 
   const visible = useMemo(() => {
-    const filtered = filterEntityOptions(options, search, domain);
+    const filtered = filterEntityOptions(scoped, search, domain);
     // Keep the saved entity selectable even when it falls outside the filters.
     if (!value || filtered.some((option) => option.entity_id === value)) return filtered;
     const selected = options.find((option) => option.entity_id === value);
     return selected ? [selected, ...filtered] : filtered;
-  }, [options, search, domain, value]);
+  }, [options, scoped, search, domain, value]);
 
   return (
     <div className="dash-entity-picker">
@@ -130,7 +138,7 @@ export function EntityPicker({ value, onChange, id }: EntityPickerProps) {
         onDomain={setDomain}
       />
       <select id={id} className="form-select" value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">Select an entity…</option>
+        <option value="">{emptyLabel ?? 'Select an entity…'}</option>
         {visible.map((option) => (
           <option key={option.entity_id} value={option.entity_id}>
             {option.label} ({option.entity_id})

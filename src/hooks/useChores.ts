@@ -8,6 +8,7 @@ export function useChores() {
   const [chores, setChores] = useState<Chore[]>(() => store.getChoresSync());
   const [completionsToday, setCompletionsToday] = useState<ChoreCompletion[]>([]);
   const [streaks, setStreaks] = useState<Streak[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     const [c, ct, s] = await Promise.all([
@@ -21,7 +22,13 @@ export function useChores() {
   }, [store]);
 
   useEffect(() => {
-    refresh();
+    let cancelled = false;
+    refresh().finally(() => {
+      if (!cancelled) setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [refresh]);
 
   const addChore = useCallback(
@@ -138,6 +145,7 @@ export function useChores() {
     chores,
     completionsToday,
     streaks,
+    loaded,
     addChore,
     updateChore,
     removeChore,

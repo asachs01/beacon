@@ -6,6 +6,7 @@ export function useFamily() {
   const store = useMemo(() => new FamilyStore(), []);
   // Start with localStorage data immediately, then update from server
   const [members, setMembers] = useState<FamilyMember[]>(() => store.getMembersSync());
+  const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     const m = await store.getMembers();
@@ -13,7 +14,13 @@ export function useFamily() {
   }, [store]);
 
   useEffect(() => {
-    refresh();
+    let cancelled = false;
+    refresh().finally(() => {
+      if (!cancelled) setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [refresh]);
 
   const addMember = useCallback(
@@ -47,6 +54,7 @@ export function useFamily() {
 
   return {
     members,
+    loaded,
     addMember,
     updateMember,
     removeMember,

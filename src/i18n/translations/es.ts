@@ -295,6 +295,8 @@ export const es: Record<TranslationKey, string> = {
   'settings.family.removeTask': 'Quitar tarea',
   'settings.family.addTask': '+ Añadir tarea',
   'settings.family.saveRoutine': 'Guardar rutina',
+  'settings.family.privilegeLabel': 'Interruptor de privilegio',
+  'settings.family.privilegeSublabel': 'Se enciende cuando este niño termina las tareas de hoy. Interruptor, toggle, luz o ventilador.',
 
   // ---- settings: calendar ----
   'settings.calendar.title': 'Calendario',

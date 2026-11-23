@@ -80,6 +80,11 @@ URL: __SITE_URL__/docs/features/chores/
 
 Assign chores, track streaks, and show a family leaderboard. Chores can have dollar values for a weekly earnings view.
 
+### Chore privileges
+URL: __SITE_URL__/docs/features/chore-privileges/
+
+Optional per-child Home Assistant entity (switch, input_boolean, light, or fan) that turns on when today's assigned chores are complete and off when they are not, including at local midnight. The add-on also fires `beacon_chore_completed` and `beacon_all_chores_done`. Standalone mode does not fire those events. Existing members are unchanged until a parent sets the switch.
+
 ### Grocery
 URL: __SITE_URL__/docs/features/grocery/
 

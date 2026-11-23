@@ -1,0 +1,54 @@
+blueprint:
+  name: Beacon — unlock a device when chores are done
+  description: >
+    Turns on a switch, input boolean, light, or fan when Beacon fires
+    beacon_all_chores_done (a child finished every chore assigned to them
+    today). This blueprint only turns the device on. It does not turn it off
+    at midnight or when a chore is unchecked. For that, set the child's
+    Privilege switch in Beacon Settings instead of, or in addition to, this
+    automation.
+  domain: automation
+  author: Beacon
+  source_url: https://github.com/asachs01/beacon/blob/main/blueprints/automation/beacon/chores_unlock_wifi.yaml
+  input:
+    privilege_entity:
+      name: Device to turn on
+      description: >
+        Wi-Fi, TV, game console, or any other switch, input_boolean, light,
+        or fan.
+      selector:
+        entity:
+          domain:
+            - switch
+            - input_boolean
+            - light
+            - fan
+    member_name:
+      name: Child's name
+      description: >
+        Leave blank to run for every family member who finishes their chores.
+        Otherwise this must match the member name in Beacon exactly, including
+        capitals.
+      default: ""
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: event
+    event_type: beacon_all_chores_done
+
+variables:
+  member_filter: !input member_name
+
+condition:
+  - condition: template
+    value_template: >-
+      {{ member_filter | trim == '' or trigger.event.data.member_name == member_filter | trim }}
+
+action:
+  - service: homeassistant.turn_on
+    target:
+      entity_id: !input privilege_entity
