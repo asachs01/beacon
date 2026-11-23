@@ -149,6 +149,22 @@ const INTENT_PATTERNS = [
     }),
   },
   {
+    name: 'chores_left',
+    patterns: [
+      /^(?:please\s+)?what\s+chores?\s+(?:are\s+left|need(?:s)?\s+to\s+be\s+done)(?:\s+for\s+(.+))?$/i,
+      /^(?:please\s+)?any\s+chores?\s+left(?:\s+for\s+(.+))?$/i,
+      /^(?:please\s+)?what\s+needs\s+to\s+be\s+done(?:\s+for\s+(.+))?$/i,
+      /^(?:please\s+)?show\s+(?:the\s+)?chore\s+list$/i,
+      /^(?:please\s+)?what\s+chores?\s+does\s+(.+?)\s+have(?:\s+left)?$/i,
+      /^(?:please\s+)?what\s+does\s+(.+?)\s+(?:still\s+)?have\s+(?:left|to\s+do)$/i,
+      /^(?:please\s+)?what(?:'s| is)\s+left\s+for\s+(.+)$/i,
+    ],
+    handler: (m) => ({
+      memberName: cleanupPhrase(m[1] || ''),
+      response: null,
+    }),
+  },
+  {
     name: 'navigate',
     patterns: [/^(?:please\s+)?(?:show|go\s+to|open|switch\s+to|navigate\s+to)\s+(?:the\s+)?(.+)$/i],
     handler: (m) => {

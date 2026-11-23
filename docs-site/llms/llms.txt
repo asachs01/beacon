@@ -29,7 +29,7 @@ Latest release: https://github.com/asachs01/beacon/releases
 - [Calendar](__SITE_URL__/docs/features/calendar/): Month and week views, recurring events, and drag-to-reschedule.
 - [Chores](__SITE_URL__/docs/features/chores/): Assignments, streaks, and a family leaderboard.
 - [Chore privileges](__SITE_URL__/docs/features/chore-privileges/): Optional Home Assistant switch when today's chores are done, plus the chore events automations can use.
-- [Press-to-talk](__SITE_URL__/docs/features/press-to-talk/): Hold-to-talk on the wall. Runs Home Assistant Assist or Beacon's voice API, and completes Beacon chores.
+- [Press-to-talk](__SITE_URL__/docs/features/press-to-talk/): Hold-to-talk on the wall. Runs Home Assistant Assist or Beacon's voice API, completes Beacon chores, and reads today's remaining chores from the family chart.
 - [Grocery](__SITE_URL__/docs/features/grocery/): Shopping lists, including Home Assistant and AnyList sources.
 - [Photos](__SITE_URL__/docs/features/photos/): Local folders, Home Assistant media folders, and cached Google Photos shared albums.
 - [Screen Saver](__SITE_URL__/docs/features/screensaver/): Photo screensaver with clock overlay.

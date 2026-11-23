@@ -24,6 +24,7 @@ const { createGooglePhotoCache, REFRESH_MS } = require('./lib/google-photos-cach
 const { acceptedChoreEvents, createPrivilegeScheduler } = require('./lib/chore-privileges.cjs');
 const { parseIntent, resolveTodoEntity } = require('./lib/voice-intents.cjs');
 const { completeStoredChore, handleCompleteChore } = require('./lib/complete-chore.cjs');
+const { listStoredChores, handleChoresLeft } = require('./lib/chores-left.cjs');
 const googlePhotos = createGooglePhotoCache({
   dataDir: path.join(DATA_DIR, 'photo-cache', 'google'),
 });
@@ -573,6 +574,10 @@ function handleCompleteChoreFromServer(req, res) {
   handleCompleteChore(req, res, completeChoreDeps());
 }
 
+function handleChoresLeftFromServer(req, res) {
+  handleChoresLeft(req, res, completeChoreDeps());
+}
+
 /**
  * POST /beacon-action/voice
  * Body: { "text": "add milk to the grocery list" }
@@ -616,6 +621,22 @@ function handleVoiceAction(req, res) {
       }
 
       // --- Beacon chore (FamilyStore, not todo.chores) ---
+      if (intent.name === 'chores_left') {
+        try {
+          const result = await listStoredChores(completeChoreDeps(), intent.memberName || '');
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (err) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            response: `Couldn't read the chore chart: ${err.message}`,
+            action: 'chores_left',
+            success: false,
+          }));
+        }
+        return;
+      }
+
       if (intent.name === 'complete_chore') {
         try {
           const result = await runCompleteChore(intent.chore, intent.memberName || '');
@@ -797,6 +818,12 @@ const server = http.createServer((req, res) => {
   // Complete a Beacon chore in FamilyStore (used by HA Assist intents).
   if (req.url.split('?')[0] === '/beacon-action/complete-chore') {
     handleCompleteChoreFromServer(req, res);
+    return;
+  }
+
+  // Remaining chores on today's chart (used by HA Assist and the voice API).
+  if (req.url.split('?')[0] === '/beacon-action/chores-left') {
+    handleChoresLeftFromServer(req, res);
     return;
   }
 

@@ -49,6 +49,7 @@ These are the commands the first version handles:
 | "Mark dishes as done", "I finished vacuuming", "Alex finished vacuuming" | Completes that Beacon chore |
 | "Add milk to the grocery list", "Put eggs on the shopping list" | Adds the item on the matching Home Assistant todo list |
 | "What's on the calendar today", "Any events today" | Reads today's events |
+| "What chores are left", "What does Ada have left" | Reads today's remaining chores from Beacon's chart |
 
 "Show the calendar" switches the wall to that view. The wall also subscribes to the Home Assistant event `beacon_navigate` with `HomeAssistantClient.subscribeEvents` and switches views when Assist fires it from another device. That subscription needs the wall's websocket, which needs the add-on long-lived token or an ingress token. The wall's own "show the …" command still navigates from the voice reply when the websocket is not connected.
 
@@ -62,6 +63,8 @@ The completion is stored in Beacon's family data (`beacon_completions.json`), th
 - The title matches one chore assigned to more than one person: the reply asks who finished it, and nothing is saved.
 - Several chores match: the reply lists them and asks which one.
 - It was already done today: the reply says so, and Beacon does not fire the events again.
+
+**What's left.** "What chores are left" reads Beacon's chore chart for today in the household's time zone. Say a name ("what does Ada have left") to limit it to one person. It does not read `todo.chores`.
 
 **PIN.** Speaking a chore does not ask for a PIN. The family PIN still only reveals kiosk navigation and exits Kid Display. Voice does not change that.
 
@@ -83,7 +86,7 @@ Assist uses the same endpoint. `BeaconCompleteChore` and `BeaconCompleteChoreByP
    intent_script: !include_dir_merge_named custom_intents
    ```
 
-3. Copy the `rest_command` block from `beacon_rest_command.yaml` into `configuration.yaml`. Replace `ADDON_SLUG` with the slug at the end of the add-on page URL (Settings → Add-ons → Beacon). From Home Assistant, the add-on listens on port 3000 of the Supervisor network, for example `http://local_beacon:3000/beacon-action/complete-chore`.
+3. Copy the `rest_command` block from `beacon_rest_command.yaml` into `configuration.yaml`. Replace `ADDON_SLUG` with the slug at the end of the add-on page URL (Settings → Add-ons → Beacon). From Home Assistant, the add-on listens on port 3000 of the Supervisor network. Chore completion is `POST /beacon-action/complete-chore`. "What chores are left" is `GET /beacon-action/chores-left?member=`.
 
 4. Restart Home Assistant so the new rest command exists. Then reload Conversation under **Developer Tools → YAML** if you only changed sentences.
 
@@ -91,7 +94,7 @@ Assist uses the same endpoint. `BeaconCompleteChore` and `BeaconCompleteChoreByP
 
 6. Optional: set the add-on's long-lived access token if you want the wall to follow `beacon_navigate` from a speaker in another room.
 
-Grocery adds still use your Home Assistant todo list (`todo.grocery` unless you renamed it in the intent file). "What's on the calendar today" from Assist reads `calendar.family`. Beacon's own voice API reads every calendar. "What chores are left" still reads `todo.chores` when that entity exists. Completing a chore does not.
+Grocery adds still use your Home Assistant todo list (`todo.grocery` unless you renamed it in the intent file). "What's on the calendar today" from Assist reads `calendar.family`. Beacon's own voice API reads every calendar. "What chores are left" reads Beacon's chart, not `todo.chores`.
 
 If the rest command is not installed yet, Assist answers with an error and the wall falls back to `/beacon-action/voice`, which completes the chore itself. A speaker that is not the wall still needs the rest command.
 

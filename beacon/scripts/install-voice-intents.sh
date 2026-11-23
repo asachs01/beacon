@@ -88,8 +88,9 @@ cat <<'CHECKLIST'
      - todo.grocery        Grocery / shopping list (add item, read list)
      - calendar.family     Family calendar (read today / tomorrow)
      - timer.beacon_voice  Timer helper (create in HA Helpers)
-     - todo.chores         Only "what chores are left" (BeaconChoreStatus).
-                           Completing a chore does not use this list.
+
+     "What chores are left" reads Beacon's chore chart
+     (GET /beacon-action/chores-left). It does not read todo.chores.
 
      If your entities have different names, edit the installed files:
        - Custom intents:   /config/custom_intents/beacon.yaml

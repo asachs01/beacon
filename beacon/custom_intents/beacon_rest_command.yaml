@@ -16,3 +16,6 @@ rest_command:
     method: POST
     content_type: "application/json"
     payload: "{{ {'chore': chore, 'name': name | default('')} | to_json }}"
+  beacon_chores_left:
+    url: "http://ADDON_SLUG:3000/beacon-action/chores-left?member={{ name | default('') | urlencode }}"
+    method: GET

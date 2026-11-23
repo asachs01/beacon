@@ -309,7 +309,8 @@ Beacon ships with custom sentence and intent handler files for [Home Assistant A
 | "Show the dashboard" | Navigates the Beacon UI |
 | "Set a timer for 5 minutes" | Starts a countdown timer |
 | "What's on the grocery list" | Reads uncompleted grocery items |
-| "What chores are left" | Lists remaining chores |
+| "What chores are left" | Lists today's remaining chores from Beacon's chart |
+| "What does Ada have left" | Lists that person's remaining chores for today |
 
 ### Installation
 
@@ -337,7 +338,7 @@ The intents reference these entities by default. Create or rename them to match:
 
 If your entities have different names, edit the installed YAML files in your HA config directory (`custom_intents/beacon.yaml` and `custom_sentences/en/beacon.yaml`).
 
-Chore completion does not use a todo list. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to the add-on's `/beacon-action/complete-chore`. Copy `custom_intents/beacon_rest_command.yaml` into `configuration.yaml`, replace `ADDON_SLUG` with the slug from the add-on page URL, and restart Home Assistant. "What chores are left" (`BeaconChoreStatus`) still reads `todo.chores` when that entity exists.
+Chores do not use a todo list. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to `/beacon-action/complete-chore`. `BeaconChoreStatus` and `BeaconChoreStatusByPerson` call `rest_command.beacon_chores_left`, which GETs `/beacon-action/chores-left`. Copy `custom_intents/beacon_rest_command.yaml` into `configuration.yaml`, replace `ADDON_SLUG` with the slug from the add-on page URL, and restart Home Assistant.
 
 ### Customizing
 

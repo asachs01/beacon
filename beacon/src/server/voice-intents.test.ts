@@ -48,6 +48,25 @@ describe('parseIntent routing', () => {
     });
   });
 
+  it('reads remaining chores from the family chart, not a todo list', () => {
+    expect(parseIntent('what chores are left')).toMatchObject({
+      name: 'chores_left',
+      memberName: '',
+    });
+    expect(parseIntent('any chores left')).toMatchObject({ name: 'chores_left', memberName: '' });
+    expect(parseIntent('what needs to be done')).toMatchObject({ name: 'chores_left' });
+    expect(parseIntent('show the chore list')).toMatchObject({ name: 'chores_left', memberName: '' });
+    expect(parseIntent('what chores does Ada have left')).toMatchObject({
+      name: 'chores_left',
+      memberName: 'Ada',
+    });
+    expect(parseIntent("what's left for Bo")).toMatchObject({
+      name: 'chores_left',
+      memberName: 'Bo',
+    });
+    expect(parseIntent('show the chores')).toMatchObject({ name: 'navigate', view: 'chores' });
+  });
+
   it('reads today from calendar phrases', () => {
     expect(parseIntent("what's on the calendar today")).toMatchObject({ name: 'calendar', fetch: 'calendar' });
     expect(parseIntent('what is on the calendar')).toMatchObject({ name: 'calendar' });

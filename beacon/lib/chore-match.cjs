@@ -391,6 +391,8 @@ module.exports = {
   normalize,
   tokens,
   titleMatches,
+  matchMembers,
+  assignmentPairs,
   matchChore,
   applyChoreCompletion,
   planChoreCompletion,

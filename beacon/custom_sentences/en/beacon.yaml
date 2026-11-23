@@ -117,3 +117,16 @@ intents:
           - "any chores left"
           - "show the chore list"
           - "what needs to be done"
+
+  BeaconChoreStatusByPerson:
+    data:
+      - sentences:
+          - "what chores does {name} have left"
+          - "what chores are left for {name}"
+          - "any chores left for {name}"
+          - "what does {name} have left"
+          - "what's left for {name}"
+          - "what is left for {name}"
+        slots:
+          name:
+            type: text
