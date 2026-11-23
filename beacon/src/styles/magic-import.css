@@ -1,0 +1,107 @@
+.magic-import-launch {
+  position: fixed;
+  bottom: 24px;
+  left: calc(var(--sidebar-width, 64px) + 16px);
+  z-index: 80;
+}
+
+.beacon--sidebar-right .magic-import-launch,
+.beacon--sidebar-bottom .magic-import-launch,
+.beacon--kiosk .magic-import-launch {
+  left: 16px;
+}
+
+.beacon--sidebar-bottom .magic-import-launch {
+  bottom: calc(var(--mobile-tab-bar-height, 72px) + 16px);
+}
+
+.magic-import-header-btn {
+  margin-right: 8px;
+}
+
+.modal.magic-import-modal {
+  width: min(640px, calc(100vw - 32px));
+  max-width: 640px;
+  max-height: min(860px, calc(100vh - 32px));
+}
+
+.modal.magic-import-modal .settings-input,
+.modal.magic-import-modal .settings-select,
+.modal.magic-import-modal .magic-import-text {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.magic-import-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.magic-import-hint {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.magic-import-text {
+  width: 100%;
+  min-height: 160px;
+  resize: vertical;
+  font-family: var(--font-family-body);
+}
+
+.magic-import-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.magic-import-draft {
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--bg-surface);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.magic-import-draft-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.magic-import-kind {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.magic-import-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.magic-import-times {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+}

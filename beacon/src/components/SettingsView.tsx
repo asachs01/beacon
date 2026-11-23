@@ -1589,6 +1589,16 @@ export function SettingsView({
             onChange={(v) => onUpdateSettings({ voiceButton: v })}
           />
         </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.display.magicImportLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.magicImportSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.magicImport}
+            onChange={(v) => onUpdateSettings({ magicImport: v })}
+          />
+        </div>
       </div>
 
       <div className="settings-group">

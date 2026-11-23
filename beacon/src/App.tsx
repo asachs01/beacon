@@ -29,6 +29,7 @@ import { ScreenSaver } from './components/ScreenSaver';
 import { GroceryView } from './components/GroceryView';
 import { OmniAdd } from './components/OmniAdd';
 import { VoiceAssist } from './components/VoiceAssist';
+import { MagicImportModal } from './components/MagicImportModal';
 import { CalendarSidebar } from './components/CalendarSidebar';
 import { Timer } from './components/Timer';
 import { WeatherView } from './components/WeatherView';
@@ -185,6 +186,7 @@ export function App() {
   );
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [prefillTime, setPrefillTime] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<SidebarView>(() =>
@@ -773,6 +775,15 @@ export function App() {
               onNavigateTimer={() => setActiveView('timer')}
               sidebarPosition={sidebarPos}
             />
+            {settings.magicImport && !settings.kioskMode && (
+              <button
+                type="button"
+                className="settings-btn settings-btn--primary magic-import-launch"
+                onClick={() => setShowImport(true)}
+              >
+                {t('import.open')}
+              </button>
+            )}
           </>
         ) : activeView === 'chores' ? (
           settings.choresEnabled ? (
@@ -850,6 +861,15 @@ export function App() {
                 )}
               </div>
               <div className="header-right">
+                {settings.magicImport && !settings.kioskMode && (
+                  <button
+                    type="button"
+                    className="settings-btn magic-import-header-btn"
+                    onClick={() => setShowImport(true)}
+                  >
+                    {t('import.open')}
+                  </button>
+                )}
                 <Clock />
               </div>
             </header>
@@ -926,6 +946,23 @@ export function App() {
           onClose={handleCloseModal}
           prefillDate={prefillDate}
           prefillTime={prefillTime}
+        />
+      )}
+
+      {showImport && settings.magicImport && !settings.kioskMode && (
+        <MagicImportModal
+          calendars={calendars}
+          members={members}
+          defaultCalendarId={settings.defaultCalendar}
+          defaultGroceryListId={settings.defaultGroceryList}
+          defaultTodoListId="beacon-todo"
+          defaultDurationMinutes={settings.defaultEventDuration}
+          locale={settings.locale}
+          grocyEnabled={settings.grocyEnabled}
+          getClient={client}
+          onCreateEvent={createEvent}
+          onClose={() => setShowImport(false)}
+          onCommitted={() => { void refetchActiveRanges(); }}
         />
       )}
 

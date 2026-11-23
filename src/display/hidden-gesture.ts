@@ -65,6 +65,12 @@ export function normalizePin(pin: string): string {
   return pin.replace(/\D/g, '').slice(0, 6);
 }
 
+/** True when the entered PIN matches any configured family PIN. */
+export function pinMatches(pin: string, configuredPins: readonly string[]): boolean {
+  const entered = normalizePin(pin);
+  return entered.length > 0 && configuredPins.some((configured) => normalizePin(configured) === entered);
+}
+
 export function configuredMemberPins(members: readonly { pin?: string | null }[]): string[] {
   const pins: string[] = [];
   for (const member of members) {
@@ -171,8 +177,7 @@ export function reduceHiddenGesture(
     }
     case 'submit-pin': {
       if (state.phase !== 'pin') return state;
-      const entered = normalizePin(event.pin);
-      const ok = entered.length > 0 && event.configuredPins.some((pin) => normalizePin(pin) === entered);
+      const ok = pinMatches(event.pin, event.configuredPins);
       if (!ok) return { ...state, pinError: true, lastActivityAt: event.now };
       return {
         phase: 'granted',

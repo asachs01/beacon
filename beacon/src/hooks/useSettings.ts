@@ -76,6 +76,12 @@ export interface BeaconSettings {
    * Home Assistant add-on leaves it on.
    */
   voiceButton: boolean;
+  /**
+   * Import button on the dashboard and calendar. The literal default is on.
+   * On first load, a standalone browser turns it off until someone enables
+   * it; the Home Assistant add-on leaves it on. A saved true/false wins.
+   */
+  magicImport: boolean;
 
   // Chores
   choresEnabled: boolean;
@@ -140,6 +146,7 @@ function buildDefaults(): BeaconSettings {
     kioskMode: false,
     kioskRevealGesture: true,
     voiceButton: true,
+    magicImport: true,
 
     choresEnabled: true,
     choresResetTime: '00:00',
@@ -160,7 +167,7 @@ async function loadSettingsAsync(): Promise<BeaconSettings> {
   const stored = serverStored ?? (configAllowsBrowserStorage
     ? loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {})
     : {});
-  return withVoiceButtonDefault(withNormalizedFonts({
+  return withUnstoredDefaults(withNormalizedFonts({
     ...defaults,
     ...stored,
     // The add-on configuration is authoritative: it can disable browser
@@ -185,6 +192,31 @@ export function withVoiceButtonDefault(
     addOn = false;
   }
   return { ...settings, voiceButton: addOn };
+}
+
+/**
+ * A saved true/false wins. When the key has never been stored, the add-on
+ * shows Import and a standalone browser hides it.
+ */
+export function withMagicImportDefault(
+  settings: BeaconSettings,
+  stored: Partial<BeaconSettings> | null | undefined,
+): BeaconSettings {
+  if (stored && typeof stored.magicImport === 'boolean') return settings;
+  let addOn = false;
+  try {
+    addOn = isAddOn();
+  } catch {
+    addOn = false;
+  }
+  return { ...settings, magicImport: addOn };
+}
+
+function withUnstoredDefaults(
+  settings: BeaconSettings,
+  stored: Partial<BeaconSettings> | null | undefined,
+): BeaconSettings {
+  return withMagicImportDefault(withVoiceButtonDefault(settings, stored), stored);
 }
 
 function withNormalizedFonts(settings: BeaconSettings): BeaconSettings {
@@ -218,9 +250,9 @@ function initialSettings(): BeaconSettings {
   const defaults = buildDefaults();
   // The screenshot build writes fixtures before React starts. Read them on
   // the first paint so views don't flash the empty defaults.
-  if (import.meta.env.VITE_DEMO !== 'true') return withVoiceButtonDefault(defaults, null);
+  if (import.meta.env.VITE_DEMO !== 'true') return withUnstoredDefaults(defaults, null);
   const stored = loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {});
-  return withVoiceButtonDefault(withNormalizedFonts({ ...defaults, ...stored }), stored);
+  return withUnstoredDefaults(withNormalizedFonts({ ...defaults, ...stored }), stored);
 }
 
 export function useSettings() {
@@ -273,7 +305,7 @@ export function useSettings() {
 
   /** Reset all settings to defaults (merged with config.yaml values). */
   const resetSettings = useCallback(() => {
-    const defaults = withVoiceButtonDefault(buildDefaults(), null);
+    const defaults = withUnstoredDefaults(buildDefaults(), null);
     setSettingsState(defaults);
     persistSettings(defaults);
   }, []);
@@ -288,7 +320,7 @@ export function useSettings() {
     try {
       const parsed = JSON.parse(json);
       const defaults = buildDefaults();
-      setSettingsState(withVoiceButtonDefault(withNormalizedFonts({ ...defaults, ...parsed }), parsed));
+      setSettingsState(withUnstoredDefaults(withNormalizedFonts({ ...defaults, ...parsed }), parsed));
     } catch {
       // invalid JSON — do nothing
     }

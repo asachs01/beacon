@@ -67,6 +67,7 @@ export function useLocalCalendar() {
     start_date?: string;
     end_date?: string;
     description?: string;
+    location?: string;
   }) => {
     const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const allDay = !!event.start_date;
@@ -85,6 +86,7 @@ export function useLocalCalendar() {
       description: event.description,
       color: LOCAL_CALENDAR.color,
     };
+    if (event.location) newEvent.location = event.location;
     setEvents(prev => [...prev, newEvent]);
     return newEvent;
   }, []);
