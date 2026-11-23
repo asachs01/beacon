@@ -1,3 +1,10 @@
+## [1.46.3](https://github.com/asachs01/beacon/compare/v1.46.2...v1.46.3) (2026-11-23)
+
+
+### Bug Fixes
+
+* **voice:** append the intent_script include from the installer ([#101](https://github.com/asachs01/beacon/issues/101)) ([13a9dd2](https://github.com/asachs01/beacon/commit/13a9dd28a63a09f36517db8dd5d25ed5b9f40b38))
+
 ## [1.46.2](https://github.com/asachs01/beacon/compare/v1.46.1...v1.46.2) (2026-11-23)
 
 
