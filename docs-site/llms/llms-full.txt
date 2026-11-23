@@ -1,6 +1,6 @@
 # Beacon — full documentation summary for language models
 
-> Beacon is a free, MIT-licensed family command center for wall-mounted displays, and a self-hosted alternative to Skylight Calendar, Hearth Display, and DAKboard. Install it as a one-click Home Assistant add-on, or run it standalone with Docker. It runs in any tablet's browser, or as a signed Android APK sideloaded from GitHub releases (it is not on the Play Store, and there is no iOS build). The dashboard includes a calendar with month and week views, chores, grocery lists, weather, a photo screensaver, custom fonts and themes, Kid Display, kiosk mode, and multiple languages. Meal plans are display-only: they are filled in from MCP tools or an AnyList sync, and there is no in-app meal planner. Google Photos support works through pasted shared-album links, which the server caches and refreshes every 6 hours; that path relies on an unofficial Google page format. You can also use any Home Assistant media folder as a photo source.
+> Beacon is a free, MIT-licensed family command center for wall-mounted displays, and a self-hosted alternative to Skylight Calendar, Hearth Display, and DAKboard. Install it as a one-click Home Assistant add-on, or run it standalone with Docker. It runs in any tablet's browser, or as a signed Android APK sideloaded from GitHub releases (it is not on the Play Store, and there is no iOS build). The dashboard includes a calendar with month and week views, chores, grocery lists, weather, a photo screensaver, custom fonts and themes, Kid Display, kiosk mode, and multiple languages. There is an in-app meal planner with a week grid and an editable dashboard Menu card (including on empty days). Meals can use a Beacon recipe and add ingredients to the grocery list. The MCP tool beacon_set_meal_plan merges by default; a null or empty name clears one slot, and replace: true restores the old replace-everything behavior. You can still fill the plan from an AnyList sync. Google Photos support works through pasted shared-album links, which the server caches and refreshes every 6 hours; that path relies on an unofficial Google page format. You can also use any Home Assistant media folder as a photo source.
 
 - Docs: __SITE_URL__
 - Compact index: __SITE_URL__/llms.txt
@@ -13,7 +13,6 @@ This file uses the current Netlify docs host. The domain may change later; paths
 ## What Beacon is not
 
 - Not a hosted or subscription product. There is no Beacon cloud account.
-- Not a meal planner. The meals view only displays a plan that was supplied by MCP tools or the AnyList sync script.
 - Not on the Apple App Store or Google Play. Android is a signed APK from GitHub releases, sideloaded. There is no iOS build.
 - Not an official Google Photos integration. Shared-album links are read from Google's public share page, which is unofficial and can change. If a refresh fails, Beacon keeps the last cached photos and shows a warning in Settings.
 
@@ -113,7 +112,7 @@ A photo screensaver with crossfade transitions and an optional clock overlay.
 ### Meals
 URL: __SITE_URL__/docs/features/meals/
 
-Shows breakfast, lunch, dinner, and snacks on the dashboard. There is no in-app planner. Fill the plan with Beacon's MCP meal tools or the `scripts/sync-meals.mjs` AnyList sync script.
+An in-app meal planner. The Meals sidebar view is a week grid for breakfast, lunch, dinner, and snacks. The dashboard Menu card is editable, including on days with nothing planned. Meals can be named, noted, tied to a Beacon recipe, and their ingredients can be added to the grocery list. The MCP tool `beacon_set_meal_plan` merges by default (upsert by date and meal type; a null or empty name clears that one slot; other dates are left alone). Pass `replace: true` to replace the whole plan, which is the previous behavior. You can still fill the plan with the `scripts/sync-meals.mjs` AnyList sync script.
 
 ### Kid Display Mode
 URL: __SITE_URL__/docs/features/kid-display/
