@@ -44,6 +44,7 @@ Skylight is a polished wall calendar that charges for hardware **and** locks mea
 - **Grocery & Shopping Lists** -- AnyList, Home Assistant Shopping List, and local list support
 - **Task / Todo Lists** -- Home Assistant todo entities and local task lists with dashboard integration
 - **Chore Tracking** -- Assign chores, track streaks, and celebrate completions with a family leaderboard
+- **Chore-gated privileges** -- Optionally bind a child's chores to a Home Assistant switch, input_boolean, light, or fan. Beacon turns it on when they finish today's chores, and off when a chore is unchecked, at local midnight, and when Beacon restarts. The add-on also fires `beacon_chore_completed` and `beacon_all_chores_done` events for your own automations.
 - **Music Controls** -- Control Music Assistant, Home Assistant media players, and browse playlists from the display
 - **Photo Slideshow** -- Display family photos between interactions
 - **Timer / Countdown** -- On-screen timer for cooking, homework, and more
