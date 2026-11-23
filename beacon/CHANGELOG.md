@@ -1,3 +1,10 @@
+# [1.46.0](https://github.com/asachs01/beacon/compare/v1.45.0...v1.46.0) (2026-11-23)
+
+
+### Features
+
+* **voice:** hold-to-talk Assist on the wall ([#90](https://github.com/asachs01/beacon/issues/90)) ([b8036d4](https://github.com/asachs01/beacon/commit/b8036d41087bfb17a51003fd66c99eb387bc2cff))
+
 # [1.45.0](https://github.com/asachs01/beacon/compare/v1.44.0...v1.45.0) (2026-11-23)
 
 
