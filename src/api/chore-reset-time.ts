@@ -6,6 +6,13 @@
  * without each screen loading settings again. Null means midnight.
  */
 
+/** Settings → Chores → Daily Reset Time. Exactly HH:mm, 00:00–23:59. */
+const CHORE_RESET_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+export function isValidChoreResetTime(value: unknown): boolean {
+  return typeof value === 'string' && CHORE_RESET_TIME.test(value.trim());
+}
+
 type Listener = () => void;
 
 let current: string | null = null;

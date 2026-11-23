@@ -53,6 +53,57 @@ describe('chore matching', () => {
     expect(result.decisions[0]).toMatchObject({ entityId: 'switch.ada_wifi', service: 'turn_off' });
   });
 
+  it('counts a voice completion on the chore day, including a 01:00 credit to the previous day', () => {
+    const first = planChoreCompletion({
+      members,
+      chores: chores.filter((chore) => chore.id === 'vacuum'),
+      completions: [],
+      streaks: [],
+      chore: 'vacuum',
+      name: 'Ada',
+      now: new Date('2026-11-21T08:00:00.000Z'), // 01:00 America/Phoenix
+      timeZone: 'America/Phoenix',
+      resetTime: '03:00',
+    });
+    expect(first.streaks[0]).toMatchObject({
+      member_id: 'ada',
+      current: 1,
+      last_chore_day: '2026-11-20',
+    });
+
+    const sameDay = planChoreCompletion({
+      members,
+      chores,
+      completions: [],
+      streaks: first.streaks,
+      chore: 'dishes',
+      name: 'Ada',
+      now: new Date('2026-11-21T09:00:00.000Z'), // 02:00, still Nov 20
+      timeZone: 'America/Phoenix',
+      resetTime: '00:00',
+    });
+    // Reset moved 03:00 → 00:00. 02:00 is chore day Nov 21, so the new day counts once.
+    expect(sameDay.streaks[0]).toMatchObject({ current: 2, last_chore_day: '2026-11-21' });
+
+    const again = planChoreCompletion({
+      members,
+      chores: chores.filter((chore) => chore.id === 'vacuum'),
+      completions: [],
+      streaks: sameDay.streaks,
+      chore: 'vacuum',
+      name: 'Ada',
+      now: new Date('2026-11-21T17:00:00.000Z'),
+      timeZone: 'America/Phoenix',
+      resetTime: '03:00',
+    });
+    // Reset moved back to 03:00. 10:00 is still Nov 21, so that day is not counted again.
+    expect(again.streaks[0]).toMatchObject({
+      current: 2,
+      last_completed: '2026-11-21T09:00:00.000Z',
+      last_chore_day: '2026-11-21',
+    });
+  });
+
   it('stamps beacon events with the chore day when reset is 04:00', () => {
     const result = planChoreCompletion({
       members,

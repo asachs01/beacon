@@ -7,7 +7,7 @@ import {
   RoutineTaskCompletion,
 } from '../types/family';
 import { loadData, loadDataSync, saveData } from './beacon-store';
-import { choreDayKey, localDayKey } from './date-keys';
+import { advanceStreak, choreDayKey, localDayKey } from './date-keys';
 import { applyPrivilegeDecision, publishChoreEvents } from './chore-bridge';
 import {
   eventsForChoreChange,
@@ -168,8 +168,8 @@ export class FamilyStore {
     completions.push(completion);
     await saveData(STORAGE_KEYS.completions, completions);
 
-    // Update streaks
-    await this.updateStreakForMember(memberId);
+    // Count the streak on this chore day. Older streak rows are not rewritten.
+    await this.updateStreakForMember(memberId, resetTime);
 
     const progressAfter = memberProgress(memberId, chores, completions, today, null, resetTime);
     void this.emitChoreChange({
@@ -274,33 +274,21 @@ export class FamilyStore {
     return existing ?? { member_id: memberId, current: 0, longest: 0, last_completed: '' };
   }
 
-  private async updateStreakForMember(memberId: string): Promise<void> {
+  /**
+   * Count this completion on the chore day from Daily Reset Time.
+   * A row that already counted this chore day is left untouched, including
+   * rows saved before streaks stored `last_chore_day`.
+   */
+  private async updateStreakForMember(memberId: string, resetTime?: string | null): Promise<void> {
     const streaks = await this.getStreaks();
-    const today = localDayKey();
-    const yesterday = localDayKey(Date.now() - 86400000);
-
-    let streak = streaks.find((s) => s.member_id === memberId);
-    if (!streak) {
-      streak = { member_id: memberId, current: 0, longest: 0, last_completed: '' };
-      streaks.push(streak);
-    }
-
-    const lastDate = localDayKey(streak.last_completed);
-
-    if (lastDate === today) {
-      // Already counted today
-      return;
-    }
-
-    if (lastDate === yesterday) {
-      streak.current += 1;
-    } else {
-      streak.current = 1;
-    }
-
-    streak.longest = Math.max(streak.longest, streak.current);
-    streak.last_completed = new Date().toISOString();
-
+    const index = streaks.findIndex((streak) => streak.member_id === memberId);
+    const existing: Streak = index === -1
+      ? { member_id: memberId, current: 0, longest: 0, last_completed: '' }
+      : streaks[index];
+    const updated = advanceStreak(existing, new Date(), null, resetTime);
+    if (updated === existing) return;
+    if (index === -1) streaks.push(updated);
+    else streaks[index] = updated;
     await saveData(STORAGE_KEYS.streaks, streaks);
   }
 
@@ -347,20 +335,23 @@ export class FamilyStore {
   }
 
   async getRoutineTaskCompletionsToday(): Promise<RoutineTaskCompletion[]> {
+    // Routines are clock-tied, not chore-chart-tied: the day is calendar midnight.
     const today = localDayKey();
     const completions = await this.getRoutineTaskCompletions();
+    // Same calendar-midnight day: routines are clock-tied, not chore-chart-tied.
     return completions.filter((c) => localDayKey(c.completed_at) === today);
   }
 
   async completeRoutineTask(routineId: string, taskId: string, memberId: string): Promise<void> {
     const completions = await this.getRoutineTaskCompletions();
+    // Routines are clock-tied, not chore-chart-tied: the day is calendar midnight.
     const today = localDayKey();
     const exists = completions.some(
       (c) =>
         c.routine_id === routineId &&
         c.task_id === taskId &&
         c.member_id === memberId &&
-        localDayKey(c.completed_at) === today
+        localDayKey(c.completed_at) === today // calendar midnight; routines are clock-tied, not chore-chart-tied
     );
     if (exists) return;
     completions.push({
@@ -374,13 +365,14 @@ export class FamilyStore {
 
   async uncompleteRoutineTask(routineId: string, taskId: string, memberId: string): Promise<boolean> {
     const completions = await this.getRoutineTaskCompletions();
+    // Routines are clock-tied, not chore-chart-tied: the day is calendar midnight.
     const today = localDayKey();
     const index = completions.findIndex(
       (c) =>
         c.routine_id === routineId &&
         c.task_id === taskId &&
         c.member_id === memberId &&
-        localDayKey(c.completed_at) === today
+        localDayKey(c.completed_at) === today // calendar midnight; routines are clock-tied, not chore-chart-tied
     );
     if (index === -1) return false;
     completions.splice(index, 1);

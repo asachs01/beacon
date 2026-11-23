@@ -441,6 +441,7 @@ export const it: Record<TranslationKey, string> = {
   'settings.chores.enableSublabel': 'Mostra il monitoraggio delle faccende e i premi',
   'settings.chores.dailyResetTimeLabel': 'Orario di reset giornaliero',
   'settings.chores.dailyResetTimeSublabel': 'Quando si azzerano le faccende giornaliere',
+  'settings.chores.dailyResetTimeInvalid': 'Inserisci un orario nel formato HH:mm, da 00:00 a 23:59.',
   'settings.chores.streakDurationLabel': 'Durata della serie',
   'settings.chores.streakDurationSublabel': 'Giorni necessari per mantenere una serie',
   'settings.chores.rewardsTitle': 'Premi',

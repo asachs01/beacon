@@ -40,7 +40,12 @@ export interface Streak {
   member_id: string;
   current: number;
   longest: number;
-  last_completed: string; // ISO date string
+  last_completed: string; // ISO timestamp of the completion that last counted
+  /**
+   * Chore day (YYYY-MM-DD) that last counted. Set on the next new chore day.
+   * Older rows omit it and are not backfilled.
+   */
+  last_chore_day?: string;
 }
 
 export interface Routine {

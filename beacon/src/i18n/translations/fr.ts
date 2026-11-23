@@ -441,6 +441,7 @@ export const fr: Record<TranslationKey, string> = {
   'settings.chores.enableSublabel': 'Affiche le suivi des corvées et des récompenses',
   'settings.chores.dailyResetTimeLabel': 'Heure de réinitialisation quotidienne',
   'settings.chores.dailyResetTimeSublabel': 'Quand les corvées quotidiennes se réinitialisent',
+  'settings.chores.dailyResetTimeInvalid': 'Saisissez une heure au format HH:mm, de 00:00 à 23:59.',
   'settings.chores.streakDurationLabel': 'Durée de la série',
   'settings.chores.streakDurationSublabel': "Jours nécessaires pour maintenir une série",
   'settings.chores.rewardsTitle': 'Récompenses',

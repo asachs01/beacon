@@ -441,6 +441,7 @@ export const ko: Record<TranslationKey, string> = {
   'settings.chores.enableSublabel': '집안일 추적과 보상을 표시합니다',
   'settings.chores.dailyResetTimeLabel': '매일 초기화 시간',
   'settings.chores.dailyResetTimeSublabel': '매일 집안일이 초기화되는 시간',
+  'settings.chores.dailyResetTimeInvalid': '시간은 HH:mm 형식(00:00–23:59)으로 입력하세요.',
   'settings.chores.streakDurationLabel': '연속 기록 기간',
   'settings.chores.streakDurationSublabel': '연속 기록을 유지하는 데 필요한 일수',
   'settings.chores.rewardsTitle': '보상',

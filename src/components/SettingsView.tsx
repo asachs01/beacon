@@ -33,6 +33,7 @@ import { useRoutines } from '../hooks/useRoutines';
 import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { demoSettingsSection } from '../demo/location';
+import { DailyResetTimeField } from './DailyResetTimeField';
 import { PhotoSourceSettings } from './PhotoSourceSettings';
 import { EntityPicker } from './cards/EntityPicker';
 import { PRIVILEGE_DOMAINS } from '../api/chore-privileges';
@@ -1778,14 +1779,15 @@ export function SettingsView({
           <div className="settings-group">
             <div className="settings-row">
               <div>
-                <div className="settings-row-label">{t('settings.chores.dailyResetTimeLabel')}</div>
+                <label htmlFor="chores-reset-time" className="settings-row-label">
+                  {t('settings.chores.dailyResetTimeLabel')}
+                </label>
                 <div className="settings-row-sublabel">{t('settings.chores.dailyResetTimeSublabel')}</div>
               </div>
-              <input
-                type="time"
-                className="settings-time-input"
+              <DailyResetTimeField
+                id="chores-reset-time"
                 value={settings.choresResetTime}
-                onChange={(e) => onUpdateSettings({ choresResetTime: e.target.value })}
+                onChange={(choresResetTime) => onUpdateSettings({ choresResetTime })}
               />
             </div>
             <div className="settings-row">

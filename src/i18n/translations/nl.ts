@@ -441,6 +441,7 @@ export const nl: Record<TranslationKey, string> = {
   'settings.chores.enableSublabel': 'Toont het bijhouden van klusjes en beloningen',
   'settings.chores.dailyResetTimeLabel': 'Dagelijkse reset-tijd',
   'settings.chores.dailyResetTimeSublabel': 'Wanneer dagelijkse klusjes resetten',
+  'settings.chores.dailyResetTimeInvalid': 'Voer een tijd in als HH:mm, van 00:00 tot 23:59.',
   'settings.chores.streakDurationLabel': 'Duur van reeks',
   'settings.chores.streakDurationSublabel': 'Dagen nodig om een reeks vol te houden',
   'settings.chores.rewardsTitle': 'Beloningen',
