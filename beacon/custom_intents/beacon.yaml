@@ -13,27 +13,44 @@ BeaconAddItem:
     text: "Added {{ item }} to the {{ list_name }} list."
 
 # ── Chore Tracking ──────────────────────────────────────────────
-# Marks a chore as complete in a todo list named "chores".
-# Adjust entity_id if your chore list has a different name.
+# Completes the chore in Beacon's FamilyStore via the add-on.
+# This does not write to todo.chores. Requires rest_command.beacon_complete_chore
+# (see beacon_rest_command.yaml) so Assist can call
+# POST /beacon-action/complete-chore and speak the reply, including
+# when the title matches more than one person or chore.
 BeaconCompleteChore:
   action:
-    - service: todo.update_item
+    - service: rest_command.beacon_complete_chore
       data:
-        entity_id: "todo.chores"
-        item: "{{ chore }}"
-        status: "completed"
+        chore: "{{ chore }}"
+        name: ""
+      response_variable: beacon_chore
   speech:
-    text: "Marked {{ chore }} as done."
+    text: >
+      {% set raw = beacon_chore.content | default('', true) %}
+      {% if raw is mapping %}
+        {{ raw.response | default('Marked ' ~ chore ~ ' as done.', true) }}
+      {% else %}
+        {% set parsed = raw | from_json(default={}) %}
+        {{ parsed.response | default('Marked ' ~ chore ~ ' as done.', true) }}
+      {% endif %}
 
 BeaconCompleteChoreByPerson:
   action:
-    - service: todo.update_item
+    - service: rest_command.beacon_complete_chore
       data:
-        entity_id: "todo.chores"
-        item: "{{ chore }}"
-        status: "completed"
+        chore: "{{ chore }}"
+        name: "{{ name }}"
+      response_variable: beacon_chore
   speech:
-    text: "{{ name }} finished {{ chore }}. Nice work!"
+    text: >
+      {% set raw = beacon_chore.content | default('', true) %}
+      {% if raw is mapping %}
+        {{ raw.response | default(name ~ ' finished ' ~ chore ~ '.', true) }}
+      {% else %}
+        {% set parsed = raw | from_json(default={}) %}
+        {{ parsed.response | default(name ~ ' finished ' ~ chore ~ '.', true) }}
+      {% endif %}
 
 # ── Calendar ────────────────────────────────────────────────────
 # Calendar queries use the built-in conversation response.

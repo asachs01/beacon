@@ -34,6 +34,20 @@ export const it: Record<TranslationKey, string> = {
   'nav.more': 'Altro',
   'nav.closeMenu': 'Chiudi menu',
   'nav.mainNavigation': 'Navigazione principale',
+  'nav.voice': 'Voce',
+
+  // ---- press-to-talk ----
+  'voice.holdToTalk': 'Tieni premuto per parlare',
+  'voice.typeCommand': 'Scrivi un comando',
+  'voice.placeholder': 'Prova “segna i piatti come fatti”',
+  'voice.send': 'Invia',
+  'voice.listening': 'In ascolto…',
+  'voice.working': 'Un attimo…',
+  'voice.youSaid': 'Hai detto',
+  'voice.reply': 'Risposta',
+  'voice.dismiss': 'Chiudi',
+  'voice.noSpeech': 'Non ho capito. Tieni premuto il microfono o scrivilo.',
+  'voice.micNeedsHttps': 'Il microfono richiede HTTPS o localhost. Scrivi il comando.',
 
   // ---- app chrome ----
   'app.kidDisplayNotFound': 'Membro per lo schermo bambini non trovato — viene mostrata l\'app completa.',
@@ -393,6 +407,8 @@ export const it: Record<TranslationKey, string> = {
   'settings.display.kioskModeSublabel': 'Nasconde la barra laterale per un display più pulito',
   'settings.display.kioskRevealLabel': 'Gesto per mostrare la navigazione',
   'settings.display.kioskRevealSublabel': 'Attivo per impostazione predefinita. In modalità chiosco, tieni premuto l\'angolo in alto per 2 secondi oppure toccalo 3 volte di seguito per mostrare la barra laterale. Tieni premuto Esc sulla tastiera. Si nasconde di nuovo dopo 15 secondi di inattività. Se è impostato un PIN di famiglia, viene richiesto.',
+  'settings.display.voiceButtonLabel': 'Pulsante vocale',
+  'settings.display.voiceButtonSublabel': 'Mostra tieni-premuto-per-parlare sul muro. Attivo per impostazione predefinita nel componente aggiuntivo di Home Assistant. Il microfono richiede HTTPS o localhost; l’ingress su HTTPS funziona, un chiosco in solo HTTP tiene la casella di testo.',
   'settings.display.kidDisplayTitle': 'Display bambini',
   'settings.display.kidDisplayDesc': 'Blocca uno schermo a parete su un solo membro della famiglia — mostra solo le sue routine e faccende.',
   'settings.display.familyMemberLabel': 'Membro della famiglia',

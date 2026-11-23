@@ -34,6 +34,20 @@ export const pt: Record<TranslationKey, string> = {
   'nav.more': 'Mais',
   'nav.closeMenu': 'Fechar menu',
   'nav.mainNavigation': 'Navegação principal',
+  'nav.voice': 'Voz',
+
+  // ---- press-to-talk ----
+  'voice.holdToTalk': 'Segure para falar',
+  'voice.typeCommand': 'Digite um comando',
+  'voice.placeholder': 'Tente “marcar a louça como feita”',
+  'voice.send': 'Enviar',
+  'voice.listening': 'Ouvindo…',
+  'voice.working': 'Um momento…',
+  'voice.youSaid': 'Você disse',
+  'voice.reply': 'Resposta',
+  'voice.dismiss': 'Fechar',
+  'voice.noSpeech': 'Não entendi. Segure o microfone ou digite.',
+  'voice.micNeedsHttps': 'O microfone precisa de HTTPS ou localhost. Digite o comando.',
 
   // ---- app chrome ----
   'app.kidDisplayNotFound': 'Membro do ecrã infantil não encontrado — a mostrar a aplicação completa.',
@@ -393,6 +407,8 @@ export const pt: Record<TranslationKey, string> = {
   'settings.display.kioskModeSublabel': 'Oculta a barra lateral para um ecrã mais limpo',
   'settings.display.kioskRevealLabel': 'Gesto para mostrar a navegação',
   'settings.display.kioskRevealSublabel': 'Ativado por predefinição. No modo quiosque, mantenha premido o canto superior durante 2 segundos ou toque 3 vezes rapidamente para mostrar a barra lateral. Mantenha Escape premido no teclado. Volta a ocultar-se após 15 segundos de inatividade. Se existir um PIN familiar, é pedido.',
+  'settings.display.voiceButtonLabel': 'Botão de voz',
+  'settings.display.voiceButtonSublabel': 'Mostra segure-para-falar na parede. Ligado por padrão no add-on do Home Assistant. O microfone precisa de HTTPS ou localhost; o ingress em HTTPS funciona, e um quiosque em HTTP simples fica só com o texto.',
   'settings.display.kidDisplayTitle': 'Ecrã infantil',
   'settings.display.kidDisplayDesc': 'Bloqueia um ecrã de parede a um único membro da família — mostra apenas as suas rotinas e tarefas.',
   'settings.display.familyMemberLabel': 'Membro da família',

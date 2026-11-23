@@ -39,6 +39,20 @@ export const en = {
   'nav.more': 'More',
   'nav.closeMenu': 'Close menu',
   'nav.mainNavigation': 'Main navigation',
+  'nav.voice': 'Voice',
+
+  // ---- press-to-talk ----
+  'voice.holdToTalk': 'Hold to talk',
+  'voice.typeCommand': 'Type a command',
+  'voice.placeholder': 'Try “mark dishes as done”',
+  'voice.send': 'Send',
+  'voice.listening': 'Listening…',
+  'voice.working': 'Working…',
+  'voice.youSaid': 'You said',
+  'voice.reply': 'Reply',
+  'voice.dismiss': 'Dismiss',
+  'voice.noSpeech': 'Didn\u2019t catch that. Hold the mic or type it.',
+  'voice.micNeedsHttps': 'The microphone needs HTTPS or localhost. Type a command instead.',
 
   // ---- app chrome ----
   'app.kidDisplayNotFound': 'Kid display member not found — showing the full app.',
@@ -398,6 +412,8 @@ export const en = {
   'settings.display.kioskModeSublabel': 'Hide the sidebar for a cleaner display',
   'settings.display.kioskRevealLabel': 'Reveal navigation gesture',
   'settings.display.kioskRevealSublabel': 'On by default. In kiosk mode, long-press the top corner for 2 seconds or tap it 3 times quickly to show the sidebar. Hold Escape on a keyboard. It hides again after 15 seconds of inactivity. A family PIN is required when one is set.',
+  'settings.display.voiceButtonLabel': 'Voice button',
+  'settings.display.voiceButtonSublabel': 'Show hold-to-talk on the wall. On by default in the Home Assistant add-on. The mic needs HTTPS or localhost; ingress over HTTPS works, and a plain HTTP kiosk keeps the text box.',
   'settings.display.kidDisplayTitle': 'Kid Display',
   'settings.display.kidDisplayDesc': 'Lock a wall-mounted screen to one family member — shows only their routines and chores.',
   'settings.display.familyMemberLabel': 'Family Member',

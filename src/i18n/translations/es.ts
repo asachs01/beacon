@@ -34,6 +34,20 @@ export const es: Record<TranslationKey, string> = {
   'nav.more': 'Más',
   'nav.closeMenu': 'Cerrar menú',
   'nav.mainNavigation': 'Navegación principal',
+  'nav.voice': 'Voz',
+
+  // ---- press-to-talk ----
+  'voice.holdToTalk': 'Mantén para hablar',
+  'voice.typeCommand': 'Escribe un comando',
+  'voice.placeholder': 'Prueba “marca los platos como hechos”',
+  'voice.send': 'Enviar',
+  'voice.listening': 'Escuchando…',
+  'voice.working': 'Trabajando…',
+  'voice.youSaid': 'Dijiste',
+  'voice.reply': 'Respuesta',
+  'voice.dismiss': 'Cerrar',
+  'voice.noSpeech': 'No se entendió. Mantén el micrófono o escríbelo.',
+  'voice.micNeedsHttps': 'El micrófono necesita HTTPS o localhost. Escribe el comando.',
 
   // ---- app chrome ----
   'app.kidDisplayNotFound': 'No se encontró el miembro de la pantalla infantil — mostrando la aplicación completa.',
@@ -393,6 +407,8 @@ export const es: Record<TranslationKey, string> = {
   'settings.display.kioskModeSublabel': 'Oculta la barra lateral para una pantalla más limpia',
   'settings.display.kioskRevealLabel': 'Gesto para mostrar la navegación',
   'settings.display.kioskRevealSublabel': 'Activado de forma predeterminada. En modo kiosco, mantén pulsada la esquina superior durante 2 segundos o tócala 3 veces seguidas para mostrar la barra lateral. Mantén Escape en un teclado. Se oculta de nuevo tras 15 segundos de inactividad. Si hay un PIN familiar, se solicita.',
+  'settings.display.voiceButtonLabel': 'Botón de voz',
+  'settings.display.voiceButtonSublabel': 'Muestra mantener-para-hablar en la pared. Activado por defecto en el complemento de Home Assistant. El micrófono necesita HTTPS o localhost; el ingress por HTTPS funciona, y un kiosco en HTTP simple deja solo el texto.',
   'settings.display.kidDisplayTitle': 'Pantalla infantil',
   'settings.display.kidDisplayDesc': 'Bloquea una pantalla de pared a un solo miembro de la familia — solo muestra sus rutinas y tareas.',
   'settings.display.familyMemberLabel': 'Miembro de la familia',

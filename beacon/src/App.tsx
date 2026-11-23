@@ -28,6 +28,7 @@ import { useNotifications } from './hooks/useNotifications';
 import { ScreenSaver } from './components/ScreenSaver';
 import { GroceryView } from './components/GroceryView';
 import { OmniAdd } from './components/OmniAdd';
+import { VoiceAssist } from './components/VoiceAssist';
 import { CalendarSidebar } from './components/CalendarSidebar';
 import { Timer } from './components/Timer';
 import { WeatherView } from './components/WeatherView';
@@ -47,6 +48,7 @@ import { HiddenCornerGesture } from './components/HiddenCornerGesture';
 import { kioskHotCorner, kioskNavVisible, shouldOfferKioskGesture } from './display/hidden-gesture';
 import { DEMO_CALENDARS, DEMO_EVENTS } from './demo/fixtures';
 import { demoInitialView } from './demo/location';
+import { normalizeNavigateView } from './voice/assist';
 
 const config = getConfig();
 
@@ -151,6 +153,7 @@ export function App() {
     loaded: choresLoaded,
     completeChore,
     uncompleteChore,
+    refresh: refreshChores,
   } = useChores();
 
   useChorePrivileges(members, chores, familyLoaded && choresLoaded);
@@ -540,6 +543,34 @@ export function App() {
     [],
   );
 
+  useEffect(() => {
+    const ha = client();
+    if (!connected || !ha) return undefined;
+    let cancelled = false;
+    const ids: number[] = [];
+    const watch = (eventType: string, handler: (event: { data?: { view?: unknown } }) => void) => {
+      ha.subscribeEvents(eventType, (event) => {
+        handler(event as { data?: { view?: unknown } });
+      }).then((id) => {
+        if (cancelled) ha.unsubscribe(id);
+        else ids.push(id);
+      }).catch((err) => {
+        console.warn(`[beacon] ${eventType} subscription failed`, err);
+      });
+    };
+    watch('beacon_navigate', (event) => {
+      const view = normalizeNavigateView(event?.data?.view);
+      if (view) handleChangeView(view);
+    });
+    watch('beacon_chore_completed', () => {
+      void refreshChores();
+    });
+    return () => {
+      cancelled = true;
+      ids.forEach((id) => ha.unsubscribe(id));
+    };
+  }, [client, connected, handleChangeView, refreshChores]);
+
   const handleClosePanel = useCallback(() => {
     setShowLeaderboard(false);
   }, []);
@@ -644,13 +675,32 @@ export function App() {
   }
 
   // Kid Display mode: replace the entire shell (same pattern as onboarding)
+  const voiceControl = settings.voiceButton ? (
+    <VoiceAssist
+      placement={showNav ? (sidebarPos === 'right' ? 'sidebar-right' : sidebarPos === 'bottom' ? 'sidebar-bottom' : 'sidebar-left') : 'kiosk'}
+      getClient={client}
+      onNavigate={handleChangeView}
+      onRefreshChores={() => { void refreshChores(); }}
+    />
+  ) : null;
+
   if (focusMember) {
     return (
-      <FocusView
-        memberId={focusMember.id}
-        settings={settings}
-        onExit={handleExitFocus}
-      />
+      <I18nContext.Provider value={i18n}>
+        <FocusView
+          memberId={focusMember.id}
+          settings={settings}
+          onExit={handleExitFocus}
+        />
+        {settings.voiceButton && (
+          <VoiceAssist
+            placement="kiosk"
+            getClient={client}
+            onNavigate={handleChangeView}
+            onRefreshChores={() => { void refreshChores(); }}
+          />
+        )}
+      </I18nContext.Provider>
     );
   }
 
@@ -917,6 +967,7 @@ export function App() {
       {!connected && !isHaManaged && !demoMode && (
         <div className="demo-badge">{t('app.demoMode')}</div>
       )}
+      {voiceControl}
     </div>
     </I18nContext.Provider>
   );

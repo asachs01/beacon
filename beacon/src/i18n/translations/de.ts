@@ -34,6 +34,20 @@ export const de: Record<TranslationKey, string> = {
   'nav.more': 'Mehr',
   'nav.closeMenu': 'Menü schließen',
   'nav.mainNavigation': 'Hauptnavigation',
+  'nav.voice': 'Sprache',
+
+  // ---- press-to-talk ----
+  'voice.holdToTalk': 'Zum Sprechen gedrückt halten',
+  'voice.typeCommand': 'Befehl eingeben',
+  'voice.placeholder': 'Zum Beispiel „Geschirr erledigt“',
+  'voice.send': 'Senden',
+  'voice.listening': 'Hört zu…',
+  'voice.working': 'Einen Moment…',
+  'voice.youSaid': 'Du hast gesagt',
+  'voice.reply': 'Antwort',
+  'voice.dismiss': 'Schließen',
+  'voice.noSpeech': 'Nichts verstanden. Halte das Mikrofon oder tippe es ein.',
+  'voice.micNeedsHttps': 'Das Mikrofon braucht HTTPS oder localhost. Gib den Befehl ein.',
 
   // ---- app chrome ----
   'app.kidDisplayNotFound': 'Mitglied für Kinderanzeige nicht gefunden — die vollständige App wird angezeigt.',
@@ -393,6 +407,8 @@ export const de: Record<TranslationKey, string> = {
   'settings.display.kioskModeSublabel': 'Blendet die Seitenleiste für eine aufgeräumtere Anzeige aus',
   'settings.display.kioskRevealLabel': 'Geste zum Einblenden der Navigation',
   'settings.display.kioskRevealSublabel': 'Standardmäßig aktiv. Im Kiosk-Modus die obere Ecke 2 Sekunden gedrückt halten oder 3-mal schnell tippen, um die Seitenleiste einzublenden. Auf einer Tastatur Escape gedrückt halten. Sie blendet sich nach 15 Sekunden Inaktivität wieder aus. Ist eine Familien-PIN gesetzt, wird sie abgefragt.',
+  'settings.display.voiceButtonLabel': 'Sprachbutton',
+  'settings.display.voiceButtonSublabel': 'Halte-zum-Sprechen auf der Wand anzeigen. Im Home-Assistant-Add-on standardmäßig an. Das Mikrofon braucht HTTPS oder localhost; Ingress über HTTPS funktioniert, ein reines HTTP-Kiosk behält das Textfeld.',
   'settings.display.kidDisplayTitle': 'Kinderanzeige',
   'settings.display.kidDisplayDesc': 'Sperrt einen Wandbildschirm auf ein Familienmitglied — zeigt nur dessen Routinen und Aufgaben.',
   'settings.display.familyMemberLabel': 'Familienmitglied',

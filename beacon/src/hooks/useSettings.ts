@@ -8,6 +8,7 @@ import {
   type FontSelection,
 } from '../fonts/selection';
 import { normalizeCalendarLayout, type CalendarLayout } from '../types';
+import { isAddOn } from '../utils/ha-env';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -68,6 +69,12 @@ export interface BeaconSettings {
   kioskMode: boolean;
   /** When kiosk mode is on, the corner gesture can temporarily reveal navigation. */
   kioskRevealGesture: boolean;
+  /**
+   * Hold-to-talk button on the wall. The literal default is on. On first
+   * load, a standalone browser turns it off until someone enables it; the
+   * Home Assistant add-on leaves it on.
+   */
+  voiceButton: boolean;
 
   // Chores
   choresEnabled: boolean;
@@ -131,6 +138,7 @@ function buildDefaults(): BeaconSettings {
     showSeconds: false,
     kioskMode: false,
     kioskRevealGesture: true,
+    voiceButton: true,
 
     choresEnabled: true,
     choresResetTime: '00:00',
@@ -151,13 +159,31 @@ async function loadSettingsAsync(): Promise<BeaconSettings> {
   const stored = serverStored ?? (configAllowsBrowserStorage
     ? loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {})
     : {});
-  return withNormalizedFonts({
+  return withVoiceButtonDefault(withNormalizedFonts({
     ...defaults,
     ...stored,
     // The add-on configuration is authoritative: it can disable browser
     // storage, while the user preference can opt out when config allows it.
     saveConfigInBrowser: configAllowsBrowserStorage && (stored.saveConfigInBrowser ?? true),
-  });
+  }), stored);
+}
+
+/**
+ * A saved true/false wins. When the key has never been stored, the add-on
+ * shows the button and a standalone browser hides it.
+ */
+export function withVoiceButtonDefault(
+  settings: BeaconSettings,
+  stored: Partial<BeaconSettings> | null | undefined,
+): BeaconSettings {
+  if (stored && typeof stored.voiceButton === 'boolean') return settings;
+  let addOn = false;
+  try {
+    addOn = isAddOn();
+  } catch {
+    addOn = false;
+  }
+  return { ...settings, voiceButton: addOn };
 }
 
 function withNormalizedFonts(settings: BeaconSettings): BeaconSettings {
@@ -191,9 +217,9 @@ function initialSettings(): BeaconSettings {
   const defaults = buildDefaults();
   // The screenshot build writes fixtures before React starts. Read them on
   // the first paint so views don't flash the empty defaults.
-  if (import.meta.env.VITE_DEMO !== 'true') return defaults;
+  if (import.meta.env.VITE_DEMO !== 'true') return withVoiceButtonDefault(defaults, null);
   const stored = loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {});
-  return withNormalizedFonts({ ...defaults, ...stored });
+  return withVoiceButtonDefault(withNormalizedFonts({ ...defaults, ...stored }), stored);
 }
 
 export function useSettings() {
@@ -240,7 +266,7 @@ export function useSettings() {
 
   /** Reset all settings to defaults (merged with config.yaml values). */
   const resetSettings = useCallback(() => {
-    const defaults = buildDefaults();
+    const defaults = withVoiceButtonDefault(buildDefaults(), null);
     setSettingsState(defaults);
     persistSettings(defaults);
   }, []);
@@ -255,7 +281,7 @@ export function useSettings() {
     try {
       const parsed = JSON.parse(json);
       const defaults = buildDefaults();
-      setSettingsState(withNormalizedFonts({ ...defaults, ...parsed }));
+      setSettingsState(withVoiceButtonDefault(withNormalizedFonts({ ...defaults, ...parsed }), parsed));
     } catch {
       // invalid JSON — do nothing
     }

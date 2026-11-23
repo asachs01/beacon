@@ -40,9 +40,9 @@ Content-Type: application/json
 
 | Say | What happens |
 |-----|-------------|
-| `add <item> to <list>` | Adds an item to a todo list (fuzzy name match) |
-| `check off <item>` / `mark <item> as done` | Marks a todo item as completed |
-| `complete <item>` / `finish <item>` | Same as above |
+| `add <item> to <list>` / `put <item> on <list>` | Adds an item to a todo list (fuzzy name match) |
+| `mark <chore> as done` / `I finished <chore>` / `<name> finished <chore>` | Completes a Beacon chore in FamilyStore |
+| `check off <item>` / `complete <item>` / `finish <item>` | Marks a todo item as completed |
 
 ```bash
 # Add an item
@@ -304,7 +304,7 @@ The intent handlers reference these entities by default:
 | Entity | Purpose | How to create |
 |--------|---------|---------------|
 | `todo.grocery` | Grocery list | Any HA todo integration (Shopping List, Todoist, etc.) |
-| `todo.chores` | Chore tracking list | Same as above |
+| `todo.chores` | Only the "what chores are left" reply. Completing a chore uses FamilyStore, not this list. | Same as above |
 | `calendar.family` | Family calendar | Google Calendar, CalDAV, or Local Calendar integration |
 | `timer.beacon_voice` | Voice timer | **Settings > Helpers > + Create Helper > Timer**, name it "Beacon Voice" |
 

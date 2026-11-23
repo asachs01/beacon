@@ -34,6 +34,20 @@ export const fr: Record<TranslationKey, string> = {
   'nav.more': 'Plus',
   'nav.closeMenu': 'Fermer le menu',
   'nav.mainNavigation': 'Navigation principale',
+  'nav.voice': 'Voix',
+
+  // ---- press-to-talk ----
+  'voice.holdToTalk': 'Maintenir pour parler',
+  'voice.typeCommand': 'Saisir une commande',
+  'voice.placeholder': 'Essayez « marque la vaisselle comme faite »',
+  'voice.send': 'Envoyer',
+  'voice.listening': 'Écoute…',
+  'voice.working': 'Un instant…',
+  'voice.youSaid': 'Vous avez dit',
+  'voice.reply': 'Réponse',
+  'voice.dismiss': 'Fermer',
+  'voice.noSpeech': 'Pas compris. Maintenez le micro ou saisissez la commande.',
+  'voice.micNeedsHttps': 'Le micro a besoin de HTTPS ou de localhost. Saisissez la commande.',
 
   // ---- app chrome ----
   'app.kidDisplayNotFound': "Membre de l'écran enfant introuvable — affichage de l'application complète.",
@@ -393,6 +407,8 @@ export const fr: Record<TranslationKey, string> = {
   'settings.display.kioskModeSublabel': 'Masque la barre latérale pour un affichage plus épuré',
   'settings.display.kioskRevealLabel': 'Geste pour afficher la navigation',
   'settings.display.kioskRevealSublabel': 'Activé par défaut. En mode kiosque, maintenez le coin supérieur pendant 2 secondes ou touchez-le 3 fois rapidement pour afficher la barre latérale. Maintenez Échap au clavier. Elle se masque après 15 secondes d\'inactivité. Un code PIN familial est demandé s\'il est défini.',
+  'settings.display.voiceButtonLabel': 'Bouton vocal',
+  'settings.display.voiceButtonSublabel': 'Affiche maintenir-pour-parler sur le mur. Activé par défaut dans le module Home Assistant. Le micro exige HTTPS ou localhost ; l’ingress en HTTPS fonctionne, un kiosque en HTTP simple garde seulement le texte.',
   'settings.display.kidDisplayTitle': 'Écran enfant',
   'settings.display.kidDisplayDesc': "Verrouille un écran mural sur un seul membre de la famille — n'affiche que ses routines et corvées.",
   'settings.display.familyMemberLabel': 'Membre de la famille',

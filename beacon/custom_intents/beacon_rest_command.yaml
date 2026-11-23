@@ -1,0 +1,18 @@
+# Home Assistant rest_command for Beacon chore completion.
+#
+# BeaconCompleteChore calls rest_command.beacon_complete_chore.
+# From the Home Assistant container, the add-on is reachable on the
+# Supervisor docker network at http://<addon_slug>:3000. The slug is the
+# last segment of the add-on page URL (Settings → Add-ons → Beacon),
+# for example local_beacon or a1b2c3d4_beacon.
+#
+# Replace ADDON_SLUG, then add this block to configuration.yaml
+# (or a package file) and restart Home Assistant. Reload is not enough
+# for a new rest_command.
+
+rest_command:
+  beacon_complete_chore:
+    url: "http://ADDON_SLUG:3000/beacon-action/complete-chore"
+    method: POST
+    content_type: "application/json"
+    payload: "{{ {'chore': chore, 'name': name | default('')} | to_json }}"

@@ -302,8 +302,8 @@ Beacon ships with custom sentence and intent handler files for [Home Assistant A
 | Say this | What happens |
 |----------|-------------|
 | "Add milk to the grocery list" | Adds item to your todo list |
-| "Mark dishes as done" | Completes a chore |
-| "Alex finished vacuuming" | Completes a chore for a specific person |
+| "Mark dishes as done" | Completes that Beacon chore in FamilyStore |
+| "Alex finished vacuuming" | Completes that Beacon chore for Alex |
 | "What's on the calendar today" | Reads today's events aloud |
 | "What's on the calendar tomorrow" | Reads tomorrow's events |
 | "Show the dashboard" | Navigates the Beacon UI |
@@ -323,7 +323,7 @@ beacon/scripts/install-voice-intents.sh
 beacon/scripts/install-voice-intents.sh /config
 ```
 
-Then reload the Conversation integration: **Developer Tools > YAML > Conversation**.
+Then reload the Conversation integration: **Developer Tools > YAML > Conversation**. A new `rest_command` needs a Home Assistant restart. The wall button is covered in [Press-to-talk](/docs/features/press-to-talk/).
 
 ### Prerequisites
 
@@ -332,11 +332,12 @@ The intents reference these entities by default. Create or rename them to match:
 | Entity | Purpose | How to create |
 |--------|---------|---------------|
 | `todo.grocery` | Grocery list | Any HA todo integration |
-| `todo.chores` | Chore list | Any HA todo integration |
 | `calendar.family` | Calendar | Google Calendar, CalDAV, or Local Calendar |
 | `timer.beacon_voice` | Timer | Settings > Helpers > Timer, name "Beacon Voice" |
 
 If your entities have different names, edit the installed YAML files in your HA config directory (`custom_intents/beacon.yaml` and `custom_sentences/en/beacon.yaml`).
+
+Chore completion does not use a todo list. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to the add-on's `/beacon-action/complete-chore`. Copy `custom_intents/beacon_rest_command.yaml` into `configuration.yaml`, replace `ADDON_SLUG` with the slug from the add-on page URL, and restart Home Assistant. "What chores are left" (`BeaconChoreStatus`) still reads `todo.chores` when that entity exists.
 
 ### Customizing
 

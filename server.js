@@ -22,6 +22,8 @@ const HA_WS_URL = process.env.HA_WS_URL_OVERRIDE || 'ws://supervisor/core/api/we
 const DATA_DIR = process.env.BEACON_DATA || '/data';
 const { createGooglePhotoCache, REFRESH_MS } = require('./lib/google-photos-cache.cjs');
 const { acceptedChoreEvents, createPrivilegeScheduler } = require('./lib/chore-privileges.cjs');
+const { parseIntent, resolveTodoEntity } = require('./lib/voice-intents.cjs');
+const { completeStoredChore, handleCompleteChore } = require('./lib/complete-chore.cjs');
 const googlePhotos = createGooglePhotoCache({
   dataDir: path.join(DATA_DIR, 'photo-cache', 'google'),
 });
@@ -408,116 +410,6 @@ async function handleDataApi(req, res) {
   res.end(JSON.stringify({ error: 'Method not allowed' }));
 }
 
-/* ------------------------------------------------------------------ */
-/*  Voice / natural-language intent parser (keyword-based, no LLM)    */
-/* ------------------------------------------------------------------ */
-
-const INTENT_PATTERNS = [
-  {
-    name: 'add_item',
-    patterns: [/add\s+(.+?)\s+to\s+(?:the\s+)?(.+)/i],
-    handler: (m) => ({
-      domain: 'todo', service: 'add_item',
-      data: { item: m[1].trim() },
-      entityHint: m[2].trim(),
-      response: `Added ${m[1].trim()} to ${m[2].trim()}`,
-    }),
-  },
-  {
-    name: 'complete_item',
-    patterns: [
-      /(?:check off|mark)\s+(.+?)\s+(?:as\s+)?(?:done|complete|completed)/i,
-      /(?:complete|finish)\s+(.+)/i,
-    ],
-    handler: (m) => ({
-      domain: 'todo', service: 'update_item',
-      data: { item: m[1].trim(), status: 'completed' },
-      entityHint: null,
-      response: `Marked ${m[1].trim()} as done`,
-    }),
-  },
-  {
-    name: 'play_music',
-    patterns: [/\b(?:play\s+music|resume\s+music|resume\s+playback|play)\b/i],
-    handler: () => ({
-      domain: 'media_player', service: 'media_play',
-      data: {},
-      entityHint: null,
-      response: 'Playing music',
-    }),
-  },
-  {
-    name: 'pause_music',
-    patterns: [/\b(?:pause|stop\s+music|pause\s+music|stop\s+playback)\b/i],
-    handler: () => ({
-      domain: 'media_player', service: 'media_pause',
-      data: {},
-      entityHint: null,
-      response: 'Paused music',
-    }),
-  },
-  {
-    name: 'next_track',
-    patterns: [/\b(?:next\s+(?:song|track)|skip)\b/i],
-    handler: () => ({
-      domain: 'media_player', service: 'media_next_track',
-      data: {},
-      entityHint: null,
-      response: 'Skipping to next track',
-    }),
-  },
-  {
-    name: 'set_volume',
-    patterns: [/set\s+volume\s+(?:to\s+)?(\d+)/i, /volume\s+(\d+)/i],
-    handler: (m) => {
-      const level = Math.min(100, Math.max(0, parseInt(m[1], 10)));
-      return {
-        domain: 'media_player', service: 'volume_set',
-        data: { volume_level: level / 100 },
-        entityHint: null,
-        response: `Volume set to ${level}%`,
-      };
-    },
-  },
-  {
-    name: 'navigate',
-    patterns: [/(?:show|go\s+to|open|navigate\s+to)\s+(?:the\s+)?(.+)/i],
-    handler: (m) => ({
-      navigation: true,
-      view: m[1].trim().toLowerCase(),
-      response: `Navigating to ${m[1].trim()}`,
-    }),
-  },
-  {
-    name: 'calendar',
-    patterns: [/\b(?:what(?:'s| is)\s+on\s+(?:today|my\s+calendar|my\s+schedule)|today(?:'s)?\s+(?:schedule|events|calendar|agenda))\b/i],
-    handler: () => ({
-      fetch: 'calendar',
-      response: null, // filled after fetch
-    }),
-  },
-  {
-    name: 'weather',
-    patterns: [/\b(?:what(?:'s| is)\s+the\s+weather|weather\s+(?:today|now|forecast))\b/i],
-    handler: () => ({
-      fetch: 'weather',
-      response: null, // filled after fetch
-    }),
-  },
-];
-
-function parseIntent(text) {
-  for (const intent of INTENT_PATTERNS) {
-    for (const pat of intent.patterns) {
-      const match = text.match(pat);
-      if (match) {
-        return { name: intent.name, ...intent.handler(match) };
-      }
-    }
-  }
-  return null;
-}
-
 /** Helper: make a request to the HA Supervisor API and return parsed JSON. */
 function haRequest(method, apiPath, body) {
   return new Promise((resolve, reject) => {
@@ -634,6 +526,53 @@ const privilegeTick = createPrivilegeScheduler({
   log: (message) => console.warn(message),
 });
 
+async function publishStoredChoreEvents(events) {
+  if (!SUPERVISOR_TOKEN) {
+    console.warn('[beacon] chore events skipped: no Supervisor token');
+    return;
+  }
+  for (const entry of events) {
+    try {
+      const result = await haRequestTimed('POST', `/api/events/${entry.event}`, entry.data);
+      if (result.status < 200 || result.status >= 300) {
+        console.warn(`[beacon] ${entry.event} failed: HTTP ${result.status}`);
+      }
+    } catch (err) {
+      console.warn(`[beacon] ${entry.event} failed: ${err.message}`);
+    }
+  }
+}
+
+/**
+ * Complete a FamilyStore chore from a voice phrase or the complete-chore
+ * endpoint. Writes beacon_completions.json, then fires the same events and
+ * privilege service calls as a toggle on the wall.
+ */
+function completeChoreDeps() {
+  return {
+    dataDir: DATA_DIR,
+    now: () => new Date(),
+    readTimeZone: async () => {
+      try {
+        return await readHaTimeZone();
+      } catch {
+        return null;
+      }
+    },
+    publishEvents: publishStoredChoreEvents,
+    applyPrivileges: (decisions) => applyStoredPrivileges(decisions, { reason: 'voice', localDate: '' }),
+    log: (message) => console.warn(message),
+  };
+}
+
+function runCompleteChore(chore, name) {
+  return completeStoredChore(completeChoreDeps(), { chore, name });
+}
+
+function handleCompleteChoreFromServer(req, res) {
+  handleCompleteChore(req, res, completeChoreDeps());
+}
+
 /**
  * POST /beacon-action/voice
  * Body: { "text": "add milk to the grocery list" }
@@ -673,6 +612,23 @@ function handleVoiceAction(req, res) {
           action: null,
           success: false,
         }));
+        return;
+      }
+
+      // --- Beacon chore (FamilyStore, not todo.chores) ---
+      if (intent.name === 'complete_chore') {
+        try {
+          const result = await runCompleteChore(intent.chore, intent.memberName || '');
+          res.writeHead(result.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result.body));
+        } catch (err) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            response: `Couldn't complete that chore: ${err.message}`,
+            action: 'complete_chore',
+            success: false,
+          }));
+        }
         return;
       }
 
@@ -774,16 +730,7 @@ function handleVoiceAction(req, res) {
       if (intent.domain === 'todo' && intent.entityHint) {
         try {
           const states = await getStates();
-          const todoEntities = states.filter(
-            (e) => typeof e.entity_id === 'string' && e.entity_id.startsWith('todo.')
-          );
-          // Match by friendly name (case-insensitive, partial)
-          const hint = intent.entityHint.toLowerCase();
-          const match = todoEntities.find((e) => {
-            const name = (e.attributes?.friendly_name || '').toLowerCase();
-            return name === hint || name.includes(hint) || e.entity_id.toLowerCase().includes(hint);
-          });
-          if (match) entityId = match.entity_id;
+          entityId = resolveTodoEntity(states, intent.entityHint);
         } catch { /* proceed without entity */ }
       }
 
@@ -844,6 +791,12 @@ const server = http.createServer((req, res) => {
   // Voice / natural-language action API
   if (req.url === '/beacon-action/voice') {
     handleVoiceAction(req, res);
+    return;
+  }
+
+  // Complete a Beacon chore in FamilyStore (used by HA Assist intents).
+  if (req.url.split('?')[0] === '/beacon-action/complete-chore') {
+    handleCompleteChoreFromServer(req, res);
     return;
   }
 
