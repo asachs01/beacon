@@ -1,3 +1,10 @@
+# [1.49.0](https://github.com/asachs01/beacon/compare/v1.48.0...v1.49.0) (2026-11-23)
+
+
+### Features
+
+* **import:** accept one photo or PDF in Magic Import ([#113](https://github.com/asachs01/beacon/issues/113)) ([8eb71b0](https://github.com/asachs01/beacon/commit/8eb71b0f826705f9b73c0b743f6ecc8ab4bb56f1))
+
 # [1.48.0](https://github.com/asachs01/beacon/compare/v1.47.0...v1.48.0) (2026-11-23)
 
 
