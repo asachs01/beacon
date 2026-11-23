@@ -39,6 +39,9 @@ function restMergeLines(): string {
   return yaml.slice(index + marker.length);
 }
 
+const REST_INCLUDE = 'rest_command: !include beacon_rest_command.yaml';
+const INTENT_INCLUDE = 'intent_script: !include_dir_merge_named custom_intents';
+
 const dirs: string[] = [];
 
 function tempConfig(): string {
@@ -86,10 +89,14 @@ describe('install-voice-intents.sh configuration.yaml wiring', () => {
 
     const updated = readFileSync(configPath, 'utf8');
     expect(updated.startsWith(original.trimEnd())).toBe(true);
-    expect(updated).toContain('\nrest_command: !include beacon_rest_command.yaml\n');
+    expect(updated).toContain(`\n${REST_INCLUDE}\n`);
+    expect(updated).toContain(`\n${INTENT_INCLUDE}\n`);
     expect(updated.match(/rest_command: !include beacon_rest_command\.yaml/g)).toHaveLength(1);
-    expect(output).toContain('Appended to configuration.yaml: rest_command: !include beacon_rest_command.yaml');
+    expect(updated.match(/^intent_script:/gm)).toHaveLength(1);
+    expect(output).toContain(`Appended to configuration.yaml: ${REST_INCLUDE}`);
+    expect(output).toContain(`Appended to configuration.yaml: ${INTENT_INCLUDE}`);
     expect(output).not.toContain('Exact lines to merge by hand:');
+    expect(output).not.toContain('Line to merge by hand:');
     expect(output).toMatch(/ha core check:/);
     expect(output).toContain('Restart Home Assistant');
     expect(existsSync(join(dir, 'custom_sentences/en/beacon.yaml'))).toBe(true);
@@ -106,28 +113,33 @@ describe('install-voice-intents.sh configuration.yaml wiring', () => {
     expect(backups(dir)).toEqual(bak);
     expect(second).toContain('Exact lines to merge by hand:');
     expect(second).toContain('already included');
+    expect(second).toContain('Line to merge by hand:');
+    expect(second).toContain(INTENT_INCLUDE);
+    expect(second).not.toContain('Appended to configuration.yaml:');
   });
 
   it('leaves an existing include unchanged and prints the merge lines', () => {
     const dir = tempConfig();
-    const original = 'default_config:\n\nrest_command: !include beacon_rest_command.yaml\n';
+    const original = `default_config:\n\n${REST_INCLUDE}\n${INTENT_INCLUDE}\n`;
     writeFileSync(join(dir, 'configuration.yaml'), original);
 
     const output = run(dir);
 
     expect(readFileSync(join(dir, 'configuration.yaml'), 'utf8')).toBe(original);
     expect(backups(dir)).toEqual([]);
-    expect(output).toContain('Left configuration.yaml unchanged (beacon_rest_command.yaml is already included).');
+    expect(output).toContain('Left configuration.yaml unchanged for rest_command (beacon_rest_command.yaml is already included).');
     expect(output).toContain('Exact lines to merge by hand:');
     expect(output).toContain(mergeLines.trim());
     expect(output).toContain('beacon_complete_chore:');
     expect(output).toContain('beacon_chores_left:');
+    expect(output).toContain('Left configuration.yaml unchanged for intent_script (a top-level intent_script: key already exists).');
+    expect(output).toContain('Line to merge by hand:');
     expect(output).not.toContain('Appended to configuration.yaml:');
   });
 
   it('treats a quoted include as already wired', () => {
     const dir = tempConfig();
-    const original = 'rest_command: !include "beacon_rest_command.yaml"\n';
+    const original = `rest_command: !include "beacon_rest_command.yaml"\n${INTENT_INCLUDE}\n`;
     writeFileSync(join(dir, 'configuration.yaml'), original);
 
     const output = run(dir);
@@ -136,6 +148,7 @@ describe('install-voice-intents.sh configuration.yaml wiring', () => {
     expect(backups(dir)).toEqual([]);
     expect(output).toContain('already included');
     expect(output).toContain('Exact lines to merge by hand:');
+    expect(output).toContain('a top-level intent_script: key already exists');
     expect(output).not.toContain('Appended to configuration.yaml:');
   });
 
@@ -149,6 +162,8 @@ describe('install-voice-intents.sh configuration.yaml wiring', () => {
       '    url: "http://example.invalid/hook"',
       '    method: POST',
       '',
+      'intent_script: !include intents.yaml',
+      '',
     ].join('\n');
     writeFileSync(join(dir, 'configuration.yaml'), original);
 
@@ -156,9 +171,11 @@ describe('install-voice-intents.sh configuration.yaml wiring', () => {
 
     expect(readFileSync(join(dir, 'configuration.yaml'), 'utf8')).toBe(original);
     expect(backups(dir)).toEqual([]);
-    expect(output).toContain('Left configuration.yaml unchanged (a top-level rest_command: key already exists).');
+    expect(output).toContain('Left configuration.yaml unchanged for rest_command (a top-level rest_command: key already exists).');
     expect(output).toContain('Exact lines to merge by hand:');
     expect(output).toContain(mergeLines.trim());
+    expect(output).toContain('Line to merge by hand:');
+    expect(output).toContain(INTENT_INCLUDE);
     expect(output).not.toContain('Appended to configuration.yaml:');
   });
 
@@ -175,10 +192,154 @@ describe('install-voice-intents.sh configuration.yaml wiring', () => {
     expect(existsSync(join(dir, 'beacon_rest_command.yaml'))).toBe(false);
     expect(existsSync(join(dir, 'custom_sentences/en/beacon.yaml'))).toBe(false);
     expect(output).toContain('Dry run. No files will be written.');
-    expect(output).toContain(`Dry run: would append this line to ${configPath}:`);
-    expect(output).toContain('rest_command: !include beacon_rest_command.yaml');
+    expect(output).toContain(`Dry run: would append these lines to ${configPath}:`);
+    expect(output).toContain(REST_INCLUDE);
+    expect(output).toContain(INTENT_INCLUDE);
     expect(output).toContain('ha core check: not run (--dry-run)');
     expect(output).toContain('Restart Home Assistant');
     expect(output).not.toContain('Appended to configuration.yaml:');
+    expect(output).not.toContain('Backed up configuration.yaml');
+  });
+
+  it('appends only intent_script when a rest_command key already exists', () => {
+    const dir = tempConfig();
+    const original = [
+      'default_config:',
+      '',
+      'rest_command:',
+      '  notify_phone:',
+      '    url: "http://example.invalid/hook"',
+      '    method: POST',
+      '',
+    ].join('\n');
+    const configPath = join(dir, 'configuration.yaml');
+    writeFileSync(configPath, original);
+
+    const output = run(dir);
+
+    const updated = readFileSync(configPath, 'utf8');
+    expect(updated.startsWith(original.trimEnd())).toBe(true);
+    expect(updated).toContain(`\n${INTENT_INCLUDE}\n`);
+    expect(updated.match(/^intent_script:/gm)).toHaveLength(1);
+    expect(updated).not.toContain(REST_INCLUDE);
+    expect(output).toContain('Left configuration.yaml unchanged for rest_command (a top-level rest_command: key already exists).');
+    expect(output).toContain('Exact lines to merge by hand:');
+    expect(output).toContain(mergeLines.trim());
+    expect(output).toContain(`Appended to configuration.yaml: ${INTENT_INCLUDE}`);
+    expect(output).not.toContain(`Appended to configuration.yaml: ${REST_INCLUDE}`);
+
+    const bak = backups(dir);
+    expect(bak).toHaveLength(1);
+    expect(readFileSync(join(dir, bak[0]), 'utf8')).toBe(original);
+
+    const second = run(dir);
+    expect(readFileSync(configPath, 'utf8')).toBe(updated);
+    expect(backups(dir)).toEqual(bak);
+    expect(second).toContain('a top-level intent_script: key already exists');
+    expect(second).not.toContain('Appended to configuration.yaml:');
+  });
+
+  it('appends only rest_command when an intent_script key already exists', () => {
+    const dir = tempConfig();
+    const original = 'default_config:\n\nintent_script: !include intents.yaml\n';
+    const configPath = join(dir, 'configuration.yaml');
+    writeFileSync(configPath, original);
+
+    const output = run(dir);
+
+    const updated = readFileSync(configPath, 'utf8');
+    expect(updated.startsWith(original.trimEnd())).toBe(true);
+    expect(updated).toContain(`\n${REST_INCLUDE}\n`);
+    expect(updated.match(/rest_command: !include beacon_rest_command\.yaml/g)).toHaveLength(1);
+    expect(updated.match(/^intent_script:/gm)).toHaveLength(1);
+    expect(updated).toContain('intent_script: !include intents.yaml');
+    expect(updated).not.toContain(INTENT_INCLUDE);
+    expect(output).toContain(`Appended to configuration.yaml: ${REST_INCLUDE}`);
+    expect(output).toContain('Line to merge by hand:');
+    expect(output).toContain(INTENT_INCLUDE);
+    expect(output).not.toContain(`Appended to configuration.yaml: ${INTENT_INCLUDE}`);
+
+    const bak = backups(dir);
+    expect(bak).toHaveLength(1);
+    expect(readFileSync(join(dir, bak[0]), 'utf8')).toBe(original);
+  });
+
+  it('ignores a commented or nested intent_script key', () => {
+    const dir = tempConfig();
+    const original = [
+      'default_config:',
+      '',
+      '# intent_script: this comment is not a key',
+      `${REST_INCLUDE}`,
+      'automation:',
+      '  - alias: Example',
+      '    intent_script: "not a top-level key"',
+      '',
+    ].join('\n');
+    const configPath = join(dir, 'configuration.yaml');
+    writeFileSync(configPath, original);
+
+    const output = run(dir);
+
+    const updated = readFileSync(configPath, 'utf8');
+    expect(updated.startsWith(original.trimEnd())).toBe(true);
+    expect(updated.match(/^intent_script:/gm)).toHaveLength(1);
+    expect(updated).toContain(INTENT_INCLUDE);
+    expect(updated.match(/beacon_rest_command\.yaml/g)).toHaveLength(1);
+    expect(output).toContain('beacon_rest_command.yaml is already included');
+    expect(output).toContain(`Appended to configuration.yaml: ${INTENT_INCLUDE}`);
+    expect(backups(dir)).toHaveLength(1);
+    expect(readFileSync(join(dir, backups(dir)[0]), 'utf8')).toBe(original);
+  });
+
+  it('creates configuration.yaml with both includes when the file is missing', () => {
+    const dir = tempConfig();
+
+    const output = run(dir);
+
+    expect(readFileSync(join(dir, 'configuration.yaml'), 'utf8')).toBe(
+      `${REST_INCLUDE}\n${INTENT_INCLUDE}\n`,
+    );
+    expect(backups(dir)).toEqual([]);
+    expect(output).toContain('Created configuration.yaml');
+    expect(output).toContain(`Appended to configuration.yaml: ${REST_INCLUDE}`);
+    expect(output).toContain(`Appended to configuration.yaml: ${INTENT_INCLUDE}`);
+    expect(output).not.toContain('Backed up configuration.yaml');
+  });
+
+  it('appends both includes when configuration.yaml has no trailing newline', () => {
+    const dir = tempConfig();
+    const original = 'default_config:';
+    const configPath = join(dir, 'configuration.yaml');
+    writeFileSync(configPath, original);
+
+    run(dir);
+
+    expect(readFileSync(configPath, 'utf8')).toBe(
+      `default_config:\n\n${REST_INCLUDE}\n${INTENT_INCLUDE}\n`,
+    );
+    const bak = backups(dir);
+    expect(bak).toHaveLength(1);
+    expect(readFileSync(join(dir, bak[0]), 'utf8')).toBe(original);
+  });
+
+  it('does not write the intent_script line in a dry run when that key exists', () => {
+    const dir = tempConfig();
+    const original = 'intent_script: !include_dir_merge_named other_intents\n';
+    const configPath = join(dir, 'configuration.yaml');
+    writeFileSync(configPath, original);
+
+    const output = run(dir, ['--dry-run']);
+
+    expect(readFileSync(configPath, 'utf8')).toBe(original);
+    expect(backups(dir)).toEqual([]);
+    expect(output).toContain(`Dry run: would append this line to ${configPath}:`);
+    expect(output).toContain(REST_INCLUDE);
+    expect(output).not.toContain('would append these lines');
+    expect(output).toContain('Line to merge by hand:');
+    expect(output).toContain(INTENT_INCLUDE);
+    expect(output).toContain('ha core check: not run (--dry-run)');
+    expect(output).not.toContain('Appended to configuration.yaml:');
+    expect(output).not.toContain('Backed up configuration.yaml');
   });
 });
