@@ -6,7 +6,7 @@ order: 4.5
 
 # Chore privileges
 
-Beacon can turn on a Home Assistant entity when a child finishes the chores assigned to them today, and it fires events that automations can listen for. Both are optional. Families that never pick a privilege switch and never import the blueprint keep the same chore behavior as before.
+Beacon can turn on a Home Assistant entity when a child finishes the chores assigned to them today, and it fires events that automations can listen for. Both are optional. Families that never pick a privilege switch and never import the blueprint keep the same chore behavior as before. This needs Beacon **1.45.0** or later.
 
 The check uses the same local calendar day as the rest of Beacon (`localDayKey`). It does not use the UTC date. An evening in US time zones is still "today" even though the stored timestamp is already the next day in UTC.
 
@@ -29,7 +29,7 @@ The picker lists only these Home Assistant domains:
 | `light` | A lamp |
 | `fan` | A fan |
 
-The default is **None**. Nothing is stored until you pick an entity. Clearing the picker removes the field. Parents do not get this control; changing a child to a parent clears it. Existing family members, chores, and completions are left as they are. There is no migration.
+The default is **None**. Nothing is stored until you pick an entity. Clearing the picker removes the field. Parents do not get this control; changing a child to a parent clears it. Existing family members, chores, completions, settings, and add-on options are left as they are. There is no migration.
 
 **PIN.** This does not add a PIN and does not change the one you already have. Checking a chore does not ask for a PIN. The family PIN still only reveals kiosk navigation and exits Kid Display. If nobody has a PIN, those actions stay on the gesture or the confirm button, the same as before.
 
