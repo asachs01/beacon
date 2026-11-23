@@ -1,6 +1,6 @@
 ---
 title: "Magic Import"
-description: "Paste a school email, a text, or a list, review the draft events and list items, and save the ones you want."
+description: "Paste a school email, a text, or a list, or add a photo or PDF, review the draft events and list items, and save the ones you want."
 order: 2.5
 ---
 
@@ -8,11 +8,11 @@ order: 2.5
 
 Paste a school email, a text message, or a list into Beacon, or add a photo or a PDF. It finds calendar events and grocery or to-do items, shows you the drafts, and waits for you to approve them. Nothing is saved until you do.
 
-Skylight Calendar's Calendar Plus already includes a Magic Import that can take forwarded emails, PDFs, and photos of flyers. Beacon does not read forwarded email. Photos and PDFs are optional and stay off until you pick an AI Task entity. It is free, approved with the family PIN, and pasted text can use a local parser.
+Skylight Calendar's Calendar Plus already includes a Magic Import that can take forwarded emails, PDFs, and photos of flyers. Beacon can now take a photo or a PDF too, but it still does not read forwarded email, so that gap is not fully closed. Photos and scanned PDFs stay off until you pick an AI Task entity. Beacon's version is free, approved with the family PIN, and pasted text (and text PDFs) can use a local parser.
 
 Pasted text is processed by your Home Assistant conversation agent, or a local parser. Photos and scanned PDFs are processed by your Home Assistant AI Task entity.
 
-Pasted text needs Beacon **1.47.0** or later. Photos and PDFs need the release that adds them, and Home Assistant **2025.8** or newer.
+Pasted text needs Beacon **1.47.0** or later. Photos and PDFs need Beacon **1.49.0** or later, and Home Assistant **2025.8** or newer.
 
 ## Where to find it
 
@@ -46,7 +46,7 @@ Drafts exist only while the dialog is open. Closing it without approving discard
 
 Pasted text is processed by your Home Assistant conversation agent, or a local parser. Beacon itself sends the text nowhere. Home Assistant sends it to a provider only when the conversation agent is a cloud service — for example the OpenAI or Google AI integrations. Only the local parser, or a local conversation agent, keeps the text in the home.
 
-A photo or scanned PDF is processed by your Home Assistant AI Task entity. Beacon itself sends the file nowhere else. A cloud entity sends the file to that provider. The file stays in memory in the browser. Beacon does not write it to add-on `/data` or to `localStorage`. Home Assistant cannot attach those bytes directly, so Beacon uploads the image to the local media source for the task and then deletes that file.
+A photo or scanned PDF is processed by your Home Assistant AI Task entity. Beacon itself sends the file nowhere else, and it never saves the file to its own storage (add-on `/data` or `localStorage`). For the task it briefly uploads the file to Home Assistant's local media source and deletes it afterward. If that delete fails, the review screen tells you and names the file still in Home Assistant's media folder. If the AI Task entity is a cloud service, that provider receives the file.
 
 ## Home Assistant agent or local parser
 
@@ -83,27 +83,32 @@ List drafts are grocery or to-do items. Each one can be assigned to a list. Groc
 
 ## Photos and PDFs
 
-Add one JPEG, PNG, HEIC, or PDF. On a phone or in the Capacitor app, **Take a photo** opens the camera. The review screen is the same one pasted text uses, and Approve still asks for the family PIN. Nothing is written before that.
+Add one JPEG, PNG, HEIC, or PDF. **Take a photo** appears in the Capacitor app, and on a phone or tablet with a coarse pointer, and opens the camera. The review screen is the same one pasted text uses, and Approve still asks for the family PIN. Nothing is written before that.
 
 - A JPEG or PNG is sent to the AI Task entity you picked.
-- HEIC is converted to JPEG when the browser can decode it (Safari can). Otherwise Beacon shows: "This photo format (HEIC) can't be read on this device. Try a JPEG or PNG, or change your camera to Most Compatible."
-- A PDF with text is read in the browser with pdfjs and then follows the pasted-text path, including the local parser. Only the first 5 pages of text are used.
-- A scanned PDF, with almost no text, uses page 1 as an image and the AI Task entity. If that path is off, Beacon says so. It does not claim the local parser read the scan.
+- HEIC is converted to JPEG when the browser can decode it. Otherwise Beacon shows this error and stops: "This photo format (HEIC) can't be read on this device. Try a JPEG or PNG, or change your camera to Most Compatible."
+- A PDF with text is read in the browser and then follows the pasted-text path, so it can use the local parser or the conversation agent. Only the first 5 pages of text are used.
+- A scanned PDF, with almost no text, uses page 1 as an image and sends it to the AI Task entity through `ai_task.generate_data`. If that path is off, Beacon says so. A failed photo or scan read does not fall back to the local parser.
 - One file per import, up to 10 MB.
 
 Photo and scan import is unavailable until **Magic Import: AI Task entity for photos** is set, and while **use Home Assistant conversation agent** is off.
 
-### Setup notes
+### Home Assistant setup
 
 - Home Assistant **2025.8** or newer. That is when `ai_task.generate_data` gained attachments.
-- In the AI integration (OpenAI, Google, Ollama, or another), add the AI Task sub-entry so an `ai_task.*` entity exists. Pick that entity in Beacon. A local integration such as Ollama is labeled local. OpenAI, Google, and Anthropic are labeled cloud. Anything else may be cloud.
+- In the AI integration (OpenAI, Google, Ollama, or another), add the AI Task sub-entry so an `ai_task.*` entity exists. Pick that entity in Beacon under **Settings → Display → Magic Import: AI Task entity for photos**. A local integration such as Ollama is labeled local. OpenAI, Google, and Anthropic are labeled cloud. Anything else may be cloud, using the same classifier as conversation agents.
 - The long-lived token, or the add-on Supervisor token, must be an admin. Home Assistant only lets an admin upload to the local media source.
-- Home Assistant needs its local media folder (the default `media` directory is enough). `ai_task.generate_data` does not accept inline image bytes. Beacon uploads with `POST /api/media_source/local_source/upload` to `media-source://media_source/local/.`, calls `ai_task.generate_data` with that `media_content_id` and `media_content_type`, then deletes the file with the `media_source/local_source/remove` websocket command. In the add-on those calls go through `/beacon-action/media-upload`, `/beacon-action/media-browse`, and `/beacon-action/media-remove` so ingress does not rewrite the upload. If the delete fails, the review screen names the file still in Home Assistant's media folder.
-- Privacy wording to reuse: the file is processed by your Home Assistant AI Task entity. Beacon itself sends the file nowhere else. A cloud entity sends it to that provider.
+- Home Assistant needs its local media folder (the default `media` directory is enough). `ai_task.generate_data` does not accept inline image bytes, so Beacon uploads the file to the local media source, calls the task with that `media_content_id`, then deletes the file. In the add-on those calls go through `/beacon-action/media-upload`, `/beacon-action/media-browse`, and `/beacon-action/media-remove` so ingress does not rewrite the upload. If the delete fails, the review screen names the file still in Home Assistant's media folder.
 
 ## Limits and troubleshooting
 
 - Beacon does not read forwarded email.
+- One file per import, up to 10 MB. Two files at once shows "Choose one file at a time." A larger file shows "This file is larger than 10 MB. Choose a smaller photo or PDF." An unsupported type shows "Choose a JPEG, PNG, HEIC, or PDF."
+- If photo and scan import is off because the local parser is forced, Beacon shows: "Photo and scanned-PDF import is unavailable because Magic Import is set to the local parser. The local parser reads text, not photos. A PDF that contains text still works."
+- If no AI Task entity is set, it shows: "Photo and scanned-PDF import needs an AI Task entity. Choose one in Settings under Magic Import: AI Task entity for photos. A PDF that contains text still works."
+- If the AI Task entity cannot read the photo, it shows: "Home Assistant's AI Task entity could not read this photo. Nothing was saved." A failed image read does not fall back to the local parser.
+- If the upload to Home Assistant fails, it explains that photo import needs Home Assistant 2025.8 or newer, an admin token, and a local media folder.
+- If the temporary media file cannot be deleted, the review screen says Home Assistant still has the file in its media folder and names it, so you can remove it there.
 - When Home Assistant reads pasted text, Beacon sends the first 8,000 characters to the conversation agent.
 - If nothing is found, the review screen says to include a date like “Fri Dec 5” or a bullet list.
 - If some drafts cannot be saved, those stay in the list with an error so you can fix them and try again.
