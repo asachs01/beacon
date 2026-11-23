@@ -12,7 +12,9 @@ This needs Beacon **1.46.0** or later.
 
 ## Upgrading from an earlier version
 
-If you already copied Beacon's voice intents into Home Assistant, update them. Chore completion by voice goes through a `rest_command` in `beacon/custom_intents/beacon_rest_command.yaml`. The install script `beacon/scripts/install-voice-intents.sh` copies the sentence file, the intent file, and that rest command file. When `configuration.yaml` has no top-level `rest_command:` key, it backs that file up once with a timestamp and appends `rest_command: !include beacon_rest_command.yaml`. When there is no top-level `intent_script:` key, the same run appends `intent_script: !include_dir_merge_named custom_intents`. If a key or the rest include is already there, that part of the file is left unchanged and the script prints the lines to merge by hand. Until you re-run the script, older intent files keep writing to `todo.chores`.
+If you already copied Beacon's voice intents into Home Assistant, update them. Chore completion by voice goes through a `rest_command` in `beacon/custom_intents/beacon_rest_command.yaml`. The install script `beacon/scripts/install-voice-intents.sh` copies the sentence file, the intent file, and that rest command file. When `configuration.yaml` has no top-level `rest_command:` key, the script appends `rest_command: !include beacon_rest_command.yaml`. When there is no top-level `intent_script:` key, the same run appends `intent_script: !include_dir_merge_named custom_intents`. If it appends either line, it first makes one timestamped backup of `configuration.yaml`. If a top-level `rest_command:` key or the Beacon rest include is already there, or if a top-level `intent_script:` key is already there, that part of the file is left unchanged and the script prints the lines to merge by hand. Until you re-run the script, older intent files keep writing to `todo.chores`.
+
+**Changed in 1.46.3.** The script now also adds the `intent_script` include when that key is not already present. If `intent_script:` already exists, it leaves that part of the file alone and prints the line to merge by hand. Upgrading is: re-run the script, merge any lines it prints, and restart Home Assistant.
 
 Replace `ADDON_SLUG` in the copied rest command file with the slug at the end of the add-on page URL (**Settings → Add-ons → Beacon**). From Home Assistant core, the add-on listens on port 3000 of the Supervisor network. Chore completion is `POST http://ADDON_SLUG:3000/beacon-action/complete-chore`. "What chores are left" is `GET http://ADDON_SLUG:3000/beacon-action/chores-left?member=`.
 
@@ -22,7 +24,7 @@ Replace `ADDON_SLUG` in the copied rest command file with the slug at the end of
    beacon/scripts/install-voice-intents.sh /config
    ```
 
-   Pass `--dry-run` to print the plan without writing files. The script runs `ha core check` when the `ha` command is available and prints the result.
+   Pass `--dry-run` to print the plan without copying files, editing `configuration.yaml`, or running `ha core check`. On a real run, the script runs `ha core check` when the `ha` command is available and prints the result.
 
 2. Merge any lines the script prints.
 
@@ -99,7 +101,7 @@ Assist uses the same chore endpoints once the rest commands are installed. `Beac
 
 ## Home Assistant setup
 
-Follow the steps in [Upgrading from an earlier version](#upgrading-from-an-earlier-version): re-run the install script, merge any lines it prints, and restart Home Assistant.
+Follow the steps in [Upgrading from an earlier version](#upgrading-from-an-earlier-version): run the install script, merge any lines it prints, and restart Home Assistant.
 
 Then:
 
