@@ -67,9 +67,15 @@ Beacon also works with **any calendar source** Home Assistant supports, includin
 
 **Yes.** Beacon supports full CRUD operations on calendar events. Tap the + button or a time slot to create events. Tap an existing event to edit or delete it. You can even drag events to reschedule them. See [Calendar](/docs/features/calendar/).
 
+### Can Beacon add events from a text or email I paste in?
+
+**Yes, from 1.47.0.** Open **Import** on the dashboard or calendar, paste the text, review the drafts, and approve them with a family PIN when one is set. Beacon only takes pasted text; it does not read forwarded emails, PDFs, or photos of flyers. Skylight Calendar's Calendar Plus already has a Magic Import that can handle those. What sets Beacon's apart is that it is free, approved with the family PIN, and can use a local parser. The paste and review screens name the Home Assistant conversation agent and its entity id, and label it local, cloud, or may be cloud. Pasted text is processed by your Home Assistant conversation agent, or a local parser. **Settings → Display → Magic Import: use Home Assistant conversation agent** is on by default; turning it off forces the local parser. Beacon itself sends the text nowhere. Home Assistant sends it to a provider only when the agent is a cloud service (for example the OpenAI or Google AI integrations). Only the local parser or a local agent keeps it in the home. See [Magic Import](/docs/features/magic-import/).
+
 ### Does Beacon send my data anywhere?
 
-**No.** Beacon runs entirely on your local network. It communicates only with your Home Assistant instance — never with any external server. There is no telemetry, analytics, or cloud dependency.
+**No, with one caveat.** Beacon itself sends nothing to outside servers. It runs on your local network and talks only to your Home Assistant instance. There is no telemetry, analytics, or cloud dependency of Beacon's own.
+
+The exception is [Magic Import](/docs/features/magic-import/). Only if Magic Import is on, and your Home Assistant conversation agent is a cloud service, does Home Assistant send the pasted text to that provider. To force the local parser, turn off **Settings → Display → Magic Import: use Home Assistant conversation agent**.
 
 Data flow: `Google/CalDAV -> Home Assistant -> Beacon (local only)`
 
