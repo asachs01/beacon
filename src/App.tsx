@@ -959,6 +959,7 @@ export function App() {
           defaultDurationMinutes={settings.defaultEventDuration}
           locale={settings.locale}
           grocyEnabled={settings.grocyEnabled}
+          useHaAgent={settings.magicImportUseHaAgent}
           getClient={client}
           onCreateEvent={createEvent}
           onClose={() => setShowImport(false)}

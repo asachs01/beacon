@@ -4,12 +4,13 @@ import { GrocyClient } from '../api/grocy';
 import { hasToken } from '../api/ha-rest';
 import type { HomeAssistantClient } from '../api/homeassistant';
 import { calendarWriteFromDraft, pickCalendarId, pickListId, type ListTarget } from '../import/commit';
-import { extractMagicImport, type Extraction } from '../import/extract';
+import { extractMagicImport, planMagicImport, type Extraction } from '../import/extract';
+import type { NamedAgent } from '../import/agent';
 import { conversationDeps } from '../import/ha';
 import { householdTimeZone } from '../import/calendar';
 import { importPinDecision } from '../import/pin-gate';
 import { useLocalTasks } from '../hooks/useLocalTasks';
-import { useTranslation } from '../i18n';
+import { useTranslation, type TranslationKey } from '../i18n';
 
 interface CalendarTarget {
   id: string;
@@ -25,6 +26,8 @@ interface MagicImportModalProps {
   defaultDurationMinutes: number;
   locale: string;
   grocyEnabled: boolean;
+  /** Off forces the local parser. Defaults to asking Home Assistant. */
+  useHaAgent?: boolean;
   getClient: () => HomeAssistantClient | null;
   onCreateEvent: (calendarId: string, event: {
     summary: string;
@@ -40,6 +43,8 @@ interface MagicImportModalProps {
   /** Tests pass known lists and a fixed extraction. The screen discovers both otherwise. */
   lists?: ListTarget[];
   extract?: (text: string) => Promise<Extraction>;
+  /** Tests supply the reader the paste screen should name. */
+  planRoute?: () => Promise<Pick<Extraction, 'source' | 'agent'>>;
   onAddListItem?: (listId: string, title: string) => Promise<void> | void;
   now?: Date;
   timeZone?: string;
@@ -66,6 +71,20 @@ interface ListDraft {
 }
 
 type Draft = EventDraft | ListDraft;
+
+function readerKey(
+  route: Pick<Extraction, 'source' | 'agent'>,
+  done: boolean,
+): TranslationKey {
+  const agent = route.agent;
+  if (route.source !== 'home-assistant' || !agent) {
+    return done ? 'import.pathLocalDone' : 'import.pathLocal';
+  }
+  if (!agent.id) return done ? 'import.pathHaUnnamedDone' : 'import.pathHaUnnamed';
+  if (agent.locality === 'local') return done ? 'import.pathHaLocalDone' : 'import.pathHaLocal';
+  if (agent.locality === 'cloud') return done ? 'import.pathHaCloudDone' : 'import.pathHaCloud';
+  return done ? 'import.pathHaMaybeDone' : 'import.pathHaMaybe';
+}
 
 function buildDrafts(
   result: Extraction,
@@ -109,12 +128,14 @@ export function MagicImportModal({
   defaultDurationMinutes,
   locale,
   grocyEnabled,
+  useHaAgent = true,
   getClient,
   onCreateEvent,
   onClose,
   onCommitted,
   lists: listsProp,
   extract,
+  planRoute,
   onAddListItem,
   now,
   timeZone,
@@ -125,12 +146,29 @@ export function MagicImportModal({
   const [text, setText] = useState('');
   const [phase, setPhase] = useState<'paste' | 'review'>('paste');
   const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [planned, setPlanned] = useState<Pick<Extraction, 'source' | 'agent'> | null>(null);
   const [source, setSource] = useState<Extraction['source']>('local');
+  const [agent, setAgent] = useState<NamedAgent | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [pinOpen, setPinOpen] = useState<'approve' | 'reject' | null>(null);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const route = planRoute
+          ? await planRoute()
+          : await planMagicImport(conversationDeps(getClient, useHaAgent));
+        if (!cancelled) setPlanned(route);
+      } catch {
+        if (!cancelled) setPlanned({ source: 'local', agent: null });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [getClient, planRoute, useHaAgent]);
 
   useEffect(() => {
     if (listsProp) return undefined;
@@ -176,8 +214,9 @@ export function MagicImportModal({
       };
       const result = extract
         ? await extract(trimmed)
-        : await extractMagicImport(trimmed, ctx, conversationDeps(getClient));
+        : await extractMagicImport(trimmed, ctx, conversationDeps(getClient, useHaAgent));
       setSource(result.source);
+      setAgent(result.agent);
       setDrafts(buildDrafts(result, calendars, lists, {
         calendarId: defaultCalendarId,
         groceryListId: defaultGroceryListId,
@@ -287,6 +326,17 @@ export function MagicImportModal({
             <>
               <label className="magic-import-label" htmlFor="magic-import-text">{t('import.pasteLabel')}</label>
               <p className="magic-import-hint">{t('import.pasteHint')}</p>
+              {planned && (
+                <p className="magic-import-hint">
+                  {t(readerKey(planned, false), {
+                    name: planned.agent?.name ?? '',
+                    id: planned.agent?.id ?? '',
+                  })}
+                </p>
+              )}
+              {planned?.source === 'home-assistant' && (
+                <p className="magic-import-privacy">{t('import.privacy')}</p>
+              )}
               <textarea
                 id="magic-import-text"
                 className="settings-input magic-import-text"
@@ -299,8 +349,14 @@ export function MagicImportModal({
           ) : (
             <>
               <p className="magic-import-hint">
-                {source === 'home-assistant' ? t('import.sourceHa') : t('import.sourceLocal')}
+                {t(readerKey({ source, agent }, true), {
+                  name: agent?.name ?? '',
+                  id: agent?.id ?? '',
+                })}
               </p>
+              {source === 'home-assistant' && (
+                <p className="magic-import-privacy">{t('import.privacy')}</p>
+              )}
               {drafts.length === 0 ? (
                 <p>{t('import.empty')}</p>
               ) : (

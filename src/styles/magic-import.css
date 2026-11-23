@@ -51,6 +51,13 @@
   font-size: 0.9rem;
 }
 
+.magic-import-privacy {
+  margin: -4px 0 12px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .magic-import-text {
   width: 100%;
   min-height: 160px;

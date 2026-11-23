@@ -24,6 +24,7 @@ describe('magic import setting', () => {
     expect(result.current.settings.kioskMode).toBe(true);
     expect(result.current.settings.choresResetTime).toBe('06:30');
     expect(result.current.settings.magicImport).toBe(false);
+    expect(result.current.settings.magicImportUseHaAgent).toBe(true);
 
     const stored = JSON.parse(localStorage.getItem('beacon-settings') ?? '{}') as Record<string, unknown>;
     expect(stored.familyName).toBe('Sachs');
@@ -31,6 +32,7 @@ describe('magic import setting', () => {
     expect(stored.kioskMode).toBe(true);
     expect(stored.choresResetTime).toBe('06:30');
     expect(stored.magicImport).toBe(false);
+    expect(stored.magicImportUseHaAgent).toBe(true);
   });
 
   it('turns magic import on for an add-on that has never stored the key', async () => {
@@ -42,8 +44,24 @@ describe('magic import setting', () => {
     }));
 
     const { result } = renderHook(() => useSettings());
-    await waitFor(() => expect(result.current.settings.magicImport).toBe(true));
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    expect(result.current.settings.magicImport).toBe(true);
     expect(result.current.settings.voiceButton).toBe(false);
     expect(result.current.settings.familyName).toBe('Sachs');
+    expect(result.current.settings.magicImportUseHaAgent).toBe(true);
+  });
+
+  it('keeps a saved choice to force the local parser', async () => {
+    localStorage.setItem('beacon-settings', JSON.stringify({
+      familyName: 'Sachs',
+      voiceButton: false,
+      magicImportUseHaAgent: false,
+    }));
+
+    const { result } = renderHook(() => useSettings());
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    expect(result.current.settings.magicImportUseHaAgent).toBe(false);
+    expect(result.current.settings.familyName).toBe('Sachs');
+    expect(result.current.settings.voiceButton).toBe(false);
   });
 });

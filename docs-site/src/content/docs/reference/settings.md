@@ -81,7 +81,8 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | `kioskMode` | Kiosk Mode | `boolean` | false | Hide the sidebar for a cleaner display |
 | `kioskRevealGesture` | Reveal navigation gesture | `boolean` | true | On by default. In kiosk mode, long-press the top corner for 2 seconds or tap it 3 times quickly to show the sidebar. Hold Escape on a keyboard. It hides again after 15 seconds of inactivity. A family PIN is required when one is set. |
 | `voiceButton` | Voice button | `boolean` | true | Show hold-to-talk on the wall. On by default in the Home Assistant add-on. The mic needs HTTPS or localhost; ingress over HTTPS works, and a plain HTTP kiosk keeps the text box. |
-| `magicImport` | Magic Import | `boolean` | true | Show Import on the dashboard and calendar. On by default in the Home Assistant add-on. Pasted text stays on this device, or is read by the Home Assistant conversation agent when one is configured. |
+| `magicImport` | Magic Import | `boolean` | true | Show Import on the dashboard and calendar. On by default in the Home Assistant add-on. Pasted text is processed by your Home Assistant conversation agent, or a local parser. |
+| `magicImportUseHaAgent` | Magic Import: use Home Assistant conversation agent | `boolean` | true | On by default. When on, pasted text is processed by your Home Assistant conversation agent, or a local parser if that agent is unavailable. When off, Beacon always uses the local parser. Beacon itself sends the text nowhere. It stays in your home unless your Home Assistant conversation agent is a cloud service; in that case HA sends it to that provider. |
 
 ### Chores
 

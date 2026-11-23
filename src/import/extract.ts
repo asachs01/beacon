@@ -1,23 +1,33 @@
 /**
  * Magic Import extraction.
  *
- * When Home Assistant has a conversation agent, ask it for strict JSON.
- * Anything else — no agent, an error, or a reply that fails the schema —
- * stays on the device and uses the local parser. Beacon never calls a
- * third-party model itself.
+ * When the household allows it and Home Assistant has a conversation agent,
+ * ask that agent for strict JSON. Beacon does not call a model itself.
+ * Home Assistant sends the text on only if that agent is a cloud service.
+ * No agent, a refused setting, an error, or a reply that fails the schema
+ * uses the local parser.
  */
+import {
+  nameConversationAgent,
+  selectConversationAgent,
+  type AgentListing,
+  type NamedAgent,
+} from './agent';
 import { zonedDayKey } from './calendar';
 import { parseMagicImportText, type ParseContext, type ParsedImport } from './parse';
 import { jsonFromAgentText, validateMagicImport } from './schema';
 import { extractConversationSpeech } from '../voice/assist';
 
 export interface ExtractDeps {
-  listAgents: () => Promise<Array<{ id: string }>>;
-  processConversation: (text: string) => Promise<unknown>;
+  /** When false, never call Home Assistant. Defaults to asking it. */
+  useHomeAssistant?: boolean;
+  listAgents: () => Promise<AgentListing>;
+  processConversation: (text: string, agentId?: string) => Promise<unknown>;
 }
 
 export interface Extraction extends ParsedImport {
   source: 'home-assistant' | 'local';
+  agent: NamedAgent | null;
 }
 
 export function magicImportPrompt(text: string, ctx: ParseContext): string {
@@ -58,27 +68,52 @@ function fromAgent(payload: unknown): ParsedImport | null {
   return validateMagicImport(jsonFromAgentText(speech));
 }
 
+const LOCAL: Pick<Extraction, 'source' | 'agent'> = { source: 'local', agent: null };
+
+/** The reader the paste screen should name before anyone submits text. */
+export async function planMagicImport(deps: ExtractDeps): Promise<Pick<Extraction, 'source' | 'agent'>> {
+  if (deps.useHomeAssistant === false) return LOCAL;
+
+  let listing: AgentListing;
+  try {
+    listing = await deps.listAgents();
+  } catch {
+    return LOCAL;
+  }
+
+  if (listing.unnamed) {
+    return { source: 'home-assistant', agent: { id: '', name: '', locality: 'maybe-cloud' } };
+  }
+
+  const selected = selectConversationAgent(listing.agents, listing.defaultAgentId);
+  if (!selected) {
+    if (listing.agents.length > 0) {
+      return { source: 'home-assistant', agent: { id: '', name: '', locality: 'maybe-cloud' } };
+    }
+    return LOCAL;
+  }
+  return { source: 'home-assistant', agent: nameConversationAgent(selected) };
+}
+
 export async function extractMagicImport(
   text: string,
   ctx: ParseContext,
   deps: ExtractDeps,
 ): Promise<Extraction> {
-  const local = (): Extraction => ({ source: 'local', ...parseMagicImportText(text, ctx) });
-  if (!text.trim()) return { source: 'local', events: [], items: [] };
+  const local = (): Extraction => ({ ...LOCAL, ...parseMagicImportText(text, ctx) });
+  if (!text.trim()) return { ...LOCAL, events: [], items: [] };
 
-  let agents: Array<{ id: string }> = [];
-  try {
-    agents = await deps.listAgents();
-  } catch {
-    agents = [];
-  }
-  if (agents.length === 0) return local();
+  const planned = await planMagicImport(deps);
+  if (planned.source === 'local') return local();
 
   try {
-    const payload = await deps.processConversation(magicImportPrompt(text, ctx));
+    const payload = await deps.processConversation(
+      magicImportPrompt(text, ctx),
+      planned.agent?.id || undefined,
+    );
     const parsed = fromAgent(payload);
     if (!parsed) return local();
-    return { source: 'home-assistant', ...parsed };
+    return { ...planned, ...parsed };
   } catch {
     return local();
   }

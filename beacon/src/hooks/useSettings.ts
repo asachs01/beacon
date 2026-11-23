@@ -82,6 +82,12 @@ export interface BeaconSettings {
    * it; the Home Assistant add-on leaves it on. A saved true/false wins.
    */
   magicImport: boolean;
+  /**
+   * Ask Home Assistant's conversation agent to read pasted text. On by
+   * default, including when the key has never been stored. Off forces the
+   * local parser. A saved true/false wins and does not rewrite other keys.
+   */
+  magicImportUseHaAgent: boolean;
 
   // Chores
   choresEnabled: boolean;
@@ -147,6 +153,7 @@ function buildDefaults(): BeaconSettings {
     kioskRevealGesture: true,
     voiceButton: true,
     magicImport: true,
+    magicImportUseHaAgent: true,
 
     choresEnabled: true,
     choresResetTime: '00:00',
