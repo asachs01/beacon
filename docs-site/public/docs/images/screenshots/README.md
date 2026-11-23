@@ -36,6 +36,6 @@ A GitHub Actions workflow (`.github/workflows/docs-screenshots.yml`) reruns this
 | File | Why |
 | --- | --- |
 | `calendar-day.png` | Beacon has no single-day calendar grid. The day agenda is the dashboard (`dashboard.png`). The script writes this file if a Day control appears later. |
-| `chores-portrait.png` | At 768px the stacked chore columns are a fixed 200px tall and clip the cards, so a portrait chores frame would not show the names. The landscape frame is `chores.png`. |
+| `chores-portrait.png` | The docs page uses the landscape frame (`chores.png`). |
 
 Photos are seeded as a placeholder image for the photo frame. There is no `photos.png` in this set.
