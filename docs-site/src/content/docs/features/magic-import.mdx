@@ -8,6 +8,8 @@ order: 2.5
 
 Paste a school email, a text message, or a list into Beacon. It finds calendar events and grocery or to-do items, shows you the drafts, and waits for you to approve them. Nothing is saved until you do.
 
+Skylight Calendar's Calendar Plus already includes a Magic Import that can take forwarded emails, PDFs, and photos of flyers. Beacon's version only takes pasted text. It is free, approved with the family PIN, and can use a local parser.
+
 Pasted text is processed by your Home Assistant conversation agent, or a local parser.
 
 This needs Beacon **TODO: version after [#104](https://github.com/asachs01/beacon/pull/104) ships**, or later.
@@ -77,7 +79,7 @@ List drafts are grocery or to-do items. Each one can be assigned to a list. Groc
 
 ## Limits and troubleshooting
 
-- This version does not read photos, PDFs, or incoming email on its own. Paste the text into the dialog.
+- Beacon only takes pasted text. It does not read photos, PDFs, or forwarded email. Skylight Calendar's Calendar Plus Magic Import can handle those.
 - When Home Assistant reads the text, Beacon sends the first 8,000 characters to the conversation agent.
 - If nothing is found, the review screen says to include a date like “Fri Dec 5” or a bullet list.
 - If some drafts cannot be saved, those stay in the list with an error so you can fix them and try again.
