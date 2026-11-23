@@ -68,7 +68,7 @@ const INTENT_PATTERNS = [
   {
     name: 'complete_item',
     patterns: [
-      /^(?:please\s+)?(?:check off|uncheck)\s+(?:the\s+)?(.+)$/i,
+      /^(?:please\s+)?check off\s+(?:the\s+)?(.+)$/i,
       /^(?:please\s+)?(?:complete|finish)\s+(?:the\s+)?(.+)$/i,
     ],
     handler: (m) => ({
@@ -77,6 +77,19 @@ const INTENT_PATTERNS = [
       data: { item: cleanupPhrase(m[1]), status: 'completed' },
       entityHint: null,
       response: `Marked ${cleanupPhrase(m[1])} as done`,
+    }),
+  },
+  {
+    name: 'uncheck_item',
+    patterns: [
+      /^(?:please\s+)?uncheck\s+(?:the\s+)?(.+)$/i,
+    ],
+    handler: (m) => ({
+      domain: 'todo',
+      service: 'update_item',
+      data: { item: cleanupPhrase(m[1]), status: 'needs_action' },
+      entityHint: null,
+      response: `Unchecked ${cleanupPhrase(m[1])}`,
     }),
   },
   {
