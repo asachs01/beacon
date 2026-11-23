@@ -12,7 +12,7 @@ This needs Beacon **1.46.0** or later.
 
 ## Upgrading from an earlier version
 
-If you already copied Beacon's voice intents into Home Assistant, update them. Chore completion by voice now goes through a new `rest_command` in `beacon/custom_intents/beacon_rest_command.yaml`. The install script `beacon/scripts/install-voice-intents.sh` copies the sentence file, the intent file, and that rest command file. Until you re-run the script or copy the files over by hand, the old intents keep writing to `todo.chores`.
+If you already copied Beacon's voice intents into Home Assistant, update them. Chore completion by voice now goes through a new `rest_command` in `beacon/custom_intents/beacon_rest_command.yaml`. The install script `beacon/scripts/install-voice-intents.sh` copies the sentence file, the intent file, and that rest command file. When `configuration.yaml` has no top-level `rest_command:` key, the script backs up `configuration.yaml` with a timestamp and appends `rest_command: !include beacon_rest_command.yaml`. If that key or the include is already there, the script leaves `configuration.yaml` unchanged and prints the exact lines to merge by hand. Until you re-run the script or copy the files over by hand, the old intents keep writing to `todo.chores`.
 
 1. Update the files:
 
@@ -20,7 +20,7 @@ If you already copied Beacon's voice intents into Home Assistant, update them. C
    beacon/scripts/install-voice-intents.sh /config
    ```
 
-   That copies `custom_sentences/en/beacon.yaml`, `custom_intents/beacon.yaml`, and `beacon_rest_command.yaml`.
+   That copies `custom_sentences/en/beacon.yaml`, `custom_intents/beacon.yaml`, and `beacon_rest_command.yaml`. It wires `configuration.yaml` when it safely can. Pass `--dry-run` to print the plan without writing files.
 
 2. In `configuration.yaml`, if it is not already there:
 
@@ -28,9 +28,9 @@ If you already copied Beacon's voice intents into Home Assistant, update them. C
    intent_script: !include_dir_merge_named custom_intents
    ```
 
-3. Copy the `rest_command` block from `beacon_rest_command.yaml` into `configuration.yaml`. The install script does not add that block for you. Replace `ADDON_SLUG` with the slug at the end of the add-on page URL (**Settings → Add-ons → Beacon**). From Home Assistant core, the add-on listens on port 3000 of the Supervisor network. Chore completion is `POST http://ADDON_SLUG:3000/beacon-action/complete-chore`. "What chores are left" is `GET http://ADDON_SLUG:3000/beacon-action/chores-left?member=`.
+3. If the script appended the include, `beacon_rest_command.yaml` is already loaded. If it printed merge lines instead, add those under your existing `rest_command:` key. Replace `ADDON_SLUG` with the slug at the end of the add-on page URL (**Settings → Add-ons → Beacon**). From Home Assistant core, the add-on listens on port 3000 of the Supervisor network. Chore completion is `POST http://ADDON_SLUG:3000/beacon-action/complete-chore`. "What chores are left" is `GET http://ADDON_SLUG:3000/beacon-action/chores-left?member=`.
 
-4. Restart Home Assistant so the new rest commands exist. Reloading Conversation is not enough for a new `rest_command`. After a restart, reload Conversation under **Developer Tools → YAML** if you only changed sentences.
+4. The script runs `ha core check` when the `ha` command is available and prints the result. Restart Home Assistant so the new rest commands exist. Reloading Conversation is not enough for a new `rest_command`. After a restart, reload Conversation under **Developer Tools → YAML** if you only changed sentences.
 
 The wall's hold-to-talk button can still complete a chore through Beacon's own voice API if Assist errors because the rest command is missing. A speaker that is not the wall still needs the updated intents and rest commands. A conversation agent has to be set up; the built-in Home Assistant agent is enough (**Settings → Voice assistants**).
 
@@ -65,11 +65,13 @@ The Web Speech API only runs in a secure context (HTTPS or localhost), as descri
 | --- | --- |
 | "Mark X as done", "I finished X", "X is done", "Ada finished X" | Completes that chore in Beacon's chore chart. Fires `beacon_chore_completed`, re-checks that person's privilege switch, and fires `beacon_all_chores_done` (and turns the switch on) only when this completion finishes their chores for today. Does not update `todo.chores`. |
 | "Complete the X chore" | Also completes a Beacon chore, same as the row above. |
-| "Check off …", or a bare "complete …" / "finish …" | Still updates a Home Assistant to-do item. These are not chore completions. |
+| "Check off …" | Marks a Home Assistant to-do item completed. This works on the wall and in Assist. It is not a chore completion. |
+| "Uncheck …" | Marks that Home Assistant to-do item needs action. This works on the wall and in Assist. It is not a chore completion. |
+| A bare "complete …" / "finish …" | Still updates a Home Assistant to-do item from the wall voice API. These are not chore completions. |
 | "What chores are left", "What does Ada have left" | Reads today's remaining chores from Beacon's chore chart, not `todo.chores`. |
 | If the match is unclear | Beacon asks which chore, or which person, and saves nothing. |
 
-**Changed in 1.46.0.** Phrases like "Mark X as done", "I finished X", "X is done", and "Name finished X" used to update `todo.chores`. They now write to Beacon's chore chart, fire the same events as checking the chore on the wall, and re-check the privilege switch. "What chores are left" also reads that chart. "Check off …" and a bare "complete …" still update a to-do item. If you already copied the older intent files into Home Assistant, see [Upgrading from an earlier version](#upgrading-from-an-earlier-version).
+**Changed in 1.46.0.** Phrases like "Mark X as done", "I finished X", "X is done", and "Name finished X" used to update `todo.chores`. They now write to Beacon's chore chart, fire the same events as checking the chore on the wall, and re-check the privilege switch. "What chores are left" also reads that chart. "Check off …" and a bare "complete …" still update a to-do item. "Uncheck …" marks that to-do item needs action. "Check off …" and "Uncheck …" work in Assist as well as on the wall. If you already copied the older intent files into Home Assistant, see [Upgrading from an earlier version](#upgrading-from-an-earlier-version).
 
 The completion is stored in Beacon's family data (`beacon_completions.json`), the same place a tap on the chore screen writes. It matches the chore title loosely, and a person's name when you say one.
 
@@ -97,11 +99,11 @@ The wall also subscribes to the Home Assistant event `beacon_navigate` and switc
 1. In the Home Assistant add-on, if a conversation agent is available, Beacon calls `conversation.process` (websocket when the wall is signed in, otherwise the REST service through the add-on).
 2. If that reply is an error, or there is no agent, or Beacon is not the add-on, Beacon POSTs the same text to `/beacon-action/voice`.
 
-Assist uses the same chore endpoints once the rest commands are installed. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to `/beacon-action/complete-chore`. `BeaconChoreStatus` and `BeaconChoreStatusByPerson` call `rest_command.beacon_chores_left`, which GETs `/beacon-action/chores-left`. The spoken reply is whatever that endpoint returns, including the question when more than one chore matches.
+Assist uses the same chore endpoints once the rest commands are installed. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to `/beacon-action/complete-chore`. `BeaconChoreStatus` and `BeaconChoreStatusByPerson` call `rest_command.beacon_chores_left`, which GETs `/beacon-action/chores-left`. The spoken reply is whatever that endpoint returns, including the question when more than one chore matches. `BeaconCheckOffItem` and `BeaconUncheckItem` call `todo.update_item` (completed, and needs action). They are not chore completions.
 
 ## Home Assistant setup
 
-Follow the steps in [Upgrading from an earlier version](#upgrading-from-an-earlier-version) to install or update the sentence files, include the intent scripts, copy the `rest_command` block, and restart Home Assistant.
+Follow the steps in [Upgrading from an earlier version](#upgrading-from-an-earlier-version) to install or update the sentence files, include the intent scripts, let the script wire `rest_command` when it safely can (or merge the lines it prints), and restart Home Assistant.
 
 Then:
 

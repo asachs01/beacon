@@ -16,6 +16,24 @@ intents:
           list_name:
             type: text
 
+  # Check off / uncheck stay on the Home Assistant to-do item.
+  # They are not Beacon chore completions. Same phrases as the wall parser.
+  BeaconCheckOffItem:
+    data:
+      - sentences:
+          - "[please] check off [the] {item}"
+        slots:
+          item:
+            type: text
+
+  BeaconUncheckItem:
+    data:
+      - sentences:
+          - "[please] uncheck [the] {item}"
+        slots:
+          item:
+            type: text
+
   # ── Chore Tracking ──────────────────────────────────────────────
   BeaconCompleteChore:
     data:

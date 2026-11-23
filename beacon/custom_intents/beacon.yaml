@@ -12,6 +12,118 @@ BeaconAddItem:
   speech:
     text: "Added {{ item }} to the {{ list_name }} list."
 
+# Check off marks a Home Assistant to-do item completed.
+# Uncheck marks it needs_action. Neither one writes a Beacon chore.
+# The spoken name is matched across to-do lists, then todo.update_item
+# runs on that list. The wall voice API calls the same service and status.
+BeaconCheckOffItem:
+  action:
+    - service: todo.get_items
+      continue_on_error: true
+      data:
+        status:
+          - needs_action
+          - completed
+      target:
+        entity_id: "{{ states.todo | default([]) | map(attribute='entity_id') | list }}"
+      response_variable: beacon_lists
+    - variables:
+        beacon_target: >-
+          {%- set raw = beacon_lists | default({}, true) -%}
+          {%- set lists = raw.service_response if raw is mapping and raw.service_response is mapping else raw -%}
+          {%- if lists is not mapping -%}
+            {%- set lists = {} -%}
+          {%- endif -%}
+          {%- set wanted = item | lower | trim -%}
+          {%- set ns = namespace(entity='', uid='') -%}
+          {%- for entity_id, payload in lists.items() -%}
+            {%- set entries = payload['items'] if payload is mapping else [] -%}
+            {%- for entry in entries -%}
+              {%- if ns.entity == '' and (entry.summary | default('') | lower | trim) == wanted -%}
+                {%- set ns.entity = entity_id -%}
+                {%- set ns.uid = entry.uid | default(entry.summary, true) -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endfor -%}
+          {{ ns.entity ~ '\n' ~ ns.uid }}
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ beacon_target.split('\n')[0] | trim | length > 0 }}"
+          sequence:
+            - service: todo.update_item
+              target:
+                entity_id: "{{ beacon_target.split('\n')[0] | trim }}"
+              data:
+                item: "{{ beacon_target.split('\n')[1] | default(item, true) | trim }}"
+                status: completed
+    - variables:
+        beacon_reply:
+          response: >-
+            {% if beacon_target.split('\n')[0] | trim | length > 0 %}
+            Marked {{ item }} as done.
+            {% else %}
+            I could not find {{ item }} on a to-do list.
+            {% endif %}
+    - stop: ""
+      response_variable: beacon_reply
+  speech:
+    text: "{{ action_response.response | default('Marked ' ~ item ~ ' as done.', true) | trim }}"
+
+BeaconUncheckItem:
+  action:
+    - service: todo.get_items
+      continue_on_error: true
+      data:
+        status:
+          - needs_action
+          - completed
+      target:
+        entity_id: "{{ states.todo | default([]) | map(attribute='entity_id') | list }}"
+      response_variable: beacon_lists
+    - variables:
+        beacon_target: >-
+          {%- set raw = beacon_lists | default({}, true) -%}
+          {%- set lists = raw.service_response if raw is mapping and raw.service_response is mapping else raw -%}
+          {%- if lists is not mapping -%}
+            {%- set lists = {} -%}
+          {%- endif -%}
+          {%- set wanted = item | lower | trim -%}
+          {%- set ns = namespace(entity='', uid='') -%}
+          {%- for entity_id, payload in lists.items() -%}
+            {%- set entries = payload['items'] if payload is mapping else [] -%}
+            {%- for entry in entries -%}
+              {%- if ns.entity == '' and (entry.summary | default('') | lower | trim) == wanted -%}
+                {%- set ns.entity = entity_id -%}
+                {%- set ns.uid = entry.uid | default(entry.summary, true) -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endfor -%}
+          {{ ns.entity ~ '\n' ~ ns.uid }}
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ beacon_target.split('\n')[0] | trim | length > 0 }}"
+          sequence:
+            - service: todo.update_item
+              target:
+                entity_id: "{{ beacon_target.split('\n')[0] | trim }}"
+              data:
+                item: "{{ beacon_target.split('\n')[1] | default(item, true) | trim }}"
+                status: needs_action
+    - variables:
+        beacon_reply:
+          response: >-
+            {% if beacon_target.split('\n')[0] | trim | length > 0 %}
+            Unchecked {{ item }}.
+            {% else %}
+            I could not find {{ item }} on a to-do list.
+            {% endif %}
+    - stop: ""
+      response_variable: beacon_reply
+  speech:
+    text: "{{ action_response.response | default('Unchecked ' ~ item ~ '.', true) | trim }}"
+
 # ── Chore Tracking ──────────────────────────────────────────────
 # Completes the chore in Beacon's FamilyStore via the add-on.
 # This does not write to todo.chores. Requires rest_command.beacon_complete_chore
