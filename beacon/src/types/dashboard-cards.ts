@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import { CalendarEvent, WeatherData } from '../types';
 import { Chore, FamilyMember } from './family';
-import { DayMenu } from './meals';
+import { BeaconRecipe, DayMenu, MealPlanEntry, MealType } from './meals';
 import type { TaskmateUser } from './taskmate';
 import type { TranslationKey } from '../i18n/translations/en';
 
@@ -83,6 +83,15 @@ export interface DashboardCardContext {
   todayEvents: CalendarEvent[];
   weekEvents: { day: Date; events: CalendarEvent[] }[];
   todaysMenu: DayMenu;
+  /** Present when the dashboard can edit today's meals. */
+  mealPlan?: {
+    recipes: BeaconRecipe[];
+    upsertMeal: (entry: MealPlanEntry) => Promise<void>;
+    deleteMeal: (target: { date: string; meal_type: MealType; id?: string }) => Promise<void>;
+    saveRecipe: (input: { id?: string; name: string; ingredients: string[] }) => Promise<BeaconRecipe>;
+    addIngredients: (ingredients: string[]) => Promise<void>;
+  };
+  onPlanMeals?: () => void;
   todoItems: TodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
   taskmateUsers: TaskmateUser[];

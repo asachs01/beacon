@@ -282,8 +282,8 @@ For volume, also pass `volume_level` (0.0 to 1.0).
 
 | Tool | Description | Required inputs |
 |------|-------------|-----------------|
-| `beacon_get_meal_plan` | Get meal plan entries | `date` (optional), `days` (optional) |
-| `beacon_set_meal_plan` | Write meal plan data | `entries` (array of `{date, meal_type, name}`) |
+| `beacon_get_meal_plan` | Get meal plan entries. Response shape is `{ date, days, entries }`. | `date` (optional), `days` (optional) |
+| `beacon_set_meal_plan` | Merge meals by default. Each entry upserts one `date` + `meal_type` slot (an entry with no id still matches on date and meal type). A null or empty `name` clears that slot. Other dates stay. `replace: true` replaces the whole plan with `entries`. | `entries`; optional `replace` |
 
 ### Example conversation
 

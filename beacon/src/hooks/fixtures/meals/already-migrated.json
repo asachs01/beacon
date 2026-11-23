@@ -1,0 +1,38 @@
+{
+  "plan": [
+    {
+      "id": "bm_1",
+      "date": "2026-04-02",
+      "meal_type": "Dinner",
+      "name": "Instant Pot Spaghetti",
+      "recipe_id": "Instant Pot Spaghetti"
+    },
+    {
+      "id": "bm_2",
+      "date": "2026-04-03",
+      "meal_type": "Lunch",
+      "name": "Soup"
+    }
+  ],
+  "recipes": {
+    "schema_version": 1,
+    "recipes": [
+      { "id": "br_keep", "name": "Keep", "ingredients": ["salt"] }
+    ]
+  },
+  "legacy": {
+    "events": [
+      {
+        "date": "2026-04-02",
+        "title": "Instant Pot Spaghetti",
+        "label": "Dinner",
+        "recipeId": "Instant Pot Spaghetti"
+      },
+      { "date": "2026-04-03", "title": "Soup", "label": "Lunch" }
+    ],
+    "recipes": {
+      "New recipe": { "name": "New recipe", "ingredients": ["pepper"] }
+    },
+    "lastSynced": "2026-04-02T00:00:00.000Z"
+  }
+}

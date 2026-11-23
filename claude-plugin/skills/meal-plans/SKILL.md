@@ -25,13 +25,39 @@ Use `beacon_get_meal_plan` with optional:
 
 ## Writing Meal Data
 
-Use `beacon_set_meal_plan` with `entries` array:
+`beacon_set_meal_plan` **merges by default**. It does not replace the whole plan unless you pass `replace: true`.
+
+Default merge:
+
+- Each entry upserts the one slot for its `date` and `meal_type`.
+- An entry with no `id` still matches on `date` and `meal_type`.
+- A `null` or empty `name` clears that slot and removes every entry for that date and meal type.
+- Meals on other dates are left untouched.
 
 ```json
-[
-  { "date": "2026-04-02", "meal_type": "Dinner", "name": "Instant Pot Spaghetti" },
-  { "date": "2026-04-03", "meal_type": "Dinner", "name": "Easy Crockpot Carnitas" }
-]
+{
+  "entries": [
+    { "date": "2026-04-02", "meal_type": "Dinner", "name": "Instant Pot Spaghetti" },
+    { "date": "2026-04-03", "meal_type": "Dinner", "name": "Easy Crockpot Carnitas" }
+  ]
+}
+```
+
+Clear one slot:
+
+```json
+{ "entries": [{ "date": "2026-04-02", "meal_type": "Dinner", "name": "" }] }
+```
+
+`replace: true` replaces the whole plan with `entries` (the previous replace-all behavior):
+
+```json
+{
+  "replace": true,
+  "entries": [
+    { "date": "2026-04-02", "meal_type": "Dinner", "name": "Instant Pot Spaghetti" }
+  ]
+}
 ```
 
 ### MealPlanEntry Fields

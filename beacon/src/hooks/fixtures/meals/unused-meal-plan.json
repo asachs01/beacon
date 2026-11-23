@@ -1,0 +1,31 @@
+{
+  "events": [
+    {
+      "id": "evt-stew",
+      "date": "2026-03-24",
+      "title": "Leftover stew",
+      "label": "Dinner",
+      "labelColor": "#E5352C"
+    },
+    {
+      "id": "evt-pasta",
+      "date": "2026-03-25",
+      "title": "Pasta",
+      "label": "lunch",
+      "recipeId": "Pasta bake"
+    },
+    {
+      "id": "evt-picnic",
+      "date": "2026-03-26",
+      "title": "Picnic sandwiches"
+    }
+  ],
+  "recipes": {
+    "Pasta bake": {
+      "name": "Pasta bake",
+      "ingredients": ["pasta", "tomato sauce", "cheese"],
+      "steps": ["Boil the pasta."]
+    }
+  },
+  "lastSynced": "2026-03-20T14:30:00.000Z"
+}

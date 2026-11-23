@@ -321,12 +321,14 @@
 
 .dash-menu-item {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
   gap: 10px;
   padding: 8px 10px;
   background: var(--bg-surface);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
+  min-width: 0;
 }
 
 .dash-menu-icon {

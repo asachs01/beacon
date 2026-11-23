@@ -290,88 +290,6 @@
   font-size: 0.9rem;
 }
 
-/* --- Meal Plan Bar (kept for potential future use) --- */
-.meal-plan-bar {
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-subtle);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  font-family: var(--font-family-body);
-  color: var(--text-primary);
-  z-index: 60;
-}
-
-.meal-plan-bar--collapsed {
-  background: var(--bg-surface);
-  border: none;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  min-height: 28px;
-  width: 100%;
-  color: var(--text-muted);
-  font-family: inherit;
-}
-
-.meal-plan-bar--collapsed:hover {
-  background: var(--bg-hover);
-}
-
-.meal-plan-bar-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 20px;
-  min-height: 40px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 150ms ease;
-  width: 100%;
-  background: none;
-  border: none;
-  font-family: inherit;
-  color: inherit;
-  font-size: inherit;
-  text-align: left;
-}
-
-.meal-plan-bar-content:hover {
-  background: var(--bg-hover);
-}
-
-.meal-plan-bar-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
-}
-
-.meal-plan-bar-meals {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.meal-plan-bar-notes {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.meal-plan-bar-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* ============================================================
    Responsive
    ============================================================ */
@@ -396,14 +314,6 @@
   .grocery-view-item {
     min-height: 48px;
     padding: 14px 8px;
-  }
-
-  .meal-plan-bar-content {
-    padding: 8px 12px;
-  }
-
-  .meal-plan-bar-notes {
-    display: none;
   }
 }
 

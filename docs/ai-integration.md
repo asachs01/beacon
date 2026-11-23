@@ -254,6 +254,39 @@ Supported actions: `play`, `pause`, `next`, `previous`, `volume`. For volume, in
 
 Reads/writes Beacon's local chore data files (`beacon_chores.json`, `beacon_family_members.json`, `beacon_completions.json` in the data directory).
 
+#### Meal plan tools
+
+**`beacon_get_meal_plan`** -- Read meals for a local calendar day (default today) or a range.
+
+```json
+{ "date": "2026-11-20", "days": 7 }
+```
+
+The response shape is unchanged: `{ "date", "days", "entries" }`.
+
+**`beacon_set_meal_plan`** -- Update the meal plan. The default mode is **merge**:
+
+- Each entry upserts the one slot for its `date` and `meal_type`.
+- An entry with no `id` still matches on `date` and `meal_type`.
+- A `null` or empty `name` clears that slot and removes every entry for that date and meal type.
+- Meals on other dates are left untouched.
+
+```json
+{ "entries": [{ "date": "2026-11-20", "meal_type": "Dinner", "name": "Tacos" }] }
+```
+
+Clear Tuesday dinner without touching the rest of the plan:
+
+```json
+{ "entries": [{ "date": "2026-11-20", "meal_type": "Dinner", "name": "" }] }
+```
+
+Pass `replace: true` to replace the whole plan with `entries`. That is the previous replace-all behavior.
+
+```json
+{ "replace": true, "entries": [{ "date": "2026-11-20", "meal_type": "Dinner", "name": "Tacos" }] }
+```
+
 ### Protocol details
 
 The MCP server communicates over stdio using JSON-RPC 2.0. It implements the MCP `2024-11-05` protocol version and supports `initialize`, `tools/list`, `tools/call`, and `ping` methods.

@@ -27,6 +27,7 @@ import { useMusic } from './hooks/useMusic';
 import { useNotifications } from './hooks/useNotifications';
 import { ScreenSaver } from './components/ScreenSaver';
 import { GroceryView } from './components/GroceryView';
+import { MealsView } from './components/MealsView';
 import { OmniAdd } from './components/OmniAdd';
 import { VoiceAssist } from './components/VoiceAssist';
 import { MagicImportModal } from './components/MagicImportModal';
@@ -767,6 +768,8 @@ export function App() {
               onSelectedDateChange={setDashboardDate}
               eventsLoading={selectedDayLoading}
               isDayLoaded={isDayLoaded}
+              onPlanMeals={() => setActiveView('meals')}
+              groceryListId={settings.defaultGroceryList || 'beacon-shopping'}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}
@@ -822,6 +825,11 @@ export function App() {
             haUrl={config.ha_url}
             calendars={calendars}
             onEnterFocusMode={handleEnterFocusMode}
+          />
+        ) : activeView === 'meals' ? (
+          <MealsView
+            weekStartsOn={settings.weekStartsOn}
+            groceryListId={settings.defaultGroceryList || 'beacon-shopping'}
           />
         ) : activeView === 'grocery' ? (
           <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" groceryListIds={settings.groceryListIds} />
