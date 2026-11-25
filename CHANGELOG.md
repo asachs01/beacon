@@ -1,3 +1,15 @@
+# [1.51.0](https://github.com/asachs01/beacon/compare/v1.50.1...v1.51.0) (2026-11-25)
+
+
+### Bug Fixes
+
+* **guest:** record guest check-offs and always allow exit ([3336882](https://github.com/asachs01/beacon/commit/3336882f1787ee3b9c0d237472542e4d64585f70))
+
+
+### Features
+
+* **display:** guest mode with guest PIN ([#124](https://github.com/asachs01/beacon/issues/124)) ([5dddd0f](https://github.com/asachs01/beacon/commit/5dddd0fa83c1a56fc09e52e4696c0ab6b6e179f7))
+
 ## [1.50.1](https://github.com/asachs01/beacon/compare/v1.50.0...v1.50.1) (2026-11-25)
 
 
