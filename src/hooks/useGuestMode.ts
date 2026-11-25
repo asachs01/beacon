@@ -16,11 +16,19 @@ export interface GuestMode {
 }
 
 /**
- * Guest session for this screen. The expiry lives in localStorage so a
- * reload keeps guest mode until the timeout, or until a family PIN leaves it.
+ * Guest session for this screen. The expiry and a hash of the guest PIN
+ * config live in localStorage. A reload keeps guest mode until the timeout,
+ * until someone leaves it, or until the saved guest PIN no longer matches.
  */
-export function useGuestMode(timeoutHours: number | null): GuestMode {
-  const [session, setSession] = useState(() => readGuestSession());
+export function useGuestMode(timeoutHours: number | null, guestPin: string): GuestMode {
+  const [session, setSession] = useState(() => readGuestSession(guestPin));
+
+  useEffect(() => {
+    const next = readGuestSession(guestPin);
+    setSession((prev) => (
+      prev.active === next.active && prev.expiresAt === next.expiresAt ? prev : next
+    ));
+  }, [guestPin]);
 
   useEffect(() => {
     if (!session.active || session.expiresAt == null) return undefined;
@@ -33,9 +41,9 @@ export function useGuestMode(timeoutHours: number | null): GuestMode {
   }, [session.active, session.expiresAt]);
 
   const enter = useCallback(() => {
-    const next = startGuestSession(timeoutHours);
+    const next = startGuestSession(timeoutHours, guestPin);
     setSession({ active: true, expiresAt: next.expiresAt });
-  }, [timeoutHours]);
+  }, [timeoutHours, guestPin]);
 
   const exit = useCallback(() => {
     clearGuestSession();

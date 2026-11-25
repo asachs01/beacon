@@ -7,7 +7,7 @@ import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
 import { useSettings } from '../hooks/useSettings';
 import { useTranslation } from '../i18n';
-import { completionCheckedByGuest } from '../display/guest-mode';
+import { completionCheckedByGuest, guestCompletionBy } from '../display/guest-mode';
 
 const CHORE_ICONS = ['🧹', '🍽️', '🐕', '🛏️', '📚', '🗑️', '👕', '🧺', '🪥', '🚿', '🧼', '💪'];
 
@@ -272,7 +272,7 @@ export function ChoresView({ guestActive = false }: { guestActive?: boolean }) {
   };
 
   const handleCompleteUnassigned = (choreId: string, memberId: string) => {
-    completeChore(choreId, memberId, guestActive ? 'guest' : undefined);
+    completeChore(choreId, memberId, guestCompletionBy(guestActive));
   };
   const checkedByGuest = (choreId: string, memberId: string) => completionsToday.some(
     (completion) => completion.chore_id === choreId
@@ -370,7 +370,7 @@ export function ChoresView({ guestActive = false }: { guestActive?: boolean }) {
                         chore={chore}
                         member={member}
                         isCompleted={isChoreCompletedToday(chore.id, member.id)}
-                        onComplete={() => completeChore(chore.id, member.id, guestActive ? 'guest' : undefined)}
+                        onComplete={() => completeChore(chore.id, member.id, guestCompletionBy(guestActive))}
                         onUncomplete={() => uncompleteChore(chore.id, member.id)}
                         onEdit={guestActive ? undefined : () => handleStartEdit(chore)}
                         onDelete={guestActive ? undefined : () => handleDeleteChore(chore.id)}

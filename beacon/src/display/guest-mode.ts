@@ -18,8 +18,29 @@ import { normalizePin, pinMatches } from './hidden-gesture';
 export const GUEST_SESSION_KEY = 'beacon-guest-session';
 
 export interface GuestSession {
-  /** Epoch milliseconds. Null stays on until a family PIN leaves guest mode. */
+  /** Epoch milliseconds. Null stays on until someone leaves guest mode. */
   expiresAt: number | null;
+  /**
+   * Hash of the guest PIN config that started this session. A reload drops
+   * the session when this no longer matches the saved guest PIN.
+   */
+  pinConfig: string;
+}
+
+/**
+ * Fingerprint of the guest PIN config. This is not the PIN. Clearing or
+ * changing the PIN produces a different token, so a stored session no
+ * longer matches.
+ */
+export function guestPinConfigToken(pin: string | null | undefined): string {
+  const digits = normalizePin(pin ?? '');
+  let hash = 0x811c9dc5;
+  const source = `beacon-guest-pin-v1:${digits}`;
+  for (let i = 0; i < source.length; i += 1) {
+    hash ^= source.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `v1:${(hash >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 /** A saved guest PIN turns the feature on only when it is 4–6 digits. */
@@ -48,12 +69,21 @@ export function guestPinProblem(
   return null;
 }
 
-export function readGuestSession(now = Date.now()): { active: boolean; expiresAt: number | null } {
+export function readGuestSession(
+  pin: string | null | undefined,
+  now = Date.now(),
+): { active: boolean; expiresAt: number | null } {
   try {
     const raw = localStorage.getItem(GUEST_SESSION_KEY);
     if (!raw) return { active: false, expiresAt: null };
     const parsed = JSON.parse(raw) as Partial<GuestSession> | null;
     if (!parsed || typeof parsed !== 'object') {
+      localStorage.removeItem(GUEST_SESSION_KEY);
+      return { active: false, expiresAt: null };
+    }
+    // A session from before the PIN fingerprint, or one whose PIN was
+    // cleared or changed, does not come back after reload.
+    if (parsed.pinConfig !== guestPinConfigToken(pin)) {
       localStorage.removeItem(GUEST_SESSION_KEY);
       return { active: false, expiresAt: null };
     }
@@ -69,11 +99,15 @@ export function readGuestSession(now = Date.now()): { active: boolean; expiresAt
 }
 
 /** `timeoutHours` null, or any non-positive value, means no timeout. */
-export function startGuestSession(timeoutHours: number | null, now = Date.now()): GuestSession {
+export function startGuestSession(
+  timeoutHours: number | null,
+  pin: string | null | undefined,
+  now = Date.now(),
+): GuestSession {
   const expiresAt = timeoutHours != null && timeoutHours > 0
     ? now + timeoutHours * 60 * 60 * 1000
     : null;
-  const session: GuestSession = { expiresAt };
+  const session: GuestSession = { expiresAt, pinConfig: guestPinConfigToken(pin) };
   localStorage.setItem(GUEST_SESSION_KEY, JSON.stringify(session));
   return session;
 }
@@ -99,6 +133,11 @@ export interface GuestFeatureRegistration {
   allowGuests?: boolean;
 }
 
+/**
+ * Denylist. A feature that is not registered stays visible to guests.
+ * Meals, photos, music, and the leaderboard are left unregistered on purpose.
+ * `kind: 'whereabouts'` is hidden from guests unless `allowGuests` is true.
+ */
 const registry = new Map<string, GuestFeatureRegistration>();
 
 /** Register or replace one feature. Safe to call again with the same id. */
@@ -125,6 +164,8 @@ function seedGuestFeatures(): void {
   screen('rewards', false);
   screen('rewardsRedeem', false);
   screen('magicImport', false);
+  screen('createEvents', false);
+  screen('editEvents', false);
   screen('deleteEvents', false);
   screen('kioskExit', false);
   registerGuestFeature({ id: 'presence', kind: 'whereabouts' });
@@ -147,12 +188,48 @@ export function rewardRedemptionAllowed(active: boolean): boolean {
   return guestCanSee(active, 'rewardsRedeem');
 }
 
+export type GuestEventAction = 'create' | 'edit' | 'delete';
+
+/** Create, edit, and delete are registered denials. Guests can still view events. */
+export function guestMayMutateEvent(active: boolean, action: GuestEventAction): boolean {
+  const feature = action === 'create'
+    ? 'createEvents'
+    : action === 'edit'
+      ? 'editEvents'
+      : 'deleteEvents';
+  return guestCanSee(active, feature);
+}
+
+/**
+ * Marker stored on a chore completion. The Chores screen and the dashboard
+ * and calendar checklists all pass this to `completeChore`.
+ */
+export function guestCompletionBy(guestActive: boolean): 'guest' | undefined {
+  return guestActive ? 'guest' : undefined;
+}
+
+/**
+ * True when guest mode is on and neither a family PIN nor a guest PIN is
+ * configured, so the corner gesture itself leaves guest mode.
+ */
+export function guestExitWithoutPin(input: {
+  guestActive: boolean;
+  familyPinConfigured: boolean;
+  guestPin: string | null | undefined;
+}): boolean {
+  return input.guestActive
+    && !input.familyPinConfigured
+    && !guestPinConfigured(input.guestPin);
+}
+
 export type GesturePinOutcome = 'enter-guest' | 'exit-guest' | 'grant-family' | 'rejected';
 
 /**
  * Classify a PIN typed into the hidden-corner dialog.
- * The guest PIN can only enter guest mode. It is never a family grant, and
- * it cannot leave guest mode or exit kiosk / Kid Display.
+ * The guest PIN can enter guest mode. It is never a family grant, and it
+ * cannot reveal kiosk navigation or leave Kid Display.
+ * While guest mode is on, a family PIN leaves it. When no family PIN is
+ * set, the guest PIN leaves it instead.
  */
 export function classifyGesturePin(input: {
   pin: string;
@@ -164,8 +241,13 @@ export function classifyGesturePin(input: {
   const guest = normalizePin(input.guestPin);
   const guestOk = guestPinConfigured(input.guestPin) && entered.length > 0 && entered === guest;
   const familyOk = pinMatches(entered, input.memberPins);
+  const familyConfigured = input.memberPins.some((pin) => normalizePin(pin).length > 0);
   if (input.guestActive) {
-    if (familyOk && !guestOk) return 'exit-guest';
+    if (familyConfigured) {
+      if (familyOk && !guestOk) return 'exit-guest';
+      return 'rejected';
+    }
+    if (guestOk) return 'exit-guest';
     return 'rejected';
   }
   if (guestOk) return 'enter-guest';

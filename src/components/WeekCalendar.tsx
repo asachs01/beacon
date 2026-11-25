@@ -25,6 +25,10 @@ interface WeekCalendarProps {
   onEventClick: (event: CalendarEvent) => void;
   onSlotClick: (date: string, hour: number) => void;
   onEventReschedule?: (event: CalendarEvent, newDate: string, newHour: number) => void;
+  /** Guests cannot create events. Hour cells stop opening the new-event form. */
+  allowCreate?: boolean;
+  /** Guests cannot edit events. Dragging and the edit button are turned off. */
+  allowEdit?: boolean;
   onVisibleWeekChange?: (weekStart: Date) => void;
   weekStartsOn: 0 | 1;
   calendarLayout?: CalendarLayout;
@@ -72,7 +76,7 @@ interface MultiDaySpan {
   lane: number;
 }
 
-export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule, onVisibleWeekChange, weekStartsOn, calendarLayout = 'week', onCalendarLayoutChange }: WeekCalendarProps) {
+export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClick, onEventReschedule, allowCreate = true, allowEdit = true, onVisibleWeekChange, weekStartsOn, calendarLayout = 'week', onCalendarLayoutChange }: WeekCalendarProps) {
   const today = new Date();
   const todayWeekStart = startOfWeek(today, { weekStartsOn });
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -662,10 +666,13 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                       <button
                         className={`week-hour-cell-btn ${isGhostTarget ? 'week-hour-cell-btn--drop-target' : ''}`}
                         type="button"
-                        onClick={() => onSlotClick(key, hour)}
-                        onDragOver={(e) => handleDragOver(key, hour, e)}
-                        onDrop={(e) => handleDrop(key, hour, e)}
-                        aria-label={t('weekCalendar.addEventOnAt', { day: format(day, 'EEEE', { locale: dateLocale }), time: formatHour(hour) })}
+                        disabled={!allowCreate}
+                        onClick={() => {
+                          if (allowCreate) onSlotClick(key, hour);
+                        }}
+                        onDragOver={allowEdit ? (e) => handleDragOver(key, hour, e) : undefined}
+                        onDrop={allowEdit ? (e) => handleDrop(key, hour, e) : undefined}
+                        aria-label={allowCreate ? t('weekCalendar.addEventOnAt', { day: format(day, 'EEEE', { locale: dateLocale }), time: formatHour(hour) }) : undefined}
                       />
                       {/* Ghost preview */}
                       {isGhostTarget && dragEvent && (
@@ -684,7 +691,7 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
                     event={event}
                     onClick={handleEventBlockClick}
                     style={getEventStyle(event, overlapLayout.get(event.id))}
-                    draggable
+                    draggable={allowEdit}
                     expanded={expandedEventId === event.id}
                     onDragStart={(e) => handleDragStart(event, e)}
                     onDragEnd={handleDragEnd}
@@ -710,11 +717,11 @@ export function WeekCalendar({ events, hiddenCalendars, onEventClick, onSlotClic
           event={expandedEvent}
           anchor={expandedAnchor}
           onClose={closeExpanded}
-          onEdit={() => {
+          onEdit={allowEdit ? () => {
             const ev = expandedEvent;
             closeExpanded();
             onEventClick(ev);
-          }}
+          } : undefined}
         />
       )}
     </div>
