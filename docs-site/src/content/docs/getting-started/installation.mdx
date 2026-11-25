@@ -124,14 +124,16 @@ docker run -d \
   --name beacon \
   -p 3000:3000 \
   -v beacon-data:/data \
-  -e SUPERVISOR_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
   -e HA_URL="http://YOUR_HA_IP:8123" \
+  -e HA_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
   ghcr.io/asachs01/beacon:latest
 ```
 
 Replace:
 - `YOUR_HA_LONG_LIVED_TOKEN` with a long-lived access token from Home Assistant (create one at **Profile > Long-Lived Access Tokens**)
 - `YOUR_HA_IP` with your Home Assistant IP address or hostname
+
+`HA_URL` is the Home Assistant base URL the Beacon container can reach. Do not set `SUPERVISOR_TOKEN` here. That variable is only for the Home Assistant add-on.
 
 ### Step 2: Create a long-lived access token
 
@@ -165,8 +167,8 @@ services:
     volumes:
       - beacon-data:/data
     environment:
-      - SUPERVISOR_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
       - HA_URL=http://YOUR_HA_IP:8123
+      - HA_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
 
 volumes:
   beacon-data:

@@ -31,10 +31,12 @@ docker pull ghcr.io/asachs01/beacon:latest
 docker stop beacon && docker rm beacon
 docker run -d --name beacon -p 3000:3000 \
   -v beacon-data:/data \
-  -e SUPERVISOR_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
   -e HA_URL="http://YOUR_HA_IP:8123" \
+  -e HA_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
   ghcr.io/asachs01/beacon:latest
 ```
+
+`HA_TOKEN` is a long-lived access token from Home Assistant (Profile → Long-Lived Access Tokens). `HA_URL` is the Home Assistant base URL reachable from the container.
 
 Make sure the `-v beacon-data:/data` volume is there. Without it, removing the container deletes your Beacon data. With Docker Compose, run `docker compose pull && docker compose up -d`.
 

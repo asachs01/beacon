@@ -37,7 +37,9 @@ wget -qO /dev/null http://localhost:3000/ || exit 1
 
 ## Docker standalone deployment
 
-For running Beacon outside of Home Assistant's add-on system.
+For running Beacon outside of Home Assistant's add-on system (Docker, Docker Compose, or Kubernetes). The container proxies Home Assistant, so `HA_URL` must be reachable from the container. The browser only needs to reach Beacon.
+
+Create a long-lived access token in Home Assistant first. Open your profile (your name at the bottom of the sidebar), scroll to **Long-Lived Access Tokens**, choose **Create Token**, name it Beacon, and copy the value. Home Assistant shows the token only once. Pass that value as `HA_TOKEN`. Do not set `SUPERVISOR_TOKEN` on a standalone container. That variable is injected by the Supervisor and selects add-on mode.
 
 ### Basic deployment
 
@@ -46,13 +48,16 @@ docker run -d \
   --name beacon \
   --restart unless-stopped \
   -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="YOUR_LONG_LIVED_TOKEN" \
+  -v beacon-data:/data \
   -e HA_URL="http://192.168.1.100:8123" \
+  -e HA_TOKEN="YOUR_LONG_LIVED_TOKEN" \
   -e FAMILY_NAME="Sachs" \
   -e THEME="midnight" \
   -e WEATHER_ENTITY="weather.home" \
   ghcr.io/asachs01/beacon:latest
 ```
+
+`HA_URL` is the Home Assistant base URL, with no path on the end. `http://` and `https://` both work. The `beacon-data` volume keeps family members, chores, settings, and meal plans when the container is recreated.
 
 ### Docker Compose
 
@@ -65,9 +70,11 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    volumes:
+      - beacon-data:/data
     environment:
-      SUPERVISOR_TOKEN: "${HA_TOKEN}"
       HA_URL: "http://192.168.1.100:8123"
+      HA_TOKEN: "${HA_TOKEN}"
       FAMILY_NAME: "Sachs"
       THEME: "midnight"
       AUTO_DARK_MODE: "true"
@@ -75,7 +82,12 @@ services:
       PHOTO_DIRECTORY: "/media/beacon/photos"
       PHOTO_INTERVAL: "30"
       SCREEN_SAVER_TIMEOUT: "5"
+
+volumes:
+  beacon-data:
 ```
+
+Put the long-lived access token in a `.env` file next to the Compose file as `HA_TOKEN=...`, or replace `${HA_TOKEN}` with the token. Do not commit the token.
 
 ### Building from source
 
@@ -84,8 +96,8 @@ git clone https://github.com/asachs01/beacon.git
 cd beacon
 docker build -t beacon .
 docker run -d --name beacon -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="..." \
-  -e HA_URL="..." \
+  -e HA_URL="http://192.168.1.100:8123" \
+  -e HA_TOKEN="YOUR_LONG_LIVED_TOKEN" \
   beacon
 ```
 
@@ -132,8 +144,8 @@ Caddy handles SSL certificates automatically via Let's Encrypt.
 
 ### Important notes
 
-- Beacon connects to Home Assistant's WebSocket API directly from the browser. The browser must be able to reach the HA URL configured in `ha_url`.
-- If you put Beacon behind a reverse proxy but HA is on a different domain/port, you may need to configure CORS on HA or ensure both are accessible from the browser.
+- The standalone container calls Home Assistant itself. The browser talks to Beacon, and Beacon calls `HA_URL` with `HA_TOKEN`. The reverse proxy in front of Beacon does not need to reach Home Assistant.
+- A development server (`npm run dev`) is different: the browser talks to Home Assistant directly, so that browser must be able to reach `VITE_HA_URL`.
 - For best results, keep Beacon and HA on the same network and access Beacon via the reverse proxy.
 
 ---
@@ -277,8 +289,8 @@ You can run Beacon on multiple displays simultaneously. Each display:
 ### Container does not start
 
 1. Check Docker logs: `docker logs beacon`
-2. Verify the `SUPERVISOR_TOKEN` is valid (not expired)
-3. Verify the `HA_URL` is reachable from the Docker container (try `docker exec beacon wget -qO- http://HA_URL/api/`)
+2. Confirm the log says `Mode: standalone` and `Home Assistant token: available`. The log never prints the token.
+3. `HA_TOKEN` must be a current long-lived access token (Profile → Long-Lived Access Tokens). `HA_URL` must be reachable from the container (try `docker exec beacon wget -qO- "$HA_URL/api/"`). Both variables are required. If either is missing, Beacon still serves the UI and logs that `HA_URL` and `HA_TOKEN` need to be set.
 
 ### Beacon loads but shows "Demo Mode"
 

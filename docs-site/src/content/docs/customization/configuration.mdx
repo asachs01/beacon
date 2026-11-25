@@ -48,8 +48,8 @@ When running Beacon as a standalone Docker container or in development mode, con
 
 | Variable | Maps To | Default |
 |----------|---------|---------|
-| `SUPERVISOR_TOKEN` | `ha_token` | (none) |
-| `HA_URL` | `ha_url` | `http://supervisor/core` |
+| `HA_URL` | Home Assistant base URL the container calls | (required) |
+| `HA_TOKEN` | Long-lived access token (Profile → Long-Lived Access Tokens). Stays on the server; it is not written into the page. | (required) |
 | `FAMILY_NAME` | `family_name` | `My Family` |
 | `SAVE_CONFIG_IN_BROWSER` | `save_config_in_browser` | `true` |
 | `THEME` | `theme` | `skylight` |
@@ -230,7 +230,7 @@ auth_api: true
 
 This appears in the browser console when:
 1. No `VITE_HA_TOKEN` is set in `.env` (development mode)
-2. The `SUPERVISOR_TOKEN` environment variable is missing (Docker mode)
+2. `HA_TOKEN` is missing on a standalone container (Docker or Kubernetes). `HA_URL` must be set as well. Do not use `SUPERVISOR_TOKEN` outside the Home Assistant add-on.
 3. The runtime-config.js script did not generate correctly (add-on mode)
 
 Without a token, Beacon runs in demo mode — no data is fetched from Home Assistant.
