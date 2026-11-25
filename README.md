@@ -88,6 +88,8 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in your browser. Beacon works fully without Home Assistant — calendars, lists, and tasks are stored locally in the browser.
 
+From [v1.50.1](https://github.com/asachs01/beacon/releases/tag/v1.50.1), a standalone Docker container can also connect to Home Assistant when you set `HA_URL` (the base address, with no `/api`) and `HA_TOKEN` (a long-lived access token). Do not set `SUPERVISOR_TOKEN` in that mode. See the [deployment guide](https://beacon-family-docs.netlify.app/docs/getting-started/deployment/).
+
 ## Configuration
 
 Beacon is configured through the Home Assistant add-on options panel:
