@@ -61,7 +61,9 @@ If a guest tries a blocked action, the screen can show **Guests can't do that on
 
 ## Chores and rewards
 
-When a guest checks off a chore, it still awards points and counts toward streaks, the same way a family check-off does today. A sitter keeping the routine going is the reason guest mode exists. The completion is stored on the chore's assignee (the kid the sitter is helping). An unassigned chore still uses the first family member, and still stores the guest marker.
+When a guest checks off a chore that is assigned to a family member, it still awards points and counts toward streaks, the same way a family check-off does today. A sitter keeping the routine going is the reason guest mode exists. The completion is stored on the chore's assignee (the kid the sitter is helping).
+
+From **1.52.0**, an unassigned chore a guest checks off is recorded as Guest and earns no points. It is stored with no family member (`by: 'guest'` and an empty `member_id`), so it does not count toward a streak or the leaderboard.
 
 On the [Chores](/docs/features/chores/) screen, a completed card shows **Checked off by Guest**. The same label appears on completed chore rows in the dashboard Tasks list and the calendar task list. There is no separate history screen. When that chore list is fully done, it collapses to **All done — great job!** and no longer lists each row; the Chores screen still shows the label on each completed card.
 
@@ -101,4 +103,4 @@ Feature visibility lives in `src/display/guest-mode.ts`. The registry is a denyl
 - `kind: 'whereabouts'` is hidden from guests unless you set `allowGuests: true`. Use this for anything that shows where the family is. `presence` and `location` are already registered and hidden by default, so a later who's-home or location view can plug in without a new default.
 - An id that is not registered stays visible. Meals, photos, music, and the leaderboard are left unregistered on purpose.
 
-Redeeming rewards is gated as `rewardsRedeem`. Creating, editing, and deleting events are gated as `createEvents`, `editEvents`, and `deleteEvents`. Calendar filtering uses `filterEventsForGuest` and `filterCalendarsForGuest`. Dashboard and calendar chore check-offs share `src/display/checklist-completion.ts` and store optional `by: 'guest'` on the completion; older completions have no `by` and stay valid.
+Redeeming rewards is gated as `rewardsRedeem`. Creating, editing, and deleting events are gated as `createEvents`, `editEvents`, and `deleteEvents`. Calendar filtering uses `filterEventsForGuest` and `filterCalendarsForGuest`. Dashboard and calendar chore check-offs share `src/display/checklist-completion.ts` and store optional `by: 'guest'` on the completion; older completions have no `by` and stay valid. An unassigned guest check-off uses `UNCREDITED_MEMBER_ID` (an empty `member_id`) so it awards no points and no streak.

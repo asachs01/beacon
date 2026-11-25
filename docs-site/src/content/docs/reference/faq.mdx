@@ -162,7 +162,11 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 ### Does it have a grocery list?
 
-**Yes.** Beacon integrates with Grocy and AnyList through Home Assistant. You can view your shopping list, add items, check them off, and see expiring product alerts. See [Grocery](/docs/features/grocery/).
+**Yes.** The Grocery view shows Home Assistant to-do lists, including AnyList lists. You can view the list, add items, and check them off. See [Grocery](/docs/features/grocery/).
+
+### Does Beacon work with Grocy?
+
+**Yes, from 1.52.0, through the [HACS Grocy integration](https://github.com/custom-components/grocy).** Open **Settings → Integrations → Grocy**. **Grocy Integration** lets [Magic Import](/docs/features/magic-import/) add items to Grocy's shopping list. Optional **Expiring products** and **Low stock** dashboard cards (off by default) read `binary_sensor.grocy_expiring_products` and `binary_sensor.grocy_missing_products`. In 1.52.0, checking an item off on the Grocery screen updates the Home Assistant to-do list; it does not sync to Grocy yet. That comes in a later release. Beacon does not sync Grocy chores or Grocy's meal plan; it has its own [chores](/docs/features/chores/) and [meal planner](/docs/features/meals/). See [Grocery](/docs/features/grocery/).
 
 ### Does it send notifications?
 
