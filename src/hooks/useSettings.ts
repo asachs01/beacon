@@ -41,6 +41,11 @@ export interface BeaconSettings {
   defaultCalendarView: CalendarLayout;
   defaultCalendar: string;
   permanentlyHiddenCalendars: string[];
+  /**
+   * Calendar ids left off every calendar view and card while guest mode is on.
+   * Missing ids stay visible. Empty means every calendar's hide flag is off.
+   */
+  guestHiddenCalendars: string[];
   calendarColors: Record<string, string>;
   defaultEventDuration: 30 | 60 | 120;
   notificationMinutes: 5 | 10 | 15 | 30;
@@ -70,6 +75,17 @@ export interface BeaconSettings {
   kioskMode: boolean;
   /** When kiosk mode is on, the corner gesture can temporarily reveal navigation. */
   kioskRevealGesture: boolean;
+  /**
+   * 4–6 digit PIN that starts guest mode from the corner gesture. Empty means
+   * guest mode is off. Guest mode limits what this screen shows. It is not a
+   * security boundary: Home Assistant and Beacon stay reachable on the network.
+   */
+  guestPin: string;
+  /**
+   * Hours before guest mode ends on its own. Null means no timeout; a family
+   * PIN can still leave guest mode.
+   */
+  guestTimeoutHours: number | null;
   /**
    * Hold-to-talk button on the wall. The literal default is on. On first
    * load, a standalone browser turns it off until someone enables it; the
@@ -143,6 +159,7 @@ function buildDefaults(): BeaconSettings {
     defaultCalendarView: 'week',
     defaultCalendar: '',
     permanentlyHiddenCalendars: [],
+    guestHiddenCalendars: [],
     calendarColors: {},
     defaultEventDuration: 60,
     notificationMinutes: 10,
@@ -168,6 +185,8 @@ function buildDefaults(): BeaconSettings {
     showSeconds: false,
     kioskMode: false,
     kioskRevealGesture: true,
+    guestPin: '',
+    guestTimeoutHours: 4,
     voiceButton: true,
     magicImport: true,
     magicImportUseHaAgent: true,

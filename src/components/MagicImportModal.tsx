@@ -32,6 +32,8 @@ interface CalendarTarget {
 interface MagicImportModalProps {
   calendars: CalendarTarget[];
   members: readonly { pin?: string | null }[];
+  /** Guest mode blocks approve and reject even when no family PIN is set. */
+  guestMode?: boolean;
   defaultCalendarId: string;
   defaultGroceryListId: string;
   defaultTodoListId: string;
@@ -160,6 +162,7 @@ function buildDrafts(
 export function MagicImportModal({
   calendars,
   members,
+  guestMode = false,
   defaultCalendarId,
   defaultGroceryListId,
   defaultTodoListId,
@@ -474,6 +477,10 @@ export function MagicImportModal({
 
   const request = (action: 'approve' | 'reject') => {
     if (busy) return;
+    if (guestMode) {
+      setError(t('guest.actionBlocked'));
+      return;
+    }
     if (action === 'approve' && drafts.length === 0) return;
     if (importPinDecision(members, '') === 'not-required') {
       if (action === 'approve') void commit();

@@ -34,6 +34,11 @@ export interface ChoreCompletion {
   member_id: string;
   completed_at: string; // ISO date string for serialization
   verified_by?: string; // member ID of verifying parent
+  /**
+   * Who checked the chore off when it was not a family member on this screen.
+   * Omitted for ordinary check-offs so existing completion records stay valid.
+   */
+  by?: 'guest';
 }
 
 export interface Streak {

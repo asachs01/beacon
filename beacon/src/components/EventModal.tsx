@@ -13,6 +13,8 @@ interface EventModalProps {
   defaultCalendarId?: string;
   onSave: (calendarId: string, data: EventFormData) => void | Promise<void>;
   onDelete: (calendarId: string, eventId: string) => void | Promise<void>;
+  /** Guest mode hides delete. Defaults to allowed. */
+  allowDelete?: boolean;
   onClose: () => void;
   prefillDate?: string | null;
   prefillTime?: string | null;
@@ -94,6 +96,7 @@ export function EventModal({
   defaultCalendarId,
   onSave,
   onDelete,
+  allowDelete = true,
   onClose,
   prefillDate,
   prefillTime,
@@ -247,7 +250,7 @@ export function EventModal({
   };
 
   const handleDelete = async () => {
-    if (!event) return;
+    if (!allowDelete || !event) return;
     if (event.hasStableId === false) {
       setError(t('eventModal.errorNoStableIdDelete'));
       return;
@@ -416,7 +419,7 @@ export function EventModal({
           )}
 
           <div className="modal-footer">
-            {isEditing && (
+            {isEditing && allowDelete && (
               <button type="button" className="btn btn--danger" onClick={handleDelete} disabled={submitting}>
                 {t('common.delete')}
               </button>

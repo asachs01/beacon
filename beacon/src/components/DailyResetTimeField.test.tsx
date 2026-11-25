@@ -66,6 +66,7 @@ const settings = {
   defaultCalendarView: 'week',
   defaultCalendar: '',
   permanentlyHiddenCalendars: [],
+  guestHiddenCalendars: [],
   calendarColors: {},
   defaultEventDuration: 60,
   notificationMinutes: 10,
@@ -88,6 +89,8 @@ const settings = {
   showSeconds: false,
   kioskMode: false,
   kioskRevealGesture: true,
+  guestPin: '',
+  guestTimeoutHours: 4,
   voiceButton: true,
   choresEnabled: true,
   choresResetTime: '00:00',
@@ -135,5 +138,47 @@ describe('Settings → Chores → Daily Reset Time', () => {
     fireEvent.change(input, { target: { value: '03:00' } });
     expect(screen.queryByRole('alert')).toBeNull();
     expect(onUpdateSettings).toHaveBeenCalledWith({ choresResetTime: '03:00' });
+  });
+});
+
+describe('Settings → Display → Guest PIN', () => {
+  it('rejects a guest PIN that matches a family member PIN', () => {
+    const onUpdateSettings = vi.fn();
+    render(
+      <SettingsView
+        settings={settings}
+        onUpdateSettings={onUpdateSettings}
+        onResetSettings={() => {}}
+        onExportSettings={() => ''}
+        onImportSettings={() => {}}
+        onClearLocalStorage={() => {}}
+        fontStatus={{ headingFellBack: false, bodyFellBack: false }}
+        members={[{
+          id: 'ada',
+          name: 'Ada',
+          avatar: '👧',
+          color: '#3b82f6',
+          role: 'child',
+          pin: '1234',
+        }]}
+        onAddMember={() => {}}
+        onUpdateMember={() => {}}
+        onRemoveMember={() => {}}
+        connected={false}
+        haUrl=""
+        calendars={[]}
+        onEnterFocusMode={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display' }));
+    const input = screen.getByLabelText('Guest PIN');
+    fireEvent.change(input, { target: { value: '1234' } });
+    expect(screen.getByRole('alert')).toHaveTextContent('That PIN belongs to a family member. Choose a different guest PIN.');
+    expect(onUpdateSettings).not.toHaveBeenCalled();
+
+    fireEvent.change(input, { target: { value: '9876' } });
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(onUpdateSettings).toHaveBeenCalledWith({ guestPin: '9876' });
   });
 });

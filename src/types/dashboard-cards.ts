@@ -98,6 +98,8 @@ export interface DashboardCardContext {
   filteredChores: Chore[];
   completedChoreIds: Set<string>;
   onToggleChore: (choreId: string) => void;
+  /** Chore ids checked off by a guest. Omitted when none of today's completions were. */
+  guestCheckedChoreIds?: ReadonlySet<string>;
 }
 
 export interface DashboardCardProps {

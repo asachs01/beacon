@@ -37,6 +37,7 @@ import { DailyResetTimeField } from './DailyResetTimeField';
 import { PhotoSourceSettings } from './PhotoSourceSettings';
 import { EntityPicker } from './cards/EntityPicker';
 import { PRIVILEGE_DOMAINS } from '../api/chore-privileges';
+import { guestPinProblem } from '../display/guest-mode';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -231,6 +232,13 @@ export function SettingsView({
   const [kidDisplayMemberId, setKidDisplayMemberId] = useState('');
   const [copiedFocusUrl, setCopiedFocusUrl] = useState(false);
   const [colorEditId, setColorEditId] = useState<string | null>(null);
+  const [guestPinDraft, setGuestPinDraft] = useState(settings.guestPin);
+  const [guestPinError, setGuestPinError] = useState<string | null>(null);
+  const [memberPinError, setMemberPinError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setGuestPinDraft(settings.guestPin);
+  }, [settings.guestPin]);
 
   // ---- Routine editor state ----
   const routinesApi = useRoutines();
@@ -302,6 +310,11 @@ export function SettingsView({
 
   const handleSaveMember = useCallback(() => {
     if (!memberForm.name.trim()) return;
+    if (guestPinProblem(settings.guestPin, [memberForm.pin]) === 'matches-member') {
+      setMemberPinError(t('settings.family.pinMatchesGuest'));
+      return;
+    }
+    setMemberPinError(null);
     const data = {
       name: memberForm.name.trim(),
       avatar: memberForm.avatar,
@@ -324,7 +337,7 @@ export function SettingsView({
     setMemberFormMode('list');
     setMemberForm(EMPTY_FORM);
     setEditingMember(null);
-  }, [memberForm, memberFormMode, editingMember, onAddMember, onUpdateMember]);
+  }, [memberForm, memberFormMode, editingMember, onAddMember, onUpdateMember, settings.guestPin, t]);
 
   const handleDeleteMember = useCallback(
     (id: string) => {
@@ -1064,13 +1077,18 @@ export function SettingsView({
               value={memberForm.pin}
               onChange={(e) => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                setMemberPinError(null);
                 setMemberForm((f) => ({ ...f, pin: val }));
               }}
               placeholder="****"
               inputMode="numeric"
               maxLength={6}
+              aria-invalid={memberPinError ? true : undefined}
             />
           </div>
+          {memberPinError && (
+            <p className="kiosk-reveal-error" role="alert" style={{ margin: '0 20px 12px' }}>{memberPinError}</p>
+          )}
           {memberForm.role === 'child' && (
             <div className="settings-row" style={{ alignItems: 'flex-start' }}>
               <div>
@@ -1258,6 +1276,20 @@ export function SettingsView({
                       );
                       if (!visible) hidden.push(cal.id);
                       onUpdateSettings({ permanentlyHiddenCalendars: hidden });
+                    }}
+                  />
+                </div>
+                <div className="settings-row">
+                  <div>
+                    <div className="settings-row-label">{t('settings.calendar.hideFromGuests')}</div>
+                    <div className="settings-row-sublabel">{t('settings.calendar.hideFromGuestsHint')}</div>
+                  </div>
+                  <Toggle
+                    checked={(settings.guestHiddenCalendars ?? []).includes(cal.id)}
+                    onChange={(hide) => {
+                      const next = (settings.guestHiddenCalendars ?? []).filter((id) => id !== cal.id);
+                      if (hide) next.push(cal.id);
+                      onUpdateSettings({ guestHiddenCalendars: next });
                     }}
                   />
                 </div>
@@ -1711,6 +1743,73 @@ export function SettingsView({
             checked={settings.kioskRevealGesture}
             onChange={(v) => onUpdateSettings({ kioskRevealGesture: v })}
           />
+        </div>
+      </div>
+
+      <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.display.guestModeTitle')}</h2>
+      <p className="settings-section-desc">{t('settings.display.guestModeDesc')}</p>
+      <div className="settings-group">
+        <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+          <div>
+            <label className="settings-row-label" htmlFor="guest-pin">{t('settings.display.guestPinLabel')}</label>
+            <div className="settings-row-sublabel">{t('settings.display.guestPinSublabel')}</div>
+          </div>
+          <input
+            id="guest-pin"
+            type="password"
+            className="settings-input"
+            style={{ width: 120 }}
+            value={guestPinDraft}
+            onChange={(e) => {
+              const next = e.target.value.replace(/\D/g, '').slice(0, 6);
+              setGuestPinDraft(next);
+              const problem = guestPinProblem(next, members.map((member) => member.pin));
+              if (problem === 'matches-member') {
+                setGuestPinError(t('settings.display.guestPinMatchesMember'));
+                return;
+              }
+              if (problem === 'length') {
+                setGuestPinError(t('settings.display.guestPinLength'));
+                return;
+              }
+              setGuestPinError(null);
+              onUpdateSettings({ guestPin: next });
+            }}
+            placeholder="****"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={6}
+            aria-invalid={guestPinError ? true : undefined}
+          />
+        </div>
+        {guestPinError && (
+          <p className="kiosk-reveal-error" role="alert" style={{ margin: '0 20px 12px' }}>{guestPinError}</p>
+        )}
+        <div className="settings-row">
+          <div>
+            <label className="settings-row-label" htmlFor="guest-timeout">{t('settings.display.guestTimeoutLabel')}</label>
+            <div className="settings-row-sublabel">{t('settings.display.guestTimeoutSublabel')}</div>
+          </div>
+          <select
+            id="guest-timeout"
+            className="settings-select"
+            value={settings.guestTimeoutHours == null ? 'none' : String(settings.guestTimeoutHours)}
+            onChange={(e) => {
+              const value = e.target.value;
+              onUpdateSettings({
+                guestTimeoutHours: value === 'none' ? null : Number(value),
+              });
+            }}
+          >
+            {[1, 2, 4, 8, 12, 24].map((hours) => (
+              <option key={hours} value={String(hours)}>
+                {hours === 1
+                  ? t('settings.display.guestTimeoutHour')
+                  : t('settings.display.guestTimeoutHours', { count: hours })}
+              </option>
+            ))}
+            <option value="none">{t('settings.display.guestTimeoutNone')}</option>
+          </select>
         </div>
       </div>
 

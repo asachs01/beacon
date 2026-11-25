@@ -28,6 +28,7 @@ interface DashboardViewProps {
   chores: Chore[];
   completedChoreIds: Set<string>;
   onToggleChore: (choreId: string) => void;
+  guestCheckedChoreIds?: ReadonlySet<string>;
   todoItems?: TodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
   onWeatherClick?: () => void;
@@ -59,6 +60,7 @@ export function DashboardView({
   chores,
   completedChoreIds,
   onToggleChore,
+  guestCheckedChoreIds,
   todoItems = [],
   onToggleTodo,
   onWeatherClick,
@@ -166,6 +168,7 @@ export function DashboardView({
     filteredChores,
     completedChoreIds,
     onToggleChore,
+    guestCheckedChoreIds,
   };
 
   // The legacy composition deliberately bypasses cards, GridStack, persisted

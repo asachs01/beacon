@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { Chore, FamilyMember, formatChoreValue } from '../types/family';
+import { useTranslation } from '../i18n';
 
 interface ChoreCardProps {
   chore: Chore;
@@ -11,6 +12,8 @@ interface ChoreCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   currencySymbol?: string;
+  /** Today's completion was recorded with by: 'guest'. */
+  checkedOffByGuest?: boolean;
 }
 
 function formatCents(cents: number, currencySymbol: string): string {
@@ -26,7 +29,9 @@ export function ChoreCard({
   onEdit,
   onDelete,
   currencySymbol = '$',
+  checkedOffByGuest = false,
 }: ChoreCardProps) {
+  const { t } = useTranslation();
   const [animating, setAnimating] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const [swiped, setSwiped] = useState(false);
@@ -90,6 +95,9 @@ export function ChoreCard({
           {chore.icon && <span className="chore-card-icon">{chore.icon}</span>}
           <span className="chore-card-title">{chore.name}</span>
         </span>
+        {isCompleted && checkedOffByGuest && (
+          <span className="guest-checked-label">{t('chores.checkedOffByGuest')}</span>
+        )}
         {(value || onEdit || onDelete) && (
           <div className="chore-card-meta">
             {value && <span className="chore-card-value">{value}</span>}
