@@ -166,7 +166,7 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 ### Does Beacon work with Grocy?
 
-**Yes, from 1.52.0, through the [HACS Grocy integration](https://github.com/custom-components/grocy).** Open **Settings → Integrations → Grocy**. **Grocy Integration** lets [Magic Import](/docs/features/magic-import/) add items to Grocy's shopping list. Optional **Expiring products** and **Low stock** dashboard cards (off by default) read `binary_sensor.grocy_expiring_products` and `binary_sensor.grocy_missing_products`. Checking items off doesn't sync back to Grocy yet. Beacon does not sync Grocy chores or Grocy's meal plan; it has its own [chores](/docs/features/chores/) and [meal planner](/docs/features/meals/). See [Grocery](/docs/features/grocery/).
+**Yes, from 1.52.0, through the [HACS Grocy integration](https://github.com/custom-components/grocy).** Open **Settings → Integrations → Grocy**. **Grocy Integration** lets [Magic Import](/docs/features/magic-import/) add items to Grocy's shopping list. Optional **Expiring products** and **Low stock** dashboard cards (off by default) read `binary_sensor.grocy_expiring_products` and `binary_sensor.grocy_missing_products`. From 1.52.1, with Grocy Integration on, the Grocery screen includes a list named Grocy and check-offs on that list write the shopping-list done flag. The expiring card shows only items due within 3 days. Beacon does not sync Grocy chores or Grocy's meal plan; it has its own [chores](/docs/features/chores/) and [meal planner](/docs/features/meals/). See [Grocery](/docs/features/grocery/).
 
 ### Does it send notifications?
 

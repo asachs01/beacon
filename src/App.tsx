@@ -847,6 +847,8 @@ export function App() {
               groceryListId={settings.defaultGroceryList || 'beacon-shopping'}
               grocyExpiringEnabled={settings.grocyExpiringEnabled}
               grocyMissingEnabled={settings.grocyMissingEnabled}
+              grocyEnabled={settings.grocyEnabled}
+              connected={connected}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}
@@ -910,7 +912,13 @@ export function App() {
             groceryListId={settings.defaultGroceryList || 'beacon-shopping'}
           />
         ) : activeView === 'grocery' ? (
-          <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" groceryListIds={settings.groceryListIds} />
+          <GroceryView
+            defaultListId={settings.defaultGroceryList || undefined}
+            mode="grocery"
+            groceryListIds={settings.groceryListIds}
+            grocyEnabled={settings.grocyEnabled}
+            connected={connected}
+          />
         ) : activeView === 'tasks' ? (
           <GroceryView mode="tasks" groceryListIds={settings.groceryListIds} />
         ) : activeView === 'timer' ? (
