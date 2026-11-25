@@ -52,7 +52,7 @@ Events are color-coded by calendar. Each calendar is assigned a color from a 12-
 
 ## Creating events
 
-There are three ways to create a new event:
+There are three ways to create a new event. These are hidden while [guest mode](/docs/features/guest-mode/) is on.
 
 ### Method 1: Tap the + button
 
@@ -96,7 +96,7 @@ Paste a school email, a text, or a list, or add a photo or PDF, with **Import** 
 3. Modify any fields you want to change
 4. Click **Save**
 
-> **Note**: Editing modifies the event on the underlying calendar (e.g., your Google Calendar). Changes sync back to any other devices connected to that calendar.
+> **Note**: Editing modifies the event on the underlying calendar (e.g., your Google Calendar). Changes sync back to any other devices connected to that calendar. Guests can view events but cannot open the editor.
 
 ---
 
@@ -107,6 +107,8 @@ Paste a school email, a text, or a list, or add a photo or PDF, with **Import** 
 3. The event is removed immediately
 
 There is no confirmation dialog — deletion is immediate. If you delete an event by mistake, you will need to recreate it or restore it from your calendar provider (e.g., Google Calendar's trash).
+
+Creating, editing, and deleting events are all blocked while [guest mode](/docs/features/guest-mode/) is on. The Delete button, the quick-add Event action, and **Open / edit** are hidden, empty days and hour cells do not start a new event, and events cannot be dragged.
 
 ---
 
@@ -228,6 +230,10 @@ Above the week view, filter pills are displayed for each calendar. Each pill sho
 - The filter state is local to the current session (it resets on page reload)
 
 This is useful when you have many calendars and want to focus on a specific family member's schedule.
+
+Each calendar also has a **Hide from guests** toggle. It starts off. While [guest mode](/docs/features/guest-mode/) is on, a hidden calendar is left off every calendar view and card, and it comes back when guest mode ends. That is separate from the filter pills above, and it does not permanently hide the calendar for the family.
+
+Guests can still view the calendars that are not hidden. They cannot create, edit, or delete events.
 
 ---
 
