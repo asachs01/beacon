@@ -1,3 +1,10 @@
+## [1.52.1](https://github.com/asachs01/beacon/compare/v1.52.0...v1.52.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **grocy:** show the Grocy list on the Grocery screen and sync check-offs ([#129](https://github.com/asachs01/beacon/issues/129)) ([0455238](https://github.com/asachs01/beacon/commit/045523881d9866d04c98eb62359a12738c3053c0))
+
 # [1.52.0](https://github.com/asachs01/beacon/compare/v1.51.0...v1.52.0) (2026-11-25)
 
 
