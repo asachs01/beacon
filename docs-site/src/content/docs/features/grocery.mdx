@@ -16,7 +16,9 @@ This needs Beacon **1.52.0** or later. A Grocy list on the Grocery screen, and c
 
 ## How lists are chosen
 
-The Grocery view in the sidebar manages Home Assistant to-do lists and local lists. With **Grocy Integration** on, it adds a list named **Grocy** next to those lists. It does not replace them. Turn the integration off and the screen is unchanged.
+The Grocery view in the sidebar manages Home Assistant to-do lists and local lists. With **Grocy Integration** on, it adds a list named **Grocy** next to those lists. It does not replace them. Turn the integration off and the Grocery screen is unchanged: only the Home Assistant and local lists remain.
+
+From **1.52.1**, a **Shopping** card on the [advanced dashboard](/docs/features/dashboard/) also shows a **Grocy** section when the integration is on, with the same add and check-off path as the Grocery screen. That card lists unchecked Grocy items. The default Family and Classic layouts do not include a Shopping card; you add it in dashboard edit mode. When the integration is off, the Shopping card stays on its Home Assistant to-do list, if one is set.
 
 Checking, unchecking, or adding on the Grocy list writes to Grocy (`grocy.update_generic` with `{ done: 1 }` or `{ done: 0 }`, or `grocy.add_generic`). Those actions do not add the product to stock and do not call the Home Assistant todo services. A failed write shows “Couldn't update the Grocy shopping list.” Other lists on that screen keep their Home Assistant or local paths.
 

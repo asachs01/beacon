@@ -12,6 +12,8 @@ When [Magic Import](/docs/features/magic-import/) is on, an **Import** button si
 
 To dim the wall in the evening, turn on [Night mode](/docs/features/night-mode/) under **Settings → Display**. It is off until you enable it. A tap, or a finished countdown timer, brings the dashboard back for at least 60 seconds.
 
+Optional [Grocy](/docs/features/grocery/) cards can appear in the sidebar. **Expiring products** and **Low stock** (off by default, under **Settings → Integrations → Grocy**) need Beacon **1.52.0** or later. From **1.52.1**, the expiring card lists only items due within 3 days, and a **Shopping** card you add in dashboard edit mode also shows a Grocy list when **Grocy Integration** is on. Checking an item off there writes the shopping-list done flag and does not change stock.
+
 ---
 
 ## Layout presets
@@ -26,7 +28,7 @@ The Family layout is a per-member calendar view designed for a family command ce
 
 - **Top bar**: The current time (styled in the theme's accent color), the date, and a compact weather widget. Clicking the weather widget opens the full weather view.
 - **Main area**: One column per family member. Each column shows the member's avatar, their name (color-coded to match their assigned color), and their calendar events for the day. Only members with a `calendar_entity` assigned in **Settings > Family Members** get a column. Events that don't match any member's calendar appear in an **"Other"** column.
-- **Sidebar** (300px, right side): Contains the **Menu** widget (today's meals from AnyList) and the **Tasks** widget (todo items from Home Assistant or chores).
+- **Sidebar** (300px, right side): Contains the **Menu** widget (today's meals from AnyList) and the **Tasks** widget (todo items from Home Assistant or chores). If you turn on **Expiring products** or **Low stock** under **Settings → Integrations → Grocy**, those cards also appear here. See [Grocery](/docs/features/grocery/).
 
 ### Classic
 
