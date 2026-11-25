@@ -1,3 +1,10 @@
+# [1.50.0](https://github.com/asachs01/beacon/compare/v1.49.0...v1.50.0) (2026-11-25)
+
+
+### Features
+
+* **display:** night mode ([#116](https://github.com/asachs01/beacon/issues/116)) ([3b2dbca](https://github.com/asachs01/beacon/commit/3b2dbca545359fc0d984b7161055e721a0689c2b))
+
 # [1.49.0](https://github.com/asachs01/beacon/compare/v1.48.0...v1.49.0) (2026-11-23)
 
 
