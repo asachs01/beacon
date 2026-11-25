@@ -53,6 +53,10 @@ export interface BeaconSettings {
   // Integrations
   weatherEntity: string;
   grocyEnabled: boolean;
+  /** Dashboard card for sensor/binary_sensor Grocy expiring products. Off until enabled. */
+  grocyExpiringEnabled: boolean;
+  /** Dashboard card for Grocy missing / low-stock products. Off until enabled. */
+  grocyMissingEnabled: boolean;
   anylistEnabled: boolean;
   defaultGroceryList: string;
   groceryListIds: string[];
@@ -168,6 +172,8 @@ function buildDefaults(): BeaconSettings {
 
     weatherEntity: config.weather_entity,
     grocyEnabled: false,
+    grocyExpiringEnabled: false,
+    grocyMissingEnabled: false,
     anylistEnabled: false,
     defaultGroceryList: '',
     groceryListIds: [],

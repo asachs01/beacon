@@ -17,10 +17,11 @@ interface UseGroceryResult {
 }
 
 /**
- * Unified grocery hook. Tries Grocy first, then AnyList, returns the first
- * source that has data. If neither is configured, returns null with source 'none'.
+ * Unified grocery hook. When Grocy is enabled it stays the source even if
+ * the shopping list is empty. Otherwise Grocy is used when it has items,
+ * then AnyList, then none.
  */
-export function useGrocery(connected: boolean): UseGroceryResult {
+export function useGrocery(connected: boolean, grocyEnabled = false): UseGroceryResult {
   const [list, setList] = useState<GroceryList | null>(null);
   const [source, setSource] = useState<GrocerySource>('none');
   const [loading, setLoading] = useState(false);
@@ -29,6 +30,8 @@ export function useGrocery(connected: boolean): UseGroceryResult {
   const grocyRef = useRef(new GrocyClient());
   const anylistRef = useRef(new AnyListClient());
   const anylistEntityRef = useRef<string | null>(null);
+  const listRef = useRef(list);
+  listRef.current = list;
 
   const refresh = useCallback(async () => {
     if (!connected) return;
@@ -36,9 +39,8 @@ export function useGrocery(connected: boolean): UseGroceryResult {
     setLoading(true);
 
     try {
-      // Try Grocy first
       const grocyList = await grocyRef.current.getShoppingList();
-      if (grocyList.items.length > 0) {
+      if (grocyEnabled || grocyList.items.length > 0) {
         setList(grocyList);
         setSource('grocy');
 
@@ -49,7 +51,7 @@ export function useGrocery(connected: boolean): UseGroceryResult {
         return;
       }
 
-      // Fall back to AnyList
+      // Fall back to AnyList only when Grocy is not the chosen source.
       const anylistLists = await anylistRef.current.getLists();
       if (anylistLists.length > 0) {
         const primaryList = anylistLists[0];
@@ -74,7 +76,7 @@ export function useGrocery(connected: boolean): UseGroceryResult {
     } finally {
       setLoading(false);
     }
-  }, [connected]);
+  }, [connected, grocyEnabled]);
 
   // Fetch on connect
   useEffect(() => {
@@ -91,16 +93,20 @@ export function useGrocery(connected: boolean): UseGroceryResult {
   }, [connected, refresh]);
 
   const addItem = useCallback(async (name: string) => {
-    if (source === 'grocy') {
-      await grocyRef.current.addItem(name);
-    } else if (source === 'anylist' && anylistEntityRef.current) {
-      await anylistRef.current.addItem(anylistEntityRef.current, name);
+    try {
+      if (source === 'grocy') {
+        await grocyRef.current.addItem(name);
+      } else if (source === 'anylist' && anylistEntityRef.current) {
+        await anylistRef.current.addItem(anylistEntityRef.current, name);
+      }
+      await refresh();
+    } catch (err) {
+      console.warn('Beacon: Grocery add failed', err);
     }
-    await refresh();
   }, [source, refresh]);
 
   const checkItem = useCallback(async (id: string) => {
-    // Optimistic update
+    const previous = listRef.current;
     setList(prev => {
       if (!prev) return prev;
       return {
@@ -111,15 +117,20 @@ export function useGrocery(connected: boolean): UseGroceryResult {
       };
     });
 
-    if (source === 'grocy') {
-      await grocyRef.current.checkItem(id);
-    } else if (source === 'anylist' && anylistEntityRef.current) {
-      await anylistRef.current.checkItem(anylistEntityRef.current, id);
+    try {
+      if (source === 'grocy') {
+        await grocyRef.current.checkItem(id);
+      } else if (source === 'anylist' && anylistEntityRef.current) {
+        await anylistRef.current.checkItem(anylistEntityRef.current, id);
+      }
+    } catch (err) {
+      console.warn('Beacon: Grocery check failed', err);
+      setList(previous);
     }
   }, [source]);
 
   const uncheckItem = useCallback(async (id: string) => {
-    // Optimistic update
+    const previous = listRef.current;
     setList(prev => {
       if (!prev) return prev;
       return {
@@ -130,10 +141,15 @@ export function useGrocery(connected: boolean): UseGroceryResult {
       };
     });
 
-    if (source === 'grocy') {
-      await grocyRef.current.uncheckItem(id);
-    } else if (source === 'anylist' && anylistEntityRef.current) {
-      await anylistRef.current.uncheckItem(anylistEntityRef.current, id);
+    try {
+      if (source === 'grocy') {
+        await grocyRef.current.uncheckItem(id);
+      } else if (source === 'anylist' && anylistEntityRef.current) {
+        await anylistRef.current.uncheckItem(anylistEntityRef.current, id);
+      }
+    } catch (err) {
+      console.warn('Beacon: Grocery uncheck failed', err);
+      setList(previous);
     }
   }, [source]);
 

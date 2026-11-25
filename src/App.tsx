@@ -54,6 +54,7 @@ import { GuestBadge } from './components/GuestBadge';
 import { kioskHotCorner, kioskNavVisible, shouldOfferKioskGesture } from './display/hidden-gesture';
 import { filterCalendarsForGuest, filterEventsForGuest, guestCanSee, guestMayMutateEvent, guestPinConfigured } from './display/guest-mode';
 import { checklistCompletedIds, checklistGuestCheckedIds, planChecklistToggle } from './display/checklist-completion';
+import { ToastHost } from './components/ToastHost';
 import { useGuestMode } from './hooks/useGuestMode';
 import { DEMO_CALENDARS, DEMO_EVENTS } from './demo/fixtures';
 import { demoInitialView } from './demo/location';
@@ -844,6 +845,8 @@ export function App() {
               isDayLoaded={isDayLoaded}
               onPlanMeals={() => setActiveView('meals')}
               groceryListId={settings.defaultGroceryList || 'beacon-shopping'}
+              grocyExpiringEnabled={settings.grocyExpiringEnabled}
+              grocyMissingEnabled={settings.grocyMissingEnabled}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}
@@ -1099,6 +1102,7 @@ export function App() {
         <div className="demo-badge">{t('app.demoMode')}</div>
       )}
       {voiceControl}
+      <ToastHost />
     </div>
     </I18nContext.Provider>
   );

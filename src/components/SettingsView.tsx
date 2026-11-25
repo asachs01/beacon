@@ -1446,6 +1446,26 @@ export function SettingsView({
             onChange={(v) => onUpdateSettings({ grocyEnabled: v })}
           />
         </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.integrations.grocyExpiringLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.integrations.grocyExpiringSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.grocyExpiringEnabled}
+            onChange={(v) => onUpdateSettings({ grocyExpiringEnabled: v })}
+          />
+        </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.integrations.grocyMissingLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.integrations.grocyMissingSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.grocyMissingEnabled}
+            onChange={(v) => onUpdateSettings({ grocyMissingEnabled: v })}
+          />
+        </div>
       </div>
 
       <div className="settings-group">

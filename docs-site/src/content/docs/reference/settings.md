@@ -54,6 +54,8 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | --- | --- | --- | --- | --- |
 | `weatherEntity` | Weather Entity | `string` | weather.home | Entity used for weather display. Uses add-on option `weather_entity` when Home Assistant provides it. |
 | `grocyEnabled` | Grocy Integration | `boolean` | false | Grocery and meal planning |
+| `grocyExpiringEnabled` | Expiring products | `boolean` | false | Show products nearing their best-before date. Hidden if the Grocy sensor is missing. |
+| `grocyMissingEnabled` | Low stock | `boolean` | false | Show products below their minimum stock. Hidden if the Grocy sensor is missing. |
 | `anylistEnabled` | AnyList Integration | `boolean` | false | Shared shopping lists |
 | `defaultGroceryList` | Default Grocery List | `string` | (empty) | List shown when opening grocery view |
 | `groceryListIds` | Grocery Lists | `string[]` | [] | Select which HA todo entities are grocery/shopping lists |

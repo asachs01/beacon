@@ -15,6 +15,7 @@ import { AgendaTodayCard } from './cards/AgendaTodayCard';
 import { AgendaWeekCard } from './cards/AgendaWeekCard';
 import { MenuCard } from './cards/MenuCard';
 import { TasksCard } from './cards/TasksCard';
+import { GrocyExpiringCard, GrocyMissingCard } from './cards/GrocyStatusCard';
 import type { TaskmateUser } from '../types/taskmate';
 import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
 import { useTranslation } from '../i18n';
@@ -45,6 +46,18 @@ interface DashboardViewProps {
   isDayLoaded?: (day: Date) => boolean;
   onPlanMeals?: () => void;
   groceryListId?: string;
+  grocyExpiringEnabled?: boolean;
+  grocyMissingEnabled?: boolean;
+}
+
+function GrocySidebarCards({ expiring, missing }: { expiring: boolean; missing: boolean }) {
+  if (!expiring && !missing) return null;
+  return (
+    <>
+      <GrocyExpiringCard enabled={expiring} />
+      <GrocyMissingCard enabled={missing} />
+    </>
+  );
 }
 
 function renderCard(card: DashboardCard, context: DashboardCardContext) {
@@ -76,6 +89,8 @@ export function DashboardView({
   isDayLoaded,
   onPlanMeals,
   groceryListId = 'beacon-shopping',
+  grocyExpiringEnabled = false,
+  grocyMissingEnabled = false,
 }: DashboardViewProps) {
   const { t } = useTranslation();
   const [now, setNow] = useState(new Date());
@@ -185,6 +200,7 @@ export function DashboardView({
             <aside className="dash-classic-col dash-classic-sidebar">
               <MenuCard config={{}} context={context} />
               <TasksCard config={{}} context={context} />
+              <GrocySidebarCards expiring={grocyExpiringEnabled} missing={grocyMissingEnabled} />
             </aside>
           </main>
         </div>
@@ -200,6 +216,7 @@ export function DashboardView({
         <aside className="dash-sidebar">
           <MenuCard config={{}} context={context} />
           <TasksCard config={{}} context={context} />
+          <GrocySidebarCards expiring={grocyExpiringEnabled} missing={grocyMissingEnabled} />
         </aside>
       </div>
     );
@@ -246,6 +263,7 @@ export function DashboardView({
               editMode={editMode}
               onChange={(c) => updateRegion('sidebar', c)}
             />
+            <GrocySidebarCards expiring={grocyExpiringEnabled} missing={grocyMissingEnabled} />
           </aside>
         </main>
       </div>
@@ -299,6 +317,7 @@ export function DashboardView({
           editMode={editMode}
           onChange={(c) => updateRegion('sidebar', c)}
         />
+        <GrocySidebarCards expiring={grocyExpiringEnabled} missing={grocyMissingEnabled} />
       </aside>
     </div>
   );
