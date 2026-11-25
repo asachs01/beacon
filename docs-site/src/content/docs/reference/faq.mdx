@@ -238,7 +238,7 @@ On Docker, your data survives only if you mounted a volume at `/data`, for examp
 ### Beacon shows "Demo Mode"
 
 This means Beacon cannot connect to Home Assistant. Check:
-1. The HA token is configured (add-on: automatic; Docker: `SUPERVISOR_TOKEN` env var; dev: `VITE_HA_TOKEN`)
+1. The HA token is configured (add-on: automatic; Docker or Kubernetes: `HA_URL` and `HA_TOKEN`, a long-lived access token; dev: `VITE_HA_TOKEN`)
 2. The HA URL is reachable from the browser
 3. Home Assistant is running
 

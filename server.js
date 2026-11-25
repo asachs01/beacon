@@ -3,21 +3,28 @@
  * Beacon add-on server.
  *
  * - Serves the static SPA from /app/dist
- * - Proxies /api/* to HA Supervisor API with SUPERVISOR_TOKEN
+ * - Proxies /api/* to Home Assistant with the Supervisor token, or HA_TOKEN
+ *   when this process is not running as an add-on
  * - Provides /beacon-data/* for persistent storage (survives rebuilds)
  */
 
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
 const WebSocket = require('ws');
+const { describeHaHttpTarget, resolveHaConnection, standaloneConfigError } = require('./lib/ha-connection.cjs');
 
 const PORT = 3000;
 const DIST = process.env.BEACON_DIST || '/app/dist';
-const SUPERVISOR_TOKEN = process.env.SUPERVISOR_TOKEN || '';
-const HA_API_BASE = process.env.HA_API_BASE_OVERRIDE || 'http://supervisor/core';
-const HA_WS_URL = process.env.HA_WS_URL_OVERRIDE || 'ws://supervisor/core/api/websocket';
+// Add-on: Supervisor token and http://supervisor/core.
+// Standalone: HA_URL + HA_TOKEN. Overrides still win when set.
+const haConnection = resolveHaConnection(process.env);
+const HA_API_BASE = haConnection.apiBase;
+const HA_WS_URL = haConnection.wsUrl;
+const HA_ACCESS_TOKEN = haConnection.token;
+const HA_MODE = haConnection.mode;
 // /data/ is HA add-on persistent storage (survives container rebuilds)
 const DATA_DIR = process.env.BEACON_DATA || '/data';
 const { createGooglePhotoCache, REFRESH_MS } = require('./lib/google-photos-cache.cjs');
@@ -98,7 +105,27 @@ function collectBody(req, maxSize = MAX_BODY_SIZE) {
   });
 }
 
+/** http or https, with port 80/443 when the URL does not name one. */
+function openHaRequest(targetUrl, options, onResponse) {
+  const target = describeHaHttpTarget(targetUrl);
+  const lib = target.secure ? https : http;
+  const headers = { ...options.headers };
+  if (options.body) headers['Content-Length'] = options.body.length;
+  return lib.request({
+    hostname: target.hostname,
+    port: target.port,
+    path: target.path,
+    method: options.method,
+    headers,
+  }, onResponse);
+}
+
 function proxyToHA(req, res) {
+  if (!HA_API_BASE) {
+    res.writeHead(503, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'HA_URL is not set' }));
+    return;
+  }
   const targetUrl = `${HA_API_BASE}${req.url}`;
 
   const chunks = [];
@@ -106,23 +133,14 @@ function proxyToHA(req, res) {
   req.on('end', () => {
     const body = chunks.length > 0 ? Buffer.concat(chunks) : null;
 
-    const url = new URL(targetUrl);
-    const options = {
-      hostname: url.hostname,
-      port: url.port || 80,
-      path: url.pathname + url.search,
+    const proxyReq = openHaRequest(targetUrl, {
       method: req.method,
+      body,
       headers: {
-        'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
+        'Authorization': `Bearer ${HA_ACCESS_TOKEN}`,
         'Content-Type': req.headers['content-type'] || 'application/json',
       },
-    };
-
-    if (body) {
-      options.headers['Content-Length'] = body.length;
-    }
-
-    const proxyReq = http.request(options, (proxyRes) => {
+    }, (proxyRes) => {
       res.writeHead(proxyRes.statusCode, proxyRes.headers);
       proxyRes.pipe(res);
     });
@@ -186,8 +204,12 @@ function handleServiceCall(req, res) {
  */
 function haWsCommand(command, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
-    if (!SUPERVISOR_TOKEN) {
-      reject(new Error('No Supervisor token available'));
+    if (!HA_ACCESS_TOKEN) {
+      reject(new Error('No Home Assistant token available'));
+      return;
+    }
+    if (!HA_WS_URL) {
+      reject(new Error('HA_URL is not set'));
       return;
     }
 
@@ -213,7 +235,7 @@ function haWsCommand(command, timeoutMs = 10000) {
       try { msg = JSON.parse(raw.toString('utf8')); } catch { return; }
 
       if (msg.type === 'auth_required') {
-        ws.send(JSON.stringify({ type: 'auth', access_token: SUPERVISOR_TOKEN }));
+        ws.send(JSON.stringify({ type: 'auth', access_token: HA_ACCESS_TOKEN }));
         return;
       }
       if (msg.type === 'auth_invalid') {
@@ -311,7 +333,7 @@ function handleCalendarEventAction(req, res) {
  * POST /beacon-action/chore-events
  * Body: { events: [{ event, data }] }
  * Fires beacon_chore_completed / beacon_all_chores_done on the HA event bus
- * with the Supervisor token. Missing token or an HA error is logged and
+ * with the Home Assistant token. Missing token or an HA error is logged and
  * returned as a soft failure so the chore toggle is never blocked.
  */
 function handleChoreEvents(req, res) {
@@ -332,8 +354,8 @@ function handleChoreEvents(req, res) {
     }
 
     const events = acceptedChoreEvents(payload.events);
-    if (!SUPERVISOR_TOKEN) {
-      console.warn('[beacon] chore events skipped: no Supervisor token');
+    if (!HA_ACCESS_TOKEN) {
+      console.warn('[beacon] chore events skipped: no Home Assistant token');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: false, skipped: true, fired: 0 }));
       return;
@@ -423,19 +445,19 @@ async function handleDataApi(req, res) {
  */
 function haForward(method, apiPath, bodyBuf, contentType) {
   return new Promise((resolve, reject) => {
-    if (!SUPERVISOR_TOKEN) {
-      reject(new Error('No Supervisor token available'));
+    if (!HA_ACCESS_TOKEN) {
+      reject(new Error('No Home Assistant token available'));
       return;
     }
-    const url = new URL(`${HA_API_BASE}${apiPath}`);
-    const headers = { Authorization: `Bearer ${SUPERVISOR_TOKEN}` };
+    if (!HA_API_BASE) {
+      reject(new Error('HA_URL is not set'));
+      return;
+    }
+    const headers = { Authorization: `Bearer ${HA_ACCESS_TOKEN}` };
     if (contentType) headers['Content-Type'] = contentType;
-    if (bodyBuf) headers['Content-Length'] = bodyBuf.length;
-    const r = http.request({
-      hostname: url.hostname,
-      port: url.port || 80,
-      path: url.pathname + url.search,
+    const r = openHaRequest(`${HA_API_BASE}${apiPath}`, {
       method,
+      body: bodyBuf,
       headers,
     }, (resp) => {
       const chunks = [];
@@ -542,24 +564,22 @@ function handleMediaRemove(req, res) {
   });
 }
 
-/** Helper: make a request to the HA Supervisor API and return parsed JSON. */
+/** Helper: make a request to the Home Assistant API and return parsed JSON. */
 function haRequest(method, apiPath, body) {
   return new Promise((resolve, reject) => {
+    if (!HA_API_BASE) {
+      reject(new Error('HA_URL is not set'));
+      return;
+    }
     const bodyBuf = body ? Buffer.from(JSON.stringify(body), 'utf8') : null;
-    const url = new URL(`${HA_API_BASE}${apiPath}`);
-    const options = {
-      hostname: url.hostname,
-      port: url.port || 80,
-      path: url.pathname + url.search,
+    const r = openHaRequest(`${HA_API_BASE}${apiPath}`, {
       method,
+      body: bodyBuf,
       headers: {
-        'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
+        'Authorization': `Bearer ${HA_ACCESS_TOKEN}`,
         'Content-Type': 'application/json',
       },
-    };
-    if (bodyBuf) options.headers['Content-Length'] = bodyBuf.length;
-
-    const r = http.request(options, (resp) => {
+    }, (resp) => {
       const chunks = [];
       resp.on('data', (c) => chunks.push(c));
       resp.on('end', () => {
@@ -656,13 +676,13 @@ const privilegeTick = createPrivilegeScheduler({
   getResetTime: () => readStoredResetTime(DATA_DIR),
   readSnapshot: readPrivilegeSnapshot,
   apply: applyStoredPrivileges,
-  hasToken: () => !!SUPERVISOR_TOKEN,
+  hasToken: () => !!HA_ACCESS_TOKEN,
   log: (message) => console.warn(message),
 });
 
 async function publishStoredChoreEvents(events) {
-  if (!SUPERVISOR_TOKEN) {
-    console.warn('[beacon] chore events skipped: no Supervisor token');
+  if (!HA_ACCESS_TOKEN) {
+    console.warn('[beacon] chore events skipped: no Home Assistant token');
     return;
   }
   for (const entry of events) {
@@ -1009,11 +1029,11 @@ const server = http.createServer((req, res) => {
 
   // Proxy API requests to HA
   if (req.url.startsWith('/api/')) {
-    if (SUPERVISOR_TOKEN) {
+    if (HA_ACCESS_TOKEN) {
       proxyToHA(req, res);
     } else {
       res.writeHead(503);
-      res.end(JSON.stringify({ error: 'No Supervisor token available' }));
+      res.end(JSON.stringify({ error: 'No Home Assistant token available' }));
     }
     return;
   }
@@ -1023,24 +1043,24 @@ const server = http.createServer((req, res) => {
 
 // Handle WebSocket upgrades for /api/websocket
 server.on('upgrade', (req, socket, head) => {
-  if (!req.url.startsWith('/api/websocket') || !SUPERVISOR_TOKEN) {
+  if (!req.url.startsWith('/api/websocket') || !HA_ACCESS_TOKEN || !HA_API_BASE) {
     socket.destroy();
     return;
   }
 
-  const url = new URL(`${HA_API_BASE}${req.url}`);
-  const options = {
-    hostname: url.hostname,
-    port: url.port || 80,
-    path: url.pathname + url.search,
+  const target = describeHaHttpTarget(`${HA_API_BASE}${req.url}`);
+  const lib = target.secure ? https : http;
+  const defaultPort = target.secure ? 443 : 80;
+  const proxyReq = lib.request({
+    hostname: target.hostname,
+    port: target.port,
+    path: target.path,
     method: 'GET',
     headers: {
       ...req.headers,
-      host: url.hostname,
+      host: target.port === defaultPort ? target.hostname : `${target.hostname}:${target.port}`,
     },
-  };
-
-  const proxyReq = http.request(options);
+  });
   proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
     socket.write(
       `HTTP/1.1 101 Switching Protocols\r\n` +
@@ -1062,8 +1082,11 @@ server.on('upgrade', (req, socket, head) => {
 
 server.listen(PORT, () => {
   console.log(`Beacon server listening on port ${PORT}`);
-  console.log(`Supervisor token: ${SUPERVISOR_TOKEN ? 'available' : 'NOT available'}`);
+  console.log(`Mode: ${HA_MODE === 'addon' ? 'add-on' : 'standalone'}`);
+  console.log(`Home Assistant token: ${HA_ACCESS_TOKEN ? 'available' : 'NOT available'}`);
   console.log(`Data directory: ${DATA_DIR}`);
+  const configError = standaloneConfigError(haConnection);
+  if (configError) console.error(configError);
 });
 
 // Fill the photo cache soon after boot, then every 6 hours. A failed
