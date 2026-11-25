@@ -110,6 +110,7 @@ URL: __SITE_URL__/docs/features/screensaver/
 A photo screensaver with crossfade transitions and an optional clock overlay.
 
 ### Night mode
+URL: __SITE_URL__/docs/features/night-mode/
 
 Shipped in [v1.50.0](https://github.com/asachs01/beacon/releases/tag/v1.50.0). Off by default under Settings → Display → Night mode. You can set a schedule (default 9:00 PM to 6:30 AM; overnight ranges work; the schedule uses the device's local time) or turn it on or off manually. The Night mode switch has to be on; a manual override of Schedule, On, or Off cannot enable it by itself. While it is on, Beacon switches to the Midnight theme without rewriting the saved theme, adds a dim layer (default 30%; a CSS overlay, not a change to the device's screen brightness), and can show an optional clock-only screen. A tap removes the dim layer and the clock-only screen for 60 seconds, so the dashboard is back at full brightness, still in the Midnight theme. A finished countdown timer wakes the screen and holds it until the alarm is dismissed, and for at least 60 seconds even if the alarm is dismissed sooner. Shared timers and Family Bell do not yet call this wake hook. Night mode also runs on the Kid Display and kiosk views when it is turned on. The dim overlay does not capture taps, and the hidden corner used to leave kiosk mode or Kid Display stays open, including when Clock only is on.
 
