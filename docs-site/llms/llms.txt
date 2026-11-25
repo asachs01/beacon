@@ -9,7 +9,7 @@ Latest release: https://github.com/asachs01/beacon/releases
 ## Install and setup
 
 - [Getting Started](__SITE_URL__/docs/getting-started/installation/): Install as a Home Assistant add-on, a Docker container, or a development server.
-- [Deployment](__SITE_URL__/docs/getting-started/deployment/): Standalone Docker, reverse proxy, hardware, kiosk mode, and performance notes.
+- [Deployment](__SITE_URL__/docs/getting-started/deployment/): Standalone Docker (from [v1.50.1](https://github.com/asachs01/beacon/releases/tag/v1.50.1), set `HA_URL` to the base Home Assistant address with no `/api`, plus `HA_TOKEN`; do not set `SUPERVISOR_TOKEN` when standalone), reverse proxy, hardware, kiosk mode, and performance notes.
 - [Android app](__SITE_URL__/docs/getting-started/android/): Sideload the signed APK from a GitHub release, verify the checksum, and point it at your Home Assistant URL. Not on the Play Store. No iOS build.
 - [Updating and Troubleshooting](__SITE_URL__/docs/getting-started/updating/): How to update (from v1.43.2, Home Assistant pulls a prebuilt image instead of building on the device), roll back, and fix common problems.
 
