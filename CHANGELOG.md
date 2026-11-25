@@ -1,3 +1,10 @@
+## [1.50.1](https://github.com/asachs01/beacon/compare/v1.50.0...v1.50.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **standalone:** honor HA_URL and HA_TOKEN outside the Supervisor ([6dca53b](https://github.com/asachs01/beacon/commit/6dca53bc652194ee7651e631bf48d3b94de5c422)), closes [#119](https://github.com/asachs01/beacon/issues/119)
+
 # [1.50.0](https://github.com/asachs01/beacon/compare/v1.49.0...v1.50.0) (2026-11-25)
 
 
