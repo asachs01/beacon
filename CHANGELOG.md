@@ -1,3 +1,15 @@
+# [1.52.0](https://github.com/asachs01/beacon/compare/v1.51.0...v1.52.0) (2026-11-25)
+
+
+### Bug Fixes
+
+* **guest:** unassigned guest check-offs record as Guest with no points ([6cbb203](https://github.com/asachs01/beacon/commit/6cbb20365f28351e8d1c7f390f19f6959cf692e2))
+
+
+### Features
+
+* **grocy:** write the shopping-list done flag and optional stock cards ([a6627ae](https://github.com/asachs01/beacon/commit/a6627ae1efa8a10926e12d19e3c8fd2c2721920a))
+
 # [1.51.0](https://github.com/asachs01/beacon/compare/v1.50.1...v1.51.0) (2026-11-25)
 
 
