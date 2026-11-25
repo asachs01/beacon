@@ -48,6 +48,10 @@ interface DashboardViewProps {
   groceryListId?: string;
   grocyExpiringEnabled?: boolean;
   grocyMissingEnabled?: boolean;
+  /** Settings → Integrations → Grocy. The shopping card reads this from context. */
+  grocyEnabled?: boolean;
+  /** Home Assistant connection for the shopping card's Grocy list. */
+  connected?: boolean;
 }
 
 function GrocySidebarCards({ expiring, missing }: { expiring: boolean; missing: boolean }) {
@@ -91,6 +95,8 @@ export function DashboardView({
   groceryListId = 'beacon-shopping',
   grocyExpiringEnabled = false,
   grocyMissingEnabled = false,
+  grocyEnabled = false,
+  connected = false,
 }: DashboardViewProps) {
   const { t } = useTranslation();
   const [now, setNow] = useState(new Date());
@@ -184,6 +190,8 @@ export function DashboardView({
     completedChoreIds,
     onToggleChore,
     guestCheckedChoreIds,
+    connected,
+    grocyEnabled,
   };
 
   // The legacy composition deliberately bypasses cards, GridStack, persisted

@@ -100,6 +100,10 @@ export interface DashboardCardContext {
   onToggleChore: (choreId: string) => void;
   /** Chore ids checked off by a guest. Omitted when none of today's completions were. */
   guestCheckedChoreIds?: ReadonlySet<string>;
+  /** Home Assistant is reachable. Shopping cards use this only when Grocy is on. */
+  connected?: boolean;
+  /** Settings → Integrations → Grocy. Off leaves the shopping card on HA todo lists. */
+  grocyEnabled?: boolean;
 }
 
 export interface DashboardCardProps {

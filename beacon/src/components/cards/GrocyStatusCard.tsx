@@ -58,7 +58,7 @@ export function GrocyStatusCard({ enabled, titleKey, emptyKey, load }: GrocyStat
   );
 }
 
-const loadExpiring = (client: GrocyClient) => client.readExpiringProducts();
+const loadExpiring = (client: GrocyClient) => client.readExpiringProducts(3);
 const loadMissing = (client: GrocyClient) => client.readMissingProducts();
 
 export function GrocyExpiringCard({ enabled }: { enabled: boolean }) {
