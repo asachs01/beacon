@@ -46,10 +46,14 @@ When running Beacon as a standalone Docker container or in development mode, con
 
 ### Docker environment variables
 
+**Changed in 1.50.1.** A standalone container uses `HA_URL` and `HA_TOKEN`. Do not set `SUPERVISOR_TOKEN` on a standalone container. See [Deployment](/docs/getting-started/deployment/#docker-standalone-deployment).
+
 | Variable | Maps To | Default |
 |----------|---------|---------|
-| `HA_URL` | Home Assistant base URL the container calls | (required) |
+| `HA_URL` | Home Assistant base URL the container calls (no `/api` path; a trailing slash is stripped). Beacon builds the websocket URL by changing `http` to `ws` or `https` to `wss` and appending `/api/websocket`. | (required) |
 | `HA_TOKEN` | Long-lived access token (Profile → Long-Lived Access Tokens). Stays on the server; it is not written into the page. | (required) |
+| `HA_API_BASE_OVERRIDE` | Advanced: REST base URL. When set, it takes precedence over the URL built from `HA_URL`. | (none) |
+| `HA_WS_URL_OVERRIDE` | Advanced: websocket URL. When set, it takes precedence over the URL built from `HA_URL`. | (none) |
 | `FAMILY_NAME` | `family_name` | `My Family` |
 | `SAVE_CONFIG_IN_BROWSER` | `save_config_in_browser` | `true` |
 | `THEME` | `theme` | `skylight` |

@@ -117,6 +117,8 @@ screen_saver_timeout: 5
 
 Use this method if you want to run Beacon outside of Home Assistant, or if you use a Home Assistant Core installation without Supervisor.
 
+This needs Beacon **1.50.1** or later. **Changed in 1.50.1.** See [Deployment](/docs/getting-started/deployment/#docker-standalone-deployment) for `--env-file` token handling, URL overrides, and troubleshooting.
+
 ### Step 1: Pull and run the container
 
 ```bash
@@ -133,7 +135,7 @@ Replace:
 - `YOUR_HA_LONG_LIVED_TOKEN` with a long-lived access token from Home Assistant (create one at **Profile > Long-Lived Access Tokens**)
 - `YOUR_HA_IP` with your Home Assistant IP address or hostname
 
-`HA_URL` is the Home Assistant base URL the Beacon container can reach. Do not set `SUPERVISOR_TOKEN` here. That variable is only for the Home Assistant add-on.
+`HA_URL` is the Home Assistant base URL the Beacon container can reach, with no `/api` path. Do not set `SUPERVISOR_TOKEN` here. That variable is only for the Home Assistant add-on. To keep the token out of your shell history, put `HA_URL` and `HA_TOKEN` in a `.env` file (do not commit it) and replace the two `-e` lines with `--env-file .env`.
 
 ### Step 2: Create a long-lived access token
 
@@ -166,13 +168,14 @@ services:
       - "3000:3000"
     volumes:
       - beacon-data:/data
-    environment:
-      - HA_URL=http://YOUR_HA_IP:8123
-      - HA_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
+    env_file:
+      - .env
 
 volumes:
   beacon-data:
 ```
+
+Put `HA_URL` and `HA_TOKEN` in a `.env` file next to the Compose file, and do not commit the token. See [Deployment](/docs/getting-started/deployment/#docker-standalone-deployment).
 
 ---
 

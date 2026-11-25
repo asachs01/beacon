@@ -36,7 +36,7 @@ docker run -d --name beacon -p 3000:3000 \
   ghcr.io/asachs01/beacon:latest
 ```
 
-`HA_TOKEN` is a long-lived access token from Home Assistant (Profile → Long-Lived Access Tokens). `HA_URL` is the Home Assistant base URL reachable from the container.
+`HA_TOKEN` is a long-lived access token from Home Assistant (Profile → Long-Lived Access Tokens). `HA_URL` is the Home Assistant base URL reachable from the container, with no `/api` path. This `HA_URL` and `HA_TOKEN` setup needs Beacon **1.50.1** or later. To keep the token out of your shell history, put both variables in a `.env` file and replace the two `-e` lines with `--env-file .env`. See [Deployment](/docs/getting-started/deployment/#docker-standalone-deployment).
 
 Make sure the `-v beacon-data:/data` volume is there. Without it, removing the container deletes your Beacon data. With Docker Compose, run `docker compose pull && docker compose up -d`.
 

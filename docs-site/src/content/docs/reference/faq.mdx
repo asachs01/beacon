@@ -242,9 +242,9 @@ On Docker, your data survives only if you mounted a volume at `/data`, for examp
 ### Beacon shows "Demo Mode"
 
 This means Beacon cannot connect to Home Assistant. Check:
-1. The HA token is configured (add-on: automatic; Docker or Kubernetes: `HA_URL` and `HA_TOKEN`, a long-lived access token; dev: `VITE_HA_TOKEN`)
-2. The HA URL is reachable from the browser
-3. Home Assistant is running
+1. The HA token is configured (add-on: automatic; Docker or Kubernetes: `HA_URL` and `HA_TOKEN`, a long-lived access token, from **1.50.1**; dev: `VITE_HA_TOKEN`)
+2. On a standalone container, `HA_URL` is the Home Assistant base URL and is reachable from the container. The browser only needs to reach Beacon. In development, the browser must be able to reach `VITE_HA_URL`.
+3. Home Assistant is running. If `HA_URL` or `HA_TOKEN` is missing on a standalone container, the UI still loads but has no Home Assistant data, and the log says `Standalone mode needs HA_URL and HA_TOKEN`.
 
 ### Calendar is empty
 
