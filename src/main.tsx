@@ -10,6 +10,7 @@ import './styles/meals.css';
 import './styles/music.css';
 import './styles/photos.css';
 import './styles/screensaver.css';
+import './styles/night-mode.css';
 import './styles/widgets.css';
 import './styles/omni-add.css';
 import './styles/voice-assist.css';

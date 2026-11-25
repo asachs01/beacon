@@ -84,6 +84,12 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | `magicImport` | Magic Import | `boolean` | true | Show Import on the dashboard and calendar. On by default in the Home Assistant add-on. Pasted text is processed by your Home Assistant conversation agent, or a local parser. |
 | `magicImportUseHaAgent` | Magic Import: use Home Assistant conversation agent | `boolean` | true | On by default. When on, pasted text is processed by your Home Assistant conversation agent, or a local parser if that agent is unavailable. When off, Beacon always uses the local parser. Beacon itself sends the text nowhere. It stays in your home unless your Home Assistant conversation agent is a cloud service; in that case HA sends it to that provider. |
 | `magicImportAiTaskEntity` | Magic Import: AI Task entity for photos | `string` | (empty) | Empty by default. Photos and scanned PDFs are processed by this Home Assistant AI Task entity. Beacon itself sends the file nowhere else. A cloud entity sends the file to that provider. Needs Home Assistant 2025.8 or newer and an admin token so the photo can be uploaded to the local media source for the task, then removed. Text in a PDF still uses the conversation agent or the local parser. |
+| `nightModeEnabled` | Night mode | `boolean` | false | Use a dark theme and dim the screen on a schedule |
+| `nightModeStart` | Starts | `string` | 21:00 | Local time (HH:mm) when night mode begins. A start later than the end crosses midnight. |
+| `nightModeEnd` | Ends | `string` | 06:30 | Local time (HH:mm) when night mode ends. The end minute is not included. |
+| `nightModeOverride` | Manual override | `'schedule' / 'on' / 'off'` | schedule | On keeps night mode up. Off keeps it down. Schedule follows the times above. |
+| `nightModeBrightness` | Brightness | `number` | 30 | How bright the screen stays while night mode is dimmed |
+| `nightModeClockOnly` | Clock only | `boolean` | false | Show a large clock and the date. Tap the screen to see the dashboard for a minute. |
 
 ### Chores
 

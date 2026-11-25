@@ -1714,6 +1714,82 @@ export function SettingsView({
         </div>
       </div>
 
+      <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.display.nightModeTitle')}</h2>
+      <p className="settings-section-desc">{t('settings.display.nightModeDesc')}</p>
+      <div className="settings-group">
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.display.nightModeEnabledLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.nightModeEnabledSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.nightModeEnabled}
+            onChange={(v) => onUpdateSettings({ nightModeEnabled: v })}
+          />
+        </div>
+        {settings.nightModeEnabled && (
+          <>
+            <div className="settings-row">
+              <div className="settings-row-label">{t('settings.display.nightModeStartLabel')}</div>
+              <input
+                type="time"
+                className="settings-time-input"
+                value={settings.nightModeStart}
+                onChange={(e) => onUpdateSettings({ nightModeStart: e.target.value })}
+              />
+            </div>
+            <div className="settings-row">
+              <div className="settings-row-label">{t('settings.display.nightModeEndLabel')}</div>
+              <input
+                type="time"
+                className="settings-time-input"
+                value={settings.nightModeEnd}
+                onChange={(e) => onUpdateSettings({ nightModeEnd: e.target.value })}
+              />
+            </div>
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">{t('settings.display.nightModeOverrideLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.display.nightModeOverrideSublabel')}</div>
+              </div>
+              <Segment
+                value={settings.nightModeOverride}
+                options={[
+                  { value: 'schedule', label: t('settings.display.nightModeOverrideSchedule') },
+                  { value: 'on', label: t('settings.display.nightModeOverrideOn') },
+                  { value: 'off', label: t('settings.display.nightModeOverrideOff') },
+                ]}
+                onChange={(v) => onUpdateSettings({ nightModeOverride: v })}
+              />
+            </div>
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">{t('settings.display.nightModeBrightnessLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.display.nightModeBrightnessSublabel')}</div>
+              </div>
+              <Slider
+                value={settings.nightModeBrightness}
+                min={5}
+                max={100}
+                step={5}
+                unit="%"
+                onChange={(v) => onUpdateSettings({ nightModeBrightness: v })}
+              />
+            </div>
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">{t('settings.display.nightModeClockOnlyLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.display.nightModeClockOnlySublabel')}</div>
+              </div>
+              <Toggle
+                checked={settings.nightModeClockOnly}
+                onChange={(v) => onUpdateSettings({ nightModeClockOnly: v })}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
       <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.display.kidDisplayTitle')}</h2>
       <p className="settings-section-desc">
         {t('settings.display.kidDisplayDesc')}

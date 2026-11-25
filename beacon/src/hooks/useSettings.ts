@@ -93,6 +93,18 @@ export interface BeaconSettings {
    * picks an ai_task entity. Pasted text and text PDFs do not use it.
    */
   magicImportAiTaskEntity: string;
+  /** Dims the display on a local-time schedule. Off leaves the screen unchanged. */
+  nightModeEnabled: boolean;
+  /** Local time (HH:mm) when night mode begins. A later start crosses midnight. */
+  nightModeStart: string;
+  /** Local time (HH:mm) when night mode ends. The end minute is not included. */
+  nightModeEnd: string;
+  /** schedule follows the clock. on forces night mode. off keeps it off while the feature stays enabled. */
+  nightModeOverride: 'schedule' | 'on' | 'off';
+  /** Screen brightness while night mode is dimmed, as a percent. */
+  nightModeBrightness: number;
+  /** Replace the dashboard with a large clock until the screen is tapped. */
+  nightModeClockOnly: boolean;
 
   // Chores
   choresEnabled: boolean;
@@ -160,6 +172,12 @@ function buildDefaults(): BeaconSettings {
     magicImport: true,
     magicImportUseHaAgent: true,
     magicImportAiTaskEntity: '',
+    nightModeEnabled: false,
+    nightModeStart: '21:00',
+    nightModeEnd: '06:30',
+    nightModeOverride: 'schedule',
+    nightModeBrightness: 30,
+    nightModeClockOnly: false,
 
     choresEnabled: true,
     choresResetTime: '00:00',

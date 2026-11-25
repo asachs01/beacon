@@ -94,6 +94,12 @@ const settings = {
   streakDays: 7,
   currencySymbol: '$',
   payoutSchedule: 'weekly',
+  nightModeEnabled: false,
+  nightModeStart: '21:00',
+  nightModeEnd: '06:30',
+  nightModeOverride: 'schedule',
+  nightModeBrightness: 30,
+  nightModeClockOnly: false,
 } satisfies BeaconSettings;
 
 describe('Settings → Chores → Daily Reset Time', () => {
