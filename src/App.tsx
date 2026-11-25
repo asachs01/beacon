@@ -52,7 +52,8 @@ import { I18nContext, createI18n } from './i18n';
 import { HiddenCornerGesture } from './components/HiddenCornerGesture';
 import { GuestBadge } from './components/GuestBadge';
 import { kioskHotCorner, kioskNavVisible, shouldOfferKioskGesture } from './display/hidden-gesture';
-import { filterCalendarsForGuest, filterEventsForGuest, guestCanSee, guestPinConfigured } from './display/guest-mode';
+import { filterCalendarsForGuest, filterEventsForGuest, guestCanSee, guestMayMutateEvent, guestPinConfigured } from './display/guest-mode';
+import { checklistCompletedIds, checklistGuestCheckedIds, planChecklistToggle } from './display/checklist-completion';
 import { useGuestMode } from './hooks/useGuestMode';
 import { DEMO_CALENDARS, DEMO_EVENTS } from './demo/fixtures';
 import { demoInitialView } from './demo/location';
@@ -74,7 +75,7 @@ export function App() {
     clearLocalStorage,
   } = useSettings();
   const fontStatus = useAppliedFonts(settings.headingFont, settings.bodyFont);
-  const guest = useGuestMode(settings.guestTimeoutHours);
+  const guest = useGuestMode(settings.guestTimeoutHours, settings.guestPin);
 
   const i18n = useMemo(() => createI18n(settings.locale), [settings.locale]);
   const { t } = i18n;
@@ -139,23 +140,25 @@ export function App() {
 
   // Route create/update/delete to local or HA based on calendar ID
   const createEvent = useCallback(async (calendarId: string, eventData: Parameters<typeof createHaEvent>[1]) => {
+    if (!guestMayMutateEvent(guest.active, 'create')) return;
     if (calendarId === localCal.calendar.id) {
       localCal.createEvent(eventData);
     } else {
       await createHaEvent(calendarId, eventData);
     }
-  }, [localCal, createHaEvent]);
+  }, [localCal, createHaEvent, guest.active]);
 
   const updateEvent = useCallback(async (calendarId: string, uid: string, eventData: Parameters<typeof updateHaEvent>[2]) => {
+    if (!guestMayMutateEvent(guest.active, 'edit')) return;
     if (calendarId === localCal.calendar.id) {
       localCal.updateEvent(uid, eventData);
     } else {
       await updateHaEvent(calendarId, uid, eventData);
     }
-  }, [localCal, updateHaEvent]);
+  }, [localCal, updateHaEvent, guest.active]);
 
   const deleteEvent = useCallback(async (calendarId: string, uid: string) => {
-    if (!guestCanSee(guest.active, 'deleteEvents')) return;
+    if (!guestMayMutateEvent(guest.active, 'delete')) return;
     if (calendarId === localCal.calendar.id) {
       localCal.deleteEvent(uid);
     } else {
@@ -401,18 +404,20 @@ export function App() {
   }, [updateSettings]);
 
   const handleEventClick = useCallback((event: CalendarEvent) => {
+    if (!guestMayMutateEvent(guest.active, 'edit')) return;
     setSelectedEvent(event);
     setPrefillDate(null);
     setPrefillTime(null);
     setShowModal(true);
-  }, []);
+  }, [guest.active]);
 
   const handleSlotClick = useCallback((date: string, hour: number) => {
+    if (!guestMayMutateEvent(guest.active, 'create')) return;
     setSelectedEvent(null);
     setPrefillDate(date);
     setPrefillTime(`${String(hour).padStart(2, '0')}:00`);
     setShowModal(true);
-  }, []);
+  }, [guest.active]);
 
   const handleCloseModal = useCallback(() => {
     setShowModal(false);
@@ -422,6 +427,7 @@ export function App() {
   }, []);
 
   const handleSaveEvent = useCallback(async (calendarId: string, data: EventFormData) => {
+    if (!guestMayMutateEvent(guest.active, selectedEvent ? 'edit' : 'create')) return;
     const eventData = data.allDay
       ? {
           summary: data.summary,
@@ -494,7 +500,7 @@ export function App() {
       // instead of the save silently appearing to do nothing.
       throw err;
     }
-  }, [selectedEvent, createEvent, updateEvent, deleteEvent, refetchActiveRanges, handleCloseModal]);
+  }, [selectedEvent, createEvent, updateEvent, deleteEvent, refetchActiveRanges, handleCloseModal, guest.active]);
 
   const handleDeleteEvent = useCallback(async (calendarId: string, eventId: string) => {
     try {
@@ -515,6 +521,7 @@ export function App() {
   }, [selectedEvent, deleteEvent, refetchActiveRanges, handleCloseModal]);
 
   const handleEventReschedule = useCallback(async (event: CalendarEvent, newDate: string, newHour: number) => {
+    if (!guestMayMutateEvent(guest.active, 'edit')) return;
     try {
       const oldStart = new Date(event.start);
       const oldEnd = new Date(event.end);
@@ -550,15 +557,16 @@ export function App() {
     } catch (err) {
       console.error('Failed to reschedule event:', err);
     }
-  }, [updateEvent, deleteEvent, createEvent, refetchActiveRanges]);
+  }, [updateEvent, deleteEvent, createEvent, refetchActiveRanges, guest.active]);
 
   const handleAddEvent = useCallback(() => {
+    if (!guestMayMutateEvent(guest.active, 'create')) return;
     setSelectedEvent(null);
     // Default new events to the day currently selected on the dashboard.
     setPrefillDate(activeView === 'dashboard' ? format(dashboardDate, 'yyyy-MM-dd') : null);
     setPrefillTime(null);
     setShowModal(true);
-  }, [activeView, dashboardDate]);
+  }, [activeView, dashboardDate, guest.active]);
 
   const handleChangeView = useCallback(
     (view: SidebarView) => {
@@ -608,39 +616,35 @@ export function App() {
     setShowLeaderboard(false);
   }, []);
 
-  // Build a set of chore IDs completed today (for the dashboard checklist).
-  // We use the first member for now; a member-picker could be added later.
-  const firstMemberId = members.length > 0 ? members[0].id : '__none__';
-  const completedChoreIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const c of completionsToday) {
-      if (c.member_id === firstMemberId) {
-        ids.add(c.chore_id);
-      }
-    }
-    return ids;
-  }, [completionsToday, firstMemberId]);
+  // Family check-offs on these lists still use the first member. A guest
+  // check-off uses the chore's assignee and the same `by: 'guest'` marker
+  // as the Chores screen.
+  const checklistScope = useMemo(() => ({
+    chores,
+    members,
+    completions: completionsToday,
+    guestActive: guest.active,
+  }), [chores, members, completionsToday, guest.active]);
+  const completedChoreIds = useMemo(
+    () => checklistCompletedIds(checklistScope),
+    [checklistScope],
+  );
+  const guestCheckedChoreIds = useMemo(
+    () => checklistGuestCheckedIds(checklistScope),
+    [checklistScope],
+  );
 
   const handleToggleChore = useCallback(
     (choreId: string) => {
-      if (completedChoreIds.has(choreId)) {
-        uncompleteChore(choreId, firstMemberId);
+      const plan = planChecklistToggle({ ...checklistScope, choreId });
+      if (plan.action === 'uncomplete') {
+        uncompleteChore(choreId, plan.memberId);
       } else {
-        completeChore(choreId, firstMemberId, guest.active ? 'guest' : undefined);
+        completeChore(choreId, plan.memberId, plan.by);
       }
     },
-    [completedChoreIds, completeChore, uncompleteChore, firstMemberId, guest.active]
+    [checklistScope, completeChore, uncompleteChore],
   );
-
-  const guestCheckedChoreIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const completion of completionsToday) {
-      if (completion.by === 'guest' && completion.member_id === firstMemberId) {
-        ids.add(completion.chore_id);
-      }
-    }
-    return ids;
-  }, [completionsToday, firstMemberId]);
 
   useEffect(() => {
     if (guest.active && activeView === 'settings') setActiveView('dashboard');
@@ -828,7 +832,7 @@ export function App() {
               todoItems={dashboardTasks.items}
               onToggleTodo={dashboardTasks.toggleItem}
               onWeatherClick={() => setActiveView('weather')}
-              onEventClick={handleEventClick}
+              onEventClick={guest.canSee('editEvents') ? handleEventClick : undefined}
               members={members}
               taskmateUsers={dashboardTasks.users}
               layout={settings.dashboardLayout}
@@ -843,6 +847,7 @@ export function App() {
             />
             <OmniAdd
               onAddEvent={handleAddEvent}
+              allowAddEvent={guest.canSee('createEvents')}
               onAddGroceryItem={() => setActiveView('grocery')}
               onAddChore={() => handleChangeView('chores')}
               onNavigateTimer={() => setActiveView('timer')}
@@ -970,6 +975,8 @@ export function App() {
                     hiddenCalendars={hiddenCalendars}
                     onEventClick={handleEventClick}
                     onSlotClick={handleSlotClick}
+                    allowCreate={guest.canSee('createEvents')}
+                    allowEdit={guest.canSee('editEvents')}
                     onVisibleMonthChange={handleVisibleMonthChange}
                     weekStartsOn={settings.weekStartsOn}
                     calendarLayout={calendarLayout}
@@ -982,7 +989,9 @@ export function App() {
                     hiddenCalendars={hiddenCalendars}
                     onEventClick={handleEventClick}
                     onSlotClick={handleSlotClick}
-                    onEventReschedule={handleEventReschedule}
+                    onEventReschedule={guest.canSee('editEvents') ? handleEventReschedule : undefined}
+                    allowCreate={guest.canSee('createEvents')}
+                    allowEdit={guest.canSee('editEvents')}
                     onVisibleWeekChange={setVisibleWeekStart}
                     weekStartsOn={settings.weekStartsOn}
                     calendarLayout={calendarLayout}
@@ -1005,6 +1014,7 @@ export function App() {
             {/* Omni-Add FAB */}
             <OmniAdd
               onAddEvent={handleAddEvent}
+              allowAddEvent={guest.canSee('createEvents')}
               onAddGroceryItem={() => setActiveView('grocery')}
               onAddChore={() => handleChangeView('chores')}
               onNavigateTimer={() => setActiveView('timer')}

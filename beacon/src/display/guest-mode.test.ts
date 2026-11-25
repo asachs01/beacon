@@ -9,7 +9,10 @@ import {
   filterCalendarsForGuest,
   filterEventsForGuest,
   guestCanSee,
+  guestExitWithoutPin,
   guestFeatureRegistration,
+  guestMayMutateEvent,
+  guestPinConfigToken,
   guestPinProblem,
   readGuestSession,
   registerGuestFeature,
@@ -67,6 +70,36 @@ describe('guest PIN never unlocks a family gate', () => {
     })).toBe('exit-guest');
   });
 
+  it('leaves guest mode with the guest PIN when no family PIN is set', () => {
+    expect(classifyGesturePin({
+      pin: guestPin,
+      memberPins: [],
+      guestPin,
+      guestActive: true,
+    })).toBe('exit-guest');
+    expect(classifyGesturePin({
+      pin: '0000',
+      memberPins: [],
+      guestPin,
+      guestActive: true,
+    })).toBe('rejected');
+    expect(guestExitWithoutPin({
+      guestActive: true,
+      familyPinConfigured: false,
+      guestPin: '',
+    })).toBe(true);
+    expect(guestExitWithoutPin({
+      guestActive: true,
+      familyPinConfigured: false,
+      guestPin,
+    })).toBe(false);
+    expect(guestExitWithoutPin({
+      guestActive: true,
+      familyPinConfigured: true,
+      guestPin: '',
+    })).toBe(false);
+  });
+
   it('rejects a guest PIN that matches a family PIN', () => {
     expect(guestPinProblem('1234', ['12-34', ''])).toBe('matches-member');
     expect(guestPinProblem('9876', ['1234'])).toBeNull();
@@ -78,18 +111,24 @@ describe('guest PIN never unlocks a family gate', () => {
 });
 
 describe('guest session timeout', () => {
+  const pin = '987654';
+
   it('stays active until the expiry and clears itself after that', () => {
     const start = 1_700_000_000_000;
-    startGuestSession(4, start);
-    expect(readGuestSession(start + 60_000)).toEqual({
+    startGuestSession(4, pin, start);
+    expect(readGuestSession(pin, start + 60_000)).toEqual({
       active: true,
       expiresAt: start + 4 * 60 * 60 * 1000,
     });
-    expect(JSON.parse(localStorage.getItem(GUEST_SESSION_KEY) ?? '{}')).toEqual({
-      expiresAt: start + 4 * 60 * 60 * 1000,
-    });
+    const stored = JSON.parse(localStorage.getItem(GUEST_SESSION_KEY) ?? '{}') as {
+      expiresAt: number;
+      pinConfig: string;
+    };
+    expect(stored.expiresAt).toBe(start + 4 * 60 * 60 * 1000);
+    expect(stored.pinConfig).toBe(guestPinConfigToken(pin));
+    expect(JSON.stringify(stored)).not.toContain(pin);
 
-    expect(readGuestSession(start + 4 * 60 * 60 * 1000)).toEqual({
+    expect(readGuestSession(pin, start + 4 * 60 * 60 * 1000)).toEqual({
       active: false,
       expiresAt: null,
     });
@@ -98,13 +137,28 @@ describe('guest session timeout', () => {
 
   it('keeps a no-timeout session until it is cleared', () => {
     const start = 1_700_000_000_000;
-    startGuestSession(null, start);
-    expect(readGuestSession(start + 100 * 60 * 60 * 1000)).toEqual({
+    startGuestSession(null, pin, start);
+    expect(readGuestSession(pin, start + 100 * 60 * 60 * 1000)).toEqual({
       active: true,
       expiresAt: null,
     });
     clearGuestSession();
-    expect(readGuestSession(start)).toEqual({ active: false, expiresAt: null });
+    expect(readGuestSession(pin, start)).toEqual({ active: false, expiresAt: null });
+  });
+
+  it('drops a stored session when the guest PIN is cleared or changed', () => {
+    const start = 1_700_000_000_000;
+    startGuestSession(null, pin, start);
+    expect(readGuestSession('111111', start)).toEqual({ active: false, expiresAt: null });
+    expect(localStorage.getItem(GUEST_SESSION_KEY)).toBeNull();
+
+    startGuestSession(null, pin, start);
+    expect(readGuestSession('', start)).toEqual({ active: false, expiresAt: null });
+    expect(localStorage.getItem(GUEST_SESSION_KEY)).toBeNull();
+
+    localStorage.setItem(GUEST_SESSION_KEY, JSON.stringify({ expiresAt: null }));
+    expect(readGuestSession(pin, start)).toEqual({ active: false, expiresAt: null });
+    expect(localStorage.getItem(GUEST_SESSION_KEY)).toBeNull();
   });
 });
 
@@ -140,8 +194,19 @@ describe('guest visibility registry', () => {
     expect(guestCanSee(true, 'rewards')).toBe(false);
     expect(guestCanSee(true, 'rewardsRedeem')).toBe(false);
     expect(guestCanSee(true, 'magicImport')).toBe(false);
+    expect(guestCanSee(true, 'createEvents')).toBe(false);
+    expect(guestCanSee(true, 'editEvents')).toBe(false);
     expect(guestCanSee(true, 'deleteEvents')).toBe(false);
+    expect(guestMayMutateEvent(true, 'create')).toBe(false);
+    expect(guestMayMutateEvent(true, 'edit')).toBe(false);
+    expect(guestMayMutateEvent(true, 'delete')).toBe(false);
+    expect(guestMayMutateEvent(false, 'create')).toBe(true);
+    expect(guestMayMutateEvent(false, 'edit')).toBe(true);
     expect(guestCanSee(true, 'kioskExit')).toBe(false);
+    expect(guestCanSee(true, 'meals')).toBe(true);
+    expect(guestCanSee(true, 'photos')).toBe(true);
+    expect(guestCanSee(true, 'music')).toBe(true);
+    expect(guestCanSee(true, 'leaderboard')).toBe(true);
     expect(rewardRedemptionAllowed(true)).toBe(false);
     expect(rewardRedemptionAllowed(false)).toBe(true);
   });

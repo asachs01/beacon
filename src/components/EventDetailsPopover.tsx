@@ -8,7 +8,8 @@ interface EventDetailsPopoverProps {
   event: CalendarEvent;
   anchor: DOMRect;
   onClose: () => void;
-  onEdit: () => void;
+  /** Omitted when the viewer cannot edit, which hides the edit control. */
+  onEdit?: () => void;
 }
 
 const POPOVER_WIDTH = 320;
@@ -117,15 +118,17 @@ export function EventDetailsPopover({ event, anchor, onClose, onEdit }: EventDet
           </div>
         )}
 
-        <div className="event-details-popover-actions">
-          <button
-            type="button"
-            className="event-details-popover-btn event-details-popover-btn--primary"
-            onClick={onEdit}
-          >
-            {t('eventDetails.openEdit')}
-          </button>
-        </div>
+        {onEdit && (
+          <div className="event-details-popover-actions">
+            <button
+              type="button"
+              className="event-details-popover-btn event-details-popover-btn--primary"
+              onClick={onEdit}
+            >
+              {t('eventDetails.openEdit')}
+            </button>
+          </div>
+        )}
       </div>
     </div>,
     document.body,

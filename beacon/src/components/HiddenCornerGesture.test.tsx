@@ -143,6 +143,41 @@ describe('HiddenCornerGesture', () => {
     expect(onGrantedChange).not.toHaveBeenCalledWith(true);
   });
 
+  it('leaves a no-timeout guest session with the guest PIN when no family PIN is set', () => {
+    const onExitGuest = vi.fn();
+    const { onGrantedChange } = setup({
+      members: [],
+      guestPin: '9876',
+      guestActive: true,
+      onExitGuest,
+    });
+    fireEvent.pointerDown(hotZone(), { button: 0, clientX: 8, clientY: 8, pointerId: 1 });
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(screen.getByText('Enter the guest PIN to leave guest mode.')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '9876' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Leave guest mode' }));
+    expect(onExitGuest).toHaveBeenCalledOnce();
+    expect(onGrantedChange).not.toHaveBeenCalledWith(true);
+  });
+
+  it('leaves guest mode with no PIN when neither a family PIN nor a guest PIN is set', () => {
+    const onExitGuest = vi.fn();
+    const { onGrantedChange } = setup({
+      purpose: 'kid-display',
+      memberName: 'Sam',
+      members: [],
+      guestPin: '',
+      guestActive: true,
+      onExitGuest,
+    });
+    fireEvent.pointerDown(hotZone(), { button: 0, clientX: 8, clientY: 8, pointerId: 1 });
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(onExitGuest).toHaveBeenCalledOnce();
+    expect(onGrantedChange).not.toHaveBeenCalledWith(true);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Exit Sam/)).not.toBeInTheDocument();
+  });
+
   it('hides revealed navigation after 15 seconds of inactivity', () => {
     const { onGrantedChange } = setup();
     fireEvent.keyDown(window, { key: 'Escape' });

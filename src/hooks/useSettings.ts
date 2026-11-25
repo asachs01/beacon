@@ -82,8 +82,10 @@ export interface BeaconSettings {
    */
   guestPin: string;
   /**
-   * Hours before guest mode ends on its own. Null means no timeout; a family
-   * PIN can still leave guest mode.
+   * Hours before guest mode ends on its own. Null means no timeout.
+   * A family PIN can leave guest mode. When no family PIN is set, the guest
+   * PIN leaves it, or the corner gesture alone when neither PIN is set.
+   * Clearing or changing the guest PIN ends an active session.
    */
   guestTimeoutHours: number | null;
   /**

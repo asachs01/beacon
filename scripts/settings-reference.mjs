@@ -61,11 +61,11 @@ const COPY = {
   kioskRevealGesture: { labelKey: 'settings.display.kioskRevealLabel', descriptionKey: 'settings.display.kioskRevealSublabel' },
   guestPin: {
     labelKey: 'settings.display.guestPinLabel',
-    description: '4-6 digits. Empty means guest mode is off. Guest mode limits what this Beacon screen shows. It is not a security boundary. Home Assistant and Beacon stay reachable on the network.',
+    description: '4-6 digits. Empty means guest mode is off. Guest mode limits what this Beacon screen shows. It is not a security boundary. Home Assistant and Beacon stay reachable on the network. Clearing or changing this PIN ends an active guest session, including one restored after reload.',
   },
   guestTimeoutHours: {
     labelKey: 'settings.display.guestTimeoutLabel',
-    description: 'Hours before guest mode ends on its own. Null means no timeout; a family PIN can still leave guest mode. Default is 4 hours.',
+    description: 'Hours before guest mode ends on its own. Null means no timeout. A family PIN can leave guest mode. When no family PIN is set, the guest PIN leaves it, or the corner gesture alone when neither PIN is set. Default is 4 hours.',
   },
   voiceButton: { labelKey: 'settings.display.voiceButtonLabel', descriptionKey: 'settings.display.voiceButtonSublabel' },
   magicImport: { labelKey: 'settings.display.magicImportLabel', descriptionKey: 'settings.display.magicImportSublabel' },
