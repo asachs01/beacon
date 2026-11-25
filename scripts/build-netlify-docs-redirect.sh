@@ -1,6 +1,6 @@
 #!/bin/bash
 # Write a one-file Netlify publish directory for the docs cutover.
-# _redirects forces every path to the same path on https://beaconboard.app.
+# _redirects forces every path to the same path on https://beaconfamily.app.
 # This does not delete the Netlify site.
 
 set -euo pipefail
@@ -12,5 +12,5 @@ fi
 
 out="$1"
 mkdir -p "$out"
-printf '%s\n' '/*  https://beaconboard.app/:splat  301!' > "$out/_redirects"
+printf '%s\n' '/*  https://beaconfamily.app/:splat  301!' > "$out/_redirects"
 echo "Wrote $out/_redirects"

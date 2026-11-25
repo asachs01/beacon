@@ -1,7 +1,7 @@
 name: Deploy Docs to Cloudflare Pages
 
 # Same triggers and docs build as deploy-docs.yml. Leave that push workflow
-# in place until cutover: Pages live on beaconboard.app with SITE_URL set,
+# in place until cutover: Pages live on beaconfamily.app with SITE_URL set,
 # then one manual Netlify redirect deploy (deploy-docs-netlify-redirect.yml).
 # Keep the Netlify site. Remove deploy-docs.yml only in a later follow-up,
 # or a docs push will publish a full site over the redirect.
