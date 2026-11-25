@@ -618,7 +618,7 @@ export function App() {
 
   // Family check-offs on these lists still use the first member. A guest
   // check-off uses the chore's assignee and the same `by: 'guest'` marker
-  // as the Chores screen.
+  // as the Chores screen. An unassigned guest check-off has no member.
   const checklistScope = useMemo(() => ({
     chores,
     members,

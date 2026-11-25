@@ -67,4 +67,50 @@ describe('guest chore check-off', () => {
     const both = await result.current.getEarningsForPeriod('2000-01-01', '2099-12-31');
     expect(both[0].total_cents).toBe(350);
   });
+
+  it('records an unassigned guest check-off as Guest with no points or streak', async () => {
+    const { result } = renderHook(() => useChores());
+
+    await act(async () => {
+      await result.current.addChore({
+        name: 'Water plants',
+        assigned_to: [],
+        frequency: 'daily',
+        value_cents: 400,
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.chores).toHaveLength(1);
+    });
+    const choreId = result.current.chores[0].id;
+
+    await act(async () => {
+      await result.current.completeChore(choreId, 'parent', 'guest');
+    });
+
+    await waitFor(() => {
+      expect(result.current.completionsToday).toHaveLength(1);
+    });
+
+    expect(result.current.completionsToday[0]).toMatchObject({
+      chore_id: choreId,
+      member_id: '',
+      by: 'guest',
+    });
+    expect(result.current.streaks.some((streak) => streak.current > 0)).toBe(false);
+    expect(result.current.streaks.some((streak) => streak.member_id === 'parent')).toBe(false);
+
+    const earnings = await result.current.getEarningsForPeriod('2000-01-01', '2099-12-31');
+    expect(earnings).toEqual([]);
+
+    const stored = JSON.parse(localStorage.getItem('beacon_completions') ?? '[]') as Array<{
+      member_id: string;
+      by?: string;
+    }>;
+    expect(stored).toEqual([
+      expect.objectContaining({ chore_id: choreId, member_id: '', by: 'guest' }),
+    ]);
+    expect(stored.some((entry) => entry.member_id === 'parent')).toBe(false);
+  });
 });
