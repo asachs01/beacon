@@ -8,6 +8,8 @@ interface TaskChecklistProps {
   completedIds: Set<string>;
   onToggle: (choreId: string) => void;
   members?: FamilyMember[];
+  /** Chore ids whose latest completion was checked off by a guest. */
+  guestCheckedIds?: ReadonlySet<string>;
 }
 
 function AssigneeBadges({ chore, members }: { chore: Chore; members: FamilyMember[] }) {
@@ -36,7 +38,7 @@ function AssigneeBadges({ chore, members }: { chore: Chore; members: FamilyMembe
   );
 }
 
-export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: TaskChecklistProps) {
+export function TaskChecklist({ chores, completedIds, onToggle, members = [], guestCheckedIds }: TaskChecklistProps) {
   const { t } = useTranslation();
   const [animatingId, setAnimatingId] = useState<string | null>(null);
 
@@ -106,6 +108,9 @@ export function TaskChecklist({ chores, completedIds, onToggle, members = [] }: 
           <span className="task-checklist-label task-checklist-label--done">
             {chore.icon && <span className="task-checklist-icon">{chore.icon}</span>}
             <span className="task-checklist-name" title={chore.name}>{chore.name}</span>
+            {guestCheckedIds?.has(chore.id) && (
+              <span className="guest-checked-label">{t('chores.checkedOffByGuest')}</span>
+            )}
           </span>
           <AssigneeBadges chore={chore} members={members} />
         </li>

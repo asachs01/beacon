@@ -13,6 +13,7 @@ import {
   type HiddenGestureState,
   type KioskHotCorner,
 } from '../display/hidden-gesture';
+import { classifyGesturePin, guestPinConfigured } from '../display/guest-mode';
 
 export interface HiddenCornerGestureHandle {
   /** Open the same PIN or confirm path the corner gesture uses. */
@@ -20,12 +21,17 @@ export interface HiddenCornerGestureHandle {
 }
 
 interface HiddenCornerGestureProps {
-  /** Kiosk reveals navigation. Kid Display asks before leaving the screen. */
-  purpose: 'kiosk' | 'kid-display';
+  /** Kiosk reveals navigation. Kid Display asks before leaving the screen. Guest only starts or leaves guest mode. */
+  purpose: 'kiosk' | 'kid-display' | 'guest';
   memberName?: string;
   corner: KioskHotCorner;
   members: readonly { pin?: string | null }[];
   onGrantedChange: (granted: boolean) => void;
+  /** Empty means guest mode cannot be started from this gesture. */
+  guestPin?: string;
+  guestActive?: boolean;
+  onEnterGuest?: () => void;
+  onExitGuest?: () => void;
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -35,7 +41,17 @@ function isTypingTarget(target: EventTarget | null): boolean {
 }
 
 export const HiddenCornerGesture = forwardRef<HiddenCornerGestureHandle, HiddenCornerGestureProps>(
-  function HiddenCornerGesture({ purpose, memberName, corner, members, onGrantedChange }, ref) {
+  function HiddenCornerGesture({
+    purpose,
+    memberName,
+    corner,
+    members,
+    onGrantedChange,
+    guestPin = '',
+    guestActive = false,
+    onEnterGuest,
+    onExitGuest,
+  }, ref) {
     const { t } = useTranslation();
     const [state, setState] = useState<HiddenGestureState>(initialHiddenGestureState);
     const [draft, setDraft] = useState('');
@@ -49,13 +65,23 @@ export const HiddenCornerGesture = forwardRef<HiddenCornerGestureHandle, HiddenC
     const cancelRef = useRef<HTMLButtonElement>(null);
 
     const pins = configuredMemberPins(members);
+    const guestConfigured = guestPinConfigured(guestPin);
     const optionsRef = useRef<HiddenGestureOptions>({ pinRequired: false, whenNoPin: 'grant' });
     optionsRef.current = {
-      pinRequired: pins.length > 0,
+      // Guest mode must not fall through to an immediate kiosk or Kid Display grant.
+      pinRequired: pins.length > 0 || guestConfigured || guestActive,
       whenNoPin: purpose === 'kid-display' ? 'confirm' : 'grant',
     };
     const pinsRef = useRef(pins);
     pinsRef.current = pins;
+    const guestPinRef = useRef(guestPin);
+    guestPinRef.current = guestPin;
+    const guestActiveRef = useRef(guestActive);
+    guestActiveRef.current = guestActive;
+    const onEnterGuestRef = useRef(onEnterGuest);
+    onEnterGuestRef.current = onEnterGuest;
+    const onExitGuestRef = useRef(onExitGuest);
+    onExitGuestRef.current = onExitGuest;
 
     const reduce = (event: HiddenGestureEvent) => {
       setState((prev) => reduceHiddenGesture(prev, event, optionsRef.current));
@@ -193,18 +219,52 @@ export const HiddenCornerGesture = forwardRef<HiddenCornerGestureHandle, HiddenC
 
     const submitPin = (pin: string) => {
       setDraft('');
+      const outcome = classifyGesturePin({
+        pin,
+        memberPins: pinsRef.current,
+        guestPin: guestPinRef.current,
+        guestActive: guestActiveRef.current,
+      });
+      if (outcome === 'enter-guest') {
+        onEnterGuestRef.current?.();
+        reduce({ type: 'cancel' });
+        return;
+      }
+      if (outcome === 'exit-guest') {
+        onExitGuestRef.current?.();
+        reduce({ type: 'cancel' });
+        return;
+      }
+      // Family grant and rejection both go through the family PIN list only.
+      // The guest PIN is never added to configuredPins.
       reduce({
         type: 'submit-pin',
         now: Date.now(),
         pin,
-        configuredPins: pinsRef.current,
+        configuredPins: outcome === 'grant-family' ? pinsRef.current : [],
       });
     };
 
-    const pinPrompt = purpose === 'kid-display'
-      ? t('gesture.pinPromptExit')
-      : t('gesture.pinPromptNav');
-    const pinSubmit = purpose === 'kid-display' ? t('gesture.exit') : t('gesture.showNavigation');
+    const pinPrompt = guestActive
+      ? t('gesture.pinPromptLeaveGuest')
+      : guestConfigured && purpose === 'kiosk'
+        ? t('gesture.pinPromptGuestOrNav')
+        : guestConfigured && purpose === 'kid-display'
+          ? t('gesture.pinPromptGuestOrExit')
+          : purpose === 'guest'
+            ? t('gesture.pinPromptGuest')
+            : purpose === 'kid-display'
+              ? t('gesture.pinPromptExit')
+              : t('gesture.pinPromptNav');
+    const pinSubmit = guestActive
+      ? t('gesture.leaveGuest')
+      : guestConfigured
+        ? t('gesture.continue')
+        : purpose === 'kid-display'
+          ? t('gesture.exit')
+          : purpose === 'guest'
+            ? t('gesture.startGuest')
+            : t('gesture.showNavigation');
 
     return (
       <>

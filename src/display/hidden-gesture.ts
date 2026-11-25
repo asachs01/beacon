@@ -65,7 +65,11 @@ export function normalizePin(pin: string): string {
   return pin.replace(/\D/g, '').slice(0, 6);
 }
 
-/** True when the entered PIN matches any configured family PIN. */
+/**
+ * True when the entered PIN matches any configured family PIN.
+ * Do not pass the guest PIN here. Guest mode is a separate check, and the
+ * guest PIN must not satisfy a family gate.
+ */
 export function pinMatches(pin: string, configuredPins: readonly string[]): boolean {
   const entered = normalizePin(pin);
   return entered.length > 0 && configuredPins.some((configured) => normalizePin(configured) === entered);

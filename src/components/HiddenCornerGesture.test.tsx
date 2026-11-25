@@ -107,6 +107,42 @@ describe('HiddenCornerGesture', () => {
     expect(onGrantedChange).toHaveBeenLastCalledWith(true);
   });
 
+  it('starts guest mode from the guest PIN without granting kiosk navigation', () => {
+    const onEnterGuest = vi.fn();
+    const { onGrantedChange } = setup({
+      members: [{ pin: '1234' }],
+      guestPin: '9876',
+      onEnterGuest,
+    });
+    fireEvent.pointerDown(hotZone(), { button: 0, clientX: 8, clientY: 8, pointerId: 1 });
+    act(() => { vi.advanceTimersByTime(2000); });
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '9876' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onEnterGuest).toHaveBeenCalledOnce();
+    expect(onGrantedChange).not.toHaveBeenCalledWith(true);
+  });
+
+  it('leaves guest mode on a family PIN and does not exit kiosk', () => {
+    const onExitGuest = vi.fn();
+    const { onGrantedChange } = setup({
+      members: [{ pin: '1234' }],
+      guestPin: '9876',
+      guestActive: true,
+      onExitGuest,
+    });
+    fireEvent.pointerDown(hotZone(), { button: 0, clientX: 8, clientY: 8, pointerId: 1 });
+    act(() => { vi.advanceTimersByTime(2000); });
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '9876' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Leave guest mode' }));
+    expect(onExitGuest).not.toHaveBeenCalled();
+    expect(onGrantedChange).not.toHaveBeenCalledWith(true);
+
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Leave guest mode' }));
+    expect(onExitGuest).toHaveBeenCalledOnce();
+    expect(onGrantedChange).not.toHaveBeenCalledWith(true);
+  });
+
   it('hides revealed navigation after 15 seconds of inactivity', () => {
     const { onGrantedChange } = setup();
     fireEvent.keyDown(window, { key: 'Escape' });

@@ -23,6 +23,20 @@ function makeEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
 }
 
 describe('EventModal', () => {
+  it('hides delete while guest mode blocks it', () => {
+    render(
+      <EventModal
+        event={makeEvent()}
+        calendars={calendars}
+        onSave={vi.fn()}
+        onDelete={vi.fn()}
+        allowDelete={false}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
+  });
+
   it('auto-shifts the end time to preserve duration when start time changes', () => {
     const onSave = vi.fn();
     render(

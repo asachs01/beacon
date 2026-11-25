@@ -4,6 +4,7 @@
  * Same digits-only match as the kiosk and Kid Display gesture
  * (`pinMatches` / `configuredMemberPins`). When no family PIN is set,
  * the action is allowed, which is how kiosk navigation already behaves.
+ * The guest PIN is not a family PIN and is never accepted here.
  */
 import { configuredMemberPins, pinMatches } from '../display/hidden-gesture';
 

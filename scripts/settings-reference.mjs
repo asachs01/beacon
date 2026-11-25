@@ -33,6 +33,10 @@ const COPY = {
   defaultCalendarView: { labelKey: 'settings.calendar.defaultViewLabel', descriptionKey: 'settings.calendar.defaultViewSublabel' },
   defaultCalendar: { labelKey: 'settings.calendar.defaultCalendarLabel', description: 'Calendar selected when creating an event.' },
   permanentlyHiddenCalendars: { label: 'Hidden calendars', description: 'Calendar ids hidden from the calendar and dashboard.' },
+  guestHiddenCalendars: {
+    labelKey: 'settings.calendar.hideFromGuests',
+    description: 'Calendar ids left off every calendar view and card while guest mode is on. Default is none, so the per-calendar flag starts off.',
+  },
   calendarColors: { label: 'Calendar colors', description: 'Chosen color for each calendar id. Overrides the automatic palette.' },
   defaultEventDuration: { labelKey: 'settings.calendar.defaultEventDurationLabel', description: 'Length of a new timed event.', unit: 'minutes' },
   notificationMinutes: { labelKey: 'settings.calendar.notificationTimingLabel', description: 'How long before an event Beacon notifies you.', unit: 'minutes' },
@@ -55,6 +59,14 @@ const COPY = {
   showSeconds: { labelKey: 'settings.display.showSecondsLabel', descriptionKey: 'settings.display.showSecondsSublabel' },
   kioskMode: { labelKey: 'settings.display.kioskModeLabel', descriptionKey: 'settings.display.kioskModeSublabel' },
   kioskRevealGesture: { labelKey: 'settings.display.kioskRevealLabel', descriptionKey: 'settings.display.kioskRevealSublabel' },
+  guestPin: {
+    labelKey: 'settings.display.guestPinLabel',
+    description: '4-6 digits. Empty means guest mode is off. Guest mode limits what this Beacon screen shows. It is not a security boundary. Home Assistant and Beacon stay reachable on the network.',
+  },
+  guestTimeoutHours: {
+    labelKey: 'settings.display.guestTimeoutLabel',
+    description: 'Hours before guest mode ends on its own. Null means no timeout; a family PIN can still leave guest mode. Default is 4 hours.',
+  },
   voiceButton: { labelKey: 'settings.display.voiceButtonLabel', descriptionKey: 'settings.display.voiceButtonSublabel' },
   magicImport: { labelKey: 'settings.display.magicImportLabel', descriptionKey: 'settings.display.magicImportSublabel' },
   magicImportUseHaAgent: { labelKey: 'settings.display.magicImportHaAgentLabel', descriptionKey: 'settings.display.magicImportHaAgentSublabel' },

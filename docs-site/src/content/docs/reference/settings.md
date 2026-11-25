@@ -43,6 +43,7 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | `defaultCalendarView` | Default Calendar View | `'week' / 'month'` | week | Week or month shown when you open the calendar |
 | `defaultCalendar` | Default Calendar | `string` | (empty) | Calendar selected when creating an event. |
 | `permanentlyHiddenCalendars` | Hidden calendars | `string[]` | [] | Calendar ids hidden from the calendar and dashboard. |
+| `guestHiddenCalendars` | Hide from guests | `string[]` | [] | Calendar ids left off every calendar view and card while guest mode is on. Default is none, so the per-calendar flag starts off. |
 | `calendarColors` | Calendar colors | `Record<string, string>` | {} | Chosen color for each calendar id. Overrides the automatic palette. |
 | `defaultEventDuration` | Default Event Duration | `30 / 60 / 120` | 60 minutes | Length of a new timed event. |
 | `notificationMinutes` | Notification Timing | `5 / 10 / 15 / 30` | 10 minutes | How long before an event Beacon notifies you. |
@@ -80,6 +81,8 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | `showSeconds` | Show Seconds on Clock | `boolean` | false | Display seconds in the header clock |
 | `kioskMode` | Kiosk Mode | `boolean` | false | Hide the sidebar for a cleaner display |
 | `kioskRevealGesture` | Reveal navigation gesture | `boolean` | true | On by default. In kiosk mode, long-press the top corner for 2 seconds or tap it 3 times quickly to show the sidebar. Hold Escape on a keyboard. It hides again after 15 seconds of inactivity. A family PIN is required when one is set. |
+| `guestPin` | Guest PIN | `string` | (empty) | 4-6 digits. Empty means guest mode is off. Guest mode limits what this Beacon screen shows. It is not a security boundary. Home Assistant and Beacon stay reachable on the network. |
+| `guestTimeoutHours` | Guest timeout | `number / null` | 4 | Hours before guest mode ends on its own. Null means no timeout; a family PIN can still leave guest mode. Default is 4 hours. |
 | `voiceButton` | Voice button | `boolean` | true | Show hold-to-talk on the wall. On by default in the Home Assistant add-on. The mic needs HTTPS or localhost; ingress over HTTPS works, and a plain HTTP kiosk keeps the text box. |
 | `magicImport` | Magic Import | `boolean` | true | Show Import on the dashboard and calendar. On by default in the Home Assistant add-on. Pasted text is processed by your Home Assistant conversation agent, or a local parser. |
 | `magicImportUseHaAgent` | Magic Import: use Home Assistant conversation agent | `boolean` | true | On by default. When on, pasted text is processed by your Home Assistant conversation agent, or a local parser if that agent is unavailable. When off, Beacon always uses the local parser. Beacon itself sends the text nowhere. It stays in your home unless your Home Assistant conversation agent is a cloud service; in that case HA sends it to that provider. |

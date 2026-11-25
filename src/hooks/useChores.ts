@@ -58,8 +58,8 @@ export function useChores() {
   );
 
   const completeChore = useCallback(
-    async (choreId: string, memberId: string) => {
-      await store.completeChore(choreId, memberId, undefined, resetTime);
+    async (choreId: string, memberId: string, by?: 'guest') => {
+      await store.completeChore(choreId, memberId, undefined, resetTime, by);
       await refresh();
     },
     [store, refresh, resetTime]

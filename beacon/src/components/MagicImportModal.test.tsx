@@ -24,7 +24,7 @@ function openReview() {
   return screen.findByDisplayValue('Practice');
 }
 
-function renderModal(members: { pin?: string }[]) {
+function renderModal(members: { pin?: string }[], guestMode = false) {
   const onCreateEvent = vi.fn(async () => {});
   const onAddListItem = vi.fn(async () => {});
   const onClose = vi.fn();
@@ -36,6 +36,7 @@ function renderModal(members: { pin?: string }[]) {
         { id: 'beacon-todo', name: 'To-Do' },
       ]}
       members={members}
+      guestMode={guestMode}
       defaultCalendarId="cal-1"
       defaultGroceryListId="beacon-shopping"
       defaultTodoListId="beacon-todo"
@@ -89,6 +90,16 @@ describe('Magic Import review PIN gate', () => {
     expect(onClose).toHaveBeenCalled();
     expect(onCreateEvent).not.toHaveBeenCalled();
     expect(onAddListItem).not.toHaveBeenCalled();
+  });
+
+  it('blocks approve and reject in guest mode', async () => {
+    const { onCreateEvent, onClose } = renderModal([], true);
+    await openReview();
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(/Guests can.t do that on this screen/);
+    expect(onCreateEvent).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Reject' }));
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('approves immediately when the household has no PIN', async () => {

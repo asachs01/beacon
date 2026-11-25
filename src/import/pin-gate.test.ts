@@ -19,4 +19,9 @@ describe('magic import PIN gate', () => {
     expect(importPinDecision(members, '0000')).toBe('rejected');
     expect(importPinDecision(members, '12345')).toBe('rejected');
   });
+
+  it('does not accept a guest PIN that is not one of the family PINs', () => {
+    const members = [{ pin: '1234' }, { pin: '5555' }];
+    expect(importPinDecision(members, '987654')).toBe('rejected');
+  });
 });

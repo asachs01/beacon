@@ -147,6 +147,7 @@ export class FamilyStore {
     memberId: string,
     verifiedBy?: string,
     resetTime?: string | null,
+    by?: ChoreCompletion['by'],
   ): Promise<ChoreCompletion> {
     const completions = await this.getCompletions();
     const today = choreToday(resetTime);
@@ -164,6 +165,7 @@ export class FamilyStore {
       member_id: memberId,
       completed_at: new Date().toISOString(),
       verified_by: verifiedBy,
+      ...(by === 'guest' ? { by: 'guest' as const } : {}),
     };
     completions.push(completion);
     await saveData(STORAGE_KEYS.completions, completions);

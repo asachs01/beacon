@@ -24,6 +24,8 @@ interface SidebarProps {
   activeView: SidebarView;
   onChangeView: (view: SidebarView) => void;
   position?: 'left' | 'right' | 'bottom';
+  /** Guest mode hides Settings. Family and reward edits live there. */
+  showSettings?: boolean;
 }
 
 const ICON_SIZE = 24;
@@ -56,6 +58,7 @@ export function Sidebar({
   activeView,
   onChangeView,
   position = 'left',
+  showSettings = true,
 }: SidebarProps) {
   const { t } = useTranslation();
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
@@ -101,6 +104,7 @@ export function Sidebar({
         <div className="sidebar-divider" />
 
         {/* Bottom utility icons */}
+        {showSettings && (
         <div className="sidebar-nav-group sidebar-nav-group--bottom">
           <button
             type="button"
@@ -112,6 +116,7 @@ export function Sidebar({
             <Settings size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
           </button>
         </div>
+        )}
       </nav>
 
       {/* Mobile bottom tab bar (hidden on desktop via CSS) */}
@@ -169,6 +174,7 @@ export function Sidebar({
                   <span>{t(item.labelKey)}</span>
                 </button>
               ))}
+              {showSettings && (
               <button
                 type="button"
                 className={`mobile-more-item ${activeView === 'settings' ? 'mobile-more-item--active' : ''}`}
@@ -177,6 +183,7 @@ export function Sidebar({
                 <Settings size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
                 <span>{t('nav.settings')}</span>
               </button>
+              )}
             </div>
           </>
         )}
