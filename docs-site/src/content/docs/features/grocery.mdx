@@ -6,7 +6,7 @@ order: 5
 
 # Grocery
 
-Beacon integrates with **Grocy** and **AnyList** through Home Assistant to display and manage your grocery shopping lists. You can view items, add new ones, check them off, and see alerts for expiring products.
+Beacon integrates with **Grocy** and **AnyList** through Home Assistant to display and manage your grocery shopping lists. You can view items, add new ones, check them off, and see alerts for expiring products. A guest in [guest mode](/docs/features/guest-mode/) can still add items to the list.
 
 ---
 
@@ -16,11 +16,11 @@ Beacon integrates with **Grocy** and **AnyList** through Home Assistant to displ
 
 Beacon tries two grocery sources in order:
 
-1. **Grocy**: If the `sensor.grocy_shopping_list` entity exists and has items, Grocy is used
-2. **AnyList**: If Grocy is not available, Beacon looks for `todo.anylist_*` entities
-3. **None**: If neither is available, the grocery drawer shows a message to connect a service
+1. **Grocy**: Turn on Grocy under **Settings → Integrations**. Beacon then keeps Grocy as the shopping-list source even when `sensor.grocy_shopping_list` is empty, instead of switching to AnyList. Checking an item writes only the shopping-list `done` flag (`grocy.update_generic`); it does not add the product to stock.
+2. **AnyList**: Used when Grocy is turned off and the Grocy list is empty or missing. Beacon looks for `todo.anylist_*` entities.
+3. **None**: If neither is available, the grocery drawer shows a message to connect a service.
 
-The source detection happens automatically — you do not need to configure which service to use.
+This requires the [HACS Grocy integration](https://github.com/custom-components/grocy). Two optional dashboard cards, both off by default, live in the same Grocy settings group: **Expiring products** and **Low stock**. Each card stays hidden when its Home Assistant entity is missing.
 
 ---
 
@@ -48,8 +48,9 @@ If you do not already have Grocy running:
 
 After the integration is set up, verify these entities exist:
 
-- `sensor.grocy_shopping_list` — your shopping list items
-- `sensor.grocy_expiring_products` — products nearing their best-before date
+- `sensor.grocy_shopping_list` — your shopping list items (`products` attribute; product names come from the row or `sensor.grocy_stock`)
+- `binary_sensor.grocy_expiring_products` — products nearing their best-before date (`expiring_products`). Older setups may still expose `sensor.grocy_expiring_products`.
+- `binary_sensor.grocy_missing_products` — products under minimum stock (`missing_products`). Older setups may still expose `sensor.grocy_missing_products`.
 
 Check in **Developer Tools > States** by searching for "grocy".
 
@@ -171,7 +172,7 @@ Beacon uses Home Assistant's REST API to communicate with Grocy/AnyList. Check:
 
 ### Expiring items alert does not appear
 
-1. Verify `sensor.grocy_expiring_products` exists in Home Assistant
+1. Turn on **Expiring products** under **Settings → Integrations → Grocy**, then verify `binary_sensor.grocy_expiring_products` (or `sensor.grocy_expiring_products`) exists in Home Assistant
 2. Ensure products in Grocy have best-before dates set
 3. The alert only shows products expiring within the next 3 days
 

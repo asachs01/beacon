@@ -42,6 +42,8 @@ const COPY = {
   notificationMinutes: { labelKey: 'settings.calendar.notificationTimingLabel', description: 'How long before an event Beacon notifies you.', unit: 'minutes' },
   weatherEntity: { labelKey: 'settings.integrations.weatherEntityLabel', descriptionKey: 'settings.integrations.weatherEntitySublabel' },
   grocyEnabled: { labelKey: 'settings.integrations.grocyLabel', descriptionKey: 'settings.integrations.grocySublabel' },
+  grocyExpiringEnabled: { labelKey: 'settings.integrations.grocyExpiringLabel', descriptionKey: 'settings.integrations.grocyExpiringSublabel' },
+  grocyMissingEnabled: { labelKey: 'settings.integrations.grocyMissingLabel', descriptionKey: 'settings.integrations.grocyMissingSublabel' },
   anylistEnabled: { labelKey: 'settings.integrations.anylistLabel', descriptionKey: 'settings.integrations.anylistSublabel' },
   defaultGroceryList: { labelKey: 'settings.integrations.defaultGroceryListLabel', descriptionKey: 'settings.integrations.defaultGroceryListSublabel' },
   groceryListIds: { labelKey: 'settings.integrations.groceryListsLabel', descriptionKey: 'settings.integrations.groceryListsSublabel' },

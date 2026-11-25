@@ -73,7 +73,7 @@ Routine tasks and chores both use the same big tap-to-complete interaction:
 - Tap an incomplete item to check it off
 - Tap a completed item again to undo it
 
-Routine task completions **reset every day** automatically. Chore completions feed into the same streaks and leaderboard tracking used everywhere else in Beacon, recorded under that family member's ID — see [Chores](/docs/features/chores/) for how streaks and the leaderboard work.
+Routine task completions **reset every day** automatically. Chore completions feed into the same streaks and leaderboard tracking used everywhere else in Beacon, recorded under that family member's ID — see [Chores](/docs/features/chores/) for how streaks and the leaderboard work. A [guest mode](/docs/features/guest-mode/) check-off is recorded the same way, including the guest label in the family app, but Kid Display does not show **Checked off by Guest**.
 
 ---
 
@@ -86,6 +86,8 @@ Kid Display is separate from kiosk mode, and it is meant to be hard to leave by 
 - **Clock**: tap the clock 5 times within 3 seconds. This opens the same step as the corner gesture.
 
 If any family member has a PIN, Beacon asks for it before leaving. If no PIN is set, it asks you to confirm. Cancel, press Escape, or wait about 15 seconds and the prompt goes away without exiting.
+
+The same gesture can also start [guest mode](/docs/features/guest-mode/) when a guest PIN is set. The guest PIN never leaves Kid Display. Once guest mode is on, a family PIN leaves guest mode first; use the gesture again with a family PIN to leave Kid Display. When no family PIN is set, the guest PIN (or the gesture alone, if no PIN is set at all) leaves guest mode first, then the usual confirm-to-exit path applies on the next gesture. The guest timeout only ends guest mode. A **Guest** badge stays on the screen while it is active.
 
 Exiting clears the device's Kid Display assignment and strips the `?display=` parameter from the URL, returning the device to the full Beacon app.
 

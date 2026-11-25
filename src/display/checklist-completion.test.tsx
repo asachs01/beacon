@@ -115,7 +115,7 @@ describe('dashboard and calendar guest check-off', () => {
     expect(screen.getByText('Checked off by Guest')).toBeInTheDocument();
   });
 
-  it('still marks an unassigned guest check-off with by: guest', () => {
+  it('records an unassigned guest check-off with by: guest and no member', () => {
     const plan = planChecklistToggle({
       choreId: 'open',
       chores: [{ id: 'open', assigned_to: [] }],
@@ -123,7 +123,8 @@ describe('dashboard and calendar guest check-off', () => {
       completions: [],
       guestActive: true,
     });
-    expect(plan).toEqual({ memberId: 'parent', action: 'complete', by: 'guest' });
+    expect(plan).toEqual({ memberId: '', action: 'complete', by: 'guest' });
+    expect(plan.memberId).not.toBe('parent');
   });
 
   it('still credits a family check-off to the first member and omits by', () => {

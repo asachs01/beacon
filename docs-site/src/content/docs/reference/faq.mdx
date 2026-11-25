@@ -132,6 +132,10 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 **Yes.** Add up to 8 family members with custom avatars, colors, and roles. Each member's chores and streaks are tracked independently. The leaderboard shows earnings per member. See [Family Members](/docs/features/family/).
 
+### Can a babysitter use Beacon without full access?
+
+**Yes, from 1.51.0.** Set a guest PIN under **Settings → Display → Guest mode**. It is empty by default. The same hidden-corner gesture plus that PIN starts guest mode, and a **Guest** badge stays on the screen. Guest mode hides Settings, family and rewards changes, Magic Import, event create/edit/delete, and calendars marked **Hide from guests**. Meals, photos, music, and the leaderboard stay visible. A guest can still check off chores and tasks, add grocery items, and use timers. Chores they check off still count for points and streaks, and show **Checked off by Guest**. Guests can always leave guest mode from inside the app: a family PIN leaves it, or the guest PIN when no family PIN is set. Guest mode only limits what this Beacon screen shows. It is not a security boundary. Home Assistant and the API stay reachable on the network. See [Guest mode](/docs/features/guest-mode/).
+
 ### Can kids earn money for doing chores?
 
 **Yes.** Each chore can have a dollar value (e.g., $1.00). When a family member completes a chore, the value is tracked. The Leaderboard shows total earnings by week or month. See [Chores](/docs/features/chores/).
@@ -208,7 +212,7 @@ Nothing is shown until you reveal it. **Reveal navigation gesture** (same screen
 - **Touch or mouse**: long-press the top corner for about 2 seconds, or tap that corner 3 times quickly. The corner is the top-left, or the top-right when the sidebar position is set to the right.
 - **Keyboard**: hold Escape for about 2 seconds (outside a text field). You can also focus the same corner and hold Enter or Space, or press it 3 times quickly.
 
-The sidebar stays up for about 15 seconds after the last tap, click, or key press, then hides again. If any family member has a PIN, Beacon asks for that PIN before showing navigation. Turn the gesture off under **Settings > Display** when this screen should stay locked with no way back from the display itself.
+The sidebar stays up for about 15 seconds after the last tap, click, or key press, then hides again. If any family member has a PIN, Beacon asks for that PIN before showing navigation. The same gesture can also start [guest mode](/docs/features/guest-mode/) when a guest PIN is set; the guest PIN never reveals navigation. Turn the gesture off under **Settings > Display** when this screen should stay locked with no way back from the display itself.
 
 **Kid Display** is a different mode (one child's routines and chores). The same corner gesture — long-press or 3 quick taps, or holding Escape — is the way out. When a family PIN is set, it is required. When no PIN is set, Beacon asks you to confirm. Five taps on the clock still opens that same PIN or confirm step.
 

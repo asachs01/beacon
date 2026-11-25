@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useSyncExternalStore } from 'react';
 import { FamilyStore } from '../api/family';
 import { getChoreResetTime, subscribeChoreResetTime } from '../api/chore-reset-time';
-import { Chore, ChoreCompletion, Streak, MemberEarnings } from '../types/family';
+import { Chore, ChoreCompletion, Streak, MemberEarnings, UNCREDITED_MEMBER_ID } from '../types/family';
 
 export function useChores() {
   const resetTime = useSyncExternalStore(subscribeChoreResetTime, getChoreResetTime, getChoreResetTime);
@@ -123,6 +123,7 @@ export function useChores() {
       const earningsMap = new Map<string, MemberEarnings>();
 
       for (const comp of completions) {
+        if (comp.member_id === UNCREDITED_MEMBER_ID) continue;
         const chore = choreMap.get(comp.chore_id);
         if (!chore) continue;
 

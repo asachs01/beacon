@@ -72,6 +72,8 @@ const settings = {
   notificationMinutes: 10,
   weatherEntity: 'weather.home',
   grocyEnabled: false,
+  grocyExpiringEnabled: false,
+  grocyMissingEnabled: false,
   anylistEnabled: false,
   defaultGroceryList: '',
   groceryListIds: [],

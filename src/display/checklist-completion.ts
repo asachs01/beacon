@@ -1,10 +1,11 @@
+import { UNCREDITED_MEMBER_ID } from '../types/family';
 import { guestCompletionBy } from './guest-mode';
 
 /**
  * Dashboard and calendar task lists share one checkbox per chore. Guest
  * check-offs go through `guestCompletionBy`, the same marker as the Chores
- * screen, and are stored on the chore's assignee rather than the first
- * family member.
+ * screen. An assigned chore is stored on that assignee. An unassigned chore
+ * is stored with no member, so it awards no points and no streak.
  */
 
 export interface ChecklistChore {
@@ -30,6 +31,7 @@ export function checklistToggleMemberId(
   if (guestActive && chore) {
     const assignee = chore.assigned_to.find((id) => members.some((member) => member.id === id));
     if (assignee) return assignee;
+    return UNCREDITED_MEMBER_ID;
   }
   return members[0]?.id ?? '__none__';
 }

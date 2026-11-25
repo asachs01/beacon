@@ -5,6 +5,8 @@ import {
   Streak,
   Routine,
   RoutineTaskCompletion,
+  UNCREDITED_MEMBER_ID,
+  memberCreditedForCompletion,
 } from '../types/family';
 import { loadData, loadDataSync, saveData } from './beacon-store';
 import { advanceStreak, choreDayKey, localDayKey } from './date-keys';
@@ -149,20 +151,25 @@ export class FamilyStore {
     resetTime?: string | null,
     by?: ChoreCompletion['by'],
   ): Promise<ChoreCompletion> {
+    const chores = this.getChoresSync();
+    const chore = chores.find((entry) => entry.id === choreId);
+    const creditedMemberId = memberCreditedForCompletion(memberId, chore?.assigned_to, by);
     const completions = await this.getCompletions();
     const today = choreToday(resetTime);
     const existing = completions.find(
       (c) =>
         c.chore_id === choreId &&
-        c.member_id === memberId &&
+        c.member_id === creditedMemberId &&
         completedOnChoreDay(c.completed_at, today, resetTime)
     );
     if (existing) return existing;
-    const chores = this.getChoresSync();
-    const progressBefore = memberProgress(memberId, chores, completions, today, null, resetTime);
+    const uncredited = creditedMemberId === UNCREDITED_MEMBER_ID;
+    const progressBefore = uncredited
+      ? { completed: 0, total: 0 }
+      : memberProgress(creditedMemberId, chores, completions, today, null, resetTime);
     const completion: ChoreCompletion = {
       chore_id: choreId,
-      member_id: memberId,
+      member_id: creditedMemberId,
       completed_at: new Date().toISOString(),
       verified_by: verifiedBy,
       ...(by === 'guest' ? { by: 'guest' as const } : {}),
@@ -170,13 +177,16 @@ export class FamilyStore {
     completions.push(completion);
     await saveData(STORAGE_KEYS.completions, completions);
 
-    // Count the streak on this chore day. Older streak rows are not rewritten.
-    await this.updateStreakForMember(memberId, resetTime);
+    // A guest check-off with no assignee is not a family member's chore.
+    if (uncredited) return completion;
 
-    const progressAfter = memberProgress(memberId, chores, completions, today, null, resetTime);
+    // Count the streak on this chore day. Older streak rows are not rewritten.
+    await this.updateStreakForMember(creditedMemberId, resetTime);
+
+    const progressAfter = memberProgress(creditedMemberId, chores, completions, today, null, resetTime);
     void this.emitChoreChange({
       choreId,
-      memberId,
+      memberId: creditedMemberId,
       completed: true,
       localDate: today,
       resetTime,

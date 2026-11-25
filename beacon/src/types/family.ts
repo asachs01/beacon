@@ -29,6 +29,26 @@ export interface Chore {
   icon?: string; // emoji
 }
 
+/**
+ * Stored as `member_id` when a guest checks off a chore that is not assigned
+ * to a family member. It is not a member, so it earns no points and no streak.
+ */
+export const UNCREDITED_MEMBER_ID = '';
+
+/**
+ * Guest check-offs of an assigned chore stay on that assignee. A guest
+ * check-off of a chore that is not assigned to `memberId` is stored with
+ * no member.
+ */
+export function memberCreditedForCompletion(
+  memberId: string,
+  assignedTo: readonly string[] | undefined,
+  by?: 'guest',
+): string {
+  if (by === 'guest' && !(assignedTo ?? []).includes(memberId)) return UNCREDITED_MEMBER_ID;
+  return memberId;
+}
+
 export interface ChoreCompletion {
   chore_id: string;
   member_id: string;

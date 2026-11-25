@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { Chore, FamilyMember, STAR_CURRENCY, formatChoreValue } from '../types/family';
+import { Chore, FamilyMember, STAR_CURRENCY, UNCREDITED_MEMBER_ID, formatChoreValue } from '../types/family';
 import { ChoreCard } from './ChoreCard';
 import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
@@ -27,6 +27,8 @@ interface UnassignedChoreCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   allowClaim?: boolean;
+  /** Guest check-off of this open chore, stored with no family member. */
+  checkedOffByGuest?: boolean;
   currencySymbol?: string;
 }
 
@@ -38,6 +40,7 @@ function UnassignedChoreCard({
   onEdit,
   onDelete,
   allowClaim = true,
+  checkedOffByGuest = false,
   currencySymbol = '$',
 }: UnassignedChoreCardProps) {
   const { t } = useTranslation();
@@ -74,6 +77,9 @@ function UnassignedChoreCard({
           <span className="chore-card-title">{chore.name}</span>
         </span>
         {value && <span className="chore-card-value">{value}</span>}
+        {checkedOffByGuest && (
+          <span className="guest-checked-label">{t('chores.checkedOffByGuest')}</span>
+        )}
       </div>
 
       <div className="chore-card-actions">
@@ -93,6 +99,10 @@ function UnassignedChoreCard({
           type="button"
           className="btn btn--sm btn--primary"
           onClick={() => {
+            if (!allowClaim) {
+              onComplete(chore.id, UNCREDITED_MEMBER_ID);
+              return;
+            }
             setPickerAction('complete');
             setShowMemberPicker(true);
           }}
@@ -316,6 +326,11 @@ export function ChoresView({ guestActive = false }: { guestActive?: boolean }) {
                     onEdit={guestActive ? undefined : () => handleStartEdit(chore)}
                     onDelete={guestActive ? undefined : () => handleDeleteChore(chore.id)}
                     allowClaim={!guestActive}
+                    checkedOffByGuest={completionsToday.some(
+                      (completion) => completion.chore_id === chore.id
+                        && completion.member_id === UNCREDITED_MEMBER_ID
+                        && completionCheckedByGuest(completion),
+                    )}
                     currencySymbol={settings.currencySymbol}
                   />
                 ))}
