@@ -56,7 +56,10 @@ else
   PHOTO_DIRECTORY="${PHOTO_DIRECTORY:-/media/beacon/photos}"
   PHOTO_INTERVAL="${PHOTO_INTERVAL:-30}"
   SCREEN_SAVER_TIMEOUT="${SCREEN_SAVER_TIMEOUT:-5}"
-  # Do not assign HA_URL here. Docker/k3s passes it in, and server.js reads it.
+  # Keep a provided HA_URL. Bind an empty value when it was never set: the
+  # Supervisor shell runs with nounset, and an unbound HA_URL aborts startup
+  # before the UI can be served.
+  HA_URL="${HA_URL:-}"
   # HA_BROWSER_TOKEN is the runtime-config ha_token. Leave it empty, matching
   # the add-on ha_token option: the proxy adds HA_TOKEN server-side.
   HA_BROWSER_TOKEN=""
