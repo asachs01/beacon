@@ -44,7 +44,7 @@ Content-Type: application/json
 | `mark <chore> as done` / `I finished <chore>` / `<name> finished <chore>` | Completes a Beacon chore in FamilyStore |
 | `check off <item>` / `complete <item>` / `finish <item>` | Marks a todo item as completed |
 
-Create the token under **Settings → Devices → Create access token** and copy it once. Add-on and standalone installs both send `Authorization: Bearer <token>`.
+The header Beacon receives is `Authorization: Bearer <token>`. On the add-on, Beacon writes `beacon_token` into `secrets.yaml` at startup when that key is missing. On a standalone install, add that secret **before** you restart Home Assistant.
 
 ```bash
 # Add an item

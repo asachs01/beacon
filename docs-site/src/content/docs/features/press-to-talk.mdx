@@ -11,7 +11,7 @@ The microphone only works when Beacon is opened over **HTTPS**, or on `localhost
 This needs Beacon **1.46.0** or later.
 
 :::caution
-**Known issue in 1.54.0:** Home Assistant automations and `rest_command` calls to Beacon, including chore completion by voice and "what chores are left", are refused with a "pairing required" error. A fix is coming in the next patch release.
+**Changed in 1.54.1:** Home Assistant automations need an access token. Update from 1.54.0 if chore completion or "what chores are left" is refused. See [Access tokens for automations](/docs/getting-started/pairing/#access-tokens-for-automations).
 :::
 
 ## Upgrading from an earlier version
@@ -22,13 +22,13 @@ If you already copied Beacon's voice intents into Home Assistant, update them. C
 
 Replace `ADDON_SLUG` in the copied rest command file with the slug at the end of the add-on page URL (**Settings → Add-ons → Beacon**). From Home Assistant core, the add-on listens on port 3000 of the Supervisor network. Chore completion is `POST http://ADDON_SLUG:3000/beacon-action/complete-chore`. "What chores are left" is `GET http://ADDON_SLUG:3000/beacon-action/chores-left?member=`.
 
-Those calls need a Beacon access token. On a paired screen, or in the add-on through the Home Assistant sidebar, open **Settings → Devices → Create access token**, name it "Home Assistant automations", and copy the token once. In `secrets.yaml` set the full header value:
+Those calls send `Authorization: !secret beacon_token`. The header Beacon receives is `Authorization: Bearer <token>`. On the add-on, Beacon writes `beacon_token` into `secrets.yaml` at startup when that key is missing, so you do not paste it yourself. On a standalone install, add the secret **before** you restart Home Assistant, or Home Assistant will not load:
 
 ```yaml
 beacon_token: "Bearer <paste the token here>"
 ```
 
-That is the header `Authorization: Bearer !secret beacon_token`. The copied rest commands send it as `Authorization: !secret beacon_token`, because Home Assistant expands `!secret` only as a YAML tag. Add-on and standalone installs both send this header. A curl to the same voice endpoint looks like this:
+Create that token under **Settings → Devices → Create access token** and copy it once. See [Access tokens for automations](/docs/getting-started/pairing/#access-tokens-for-automations). A curl looks like this:
 
 ```bash
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \

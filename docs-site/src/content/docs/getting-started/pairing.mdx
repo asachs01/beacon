@@ -54,11 +54,19 @@ Revoke a device when you sell a tablet, lose a phone, or just aren't sure what i
 
 ## Access tokens for automations
 
-Home Assistant automations and `curl` are not a screen, so they do not pair with a PIN. On a paired screen, or in the add-on through the Home Assistant sidebar, open **Settings → Devices**. Under **Access token**, enter a name such as "Home Assistant automations" and choose **Create access token**. Copy the token immediately. Beacon stores only a hash and will not show the token again.
+This needs Beacon **1.54.1** or later.
 
-Send it as `Authorization: Bearer <token>`. The row is marked **Access token** and **Revoke** turns it off, the same as a device.
+Home Assistant automations and `curl` are not a screen, so they do not pair with a PIN. The header Beacon receives is `Authorization: Bearer <token>`. Rest commands send it as `Authorization: !secret beacon_token`.
 
-Add-on and standalone installs both need this header. See [Press-to-talk](/docs/features/press-to-talk/) for the `secrets.yaml` line the rest commands use.
+On the **Home Assistant add-on**, Beacon writes `beacon_token` into `secrets.yaml` the first time it starts if that key is missing. The value is `Bearer` plus a token named "Home Assistant automations (installer)". It is listed under **Settings → Devices**, marked **Access token**, and **Revoke** turns it off. If you revoke it and delete the `beacon_token` line, the next add-on start creates a new one. You do not paste the token yourself. Restart Home Assistant after the add-on is running so the rest commands pick up the secret.
+
+On a **standalone** install, Beacon does not edit Home Assistant's config. Create a token under **Settings → Devices → Create access token**, copy it once, and add this to `secrets.yaml` **before** you restart Home Assistant. A missing secret makes Home Assistant refuse to load the configuration.
+
+```yaml
+beacon_token: "Bearer <paste the token here>"
+```
+
+You can also create a token by hand on the add-on. Copy it immediately. Beacon stores only a hash and will not show it again.
 
 ## If pairing is locked
 

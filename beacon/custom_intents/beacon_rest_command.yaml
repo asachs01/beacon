@@ -8,22 +8,22 @@
 # A standalone Beacon server uses its own URL in place of ADDON_SLUG:3000,
 # for example http://192.168.1.20:8099.
 #
-# Both installs send a Beacon access token. On a paired Beacon screen,
-# or in the add-on through the Home Assistant sidebar, open
-# Settings → Devices → Create access token. Name it
-# "Home Assistant automations" and copy the token once.
-# In secrets.yaml set the full header value, including the word Bearer:
+# The commands below send Authorization: !secret beacon_token.
+# The header Beacon receives is Authorization: Bearer <token>.
+#
+# Add-on: Beacon writes beacon_token into secrets.yaml at startup when
+# that key is missing. The token is listed under Settings → Devices.
+# Restart Home Assistant after the add-on is running.
+#
+# Standalone: Beacon does not edit Home Assistant's config. Add this to
+# secrets.yaml before you restart Home Assistant, or Home Assistant will
+# not load. Create the token under Settings → Devices → Create access
+# token and copy it once:
 #
 #   beacon_token: "Bearer <paste the token here>"
 #
-# That is the header Authorization: Bearer !secret beacon_token.
-# Home Assistant expands !secret only as a YAML tag, so the secret
-# itself holds "Bearer <token>" and the commands below use
-# Authorization: !secret beacon_token.
-#
-# Replace ADDON_SLUG, add the secret, then add this block to
-# configuration.yaml (or a package file) and restart Home Assistant.
-# Reload is not enough for a new rest_command.
+# Replace ADDON_SLUG, then add this block to configuration.yaml
+# (or a package file). Reload is not enough for a new rest_command.
 
 rest_command:
   beacon_complete_chore:

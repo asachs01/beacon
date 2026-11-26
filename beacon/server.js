@@ -48,6 +48,7 @@ const {
   retryAfterSeconds,
 } = require('./lib/device-auth.cjs');
 const { warnIfBrowserTokenSet } = require('./lib/runtime-config.cjs');
+const { ADDED_LOG, ensureBeaconToken } = require('./lib/ha-secrets-token.cjs');
 
 // BEACON_PORT is for tests. The add-on keeps listening on 3000.
 const PORT = process.env.BEACON_PORT ? Number(process.env.BEACON_PORT) : 3000;
@@ -1536,8 +1537,20 @@ const privilegeTimer = setInterval(() => {
 
 function startBeaconServer() {
   warnIfBrowserTokenSet();
-  return sessionStore.load().then((code) => {
+  return sessionStore.load().then(async (code) => {
     console.log(`Beacon pairing code: ${code}`);
+    if (HA_MODE === 'addon') {
+      try {
+        const secrets = await ensureBeaconToken({
+          secretsPath: process.env.BEACON_SECRETS_PATH || '/config/secrets.yaml',
+          createToken: (label) => sessionStore.createSession(label, { kind: 'token' }),
+          revokeToken: (id) => sessionStore.revoke(id),
+        });
+        if (secrets.added) console.log(ADDED_LOG);
+      } catch (err) {
+        console.warn(`[beacon] could not add beacon_token to secrets.yaml: ${err.message}`);
+      }
+    }
     server.listen(PORT, () => {
       const address = server.address();
       const port = address && typeof address === 'object' ? address.port : PORT;

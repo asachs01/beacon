@@ -61,6 +61,7 @@ async function startBeacon(env: Record<string, string>): Promise<Running> {
     cwd: dir,
     env: {
       ...process.env,
+      BEACON_SECRETS_PATH: join(dir, 'missing-parent', 'secrets.yaml'),
       ...env,
       BEACON_DATA: dataDir,
       BEACON_DIST: dist,
@@ -404,6 +405,43 @@ describe('device pairing on the Beacon server', () => {
     });
     expect(after.status).toBe(401);
     expect(await after.json()).toEqual({ error: 'pairing_required' });
+  });
+
+  it('mints beacon_token once for the add-on and does not log the token', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'beacon-ha-secrets-'));
+    const secretsPath = join(dir, 'secrets.yaml');
+    await writeFile(secretsPath, 'other_secret: keep\n');
+    const ha = await startDummyHa();
+    closers.push(ha.close);
+    const beacon = await startBeacon({
+      SUPERVISOR_TOKEN: 'supervisor-token',
+      HA_API_BASE_OVERRIDE: ha.url,
+      HA_WS_URL_OVERRIDE: ha.url.replace(/^http/, 'ws') + '/api/websocket',
+      BEACON_SECRETS_PATH: secretsPath,
+    });
+    children.push(beacon.child);
+    expect(beacon.logs.text).toContain('added beacon_token to secrets.yaml');
+    const written = await readFile(secretsPath, 'utf8');
+    expect(written.startsWith('other_secret: keep\n')).toBe(true);
+    const match = /beacon_token: "Bearer ([^"]+)"/.exec(written);
+    expect(match?.[1]).toBeTruthy();
+    expect(beacon.logs.text).not.toContain(match?.[1]);
+    const stored = await readFile(join(beacon.dataDir, 'device-sessions.json'), 'utf8');
+    expect(stored).not.toContain(match?.[1]);
+    expect(stored).toContain('Home Assistant automations (installer)');
+
+    beacon.child.kill('SIGTERM');
+    await new Promise((resolve) => beacon.child.once('exit', resolve));
+    const again = await startBeacon({
+      SUPERVISOR_TOKEN: 'supervisor-token',
+      HA_API_BASE_OVERRIDE: ha.url,
+      HA_WS_URL_OVERRIDE: ha.url.replace(/^http/, 'ws') + '/api/websocket',
+      BEACON_SECRETS_PATH: secretsPath,
+      BEACON_DATA: beacon.dataDir,
+    });
+    children.push(again.child);
+    expect(again.logs.text).not.toContain('added beacon_token to secrets.yaml');
+    expect(await readFile(secretsPath, 'utf8')).toBe(written);
   });
 
   it('never treats 172.30.32.1 as trusted in standalone mode', async () => {
