@@ -22,6 +22,15 @@ describe('ingress trust', () => {
     expect(isTrustedIngress({ mode: 'standalone', remoteAddress: `::ffff:${INGRESS_IP}` })).toBe(false);
   });
 
+  it('does not trust 172.30.32.1 in add-on mode or standalone mode', () => {
+    // Supervisor's hassio gateway, reported as Core's IP because Core uses
+    // host networking. It is not Core alone, so it is never ingress.
+    expect(isTrustedIngress({ mode: 'addon', remoteAddress: '172.30.32.1' })).toBe(false);
+    expect(isTrustedIngress({ mode: 'addon', remoteAddress: '::ffff:172.30.32.1' })).toBe(false);
+    expect(isTrustedIngress({ mode: 'standalone', remoteAddress: '172.30.32.1' })).toBe(false);
+    expect(isTrustedIngress({ mode: 'standalone', remoteAddress: '::ffff:172.30.32.1' })).toBe(false);
+  });
+
   it('does not take a header into account', () => {
     const forged = {
       mode: 'addon' as const,
@@ -66,6 +75,7 @@ describe('route classification', () => {
     '/beacon-auth/devices',
     '/beacon-auth/devices/revoke',
     '/beacon-auth/pairing-code',
+    '/beacon-auth/access-tokens',
   ];
 
   it('protects Home Assistant, Beacon data, media, and settings routes', () => {

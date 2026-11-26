@@ -61,6 +61,7 @@ async function startBeacon(env: Record<string, string>): Promise<Running> {
     cwd: dir,
     env: {
       ...process.env,
+      BEACON_SECRETS_PATH: join(dir, 'missing-parent', 'secrets.yaml'),
       ...env,
       BEACON_DATA: dataDir,
       BEACON_DIST: dist,
@@ -178,6 +179,7 @@ describe('device pairing on the Beacon server', () => {
       '/beacon-api/google-photos/file/abc/one.jpg',
       '/beacon-auth/devices',
       '/beacon-auth/pairing-code',
+      '/beacon-auth/access-tokens',
     ];
     for (const path of protectedPaths) {
       const res = await fetch(`${base}${path}`, { headers: FORGED_INGRESS });
@@ -244,11 +246,16 @@ describe('device pairing on the Beacon server', () => {
     expect(paired.status).toBe(200);
     const body = await paired.json() as { token: string; device: { id: string; label: string } };
     expect(body.device.label).toBe('Kitchen tablet');
-    const setCookie = paired.headers.get('set-cookie') || '';
+    const cookies = paired.headers.getSetCookie?.() ?? [paired.headers.get('set-cookie') || ''];
+    const setCookie = cookies.find((value) => value.includes('beacon_session=')) || '';
     expect(setCookie).toContain('HttpOnly');
     expect(setCookie).toContain('SameSite=Lax');
     expect(setCookie).toContain('Secure');
     expect(setCookie).toContain('beacon_session=');
+    const attemptCookie = cookies.find((value) => value.includes('beacon_pair_attempt=')) || '';
+    expect(attemptCookie).toContain('beacon_pair_attempt=');
+    expect(attemptCookie).not.toContain('HttpOnly');
+    expect(attemptCookie).toContain('SameSite=Lax');
     const sessions = await readFile(join(beacon.dataDir, 'device-sessions.json'), 'utf8');
     expect(sessions).not.toContain(body.token);
 
@@ -312,5 +319,149 @@ describe('device pairing on the Beacon server', () => {
       body: JSON.stringify({ secret: beacon.code, label: 'Hall' }),
     });
     expect(byCode.status).toBe(200);
+  });
+
+  it('creates, lists, and revokes an access token accepted on /beacon-action', async () => {
+    const beacon = await boot();
+    const base = `http://127.0.0.1:${beacon.port}`;
+    const paired = await fetch(`${base}/beacon-auth/pair`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: '1234', label: 'Kitchen tablet' }),
+    });
+    const session = await paired.json() as { token: string };
+    expect(paired.status).toBe(200);
+
+    const anonymous = await fetch(`${base}/beacon-auth/access-tokens`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: 'should fail' }),
+    });
+    expect(anonymous.status).toBe(401);
+
+    const created = await fetch(`${base}/beacon-auth/access-tokens`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({ label: 'Home Assistant automations' }),
+    });
+    expect(created.status).toBe(200);
+    const createdCookies = created.headers.getSetCookie?.() ?? [created.headers.get('set-cookie') || ''];
+    expect(createdCookies.join('\n')).not.toContain('beacon_session=');
+    const tokenBody = await created.json() as { token: string; device: { id: string; label: string; kind: string } };
+    expect(tokenBody.device).toMatchObject({ label: 'Home Assistant automations', kind: 'token' });
+    expect(beacon.logs.text).not.toContain(tokenBody.token);
+    const stored = await readFile(join(beacon.dataDir, 'device-sessions.json'), 'utf8');
+    expect(stored).not.toContain(tokenBody.token);
+    expect(stored).toContain('"kind":"token"');
+
+    const listed = await fetch(`${base}/beacon-auth/devices`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
+    const devices = await listed.json() as { devices: Array<{ id: string; kind: string; label: string }> };
+    expect(devices.devices).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: tokenBody.device.id, kind: 'token', label: 'Home Assistant automations' }),
+    ]));
+
+    const actionPaths = [
+      '/beacon-action/voice',
+      '/beacon-action/complete-chore',
+      '/beacon-action/chores-left',
+      '/beacon-action/chore-events',
+      '/beacon-action/calendar-event',
+    ];
+    for (const path of actionPaths) {
+      const res = await fetch(`${base}${path}`, {
+        headers: { Authorization: `Bearer ${tokenBody.token}` },
+      });
+      expect(res.status, path).not.toBe(401);
+    }
+
+    const forgedCore = {
+      'X-Forwarded-For': '172.30.32.1',
+      'X-Real-IP': '::ffff:172.30.32.1',
+      'X-Hass-Source': 'core',
+      'X-Ingress-Path': '/api/hassio_ingress/not-a-real-token',
+    };
+    for (const path of ['/beacon-action/chores-left', '/api/states', '/beacon-data/beacon_settings', '/beacon-auth/devices']) {
+      const res = await fetch(`${base}${path}`, { headers: forgedCore });
+      expect(res.status, path).toBe(401);
+      expect(await res.json(), path).toEqual({ error: 'pairing_required' });
+    }
+
+    const revoked = await fetch(`${base}/beacon-auth/devices/revoke`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({ id: tokenBody.device.id }),
+    });
+    expect(revoked.status).toBe(200);
+    const after = await fetch(`${base}/beacon-action/chores-left`, {
+      headers: { Authorization: `Bearer ${tokenBody.token}` },
+    });
+    expect(after.status).toBe(401);
+    expect(await after.json()).toEqual({ error: 'pairing_required' });
+  });
+
+  it('mints beacon_token once for the add-on and does not log the token', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'beacon-ha-secrets-'));
+    const secretsPath = join(dir, 'secrets.yaml');
+    await writeFile(secretsPath, 'other_secret: keep\n');
+    const ha = await startDummyHa();
+    closers.push(ha.close);
+    const beacon = await startBeacon({
+      SUPERVISOR_TOKEN: 'supervisor-token',
+      HA_API_BASE_OVERRIDE: ha.url,
+      HA_WS_URL_OVERRIDE: ha.url.replace(/^http/, 'ws') + '/api/websocket',
+      BEACON_SECRETS_PATH: secretsPath,
+    });
+    children.push(beacon.child);
+    expect(beacon.logs.text).toContain('added beacon_token to secrets.yaml');
+    const written = await readFile(secretsPath, 'utf8');
+    expect(written.startsWith('other_secret: keep\n')).toBe(true);
+    const match = /beacon_token: "Bearer ([^"]+)"/.exec(written);
+    expect(match?.[1]).toBeTruthy();
+    expect(beacon.logs.text).not.toContain(match?.[1]);
+    const stored = await readFile(join(beacon.dataDir, 'device-sessions.json'), 'utf8');
+    expect(stored).not.toContain(match?.[1]);
+    expect(stored).toContain('Home Assistant automations (installer)');
+
+    beacon.child.kill('SIGTERM');
+    await new Promise((resolve) => beacon.child.once('exit', resolve));
+    const again = await startBeacon({
+      SUPERVISOR_TOKEN: 'supervisor-token',
+      HA_API_BASE_OVERRIDE: ha.url,
+      HA_WS_URL_OVERRIDE: ha.url.replace(/^http/, 'ws') + '/api/websocket',
+      BEACON_SECRETS_PATH: secretsPath,
+      BEACON_DATA: beacon.dataDir,
+    });
+    children.push(again.child);
+    expect(again.logs.text).not.toContain('added beacon_token to secrets.yaml');
+    expect(await readFile(secretsPath, 'utf8')).toBe(written);
+  });
+
+  it('never treats 172.30.32.1 as trusted in standalone mode', async () => {
+    const ha = await startDummyHa();
+    closers.push(ha.close);
+    const beacon = await startBeacon({
+      SUPERVISOR_TOKEN: '',
+      HA_URL: ha.url,
+      HA_TOKEN: 'long-lived-token',
+    });
+    children.push(beacon.child);
+    const base = `http://127.0.0.1:${beacon.port}`;
+    const res = await fetch(`${base}/beacon-action/chores-left`, {
+      headers: {
+        'X-Forwarded-For': '172.30.32.1',
+        'X-Real-IP': '172.30.32.1',
+      },
+    });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: 'pairing_required' });
+    expect(beacon.logs.text).toContain('Mode: standalone');
   });
 });

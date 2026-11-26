@@ -21,7 +21,13 @@ const { attachHaWsBridge } = require('./lib/ha-ws-bridge.cjs');
 const { createHomeSensorGate } = require('./lib/home-sensor-gate.cjs');
 const { handleHomeSensorEntities } = require('./lib/home-sensor-entities.cjs');
 const { evaluateHaProxyPolicy, isHaMediaUpload, proxySettingsFromStore } = require('./lib/ha-proxy-policy.cjs');
-const { createPairingLimiter } = require('./lib/pairing-rate-limit.cjs');
+const {
+  PAIR_ATTEMPT_COOKIE,
+  buildPairAttemptCookie,
+  createPairingLimiter,
+  newAttemptId,
+  normalizeAttemptId,
+} = require('./lib/pairing-rate-limit.cjs');
 const {
   buildSessionCookie,
   cleanLabel,
@@ -37,10 +43,12 @@ const {
   stripSessionQuery,
   createSocketRegistry,
   isTrustedIngress,
+  readCookie,
   readPresentedToken,
   retryAfterSeconds,
 } = require('./lib/device-auth.cjs');
 const { warnIfBrowserTokenSet } = require('./lib/runtime-config.cjs');
+const { ADDED_LOG, ensureBeaconToken } = require('./lib/ha-secrets-token.cjs');
 
 // BEACON_PORT is for tests. The add-on keeps listening on 3000.
 const PORT = process.env.BEACON_PORT ? Number(process.env.BEACON_PORT) : 3000;
@@ -102,7 +110,7 @@ const sessionStore = createSessionStore({
 const pairingLimiter = createPairingLimiter({
   onLockout({ scope, ip, until }) {
     const who = scope === 'global' ? 'all clients' : ip;
-    console.warn(`[beacon] pairing lockout for ${who} until ${new Date(until).toISOString()}`);
+    console.warn(`[beacon] pairing lockout (${scope}) for ${who} until ${new Date(until).toISOString()}`);
   },
 });
 
@@ -114,7 +122,12 @@ function ingressTrusted(req) {
 }
 
 function json(res, status, body, extraHeaders) {
-  const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...extraHeaders };
+  const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+  if (extraHeaders) {
+    for (const [key, value] of Object.entries(extraHeaders)) {
+      headers[key] = value;
+    }
+  }
   res.writeHead(status, headers);
   res.end(JSON.stringify(body));
 }
@@ -168,38 +181,72 @@ function handlePair(req, res) {
     return;
   }
   const ip = clientIp(req);
+  const attemptId = normalizeAttemptId(readCookie(req, PAIR_ATTEMPT_COOKIE)) || newAttemptId();
+  const attemptCookie = buildPairAttemptCookie(attemptId, { secure: requestIsSecure(req) });
+  const send = (status, body, extraHeaders) => {
+    const extra = { ...(extraHeaders || {}) };
+    const cookies = [attemptCookie];
+    if (extra['Set-Cookie']) cookies.push(extra['Set-Cookie']);
+    extra['Set-Cookie'] = cookies;
+    json(res, status, body, extra);
+  };
   collectBody(req).then(async (bodyBuf) => {
-    const gate = pairingLimiter.check(ip);
+    const gate = pairingLimiter.check(ip, attemptId);
     if (!gate.ok) {
       const retryAfter = retryAfterSeconds(gate.retryAfterMs);
-      json(res, 429, { error: 'pairing_locked', retryAfter }, { 'Retry-After': String(retryAfter) });
+      send(429, { error: 'pairing_locked', retryAfter }, { 'Retry-After': String(retryAfter) });
       return;
     }
     let payload = {};
     try {
       payload = JSON.parse((bodyBuf || '{}').toString('utf8'));
     } catch {
-      pairingLimiter.fail(ip);
-      json(res, 401, { error: 'pairing_failed' });
+      pairingLimiter.fail(ip, attemptId);
+      send(401, { error: 'pairing_failed' });
       return;
     }
     const pins = await readFamilyPins(DATA_DIR);
     const ok = pairingSecretOk(payload.secret, sessionStore.pairingCode(), pins);
     if (!ok) {
-      const failed = pairingLimiter.fail(ip);
-      if (failed.scope === 'ip' || failed.scope === 'global') {
+      const failed = pairingLimiter.fail(ip, attemptId);
+      if (failed.scope === 'attempt' || failed.scope === 'ip' || failed.scope === 'global') {
         const retryAfter = retryAfterSeconds(failed.retryAfterMs);
-        json(res, 429, { error: 'pairing_locked', retryAfter }, { 'Retry-After': String(retryAfter) });
+        send(429, { error: 'pairing_locked', retryAfter }, { 'Retry-After': String(retryAfter) });
         return;
       }
-      json(res, 401, { error: 'pairing_failed' });
+      send(401, { error: 'pairing_failed' });
       return;
     }
-    pairingLimiter.success(ip);
+    pairingLimiter.success(ip, attemptId);
     const created = await sessionStore.createSession(cleanLabel(payload.label));
-    json(res, 200, { ok: true, token: created.token, device: created.session }, {
+    // The raw token is returned once in this body and is not logged.
+    send(200, { ok: true, token: created.token, device: created.session }, {
       'Set-Cookie': buildSessionCookie(created.token, { secure: requestIsSecure(req) }),
     });
+  }).catch((err) => {
+    if (!res.headersSent) json(res, 400, { error: err.message || 'Bad request' });
+  });
+}
+
+function handleAccessTokenCreate(req, res) {
+  if (req.method !== 'POST') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const auth = requireSession(req, res);
+  if (!auth) return;
+  collectBody(req).then(async (bodyBuf) => {
+    let payload = {};
+    try {
+      payload = JSON.parse((bodyBuf || '{}').toString('utf8'));
+    } catch {
+      json(res, 400, { error: 'Invalid JSON' });
+      return;
+    }
+    const label = typeof payload.label === 'string' ? payload.label : '';
+    const created = await sessionStore.createSession(label, { kind: 'token' });
+    // Returned once. Not written to the log, and not stored except as a hash.
+    json(res, 200, { ok: true, token: created.token, device: created.session });
   }).catch((err) => {
     if (!res.headersSent) json(res, 400, { error: err.message || 'Bad request' });
   });
@@ -1285,6 +1332,10 @@ const server = http.createServer((req, res) => {
     handlePairingCodeRegenerate(req, res);
     return;
   }
+  if (pathname === '/beacon-auth/access-tokens') {
+    handleAccessTokenCreate(req, res);
+    return;
+  }
 
   // Voice / natural-language action API
   if (req.url === '/beacon-action/voice') {
@@ -1486,8 +1537,20 @@ const privilegeTimer = setInterval(() => {
 
 function startBeaconServer() {
   warnIfBrowserTokenSet();
-  return sessionStore.load().then((code) => {
+  return sessionStore.load().then(async (code) => {
     console.log(`Beacon pairing code: ${code}`);
+    if (HA_MODE === 'addon') {
+      try {
+        const secrets = await ensureBeaconToken({
+          secretsPath: process.env.BEACON_SECRETS_PATH || '/config/secrets.yaml',
+          createToken: (label) => sessionStore.createSession(label, { kind: 'token' }),
+          revokeToken: (id) => sessionStore.revoke(id),
+        });
+        if (secrets.added) console.log(ADDED_LOG);
+      } catch (err) {
+        console.warn(`[beacon] could not add beacon_token to secrets.yaml: ${err.message}`);
+      }
+    }
     server.listen(PORT, () => {
       const address = server.address();
       const port = address && typeof address === 'object' ? address.port : PORT;

@@ -836,6 +836,16 @@ export const en = {
   'settings.devices.lastSeen': 'Last seen {when}',
   'settings.devices.unavailable': 'This list is available when Settings is opened on the Beacon server.',
   'settings.devices.loadFailed': 'Could not load paired devices.',
+  'settings.devices.tokenHeading': 'Access token',
+  'settings.devices.tokenDesc': 'Automations and curl calls send this as Authorization: Bearer. Beacon shows the token once. Revoke it here the same way as a device.',
+  'settings.devices.tokenLabel': 'Token name',
+  'settings.devices.tokenPlaceholder': 'Home Assistant automations',
+  'settings.devices.createToken': 'Create access token',
+  'settings.devices.tokenOnce': 'Copy this token now. Beacon will not show it again.',
+  'settings.devices.copyToken': 'Copy',
+  'settings.devices.copied': 'Copied',
+  'settings.devices.tokenKind': 'Access token',
+  'settings.devices.createFailed': 'Could not create an access token.',
 } as const;
 
 export type TranslationKey = keyof typeof en;

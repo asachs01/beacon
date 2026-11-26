@@ -24,10 +24,21 @@ describe('device sessions', () => {
     expect(raw).not.toContain(created.token);
     expect(raw).toContain(hashToken(created.token));
     expect(store.verify(created.token)?.label).toBe('Kitchen tablet');
+    expect(store.verify(created.token)?.kind).toBe('device');
+    expect(store.list(created.session.id)[0].kind).toBe('device');
     expect(store.verify('not-the-token')).toBeNull();
 
+    const access = await store.createSession('Home Assistant automations', { kind: 'token' });
+    const withToken = await readFile(store.filePath, 'utf8');
+    expect(withToken).not.toContain(access.token);
+    expect(withToken).toContain(hashToken(access.token));
+    expect(access.session.kind).toBe('token');
+    expect(store.list(created.session.id).find((item: { id: string }) => item.id === access.session.id)?.kind).toBe('token');
+    expect(await store.revoke(access.session.id)).toBe(true);
+    expect(store.verify(access.token)).toBeNull();
+
     expect(await store.revoke(created.session.id)).toBe(true);
-    expect(closed).toEqual([created.session.id]);
+    expect(closed).toEqual([access.session.id, created.session.id]);
     expect(store.verify(created.token)).toBeNull();
     const after = await readFile(store.filePath, 'utf8');
     expect(after).not.toContain(created.token);
