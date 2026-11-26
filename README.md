@@ -106,7 +106,7 @@ Additional settings (themes, family members, chores, calendar sources, list prov
 ## Why Beacon?
 
 - **Free & open source** — no subscriptions, no cloud accounts, no vendor lock-in
-- **Private by design** — all data stays on your network; nothing phones home
+- **Self-hosted** — runs on your Home Assistant or your own server, with no Beacon account or Beacon cloud. Features you connect to outside services (a cloud Assist agent or AI Task, Google Photos shared albums) send data to those services.
 - **Home Assistant native** — deep integration with calendars, media players, lists, weather, and more
 - **Works standalone** — built-in local calendar, task lists, and shopping lists work without HA
 - **Fully themeable** — 8+ themes with automatic dark mode
