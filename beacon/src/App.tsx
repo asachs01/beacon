@@ -60,6 +60,8 @@ import { attachDirectHaClient } from './api/home-sensor-stream';
 import { DEMO_CALENDARS, DEMO_EVENTS } from './demo/fixtures';
 import { demoInitialView } from './demo/location';
 import { normalizeNavigateView } from './voice/assist';
+import { PairDeviceScreen } from './components/PairDeviceScreen';
+import { useDevicePairing } from './hooks/useDevicePairing';
 
 const config = getConfig();
 
@@ -118,6 +120,7 @@ export function App() {
   });
 
   const demoMode = import.meta.env.VITE_DEMO === 'true';
+  const pairing = useDevicePairing(!demoMode);
 
   // Merge HA + local calendars and events. The screenshot build substitutes
   // the fictional Rivera calendars so each family column has its own color.
@@ -716,12 +719,20 @@ export function App() {
     />
   );
 
-  // Show loading screen while checking stored credentials
-  if (auth.state.loading) {
+  // Show loading screen while checking stored credentials or device pairing.
+  if (auth.state.loading || pairing.status === 'checking') {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
       </div>
+    );
+  }
+
+  if (pairing.status === 'required') {
+    return (
+      <I18nContext.Provider value={i18n}>
+        <PairDeviceScreen onPaired={pairing.markReady} />
+      </I18nContext.Provider>
     );
   }
 

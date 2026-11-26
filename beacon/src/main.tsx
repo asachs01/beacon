@@ -22,6 +22,7 @@ import { initNativeBridge } from './native';
 import { applyStoredTheme } from './hooks/useTheme';
 import { bootstrapStoredFonts } from './fonts/apply';
 import { installDemo } from './demo/install';
+import { installDeviceSessionFetch, loadDeviceSession } from './api/device-session';
 
 // Demo builds seed fixtures before the first paint so screenshots are stable.
 if (import.meta.env.VITE_DEMO === 'true') {
@@ -34,9 +35,12 @@ bootstrapStoredFonts();
 
 // Initialize Capacitor native bridge (no-op on web)
 initNativeBridge();
+installDeviceSessionFetch();
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+void loadDeviceSession().finally(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+});

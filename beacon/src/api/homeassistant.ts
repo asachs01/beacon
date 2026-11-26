@@ -1,4 +1,5 @@
 import { CalendarEvent, CalendarInfo, WeatherData, CalendarColorMember, resolveCalendarColor } from '../types';
+import { withDeviceSession } from './device-session';
 
 type MessageHandler = (message: HAMessage) => void;
 
@@ -88,7 +89,7 @@ export class HomeAssistantClient {
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        this.ws = new WebSocket(this.url);
+        this.ws = new WebSocket(withDeviceSession(this.url));
       } catch (err) {
         reject(err);
         return;

@@ -7,10 +7,9 @@
 #
 # Standalone mode (Docker, k3s): no Supervisor. HA_URL, HA_TOKEN, and
 # FAMILY_NAME come from the environment. HA_URL is not cleared. The browser
-# token stays empty, the same way the add-on's ha_token option does: it is
-# read into HA_TOKEN and is not copied into runtime-config.js. server.js
-# sends HA_TOKEN on Home Assistant requests, and the page keeps calling
-# this server so a browser that cannot reach HA_URL still works.
+# never receives HA_TOKEN. server.js sends it on Home Assistant requests,
+# and the page keeps calling this server so a browser that cannot reach
+# HA_URL still works.
 
 ADDON_MODE=0
 if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
@@ -42,10 +41,8 @@ if [ "${ADDON_MODE}" -eq 1 ]; then
 
   # The proxy server handles /api/* requests — the browser always uses same-origin.
   # ha_url stays empty so the frontend uses window.location.origin (the proxy).
-  # ha_token is cleared in the runtime config — the proxy injects auth server-side.
-  # This means zero config needed from the user for HA connectivity.
+  # The Home Assistant token stays on the server. runtime-config.js has no token.
   HA_URL=""
-  HA_BROWSER_TOKEN=""
 else
   FAMILY_NAME="${FAMILY_NAME:-My Family}"
   SAVE_CONFIG_IN_BROWSER="${SAVE_CONFIG_IN_BROWSER:-true}"
@@ -60,35 +57,20 @@ else
   # Supervisor shell runs with nounset, and an unbound HA_URL aborts startup
   # before the UI can be served.
   HA_URL="${HA_URL:-}"
-  # HA_BROWSER_TOKEN is the runtime-config ha_token. Leave it empty, matching
-  # the add-on ha_token option: the proxy adds HA_TOKEN server-side.
-  HA_BROWSER_TOKEN=""
 fi
 
-# Generate runtime-config.js using node for proper JSON escaping (prevents injection)
+# The runtime-config writer and server.js are child processes. Export the
+# values this script just resolved so they see the add-on options.
+export HA_URL FAMILY_NAME SAVE_CONFIG_IN_BROWSER THEME AUTO_DARK_MODE \
+  WEATHER_ENTITY PHOTO_DIRECTORY PHOTO_INTERVAL SCREEN_SAVER_TIMEOUT HA_TOKEN
+
+# Generate runtime-config.js. lib/runtime-config.cjs never writes a token.
+# The Home Assistant token stays in the server environment.
 CONFIG_JS="/app/dist/runtime-config.js"
 node -e "
-  const config = {
-    ha_url: process.env.HA_URL || '',
-    ha_token: process.env.HA_BROWSER_TOKEN || '',
-    family_name: process.env.FAMILY_NAME || 'My Family',
-    save_config_in_browser: process.env.SAVE_CONFIG_IN_BROWSER !== 'false',
-    theme: process.env.THEME || 'skylight',
-    auto_dark_mode: process.env.AUTO_DARK_MODE !== 'false',
-    weather_entity: process.env.WEATHER_ENTITY || 'weather.home',
-    photo_directory: process.env.PHOTO_DIRECTORY || '/media/beacon/photos',
-    photo_interval: parseInt(process.env.PHOTO_INTERVAL) || 30,
-    screen_saver_timeout: parseInt(process.env.SCREEN_SAVER_TIMEOUT) || 5,
-  };
-  require('fs').writeFileSync(
-    '${CONFIG_JS}',
-    'window.__BEACON_CONFIG__ = ' + JSON.stringify(config) + ';'
-  );
-" HA_URL="${HA_URL}" HA_BROWSER_TOKEN="${HA_BROWSER_TOKEN}" FAMILY_NAME="${FAMILY_NAME}" \
-  SAVE_CONFIG_IN_BROWSER="${SAVE_CONFIG_IN_BROWSER}" \
-  THEME="${THEME}" AUTO_DARK_MODE="${AUTO_DARK_MODE}" WEATHER_ENTITY="${WEATHER_ENTITY}" \
-  PHOTO_DIRECTORY="${PHOTO_DIRECTORY}" PHOTO_INTERVAL="${PHOTO_INTERVAL}" \
-  SCREEN_SAVER_TIMEOUT="${SCREEN_SAVER_TIMEOUT}"
+  const { renderRuntimeConfig } = require('/app/lib/runtime-config.cjs');
+  require('fs').writeFileSync(process.argv[1], renderRuntimeConfig(process.env));
+" "${CONFIG_JS}"
 
 # Inject the runtime-config script tag into index.html if not already present
 INDEX_HTML="/app/dist/index.html"

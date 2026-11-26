@@ -26,7 +26,7 @@ rsync -av --delete beacon/custom_sentences/ custom_sentences/
 ```
 
 ### HA Add-on Auth: Long-Lived Token in Config
-SUPERVISOR_TOKEN only works container-side (http://supervisor/core). postMessage auth doesn't work in HA companion app WKWebView. The `ha_token` config option (schema: password) with a user-provided long-lived access token is the only reliable browser-side auth approach.
+SUPERVISOR_TOKEN only works container-side (http://supervisor/core). postMessage auth doesn't work in HA companion app WKWebView. The `ha_token` config option (schema: password) is read into `HA_TOKEN` for the server proxy only. Do not put it, or `HA_BROWSER_TOKEN`, in `runtime-config.js`. The browser reaches Home Assistant through Beacon. Direct-port clients pair once; ingress (socket peer `172.30.32.2` in add-on mode) does not.
 
 ### HA Todo Items: Service Call with ?return_response
 Don't read `entity.attributes.items` — it doesn't exist. Use:

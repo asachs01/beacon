@@ -103,7 +103,7 @@ const ADDON_TO_SETTING = {
   family_name: 'familyName',
   ha_token: {
     label: 'Home Assistant token',
-    description: 'Long-lived access token used for browser-side Home Assistant access. Stored as a password.',
+    description: 'Optional long-lived access token for the Beacon server, stored as a password. The browser never receives it. In the add-on the Supervisor token is used when this is empty. Direct-port and standalone screens pair once; ingress does not.',
   },
   save_config_in_browser: 'saveConfigInBrowser',
   theme: 'themeId',
