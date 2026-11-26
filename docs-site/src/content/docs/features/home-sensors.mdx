@@ -8,7 +8,7 @@ order: 1.5
 
 Home sensors is a dashboard card for a few Home Assistant entities: a temperature, a door, the garage, or whether the washer is done. It is read-only. It does not toggle devices, call services, or show camera feeds.
 
-The card is **off** until you turn it on. Existing dashboards are unchanged, and the card is not part of the Family or Classic layout presets.
+The card is **off** until you turn it on. Existing dashboards are unchanged, and the card is not part of the Family, Classic, or Compact layout presets.
 
 This needs Beacon **1.53.0** or later.
 
@@ -16,9 +16,9 @@ This needs Beacon **1.53.0** or later.
 
 1. Open **Settings → Integrations → Home sensors**.
 2. Turn on **Home sensors card**.
-3. Pick the entities you want. The list is whatever this Home Assistant connection can actually read. Each entity can have its own name and icon (an emoji or a short label). Leave the name blank to use Home Assistant's friendly name.
+3. Pick the entities you want under **Sensors**. The list is whatever this Home Assistant connection can actually read — in standalone mode, that is whatever the Home Assistant user for the long-lived `HA_TOKEN` can read. Each entity can have its own optional **Name** and **Icon** (an emoji or a short label). Leave the name blank to use Home Assistant's friendly name.
 4. Turn on **Settings → Appearance → Advanced Dashboard** if it is not already on.
-5. On the dashboard, choose **Edit dashboard** and add the **Home sensors** card. You can put it in the top bar, the main area, or the sidebar.
+5. On the dashboard, choose **Edit Dashboard** and add the **Home sensors** card. You can put it in the top bar, the main area, or the sidebar.
 
 The picker does not include `camera` entities. The card never shows a camera image.
 
@@ -26,7 +26,7 @@ It works in the Home Assistant add-on and in standalone mode (`HA_URL` and `HA_T
 
 ## What you see
 
-Each row is a name and a state. Temperatures keep their unit. A door or garage shows **Open** or **Closed**. A running sensor shows **Running** or **Idle**.
+Each row is a name and a state. Temperatures keep their unit. A door, garage, or window shows **Open** or **Closed**. A lock shows **Unlocked** or **Locked**. A running sensor shows **Running** or **Idle**. Other binary sensors show **On** or **Off**.
 
 Updates arrive over Home Assistant's websocket (`get_states`, then `state_changed`). The card does not poll.
 
