@@ -15,7 +15,7 @@ Pairing tells Beacon, once, that a screen is one of yours. After that, the scree
 Pair a device if it opens Beacon directly on Beacon's own address and port:
 
 - A **Docker or standalone** install, for example `http://YOUR_DOCKER_HOST:3000`
-- The **native iOS and Android apps**, when they open a Beacon server
+- The **native iOS and Android apps**, only when you point them at a Beacon server URL (the built-in dashboard talks to Home Assistant directly and never asks to pair)
 - A Home Assistant add-on where you **mapped the add-on's port by hand**
 
 You don't need to pair if you open Beacon from the **Home Assistant sidebar** (ingress). It sits behind your Home Assistant login, so Beacon trusts it. The add-on doesn't publish a port by default, so most add-on setups never see the pairing screen. A wall tablet that loads Beacon through your Home Assistant address, including a Fully Kiosk Browser pointed at the ingress URL, doesn't pair either.
