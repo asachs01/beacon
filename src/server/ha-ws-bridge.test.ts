@@ -60,4 +60,59 @@ describe('home assistant websocket bridge', () => {
     expect(closeBrowser).toHaveBeenCalled();
     expect(closeHa).toHaveBeenCalled();
   });
+
+  it('rejects commands outside the read-only allowlist and never forwards them', () => {
+    const { api, toHa, toBrowser } = bridge();
+    api.onHaMessage({ type: 'auth_required' });
+    api.onHaMessage({ type: 'auth_ok' });
+    api.onBrowserMessage({ type: 'auth', access_token: 'browser-token' });
+    toHa.length = 0;
+    toBrowser.length = 0;
+
+    const rejected = [
+      { id: 10, type: 'call_service', domain: 'light', service: 'turn_on', target: { entity_id: 'light.kitchen' } },
+      { id: 11, type: 'subscribe_events' },
+      { id: 12, type: 'subscribe_events', event_type: 'call_service' },
+      { id: 13, type: 'subscribe_trigger', trigger: { platform: 'state' } },
+      { id: 14, type: 'execute_script', sequence: [{ service: 'homeassistant.turn_off' }] },
+      { id: 15, type: 'config/core/update', country: 'US' },
+      { id: 16, type: 'config/entity_registry/update', entity_id: 'light.kitchen' },
+      { id: 17, type: 'unsubscribe_events', subscription: 99 },
+    ];
+
+    for (const msg of rejected) api.onBrowserMessage(msg);
+
+    expect(toHa).toEqual([]);
+    expect(toBrowser).toEqual(rejected.map((msg) => ({
+      id: msg.id,
+      type: 'result',
+      success: false,
+      error: { code: 'not_allowed' },
+    })));
+  });
+
+  it('forwards ping and unsubscribe only for a state_changed subscription this browser opened', () => {
+    const { api, toHa, toBrowser } = bridge();
+    api.onHaMessage({ type: 'auth_required' });
+    api.onHaMessage({ type: 'auth_ok' });
+    api.onBrowserMessage({ type: 'auth', access_token: 'browser-token' });
+    toHa.length = 0;
+    toBrowser.length = 0;
+
+    api.onBrowserMessage({ id: 4, type: 'ping' });
+    api.onBrowserMessage({ id: 5, type: 'subscribe_events', event_type: 'state_changed' });
+    api.onBrowserMessage({ id: 6, type: 'unsubscribe_events', subscription: 5 });
+    api.onBrowserMessage({ id: 7, type: 'unsubscribe_events', subscription: 5 });
+    api.onBrowserMessage({ id: 8, type: 'unsubscribe_events', subscription: 4 });
+
+    expect(toHa).toEqual([
+      { id: 4, type: 'ping' },
+      { id: 5, type: 'subscribe_events', event_type: 'state_changed' },
+      { id: 6, type: 'unsubscribe_events', subscription: 5 },
+    ]);
+    expect(toBrowser).toEqual([
+      { id: 7, type: 'result', success: false, error: { code: 'not_allowed' } },
+      { id: 8, type: 'result', success: false, error: { code: 'not_allowed' } },
+    ]);
+  });
 });

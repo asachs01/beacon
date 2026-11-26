@@ -22,7 +22,7 @@ This needs Beacon **1.53.0** or later.
 
 The picker does not include `camera` entities. The card never shows a camera image.
 
-It works in the Home Assistant add-on and in standalone mode (`HA_URL` and `HA_TOKEN`). The browser does not need its own token: the add-on and standalone server subscribe with the token they already use. If the browser itself is signed in to Home Assistant, the card uses that connection instead.
+It works in the Home Assistant add-on and in standalone mode (`HA_URL` and `HA_TOKEN`). The browser does not need its own token: the add-on and standalone server subscribe with the token they already use. That socket is `/beacon-ws/ha`. It is read-only by allowlist: `get_states`, a `state_changed` subscription, unsubscribe of a subscription this page opened, and `ping`. Other commands are refused on the server and are not sent to Home Assistant. If the browser itself is signed in to Home Assistant, the card uses that connection instead.
 
 ## What you see
 
