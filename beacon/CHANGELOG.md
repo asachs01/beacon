@@ -1,3 +1,11 @@
+## [1.53.1](https://github.com/asachs01/beacon/compare/v1.53.0...v1.53.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **home-sensors:** only stream picked entities over the HA bridge ([7268a74](https://github.com/asachs01/beacon/commit/7268a74bc57f82cb1a7d5ad4ccfc28bee8527192))
+* **security:** restrict the Home Assistant API proxy to an allowlist ([9f3fae3](https://github.com/asachs01/beacon/commit/9f3fae37cc4a8378a1011731db19ad09646b4316))
+
 # [1.53.0](https://github.com/asachs01/beacon/compare/v1.52.1...v1.53.0) (2026-11-26)
 
 
