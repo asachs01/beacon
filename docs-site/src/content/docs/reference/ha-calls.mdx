@@ -1,0 +1,60 @@
+---
+title: "Home Assistant calls Beacon allows"
+description: "Which Home Assistant calls Beacon passes along since 1.53.1, what works without setup, what has to be configured first, and what to do when you see a 403 that says a call is not allowed by Beacon."
+order: 2.5
+---
+
+# Home Assistant calls Beacon allows
+
+This applies from Beacon **1.53.1**.
+
+Beacon's server sits between your screens and Home Assistant. Since 1.53.1, it only passes along the Home Assistant calls Beacon's own screens use. Anything else is refused with a **403** error that says the call is **not allowed by Beacon**, and it is never sent to Home Assistant.
+
+For most families this changes nothing and there is nothing to set up. It only matters if you control something in Home Assistant from Beacon (a toggle, a chore privilege, or music), or if a custom script or automation was using Beacon's address as a general way to reach Home Assistant.
+
+This page covers the add-on and the standalone container. A tablet app that connects straight to Home Assistant with its own token doesn't go through Beacon's server, so this doesn't apply to it.
+
+## What works without any setup
+
+These keep working as they always did:
+
+- Reading the state of your entities, such as sensors, weather, and the entities on your dashboard cards
+- Calendars
+- To-do lists, including AnyList lists and the Beacon chore list
+- Weather forecasts
+- Assist (press-to-talk and typed commands)
+- Magic Import and photo import through the AI Task agent
+- Notifications, including Home Assistant mobile app notifications
+- [Grocy](/docs/features/grocery/) shopping list and check-offs
+- Browsing and showing Home Assistant media and photos, and uploading a photo for Magic Import
+
+## What has to be set up before Beacon can control it
+
+Beacon only switches or plays things you have told it about. If you haven't, the call gets a 403.
+
+| You want to… | What Beacon needs |
+| --- | --- |
+| Switch something from an **HA Toggle** card | The entity has to be on an HA Toggle card in your dashboard layout. After adding or changing the card, leave **Edit Dashboard** so the layout saves. The card doesn't have to be on the tab you're looking at. |
+| Turn on a child's reward when chores are done | Pick the entity as that child's **Privilege switch** in **Settings → Family Members**. See [Chore privileges](/docs/features/chore-privileges/). |
+| Control music | Set **Default Player** in **Settings → Integrations**. A player you pick only from the dropdown on the music screen isn't enough. See [Music](/docs/features/music/). |
+
+A few things are never allowed, even for an entity you have set up:
+
+- Home Assistant **scripts** and **shell commands**
+- A call that aims at an **area, device, label, or floor** instead of naming specific entities
+
+If you want one button to do several things, put an `input_boolean` helper on an HA Toggle card and have a Home Assistant automation react when it changes. Beacon only flips the helper.
+
+## Home sensors
+
+The [Home sensors](/docs/features/home-sensors/) card now receives only the sensors you picked. If the card is off, or nothing is picked, it receives nothing. When you pick another sensor, it starts showing up right away without a reload.
+
+## If you see a 403
+
+The message ends with **is not allowed by Beacon**. You may see it in the browser console, in a custom script's output, or as a control that doesn't respond.
+
+1. **A toggle, privilege switch, or music control that stopped working.** Check the matching row in the table above. The most common cause is a Default Player that isn't set, or a toggle card whose layout hasn't been saved yet.
+2. **A custom script, automation, or dashboard that called Home Assistant through Beacon.** Beacon is no longer a general route to Home Assistant. Point that tool at Home Assistant directly with its own access token instead.
+3. **Still stuck.** Open a [GitHub issue](https://github.com/asachs01/beacon/issues) with the full 403 message and what you were trying to do.
+
+Staying on your own network is still the rule: see the warning on [Deployment](/docs/getting-started/deployment/).

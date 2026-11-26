@@ -182,6 +182,10 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 **Yes, from 1.53.0.** Turn on **Home sensors card** under **Settings → Integrations → Home sensors**, pick the entities, then add the **Home sensors** card in dashboard edit mode. It is read-only on purpose: it does not toggle devices, call services, or show camera feeds. Updates arrive live over the Home Assistant websocket. If an entity is unavailable or has not updated in 3 hours, the card says so instead of showing an old value. The card is hidden from guests and is not on Kid Display. See [Home sensors](/docs/features/home-sensors/).
 
+### Why does Beacon say a Home Assistant call is not allowed?
+
+**Since 1.53.1, Beacon only passes along the Home Assistant calls its own screens use.** Anything else gets a 403 error that says the call is **not allowed by Beacon**. Toggles need the entity on an HA Toggle card (leave **Edit Dashboard** so the layout saves). Chore privileges need the entity set as the child's **Privilege switch**. Music needs a **Default Player** in **Settings → Integrations**. Scripts, shell commands, and calls aimed at an area, device, label, or floor are always refused. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/).
+
 ### Does it send notifications?
 
 **Yes.** Beacon monitors upcoming calendar events and sends notifications ahead of each event through two channels:

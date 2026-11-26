@@ -120,7 +120,9 @@ If you have multiple media players:
 4. Players currently playing show a "Playing" badge
 5. Click a player to select it
 
-The selected player becomes the active player for all transport and volume controls. If no player is explicitly selected, Beacon automatically selects the first player that is currently playing.
+The selected player becomes the active player for all transport and volume controls.
+
+From Beacon **1.53.1**, Beacon only controls the player you chose as **Default Player** in **Settings → Integrations**. Picking a different player only from this dropdown isn't enough for its play, pause, skip, and volume buttons to work. If you want to control a different player, make it the Default Player. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/). If no player is explicitly selected, Beacon automatically selects the first player that is currently playing.
 
 ### Player priority
 
@@ -169,7 +171,7 @@ This means:
 
 ### Controls do not respond
 
-1. Check the browser console for errors
+1. Check the browser console for errors. A **403** that says the call is **not allowed by Beacon** means the player isn't set as **Default Player** in **Settings → Integrations** (Beacon 1.53.1 and later). See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/)
 2. Verify the media player supports the service being called (some players do not support skip/previous)
 3. Test the service in **Developer Tools > Services**: call `media_player.media_play` on the entity
 

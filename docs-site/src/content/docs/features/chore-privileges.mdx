@@ -53,7 +53,7 @@ A manual toggle in Home Assistant is left alone until the next one of those mome
 
 ### Where the call runs
 
-- An open Beacon page calls the service itself. In the add-on that goes through the add-on's Home Assistant proxy. In standalone mode it uses the long-lived access token, if one is configured.
+- An open Beacon page calls the service itself. In the add-on that goes through the add-on's Home Assistant proxy. From **1.53.1**, that proxy only allows the entity picked as a child's **Privilege switch**. If you change it, save the family settings first. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/). In standalone mode it uses the long-lived access token, if one is configured.
 - The add-on server also sets the switches about 15 seconds after it starts, and again when the chore day changes, even if no screen is open. It checks every 30 seconds, so the reset can be up to half a minute late.
 - The server asks Home Assistant for `time_zone` (`GET /api/config`) and uses that zone for the chore day. If that request fails, it uses the add-on process timezone via the same chore-day helper. It does not use UTC. The page uses the device timezone. Those should be the same zone as Home Assistant. If they are not, the screen and the add-on can disagree about when the reset time arrives.
 - Standalone Beacon (the browser or Android app talking to Home Assistant without the add-on server) has no background scheduler. The reset turns the switch off only while a Beacon page is open. If the page is closed across the reset, the switch stays where it was until the next time Beacon opens and re-evaluates.
