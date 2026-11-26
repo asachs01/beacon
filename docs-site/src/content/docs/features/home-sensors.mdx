@@ -10,7 +10,7 @@ Home sensors is a dashboard card for a few Home Assistant entities: a temperatur
 
 The card is **off** until you turn it on. Existing dashboards are unchanged, and the card is not part of the Family, Classic, or Compact layout presets.
 
-This needs Beacon **1.53.0** or later. The live socket only streams the entities you picked starting in **1.53.1**.
+This needs Beacon **1.53.0** or later. The live socket only streams the entities you picked starting in **1.53.1**. See also [Home Assistant calls Beacon allows](/docs/reference/ha-calls/).
 
 ## Turn it on
 
@@ -26,7 +26,7 @@ It works in the Home Assistant add-on and in standalone mode (`HA_URL` and `HA_T
 
 The socket is still read-only by allowlist: `get_states`, a `state_changed` subscription, unsubscribe of a subscription this page opened, and `ping`. Other commands are refused on the server and are not sent to Home Assistant. If the browser itself is signed in to Home Assistant, the card uses that connection instead.
 
-Beacon does not check a family PIN on the server. Anyone who can open Beacon can open the picker catalog, the same way they can read and write other settings. The catalog does not include state values. The pre-existing `/api/*` proxy still sends Beacon's Home Assistant token and is not limited to the entities you pick.
+Beacon does not check a family PIN on the server. Anyone who can open Beacon can open the picker catalog, the same way they can read and write other settings. The catalog does not include state values. Separately, from 1.53.1 Beacon only passes along the Home Assistant calls its own screens use. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/).
 
 :::caution
 Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
