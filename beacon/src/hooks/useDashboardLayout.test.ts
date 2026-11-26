@@ -92,6 +92,16 @@ describe('migrate — persisted layouts survive the upgrade', () => {
     expect(migrated.views[0].regions.main[0].layout).toEqual({ x: 12, y: 0, w: 12, h: 16 });
   });
 
+  it('leaves home sensors off the Family and Classic presets', () => {
+    for (const preset of ['default', 'classic', 'compact'] as const) {
+      const migrated = migrate({ customized: false } as StoredDashboardLayoutV1, preset);
+      const types = (['topbar', 'main', 'sidebar'] as const).flatMap((region) => (
+        migrated.views[0].regions[region].map((dashboardCard) => dashboardCard.type)
+      ));
+      expect(types, preset).not.toContain('home-sensors');
+    }
+  });
+
   it('falls back to the preset when a v1 layout has no regions', () => {
     const migrated = migrate({ customized: false } as StoredDashboardLayoutV1, 'default');
 

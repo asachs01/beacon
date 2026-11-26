@@ -15,6 +15,7 @@ const fsp = require('fs/promises');
 const path = require('path');
 const WebSocket = require('ws');
 const { describeHaHttpTarget, resolveHaConnection, standaloneConfigError } = require('./lib/ha-connection.cjs');
+const { attachHaWsBridge } = require('./lib/ha-ws-bridge.cjs');
 
 const PORT = 3000;
 const DIST = process.env.BEACON_DIST || '/app/dist';
@@ -25,6 +26,7 @@ const HA_API_BASE = haConnection.apiBase;
 const HA_WS_URL = haConnection.wsUrl;
 const HA_ACCESS_TOKEN = haConnection.token;
 const HA_MODE = haConnection.mode;
+const haBridgeServer = new WebSocket.Server({ noServer: true });
 // /data/ is HA add-on persistent storage (survives container rebuilds)
 const DATA_DIR = process.env.BEACON_DATA || '/data';
 const { createGooglePhotoCache, REFRESH_MS } = require('./lib/google-photos-cache.cjs');
@@ -1041,8 +1043,24 @@ const server = http.createServer((req, res) => {
   serveStatic(req, res);
 });
 
-// Handle WebSocket upgrades for /api/websocket
+// Handle WebSocket upgrades for /api/websocket and the home-sensor bridge.
 server.on('upgrade', (req, socket, head) => {
+  const pathOnly = (req.url || '').split('?')[0];
+  if (pathOnly === '/beacon-ws/ha') {
+    if (!HA_ACCESS_TOKEN || !HA_WS_URL) {
+      socket.destroy();
+      return;
+    }
+    haBridgeServer.handleUpgrade(req, socket, head, (browserWs) => {
+      attachHaWsBridge(browserWs, {
+        url: HA_WS_URL,
+        token: HA_ACCESS_TOKEN,
+        WebSocketImpl: WebSocket,
+      });
+    });
+    return;
+  }
+
   if (!req.url.startsWith('/api/websocket') || !HA_ACCESS_TOKEN || !HA_API_BASE) {
     socket.destroy();
     return;

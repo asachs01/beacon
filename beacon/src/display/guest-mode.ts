@@ -8,7 +8,8 @@
  *
  * Future features opt in through `registerGuestFeature`. Anything that shows
  * where the family is uses `kind: 'whereabouts'` and is hidden from guests
- * unless `allowGuests` is set:
+ * unless `allowGuests` is set. Home sensors use `kind: 'sensors'`, which is
+ * hidden from guests the same way:
  *
  *   registerGuestFeature({ id: 'whosHome', kind: 'whereabouts' });
  *   if (!canSee('whosHome')) return null;
@@ -120,14 +121,15 @@ export function clearGuestSession(): void {
   }
 }
 
-export type GuestFeatureKind = 'screen' | 'whereabouts';
+export type GuestFeatureKind = 'screen' | 'whereabouts' | 'sensors';
 
 export interface GuestFeatureRegistration {
   id: string;
   /**
    * `whereabouts` is for anything that shows where the family is. Those
    * features are hidden from guests unless `allowGuests` is true.
-   * `screen` features set `allowGuests` explicitly.
+   * `sensors` is the home sensors card. It is hidden from guests unless
+   * `allowGuests` is true. `screen` features set `allowGuests` explicitly.
    */
   kind: GuestFeatureKind;
   allowGuests?: boolean;
@@ -136,7 +138,8 @@ export interface GuestFeatureRegistration {
 /**
  * Denylist. A feature that is not registered stays visible to guests.
  * Meals, photos, music, and the leaderboard are left unregistered on purpose.
- * `kind: 'whereabouts'` is hidden from guests unless `allowGuests` is true.
+ * `kind: 'whereabouts'` and `kind: 'sensors'` are hidden from guests unless
+ * `allowGuests` is true.
  */
 const registry = new Map<string, GuestFeatureRegistration>();
 
@@ -170,16 +173,17 @@ function seedGuestFeatures(): void {
   screen('kioskExit', false);
   registerGuestFeature({ id: 'presence', kind: 'whereabouts' });
   registerGuestFeature({ id: 'location', kind: 'whereabouts' });
+  registerGuestFeature({ id: 'homeSensors', kind: 'sensors' });
 }
 
 seedGuestFeatures();
 
-/** When guest mode is off, every feature is visible. Whereabouts defaults to hidden. */
+/** When guest mode is off, every feature is visible. Whereabouts and sensors default to hidden. */
 export function guestCanSee(active: boolean, featureId: string): boolean {
   if (!active) return true;
   const feature = registry.get(featureId);
   if (!feature) return true;
-  if (feature.kind === 'whereabouts') return feature.allowGuests === true;
+  if (feature.kind === 'whereabouts' || feature.kind === 'sensors') return feature.allowGuests === true;
   return feature.allowGuests !== false;
 }
 

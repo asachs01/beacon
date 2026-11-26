@@ -52,6 +52,14 @@ const COPY = {
   photoDirectory: { labelKey: 'settings.integrations.sourceDirectoryLabel', descriptionKey: 'settings.integrations.sourceDirectorySublabel' },
   photoInterval: { labelKey: 'settings.integrations.slideshowIntervalLabel', descriptionKey: 'settings.integrations.slideshowIntervalSublabel', unit: 'seconds' },
   photoTransition: { labelKey: 'settings.integrations.transitionStyleLabel', description: 'How the photo frame moves between pictures.' },
+  homeSensorsEnabled: {
+    labelKey: 'settings.integrations.homeSensorsLabel',
+    description: 'Show the Home sensors dashboard card. Off until enabled, so existing dashboards stay as they are. Add the card in dashboard edit mode. It is not part of the Family or Classic presets, it is hidden from guests, and it is not on Kid Display.',
+  },
+  homeSensors: {
+    labelKey: 'settings.integrations.homeSensorsListLabel',
+    description: 'Entities to show, each with an optional friendly name and icon. Empty until you pick them. The picker lists only entities the Home Assistant token can read. A reading that has not been updated for 3 hours is shown as stale instead of the last value.',
+  },
   dashboardLayout: { labelKey: 'settings.general.layoutLabel', descriptionKey: 'settings.general.layoutSublabel' },
   advancedDashboard: { labelKey: 'settings.appearance.advancedDashboardLabel', descriptionKey: 'settings.appearance.advancedDashboardSublabel' },
   screenSaverEnabled: { labelKey: 'settings.display.screenSaverLabel', descriptionKey: 'settings.display.screenSaverSublabel' },

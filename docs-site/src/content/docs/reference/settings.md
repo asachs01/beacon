@@ -64,6 +64,8 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | `photoDirectory` | Source Directory | `string` | /media/beacon/photos | A /media path, or any Home Assistant media-source id. Browse to pick a folder. Uses add-on option `photo_directory` when Home Assistant provides it. |
 | `photoInterval` | Slideshow Interval | `number` | 30 seconds | Seconds between photo changes. Uses add-on option `photo_interval` when Home Assistant provides it. |
 | `photoTransition` | Transition Style | `'fade' / 'slide'` | fade | How the photo frame moves between pictures. |
+| `homeSensorsEnabled` | Home sensors card | `boolean` | false | Show the Home sensors dashboard card. Off until enabled, so existing dashboards stay as they are. Add the card in dashboard edit mode. It is not part of the Family or Classic presets, it is hidden from guests, and it is not on Kid Display. |
+| `homeSensors` | Sensors | `HomeSensorPick[]` | [] | Entities to show, each with an optional friendly name and icon. Empty until you pick them. The picker lists only entities the Home Assistant token can read. A reading that has not been updated for 3 hours is shown as stale instead of the last value. |
 
 ### Dashboard
 

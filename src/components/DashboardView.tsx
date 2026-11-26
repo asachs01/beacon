@@ -20,6 +20,7 @@ import type { TaskmateUser } from '../types/taskmate';
 import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
 import { useTranslation } from '../i18n';
 import { addIngredientsToGroceryList } from '../api/grocery-write';
+import type { HomeSensorPick } from '../home-sensors/types';
 
 export type { TodoItem } from '../types/dashboard-cards';
 
@@ -48,6 +49,9 @@ interface DashboardViewProps {
   groceryListId?: string;
   grocyExpiringEnabled?: boolean;
   grocyMissingEnabled?: boolean;
+  guestActive?: boolean;
+  homeSensorsEnabled?: boolean;
+  homeSensors?: HomeSensorPick[];
 }
 
 function GrocySidebarCards({ expiring, missing }: { expiring: boolean; missing: boolean }) {
@@ -91,6 +95,9 @@ export function DashboardView({
   groceryListId = 'beacon-shopping',
   grocyExpiringEnabled = false,
   grocyMissingEnabled = false,
+  guestActive = false,
+  homeSensorsEnabled = false,
+  homeSensors = [],
 }: DashboardViewProps) {
   const { t } = useTranslation();
   const [now, setNow] = useState(new Date());
@@ -184,6 +191,10 @@ export function DashboardView({
     completedChoreIds,
     onToggleChore,
     guestCheckedChoreIds,
+    guestActive,
+    kidDisplay: false,
+    homeSensorsEnabled,
+    homeSensors,
   };
 
   // The legacy composition deliberately bypasses cards, GridStack, persisted
