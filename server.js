@@ -3,8 +3,10 @@
  * Beacon add-on server.
  *
  * - Serves the static SPA from /app/dist
- * - Proxies /api/* to Home Assistant with the Supervisor token, or HA_TOKEN
- *   when this process is not running as an add-on
+ * - Proxies an allowlisted subset of /api/* to Home Assistant with the
+ *   Supervisor token, or HA_TOKEN when this process is not running as an add-on.
+ *   Anything else is 403 and is not forwarded. Server-internal haRequest calls
+ *   are not part of that proxy.
  * - Provides /beacon-data/* for persistent storage (survives rebuilds)
  */
 
@@ -18,8 +20,10 @@ const { describeHaHttpTarget, resolveHaConnection, standaloneConfigError } = req
 const { attachHaWsBridge } = require('./lib/ha-ws-bridge.cjs');
 const { createHomeSensorGate } = require('./lib/home-sensor-gate.cjs');
 const { handleHomeSensorEntities } = require('./lib/home-sensor-entities.cjs');
+const { evaluateHaProxyPolicy, isHaMediaUpload, proxySettingsFromStore } = require('./lib/ha-proxy-policy.cjs');
 
-const PORT = 3000;
+// BEACON_PORT is for tests. The add-on keeps listening on 3000.
+const PORT = process.env.BEACON_PORT ? Number(process.env.BEACON_PORT) : 3000;
 const DIST = process.env.BEACON_DIST || '/app/dist';
 // Add-on: Supervisor token and http://supervisor/core.
 // Standalone: HA_URL + HA_TOKEN. Overrides still win when set.
@@ -135,40 +139,105 @@ function openHaRequest(targetUrl, options, onResponse) {
   }, onResponse);
 }
 
+function rejectJson(res, status, payload) {
+  if (res.headersSent) return;
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(payload));
+}
+
+function parseProxyJsonBody(body, contentType) {
+  if (!body || body.length === 0) return null;
+  const type = String(contentType || '').toLowerCase();
+  if (type.includes('multipart/form-data')) return null;
+  try {
+    return JSON.parse(body.toString('utf8'));
+  } catch {
+    return null;
+  }
+}
+
+async function readStoredJson(name) {
+  try {
+    const raw = await fsp.readFile(path.join(DATA_DIR, name), 'utf8');
+    return JSON.parse(raw);
+  } catch (err) {
+    if (err.code !== 'ENOENT') console.warn(`[beacon] could not read ${name}: ${err.message}`);
+    return null;
+  }
+}
+
+/** Entity scope for the public proxy, from the same JSON files /beacon-data writes. */
+async function loadHaProxySettings() {
+  const [beaconSettings, dashboardLayout, familyMembers] = await Promise.all([
+    readStoredJson('beacon-settings.json'),
+    readStoredJson('beacon-dashboard-layout.json'),
+    readStoredJson('beacon_family_members.json'),
+  ]);
+  return proxySettingsFromStore({
+    beaconSettings: beaconSettings && typeof beaconSettings === 'object' ? beaconSettings : {},
+    dashboardLayout,
+    familyMembers: Array.isArray(familyMembers) ? familyMembers : [],
+  });
+}
+
+/**
+ * Public /api/* proxy. evaluateHaProxyPolicy runs before Home Assistant is
+ * contacted. A denial is 403 JSON and the request is not forwarded.
+ */
 function proxyToHA(req, res) {
+  proxyToHAAsync(req, res).catch((err) => {
+    console.error('Proxy error:', err.message);
+    rejectJson(res, 502, { error: 'Failed to reach Home Assistant' });
+  });
+}
+
+async function proxyToHAAsync(req, res) {
   if (!HA_API_BASE) {
-    res.writeHead(503, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'HA_URL is not set' }));
+    rejectJson(res, 503, { error: 'HA_URL is not set' });
     return;
   }
+
+  const limit = isHaMediaUpload(req.method, req.url) ? MAX_MEDIA_UPLOAD : MAX_BODY_SIZE;
+  let body;
+  try {
+    body = await collectBody(req, limit);
+  } catch (err) {
+    rejectJson(res, 413, { error: err.message });
+    return;
+  }
+
+  const settings = await loadHaProxySettings();
+  const decision = evaluateHaProxyPolicy(
+    req.method,
+    req.url,
+    parseProxyJsonBody(body, req.headers['content-type']),
+    settings,
+  );
+  if (!decision.allowed) {
+    rejectJson(res, 403, { error: 'not_allowed', detail: decision.detail });
+    return;
+  }
+
   const targetUrl = `${HA_API_BASE}${req.url}`;
-
-  const chunks = [];
-  req.on('data', (chunk) => chunks.push(chunk));
-  req.on('end', () => {
-    const body = chunks.length > 0 ? Buffer.concat(chunks) : null;
-
-    const proxyReq = openHaRequest(targetUrl, {
-      method: req.method,
-      body,
-      headers: {
-        'Authorization': `Bearer ${HA_ACCESS_TOKEN}`,
-        'Content-Type': req.headers['content-type'] || 'application/json',
-      },
-    }, (proxyRes) => {
-      res.writeHead(proxyRes.statusCode, proxyRes.headers);
-      proxyRes.pipe(res);
-    });
-
-    proxyReq.on('error', (err) => {
-      console.error('Proxy error:', err.message);
-      res.writeHead(502);
-      res.end(JSON.stringify({ error: 'Failed to reach Home Assistant' }));
-    });
-
-    if (body) proxyReq.write(body);
-    proxyReq.end();
+  const proxyReq = openHaRequest(targetUrl, {
+    method: req.method,
+    body,
+    headers: {
+      'Authorization': `Bearer ${HA_ACCESS_TOKEN}`,
+      'Content-Type': req.headers['content-type'] || 'application/json',
+    },
+  }, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
   });
+
+  proxyReq.on('error', (err) => {
+    console.error('Proxy error:', err.message);
+    rejectJson(res, 502, { error: 'Failed to reach Home Assistant' });
+  });
+
+  if (body) proxyReq.write(body);
+  proxyReq.end();
 }
 
 /**
@@ -192,7 +261,16 @@ function handleServiceCall(req, res) {
       }
 
       const qs = return_response ? '?return_response' : '';
-      const result = await haRequest('POST', `/api/services/${domain}/${service}${qs}`, data || {});
+      const apiPath = `/api/services/${domain}/${service}${qs}`;
+      // Same allowlist as the /api proxy. This endpoint is how the add-on UI
+      // calls services; it is not a server-internal haRequest.
+      const decision = evaluateHaProxyPolicy('POST', apiPath, data || {}, await loadHaProxySettings());
+      if (!decision.allowed) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'not_allowed', detail: decision.detail }));
+        return;
+      }
+      const result = await haRequest('POST', apiPath, data || {});
       res.writeHead(result.status, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result.data));
     } catch (err) {
@@ -586,7 +664,11 @@ function handleMediaRemove(req, res) {
   });
 }
 
-/** Helper: make a request to the Home Assistant API and return parsed JSON. */
+/**
+ * Server-internal Home Assistant request. Intentionally not checked by the
+ * public proxy allowlist. Voice intents, chore events, privilege sync, and
+ * the server's own config read use this directly and must keep working.
+ */
 function haRequest(method, apiPath, body) {
   return new Promise((resolve, reject) => {
     if (!HA_API_BASE) {
@@ -1083,7 +1165,10 @@ const server = http.createServer((req, res) => {
   serveStatic(req, res);
 });
 
-// Handle WebSocket upgrades for /api/websocket and the home-sensor bridge.
+// /beacon-ws/ha is the home-sensor bridge: the server authenticates upstream
+// and only forwards the read commands that bridge allows.
+// /api/websocket is a raw pass-through. The server token is not attached
+// there; the browser authenticates itself after auth_required.
 server.on('upgrade', (req, socket, head) => {
   const pathOnly = (req.url || '').split('?')[0];
   if (pathOnly === '/beacon-ws/ha') {

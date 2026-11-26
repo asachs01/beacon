@@ -74,8 +74,8 @@ export function useHomeAssistant() {
       const url = resolveHaUrl();
 
       // In add-on mode with the proxy, we don't need a browser-side token.
-      // The server.js proxy injects SUPERVISOR_TOKEN for all /api/* requests.
-      // Just mark as connected so REST-based hooks fire.
+      // The server.js proxy injects the add-on token for allowlisted /api/*
+      // requests. Just mark as connected so REST-based hooks fire.
       if (isAddOn() && !token) {
         console.info('Beacon: Add-on proxy mode — using REST API via ingress.');
         if (!cancelled) setConnected(true);
