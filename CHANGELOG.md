@@ -1,3 +1,10 @@
+## [1.54.1](https://github.com/asachs01/beacon/compare/v1.54.0...v1.54.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **pairing:** let Home Assistant automations reach Beacon after pairing ([d44aa24](https://github.com/asachs01/beacon/commit/d44aa2480fcac100bb0839e75ba3ca6ac7152383))
+
 # [1.54.0](https://github.com/asachs01/beacon/compare/v1.53.1...v1.54.0) (2026-11-26)
 
 
