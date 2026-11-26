@@ -1,3 +1,10 @@
+# [1.54.0](https://github.com/asachs01/beacon/compare/v1.53.1...v1.54.0) (2026-11-26)
+
+
+### Features
+
+* **security:** device pairing and sessions for Beacon server endpoints ([de3ff23](https://github.com/asachs01/beacon/commit/de3ff238bb39b77bd6176b92a20c509ef2dfeb70))
+
 ## [1.53.1](https://github.com/asachs01/beacon/compare/v1.53.0...v1.53.1) (2026-11-26)
 
 
