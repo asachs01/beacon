@@ -2,8 +2,8 @@
  * Shared helpers for HA REST API calls.
  *
  * In add-on mode (proxy), API calls go through the ingress path to the
- * add-on's server.js which proxies to http://supervisor/core with
- * SUPERVISOR_TOKEN. No browser-side auth needed.
+ * add-on's server.js, which forwards allowlisted /api/* requests to
+ * http://supervisor/core with SUPERVISOR_TOKEN. No browser-side auth needed.
  *
  * In standalone mode, API calls go directly to the HA instance with a
  * user-provided long-lived access token.
