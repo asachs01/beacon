@@ -1,21 +1,40 @@
-# Home Assistant rest_command for Beacon chore completion.
+# Home Assistant rest_command for Beacon chore completion and status.
 #
 # BeaconCompleteChore calls rest_command.beacon_complete_chore.
 # From the Home Assistant container, the add-on is reachable on the
 # Supervisor docker network at http://<addon_slug>:3000. The slug is the
 # last segment of the add-on page URL (Settings → Add-ons → Beacon),
 # for example local_beacon or a1b2c3d4_beacon.
+# A standalone Beacon server uses its own URL in place of ADDON_SLUG:3000,
+# for example http://192.168.1.20:8099.
 #
-# Replace ADDON_SLUG, then add this block to configuration.yaml
-# (or a package file) and restart Home Assistant. Reload is not enough
-# for a new rest_command.
+# Both installs send a Beacon access token. On a paired Beacon screen,
+# or in the add-on through the Home Assistant sidebar, open
+# Settings → Devices → Create access token. Name it
+# "Home Assistant automations" and copy the token once.
+# In secrets.yaml set the full header value, including the word Bearer:
+#
+#   beacon_token: "Bearer <paste the token here>"
+#
+# That is the header Authorization: Bearer !secret beacon_token.
+# Home Assistant expands !secret only as a YAML tag, so the secret
+# itself holds "Bearer <token>" and the commands below use
+# Authorization: !secret beacon_token.
+#
+# Replace ADDON_SLUG, add the secret, then add this block to
+# configuration.yaml (or a package file) and restart Home Assistant.
+# Reload is not enough for a new rest_command.
 
 rest_command:
   beacon_complete_chore:
     url: "http://ADDON_SLUG:3000/beacon-action/complete-chore"
     method: POST
     content_type: "application/json"
+    headers:
+      Authorization: !secret beacon_token
     payload: "{{ {'chore': chore, 'name': name | default('')} | to_json }}"
   beacon_chores_left:
     url: "http://ADDON_SLUG:3000/beacon-action/chores-left?member={{ name | default('') | urlencode }}"
     method: GET
+    headers:
+      Authorization: !secret beacon_token

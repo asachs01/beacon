@@ -119,19 +119,24 @@ Content-Type: application/json
 
 ### Examples
 
+Create the token under **Settings → Devices → Create access token** (for example, name it "Home Assistant automations") and copy it once. Add-on and standalone installs both send it. Beacon does not treat Home Assistant Core's address on the Supervisor network as a paired session.
+
 ```bash
 # Add a grocery item
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "add eggs to the grocery list"}'
 
 # Control media
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "set volume to 40"}'
 
 # Check the calendar
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "what'\''s on my calendar"}'
 ```
@@ -340,7 +345,7 @@ The intents reference these entities by default. Create or rename them to match:
 
 If your entities have different names, edit the installed YAML files in your HA config directory (`custom_intents/beacon.yaml` and `custom_sentences/en/beacon.yaml`).
 
-Chores do not use a todo list. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to `/beacon-action/complete-chore`. `BeaconChoreStatus` and `BeaconChoreStatusByPerson` call `rest_command.beacon_chores_left`, which GETs `/beacon-action/chores-left`. The install script copies `beacon_rest_command.yaml` and, when it can, adds the `rest_command` and `intent_script` includes to `configuration.yaml`. Replace `ADDON_SLUG` in that rest command file with the slug from the add-on page URL, then restart Home Assistant. See [Press-to-talk](/docs/features/press-to-talk/) for the upgrade steps.
+Chores do not use a todo list. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to `/beacon-action/complete-chore`. `BeaconChoreStatus` and `BeaconChoreStatusByPerson` call `rest_command.beacon_chores_left`, which GETs `/beacon-action/chores-left`. The install script copies `beacon_rest_command.yaml` and, when it can, adds the `rest_command` and `intent_script` includes to `configuration.yaml`. Replace `ADDON_SLUG` in that rest command file with the slug from the add-on page URL. In `secrets.yaml`, set `beacon_token` to the full header value `Bearer <token>` from **Settings → Devices → Create access token**. The rest commands send `Authorization: Bearer !secret beacon_token` (`Authorization: !secret beacon_token` in the YAML, because Home Assistant expands `!secret` only as a tag). Add-on and standalone installs both need that header. Then restart Home Assistant. See [Press-to-talk](/docs/features/press-to-talk/) for the upgrade steps.
 
 ### Customizing
 

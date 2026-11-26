@@ -18,6 +18,21 @@ If you already copied Beacon's voice intents into Home Assistant, update them. C
 
 Replace `ADDON_SLUG` in the copied rest command file with the slug at the end of the add-on page URL (**Settings → Add-ons → Beacon**). From Home Assistant core, the add-on listens on port 3000 of the Supervisor network. Chore completion is `POST http://ADDON_SLUG:3000/beacon-action/complete-chore`. "What chores are left" is `GET http://ADDON_SLUG:3000/beacon-action/chores-left?member=`.
 
+Those calls need a Beacon access token. On a paired screen, or in the add-on through the Home Assistant sidebar, open **Settings → Devices → Create access token**, name it "Home Assistant automations", and copy the token once. In `secrets.yaml` set the full header value:
+
+```yaml
+beacon_token: "Bearer <paste the token here>"
+```
+
+That is the header `Authorization: Bearer !secret beacon_token`. The copied rest commands send it as `Authorization: !secret beacon_token`, because Home Assistant expands `!secret` only as a YAML tag. Add-on and standalone installs both send this header. A curl to the same voice endpoint looks like this:
+
+```bash
+curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "mark dishes as done"}'
+```
+
 1. Re-run the script:
 
    ```bash

@@ -321,7 +321,15 @@ cat <<'CHECKLIST'
      printed above. If an intent_script key is already there, that part
      is left unchanged and the intent_script line is printed above.
      Replace ADDON_SLUG with the slug in the add-on page URL
-     (Settings → Add-ons → Beacon), then restart Home Assistant.
+     (Settings → Add-ons → Beacon). Create an access token in Beacon
+     under Settings → Devices → Create access token and put the full
+     header value in secrets.yaml:
+
+       beacon_token: "Bearer <paste the token here>"
+
+     That is Authorization: Bearer !secret beacon_token. The rest
+     commands send Authorization: !secret beacon_token. Add-on and
+     standalone installs both need it. Then restart Home Assistant.
      The wall's hold-to-talk button can still complete chores through
      Beacon's own voice API if that command is missing.
 

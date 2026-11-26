@@ -132,6 +132,7 @@ describe('install-voice-intents.sh configuration.yaml wiring', () => {
     expect(output).toContain(mergeLines.trim());
     expect(output).toContain('beacon_complete_chore:');
     expect(output).toContain('beacon_chores_left:');
+    expect(mergeLines).toContain('Authorization: !secret beacon_token');
     expect(output).toContain('Left configuration.yaml unchanged for intent_script (a top-level intent_script: key already exists).');
     expect(output).toContain('Line to merge by hand:');
     expect(output).not.toContain('Appended to configuration.yaml:');

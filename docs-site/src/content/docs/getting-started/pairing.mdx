@@ -52,18 +52,27 @@ Choose **Revoke** next to a device to sign it out. It takes effect immediately, 
 
 Revoke a device when you sell a tablet, lose a phone, or just aren't sure what it is. Choose **New code** as well if you think someone you didn't intend has the code.
 
+## Access tokens for automations
+
+Home Assistant automations and `curl` are not a screen, so they do not pair with a PIN. On a paired screen, or in the add-on through the Home Assistant sidebar, open **Settings → Devices**. Under **Access token**, enter a name such as "Home Assistant automations" and choose **Create access token**. Copy the token immediately. Beacon stores only a hash and will not show the token again.
+
+Send it as `Authorization: Bearer <token>`. The row is marked **Access token** and **Revoke** turns it off, the same as a device.
+
+Add-on and standalone installs both need this header. See [Press-to-talk](/docs/features/press-to-talk/) for the `secrets.yaml` line the rest commands use.
+
 ## If pairing is locked
 
 Beacon slows down wrong guesses so a PIN or code can't be guessed:
 
-- Each wrong attempt makes the next one wait a little longer (1, 2, 4, then 8 seconds).
-- The **5th** wrong attempt locks pairing for that device's address for **15 minutes**. The screen says **Too many tries. Try again in N min.** Locking again makes the wait longer: 30 minutes, then 60, and so on, up to 24 hours.
-- A correct PIN or code is refused while the lock is on.
-- Many wrong attempts in a short time, from any devices, can pause pairing for **everyone** for a while.
+- Each wrong attempt on the same try makes the next one wait longer (1, 2, 4, then 8 seconds). Beacon sets a cookie named `beacon_pair_attempt` so this fast limit follows that browser, not only the address. The value is a random id, not a secret.
+- The **5th** wrong attempt on that cookie locks pairing for **15 minutes**. The screen says **Too many tries. Try again in N min.** Locking again makes the wait longer: 30 minutes, then 60, and so on, up to 24 hours.
+- The same address is also limited to **30** wrong attempts per hour, even if that cookie is cleared or replaced. That lock uses the same increasing waits. Clearing the cookie cannot guess a 4-digit PIN.
+- A correct PIN or code is refused while either lock is on. A correct code does not erase the hourly count for that address.
+- Across every address, Beacon allows at most 30 attempts per minute, and **20** wrong attempts pause pairing for everyone. That pause also grows: 15 minutes, then 30, then 60, up to 24 hours.
 
-Beacon notes each lockout in its log (**Settings → Add-ons → Beacon → Log** or `docker logs`), with the address and when it ends.
+Beacon notes each lockout in its log (**Settings → Add-ons → Beacon → Log** or `docker logs`), with the address and when it ends. The attempt-cookie value is not written there.
 
-If Beacon sits behind a [reverse proxy](/docs/getting-started/deployment/#reverse-proxy-setup), Beacon sees the proxy's address for every device. A lockout then applies to all devices behind that proxy. Take care typing the code, and wait out the lock if it happens.
+If Beacon sits behind a [reverse proxy](/docs/getting-started/deployment/#reverse-proxy-setup), Beacon sees the proxy's address for every device. The 5-try lock follows `beacon_pair_attempt`, so one screen's mistakes do not lock the others. Clearing the cookie still counts toward the 30-per-hour limit on that shared address.
 
 ## `HA_BROWSER_TOKEN` is no longer used
 

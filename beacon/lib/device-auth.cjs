@@ -9,6 +9,18 @@
  *
  * Standalone mode never trusts that address, even if a client somehow
  * presents it.
+ *
+ * 172.30.32.1 is not trusted. Supervisor's hassio network uses
+ * 172.30.32.0/23, and that address is the bridge gateway
+ * (supervisor/docker/network.py: gateway = DOCKER_IPV4_NETWORK_MASK[1]).
+ * Home Assistant Core runs with network_mode="host" and only *reports*
+ * the gateway as its IP (supervisor/docker/homeassistant.py: ip_address).
+ * Add-ons are allocated from 172.30.33.0/24 (DOCKER_IPV4_NETWORK_RANGE).
+ * Plugins are pinned to .3–.6 (dns, audio, cli, observer). A host-networked
+ * add-on shares the gateway, so 172.30.32.1 is not Core alone.
+ * https://github.com/home-assistant/supervisor/blob/main/supervisor/docker/network.py
+ * https://github.com/home-assistant/supervisor/blob/main/supervisor/docker/homeassistant.py
+ * https://github.com/home-assistant/supervisor/blob/main/supervisor/const.py
  */
 
 const { COOKIE_NAME } = require('./device-sessions.cjs');

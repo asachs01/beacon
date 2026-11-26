@@ -5,6 +5,7 @@ import { useTranslation } from '../i18n';
 interface PairedDevice {
   id: string;
   label: string;
+  kind?: 'device' | 'token';
   createdAt: string;
   lastSeenAt: string;
   current: boolean;
@@ -28,6 +29,9 @@ export function PairedDevicesSettings() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [unavailable, setUnavailable] = useState(false);
+  const [tokenLabel, setTokenLabel] = useState('');
+  const [createdToken, setCreatedToken] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     const base = getIngressBasePath();
@@ -67,6 +71,37 @@ export function PairedDevicesSettings() {
     setNotice(t('settings.devices.regenerated'));
   }
 
+  async function createToken() {
+    setNotice('');
+    setError('');
+    setCopied(false);
+    const base = getIngressBasePath();
+    const label = tokenLabel.trim();
+    const res = await fetch(`${base}/beacon-auth/access-tokens`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || typeof data?.token !== 'string' || !data.token) {
+      setError(t('settings.devices.createFailed'));
+      return;
+    }
+    setCreatedToken(data.token);
+    setTokenLabel('');
+    await load();
+  }
+
+  async function copyToken() {
+    if (!createdToken) return;
+    try {
+      await navigator.clipboard.writeText(createdToken);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
   async function revoke(device: PairedDevice) {
     setNotice('');
     setError('');
@@ -102,6 +137,42 @@ export function PairedDevicesSettings() {
               {t('settings.devices.regenerate')}
             </button>
           </div>
+          <div className="settings-row">
+            <div>
+              <div className="settings-row-label">{t('settings.devices.tokenHeading')}</div>
+              <div className="settings-row-sublabel">{t('settings.devices.tokenDesc')}</div>
+            </div>
+          </div>
+          <div className="settings-token-controls">
+            <label className="settings-row-label" htmlFor="beacon-access-token-label">
+              {t('settings.devices.tokenLabel')}
+            </label>
+            <input
+              id="beacon-access-token-label"
+              className="settings-input settings-input--wide"
+              value={tokenLabel}
+              placeholder={t('settings.devices.tokenPlaceholder')}
+              maxLength={80}
+              onChange={(event) => setTokenLabel(event.target.value)}
+            />
+            <button type="button" className="settings-btn settings-btn--primary" onClick={() => { void createToken(); }}>
+              {t('settings.devices.createToken')}
+            </button>
+          </div>
+          {createdToken && (
+            <div className="settings-token-reveal" role="status">
+              <div className="settings-row-label">{t('settings.devices.tokenOnce')}</div>
+              <input
+                className="settings-input settings-token-value"
+                readOnly
+                value={createdToken}
+                aria-label={t('settings.devices.tokenOnce')}
+              />
+              <button type="button" className="settings-btn" onClick={() => { void copyToken(); }}>
+                {copied ? t('settings.devices.copied') : t('settings.devices.copyToken')}
+              </button>
+            </div>
+          )}
           {list.devices.length === 0 && (
             <p className="settings-section-desc">{t('settings.devices.empty')}</p>
           )}
@@ -110,6 +181,7 @@ export function PairedDevicesSettings() {
               <div>
                 <div className="settings-row-label">
                   {device.label}
+                  {device.kind === 'token' ? ` · ${t('settings.devices.tokenKind')}` : ''}
                   {device.current ? ` · ${t('settings.devices.current')}` : ''}
                 </div>
                 <div className="settings-row-sublabel">

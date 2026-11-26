@@ -44,14 +44,18 @@ Content-Type: application/json
 | `mark <chore> as done` / `I finished <chore>` / `<name> finished <chore>` | Completes a Beacon chore in FamilyStore |
 | `check off <item>` / `complete <item>` / `finish <item>` | Marks a todo item as completed |
 
+Create the token under **Settings → Devices → Create access token** and copy it once. Add-on and standalone installs both send `Authorization: Bearer <token>`.
+
 ```bash
 # Add an item
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "add eggs to the grocery list"}'
 
 # Complete a chore
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "mark dishes as done"}'
 ```
@@ -69,6 +73,7 @@ The voice API automatically finds the best media player: it prefers one that is 
 
 ```bash
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "set volume to 40"}'
 ```
@@ -83,6 +88,7 @@ Valid views: `dashboard`, `calendar`, `grocery`, `chores`, `music`, `photos`, `s
 
 ```bash
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "show the calendar"}'
 ```
@@ -96,6 +102,7 @@ curl -X POST http://<beacon-host>:8099/beacon-action/voice \
 
 ```bash
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "what'\''s on my calendar"}'
 ```
