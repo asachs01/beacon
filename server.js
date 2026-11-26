@@ -16,6 +16,8 @@ const path = require('path');
 const WebSocket = require('ws');
 const { describeHaHttpTarget, resolveHaConnection, standaloneConfigError } = require('./lib/ha-connection.cjs');
 const { attachHaWsBridge } = require('./lib/ha-ws-bridge.cjs');
+const { createHomeSensorGate } = require('./lib/home-sensor-gate.cjs');
+const { handleHomeSensorEntities } = require('./lib/home-sensor-entities.cjs');
 
 const PORT = 3000;
 const DIST = process.env.BEACON_DIST || '/app/dist';
@@ -29,6 +31,17 @@ const HA_MODE = haConnection.mode;
 const haBridgeServer = new WebSocket.Server({ noServer: true });
 // /data/ is HA add-on persistent storage (survives container rebuilds)
 const DATA_DIR = process.env.BEACON_DATA || '/data';
+const homeSensorGate = createHomeSensorGate({
+  readSettings: async () => JSON.parse(await fsp.readFile(path.join(DATA_DIR, 'beacon-settings.json'), 'utf8')),
+  fetchEntityState: async (entityId) => {
+    const result = await haRequestTimed('GET', `/api/states/${encodeURIComponent(entityId)}`);
+    if (!result || result.status !== 200 || !result.data || typeof result.data !== 'object') return null;
+    return result.data;
+  },
+});
+homeSensorGate.load().catch((err) => {
+  console.warn(`[beacon] home sensor selection load failed: ${err.message}`);
+});
 const { createGooglePhotoCache, REFRESH_MS } = require('./lib/google-photos-cache.cjs');
 const { acceptedChoreEvents, createPrivilegeScheduler } = require('./lib/chore-privileges.cjs');
 const { readStoredResetTime } = require('./lib/chore-day.cjs');
@@ -428,6 +441,13 @@ async function handleDataApi(req, res) {
         try { backupMealPlanFile(DATA_DIR); } catch { /* backup is best-effort */ }
       }
       await fsp.writeFile(filePath, body, 'utf8');
+      if (key === 'beacon-settings') {
+        let parsed = null;
+        try { parsed = JSON.parse(body); } catch { parsed = null; }
+        homeSensorGate.applySettings(parsed).catch((err) => {
+          console.warn(`[beacon] home sensor selection update failed: ${err.message}`);
+        });
+      }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));
     } catch (err) {
@@ -1023,6 +1043,26 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Home sensors picker. Metadata only; same reachability as settings writes.
+  if ((req.url || '').split('?')[0] === '/beacon-api/home-sensors/entities') {
+    handleHomeSensorEntities(req, res, {
+      fetchStates: async () => {
+        const result = await haRequestTimed('GET', '/api/states');
+        if (!result || result.status !== 200 || !Array.isArray(result.data)) {
+          throw new Error('Home Assistant states unavailable');
+        }
+        return result.data;
+      },
+    }).catch((err) => {
+      console.warn(`[beacon] home sensor catalog failed: ${err.message}`);
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Home Assistant states unavailable' }));
+      }
+    });
+    return;
+  }
+
   // Google Photos shared-album cache. The browser never calls Google.
   if (req.url.startsWith('/beacon-api/google-photos')) {
     googlePhotos.handle(req, res);
@@ -1056,6 +1096,8 @@ server.on('upgrade', (req, socket, head) => {
         url: HA_WS_URL,
         token: HA_ACCESS_TOKEN,
         WebSocketImpl: WebSocket,
+        allowedEntityIds: () => homeSensorGate.allowedEntityIds(),
+        registerDeliver: (deliver) => homeSensorGate.watch(deliver),
       });
     });
     return;

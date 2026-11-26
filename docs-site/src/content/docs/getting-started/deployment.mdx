@@ -43,7 +43,7 @@ This needs Beacon **1.50.1** or later. **Changed in 1.50.1.**
 
 Create a long-lived access token in Home Assistant first. Open your profile (your name at the bottom of the sidebar), scroll to **Long-Lived Access Tokens**, choose **Create Token**, name it Beacon, and copy the value. Home Assistant shows the token only once. Pass that value as `HA_TOKEN`. Do not set `SUPERVISOR_TOKEN` on a standalone container. That variable is injected by the Supervisor and selects add-on mode.
 
-The [Home sensors](/docs/features/home-sensors/) card (Beacon **1.53.0** or later) uses this token through the server's `/beacon-ws/ha` proxy. It can read only the entities that the Home Assistant user for that long-lived token can read.
+The [Home sensors](/docs/features/home-sensors/) card (Beacon **1.53.0** or later) uses this token through the server's `/beacon-ws/ha` proxy. From **1.53.1**, that socket streams only the entities picked in Settings. The Home Assistant user for the token can still read more than that through Beacon's `/api/*` proxy.
 
 ### Basic deployment
 

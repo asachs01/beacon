@@ -28,6 +28,11 @@ describe('home sensors card is mounted', () => {
       expect(settings).toContain('settings.homeSensorsEnabled');
       expect(settings).toContain('settings.homeSensors');
 
+      const picker = read(`${root}/components/HomeSensorsSettings.tsx`);
+      expect(picker).toContain('useHomeSensorCatalog');
+      expect(picker).not.toContain('useHomeSensorStream');
+      expect(picker).not.toContain('get_states');
+
       const dashboard = read(`${root}/components/DashboardView.tsx`);
       expect(dashboard).toContain('homeSensorsEnabled');
       expect(dashboard).toContain('homeSensors');
