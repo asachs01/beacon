@@ -102,11 +102,13 @@ screen_saver_timeout: 5
 1. Go back to the **Info** tab
 2. Click **Start**
 3. Wait a few seconds for the container to start
-4. Click **Open Web UI** in the sidebar panel, or navigate directly to your Home Assistant URL — Beacon appears as a sidebar panel with a calendar-clock icon. Prefer that sidebar panel (ingress); it sits behind your Home Assistant login. Do not map or forward Beacon's own port off your trusted home network.
+4. Click **Open Web UI** in the sidebar panel, or navigate directly to your Home Assistant URL — Beacon appears as a sidebar panel with a calendar-clock icon. Prefer that sidebar panel (ingress); it sits behind your Home Assistant login. Do not map or forward Beacon's own port off your trusted home network. The add-on doesn't publish a port by default, so the sidebar panel needs no pairing. If you map the port by hand, devices that open it directly have to pair once.
 
 :::caution
 Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
 :::
+
+From Beacon **TODO**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
 
 
 > **What you should see**: The Beacon dashboard with a large clock, the current date, a personalized greeting, and (if weather is configured) the current temperature. If you have not connected any calendars yet, the calendar view will be empty.
@@ -127,6 +129,8 @@ This needs Beacon **1.50.1** or later. **Changed in 1.50.1.** See [Deployment](/
 :::caution
 Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
 :::
+
+From Beacon **TODO**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
 
 ### Step 1: Pull and run the container
 
@@ -163,6 +167,8 @@ http://YOUR_DOCKER_HOST:3000
 ```
 
 Keep port 3000 on your LAN. Do not forward it to the internet.
+
+From Beacon **TODO**, each device that opens this address shows **Pair this device** the first time. Enter a family PIN or the 6-digit pairing code from the container log (`docker logs beacon`). See [Pairing a device](/docs/getting-started/pairing/).
 
 The `beacon-data` volume holds your family members, chores, settings, and meal plans. Without it, that data is lost whenever the container is recreated, including during updates.
 
