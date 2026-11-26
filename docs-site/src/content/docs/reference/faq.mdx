@@ -59,6 +59,8 @@ Skylight sells its own screen, and meal planning, photos and some other features
 Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
 :::
 
+From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
+
 ### How do I update Beacon?
 
 On the add-on, go to **Settings → Add-ons → Beacon** and click **Update**. For Docker, rolling back, and fixing a failed update, see [Updating and Troubleshooting](/docs/getting-started/updating/).
@@ -185,6 +187,10 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 ### Why does Beacon say a Home Assistant call is not allowed?
 
 **Since 1.53.1, Beacon only passes along the Home Assistant calls its own screens use.** Anything else gets a 403 error that says the call is **not allowed by Beacon**. Toggles need the entity on an HA Toggle card (leave **Edit Dashboard** so the layout saves). Chore privileges need the entity set as the child's **Privilege switch**. Music needs a **Default Player** in **Settings → Integrations**. Scripts, shell commands, and calls aimed at an area, device, label, or floor are always refused. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/).
+
+### Why is Beacon asking me to pair this device?
+
+**From Beacon 1.54.0, a device that opens Beacon directly on its port pairs once.** That covers Docker and standalone installs, the native iOS and Android apps, and any add-on where you mapped the port by hand. Enter a family PIN or the 6-digit pairing code. The code is printed in the Beacon log at startup (`Beacon pairing code: NNNNNN`) and shown in **Settings → Devices** on a screen that's already paired. After you pair, the device stays paired until you choose **Revoke** in **Settings → Devices**. Opening Beacon from the Home Assistant sidebar needs no pairing. After an update, a wall tablet that opens Beacon directly shows the pairing screen once. See [Pairing a device](/docs/getting-started/pairing/).
 
 ### Does it send notifications?
 

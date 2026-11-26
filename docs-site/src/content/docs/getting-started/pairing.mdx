@@ -1,0 +1,77 @@
+---
+title: "Pairing a device"
+description: "How to pair a tablet, browser, or phone with Beacon once, find the pairing code, revoke a device, and what to do if pairing is locked."
+order: 5.5
+---
+
+# Pairing a device
+
+This needs Beacon **1.54.0** or later.
+
+Pairing tells Beacon, once, that a screen is one of yours. After that, the screen stays paired and you don't enter anything again.
+
+## Who needs to pair
+
+Pair a device if it opens Beacon directly on Beacon's own address and port:
+
+- A **Docker or standalone** install, for example `http://YOUR_DOCKER_HOST:3000`
+- The **native iOS and Android apps**, when they open a Beacon server
+- A Home Assistant add-on where you **mapped the add-on's port by hand**
+
+You don't need to pair if you open Beacon from the **Home Assistant sidebar** (ingress). It sits behind your Home Assistant login, so Beacon trusts it. The add-on doesn't publish a port by default, so most add-on setups never see the pairing screen. A wall tablet that loads Beacon through your Home Assistant address, including a Fully Kiosk Browser pointed at the ingress URL, doesn't pair either.
+
+:::note
+After you update, a wall tablet that opens Beacon directly on its port shows the pairing screen once. Pair it and it carries on as before. Tablets that open Beacon through the Home Assistant sidebar are not affected.
+:::
+
+## How to pair
+
+1. Open Beacon on the new device. The **Pair this device** screen appears.
+2. Enter a **family PIN** or the **6-digit pairing code** under **Family PIN or pairing code**.
+3. Optionally give the device a name under **Name for this device**, such as "Kitchen tablet". That's the name you'll see when you manage devices later.
+4. Choose **Pair this device**.
+
+If you get it wrong, the screen says **That PIN or code did not match.**
+
+### Where to find the pairing code
+
+- **In the log.** Beacon prints `Beacon pairing code: NNNNNN` each time it starts. For the add-on, open **Settings → Add-ons → Beacon → Log**. For Docker, run `docker logs beacon` (use your container's name).
+- **On a screen that's already paired.** Open **Settings → Devices**. The code is shown under **Pairing code**.
+
+Choose **New code** in **Settings → Devices** to make a new code. The old code stops working right away. Devices that are already paired are not affected.
+
+## Each device pairs once
+
+A browser stays paired until you revoke it. The native iOS and Android apps stay paired after you force-quit and reopen them.
+
+## See paired devices and revoke one
+
+Open **Settings → Devices**. Each paired device is listed with when it was last seen, and your current screen is marked **This device**.
+
+Choose **Revoke** next to a device to sign it out. It takes effect immediately, including for a screen that's open right now, and that screen goes back to **Pair this device**. To use it again, pair it again.
+
+Revoke a device when you sell a tablet, lose a phone, or just aren't sure what it is. Choose **New code** as well if you think someone you didn't intend has the code.
+
+## If pairing is locked
+
+Beacon slows down wrong guesses so a PIN or code can't be guessed:
+
+- Each wrong attempt makes the next one wait a little longer (1, 2, 4, then 8 seconds).
+- The **5th** wrong attempt locks pairing for that device's address for **15 minutes**. The screen says **Too many tries. Try again in N min.** Locking again makes the wait longer: 30 minutes, then 60, and so on, up to 24 hours.
+- A correct PIN or code is refused while the lock is on.
+- Many wrong attempts in a short time, from any devices, can pause pairing for **everyone** for a while.
+
+Beacon notes each lockout in its log (**Settings → Add-ons → Beacon → Log** or `docker logs`), with the address and when it ends.
+
+If Beacon sits behind a [reverse proxy](/docs/getting-started/deployment/#reverse-proxy-setup), Beacon sees the proxy's address for every device. A lockout then applies to all devices behind that proxy. Take care typing the code, and wait out the lock if it happens.
+
+## `HA_BROWSER_TOKEN` is no longer used
+
+Older setups could set `HA_BROWSER_TOKEN`. From Beacon **1.54.0**, the browser goes through Beacon's server instead, and the variable is ignored. If it's still set, Beacon logs a deprecation warning at startup and does nothing with the value. Remove it from your configuration. Your Home Assistant token (`HA_TOKEN`, or the add-on's `ha_token` option) stays on the server and is not changed. See [Configuration](/docs/customization/configuration/).
+
+## Related
+
+- [Installation](/docs/getting-started/installation/)
+- [Deployment](/docs/getting-started/deployment/)
+- [Kid Display](/docs/features/kid-display/)
+- [Why is Beacon asking me to pair this device?](/docs/reference/faq/#why-is-beacon-asking-me-to-pair-this-device)

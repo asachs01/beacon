@@ -26,7 +26,7 @@ Home Assistant pulls `ghcr.io/asachs01/beacon` for the version in `beacon/config
    - Generates `runtime-config.js` with the configuration values
    - Injects the script tag into `index.html`
    - Starts `serve` on port 3000
-3. HA's ingress proxy forwards requests from the sidebar panel to port 3000
+3. HA's ingress proxy forwards requests from the sidebar panel to port 3000. The add-on doesn't publish a host port by default, and the sidebar panel needs no [pairing](/docs/getting-started/pairing/).
 
 **Health check**: The container includes a health check that runs every 30 seconds:
 ```
@@ -43,11 +43,15 @@ For running Beacon outside of Home Assistant's add-on system (Docker, Docker Com
 Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
 :::
 
+From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
+
 This needs Beacon **1.50.1** or later. **Changed in 1.50.1.**
 
 Create a long-lived access token in Home Assistant first. Open your profile (your name at the bottom of the sidebar), scroll to **Long-Lived Access Tokens**, choose **Create Token**, name it Beacon, and copy the value. Home Assistant shows the token only once. Pass that value as `HA_TOKEN`. Do not set `SUPERVISOR_TOKEN` on a standalone container. That variable is injected by the Supervisor and selects add-on mode.
 
 The [Home sensors](/docs/features/home-sensors/) card (Beacon **1.53.0** or later) uses this token through the server's `/beacon-ws/ha` proxy. From **1.53.1**, that socket streams only the entities picked in Settings. Beacon also only passes along the Home Assistant calls its own screens use. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/).
+
+From Beacon **1.54.0**, every device that opens a standalone Beacon pairs once. The pairing code is printed in the container log at startup. See [Pairing a device](/docs/getting-started/pairing/).
 
 ### Basic deployment
 
@@ -132,6 +136,8 @@ If you put Beacon behind a reverse proxy. A reverse proxy that is reachable from
 Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
 :::
 
+From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
+
 
 ### Nginx
 
@@ -172,6 +178,7 @@ Caddy handles SSL certificates automatically via Let's Encrypt.
 
 - The standalone container calls Home Assistant itself. The browser talks to Beacon, and Beacon calls `HA_URL` with `HA_TOKEN`. The reverse proxy in front of Beacon does not need to reach Home Assistant.
 - A development server (`npm run dev`) is different: the browser talks to Home Assistant directly, so that browser must be able to reach `VITE_HA_URL`.
+- From Beacon **1.54.0**, each device pairs once with Beacon through the proxy. Beacon sees the proxy's address for every device, so a pairing lockout applies to all devices behind it. See [Pairing a device](/docs/getting-started/pairing/#if-pairing-is-locked).
 - Keep Beacon and Home Assistant on the same trusted network. If the reverse proxy is reachable from outside your LAN, it must require authentication.
 
 ---
