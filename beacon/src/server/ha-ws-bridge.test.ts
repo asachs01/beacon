@@ -1,19 +1,32 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createHaWsBridge } from '../../lib/ha-ws-bridge.cjs';
 
-function bridge(token = 'server-token') {
+function bridge(token = 'server-token', options: {
+  allowed?: Set<string>;
+  allowedEntityIds?: () => Set<string>;
+  registerDeliver?: (deliver: (state: Record<string, unknown>) => void) => (() => void) | void;
+} = {}) {
   const toHa: unknown[] = [];
   const toBrowser: unknown[] = [];
   const closeBrowser = vi.fn();
   const closeHa = vi.fn();
+  const allowed = options.allowed ?? new Set(['sensor.kitchen']);
   const api = createHaWsBridge({
     token,
     sendToHa: (msg: unknown) => { toHa.push(msg); },
     sendToBrowser: (msg: unknown) => { toBrowser.push(msg); },
     closeBrowser,
     closeHa,
+    allowedEntityIds: options.allowedEntityIds ?? (() => allowed),
+    registerDeliver: options.registerDeliver,
   });
-  return { api, toHa, toBrowser, closeBrowser, closeHa };
+  return { api, toHa, toBrowser, closeBrowser, closeHa, allowed };
+}
+
+function authenticate(api: ReturnType<typeof bridge>['api']) {
+  api.onHaMessage({ type: 'auth_required' });
+  api.onHaMessage({ type: 'auth_ok', ha_version: '2026.11' });
+  api.onBrowserMessage({ type: 'auth', access_token: 'browser-token' });
 }
 
 describe('home assistant websocket bridge', () => {
@@ -36,11 +49,24 @@ describe('home assistant websocket bridge', () => {
 
     api.onBrowserMessage({ id: 2, type: 'get_states' });
     api.onBrowserMessage({ id: 3, type: 'subscribe_events', event_type: 'state_changed' });
-    api.onHaMessage({ id: 2, type: 'result', success: true, result: [{ entity_id: 'sensor.kitchen' }] });
+    api.onHaMessage({
+      id: 2,
+      type: 'result',
+      success: true,
+      result: [
+        { entity_id: 'sensor.kitchen', state: '70' },
+        { entity_id: 'sensor.secret', state: 'hidden' },
+      ],
+    });
     api.onHaMessage({
       id: 3,
       type: 'event',
-      event: { event_type: 'state_changed', data: { entity_id: 'sensor.kitchen' } },
+      event: { event_type: 'state_changed', data: { entity_id: 'sensor.kitchen', new_state: { entity_id: 'sensor.kitchen', state: '71' } } },
+    });
+    api.onHaMessage({
+      id: 3,
+      type: 'event',
+      event: { event_type: 'state_changed', data: { entity_id: 'sensor.secret', new_state: { entity_id: 'sensor.secret', state: 'nope' } } },
     });
 
     expect(toHa).toEqual([
@@ -50,6 +76,14 @@ describe('home assistant websocket bridge', () => {
     ]);
     expect(JSON.stringify(toBrowser)).not.toContain('server-token');
     expect(JSON.stringify(toBrowser)).not.toContain('browser-token');
+    expect(JSON.stringify(toBrowser)).not.toContain('sensor.secret');
+    expect(JSON.stringify(toBrowser)).not.toContain('hidden');
+    expect(toBrowser).toContainEqual({
+      id: 2,
+      type: 'result',
+      success: true,
+      result: [{ entity_id: 'sensor.kitchen', state: '70' }],
+    });
     expect(toBrowser.some((msg) => (msg as { type?: string }).type === 'event')).toBe(true);
   });
 
@@ -114,5 +148,140 @@ describe('home assistant websocket bridge', () => {
       { id: 7, type: 'result', success: false, error: { code: 'not_allowed' } },
       { id: 8, type: 'result', success: false, error: { code: 'not_allowed' } },
     ]);
+  });
+
+  it('delivers nothing when the card is disabled or nothing is picked', () => {
+    const { api, toBrowser } = bridge('server-token', { allowed: new Set() });
+    authenticate(api);
+    toBrowser.length = 0;
+    api.onBrowserMessage({ id: 2, type: 'get_states' });
+    api.onBrowserMessage({ id: 3, type: 'subscribe_events', event_type: 'state_changed' });
+    api.onHaMessage({
+      id: 2,
+      type: 'result',
+      success: true,
+      result: [
+        { entity_id: 'sensor.kitchen', state: '70', attributes: { friendly_name: 'Kitchen' } },
+        { entity_id: 'binary_sensor.garage', state: 'on' },
+      ],
+    });
+    api.onHaMessage({
+      id: 3,
+      type: 'event',
+      event: {
+        event_type: 'state_changed',
+        data: { entity_id: 'sensor.kitchen', new_state: { entity_id: 'sensor.kitchen', state: '71' } },
+      },
+    });
+    expect(toBrowser).toEqual([
+      { id: 2, type: 'result', success: true, result: [] },
+    ]);
+    expect(JSON.stringify(toBrowser)).not.toContain('sensor.kitchen');
+    expect(JSON.stringify(toBrowser)).not.toContain('70');
+  });
+
+  it('drops an unpicked entity from get_states and state_changed', () => {
+    const { api, toBrowser } = bridge('server-token', { allowed: new Set(['sensor.kitchen']) });
+    authenticate(api);
+    toBrowser.length = 0;
+    api.onBrowserMessage({ id: 2, type: 'get_states' });
+    api.onHaMessage({
+      id: 2,
+      type: 'result',
+      success: true,
+      result: [
+        { entity_id: 'sensor.kitchen', state: '70' },
+        { entity_id: 'sensor.washer', state: 'running' },
+      ],
+    });
+    api.onHaMessage({
+      id: 9,
+      type: 'event',
+      event: {
+        event_type: 'state_changed',
+        data: { entity_id: 'sensor.washer', new_state: { entity_id: 'sensor.washer', state: 'done' } },
+      },
+    });
+    expect(toBrowser).toEqual([
+      { id: 2, type: 'result', success: true, result: [{ entity_id: 'sensor.kitchen', state: '70' }] },
+    ]);
+  });
+
+  it('starts delivering a newly picked entity on the same bridge', () => {
+    const allowed = new Set(['sensor.kitchen']);
+    const { api, toBrowser } = bridge('server-token', { allowed });
+    authenticate(api);
+    api.onBrowserMessage({ id: 3, type: 'subscribe_events', event_type: 'state_changed' });
+    toBrowser.length = 0;
+
+    api.onHaMessage({
+      id: 3,
+      type: 'event',
+      event: {
+        event_type: 'state_changed',
+        data: { entity_id: 'sensor.washer', new_state: { entity_id: 'sensor.washer', state: 'idle' } },
+      },
+    });
+    expect(toBrowser).toEqual([]);
+
+    allowed.add('sensor.washer');
+    api.onBrowserMessage({ id: 4, type: 'get_states' });
+    api.onHaMessage({
+      id: 4,
+      type: 'result',
+      success: true,
+      result: [
+        { entity_id: 'sensor.kitchen', state: '70' },
+        { entity_id: 'sensor.washer', state: 'idle' },
+        { entity_id: 'light.porch', state: 'on' },
+      ],
+    });
+    api.onHaMessage({
+      id: 3,
+      type: 'event',
+      event: {
+        event_type: 'state_changed',
+        data: { entity_id: 'sensor.washer', new_state: { entity_id: 'sensor.washer', state: 'done' } },
+      },
+    });
+
+    expect(toBrowser).toEqual([
+      {
+        id: 4,
+        type: 'result',
+        success: true,
+        result: [
+          { entity_id: 'sensor.kitchen', state: '70' },
+          { entity_id: 'sensor.washer', state: 'idle' },
+        ],
+      },
+      {
+        id: 3,
+        type: 'event',
+        event: {
+          event_type: 'state_changed',
+          data: { entity_id: 'sensor.washer', new_state: { entity_id: 'sensor.washer', state: 'done' } },
+        },
+      },
+    ]);
+    expect(JSON.stringify(toBrowser)).not.toContain('light.porch');
+  });
+
+  it('does not deliver a state_changed whose nested state names a different entity', () => {
+    const { api, toBrowser } = bridge('server-token', { allowed: new Set(['sensor.kitchen']) });
+    authenticate(api);
+    toBrowser.length = 0;
+    api.onHaMessage({
+      id: 3,
+      type: 'event',
+      event: {
+        event_type: 'state_changed',
+        data: {
+          entity_id: 'sensor.kitchen',
+          new_state: { entity_id: 'sensor.secret', state: 'leaked' },
+        },
+      },
+    });
+    expect(toBrowser).toEqual([]);
   });
 });

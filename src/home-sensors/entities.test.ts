@@ -24,6 +24,16 @@ describe('home sensor entity picker', () => {
     expect(choices.map((choice) => choice.entityId)).not.toContain('light.porch');
   });
 
+  it('lists catalog rows that have no state', () => {
+    const choices = filterHomeSensorChoices([
+      { entity_id: 'sensor.kitchen_temp', friendly_name: 'Kitchen', domain: 'sensor' },
+      { entity_id: 'camera.porch', friendly_name: 'Porch camera', domain: 'camera' },
+    ]);
+    expect(choices).toEqual([
+      { entityId: 'sensor.kitchen_temp', label: 'Kitchen', domain: 'sensor' },
+    ]);
+  });
+
   it('filters the returned list by name or entity id', () => {
     expect(filterHomeSensorChoices(returned, 'kit').map((choice) => choice.entityId))
       .toEqual(['sensor.kitchen_temp']);

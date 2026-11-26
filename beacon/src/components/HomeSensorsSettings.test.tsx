@@ -2,17 +2,15 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HomeSensorsSettings } from './HomeSensorsSettings';
-import type { HaLiveState } from '../home-sensors/types';
 
-vi.mock('../api/home-sensor-stream', () => ({
-  useHomeSensorStream: () => ({
+vi.mock('../api/home-sensor-catalog', () => ({
+  useHomeSensorCatalog: () => ({
     ready: true,
-    failed: false,
     entities: [
-      { entity_id: 'sensor.kitchen_temp', state: '70', attributes: { friendly_name: 'Kitchen' } },
-      { entity_id: 'camera.porch', state: 'idle', attributes: { friendly_name: 'Porch camera' } },
-      { entity_id: 'binary_sensor.garage_door', state: 'off', attributes: { friendly_name: 'Garage' } },
-    ] satisfies HaLiveState[],
+      { entity_id: 'sensor.kitchen_temp', friendly_name: 'Kitchen', domain: 'sensor', device_class: 'temperature', unit: '°F' },
+      { entity_id: 'camera.porch', friendly_name: 'Porch camera', domain: 'camera', device_class: null, unit: null },
+      { entity_id: 'binary_sensor.garage_door', friendly_name: 'Garage', domain: 'binary_sensor', device_class: 'garage', unit: null },
+    ],
   }),
 }));
 

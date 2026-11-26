@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useHomeSensorStream } from '../api/home-sensor-stream';
+import { useHomeSensorCatalog } from '../api/home-sensor-catalog';
 import { filterHomeSensorChoices } from '../home-sensors/entities';
 import type { HomeSensorPick } from '../home-sensors/types';
 import { useTranslation } from '../i18n';
@@ -11,13 +11,14 @@ interface HomeSensorsSettingsProps {
 }
 
 /**
- * Settings → Integrations → Home sensors. The entity list is whatever the
- * current Home Assistant connection returned from get_states. Cameras are
- * left out. The card itself stays read-only.
+ * Settings → Integrations → Home sensors. The entity list comes from
+ * GET /beacon-api/home-sensors/entities (names and classes, not states).
+ * Cameras are left out. The card itself stays read-only and uses the
+ * filtered state socket.
  */
 export function HomeSensorsSettings({ enabled, sensors, onChange }: HomeSensorsSettingsProps) {
   const { t } = useTranslation();
-  const { entities, ready } = useHomeSensorStream(true);
+  const { entities, ready } = useHomeSensorCatalog();
   const [search, setSearch] = useState('');
   const choices = useMemo(
     () => filterHomeSensorChoices(entities, search),
