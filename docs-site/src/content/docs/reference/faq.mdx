@@ -15,6 +15,8 @@ faq:
     answer: "Mostly. Beacon runs entirely on your local network and never needs its own cloud service. The display keeps a local copy of its data, and the built-in fonts and themes need no internet. Anything that comes from the internet still needs it: Google Calendar sync and weather reach you through Home Assistant, and Google Fonts are downloaded when you pick one."
   - question: "Is my family's data private?"
     answer: "Yes. Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account."
+  - question: "Is it safe to expose Beacon to the internet?"
+    answer: "No. Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet. For remote access, use the add-on's ingress panel (behind Home Assistant login), Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication."
   - question: "How do I update Beacon?"
     answer: "On the add-on, go to Settings → Add-ons → Beacon and click Update. For Docker, rolling back, and fixing a failed update, see the Updating and Troubleshooting docs page."
 ---
@@ -47,7 +49,15 @@ Skylight sells its own screen, and meal planning, photos and some other features
 
 ### Is my family's data private?
 
-**Yes.** Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account. See [Does Beacon send my data anywhere?](#does-beacon-send-my-data-anywhere)
+**Yes.** Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account. See [Does Beacon send my data anywhere?](#does-beacon-send-my-data-anywhere). For keeping Beacon's port on your LAN, see [Is it safe to expose Beacon to the internet?](#is-it-safe-to-expose-beacon-to-the-internet).
+
+### Is it safe to expose Beacon to the internet?
+
+**No.**
+
+:::caution
+Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+:::
 
 ### How do I update Beacon?
 
@@ -229,7 +239,7 @@ The sidebar stays up for about 15 seconds after the last tap, click, or key pres
 1. **Find the direct URL**: In HA, click "Open Web UI" on the Beacon add-on page, or use the direct ingress URL (typically `http://YOUR_HA_IP:8123/api/hassio_ingress/<addon-token>`)
 2. **For Android tablets**: Use [Fully Kiosk Browser](/docs/getting-started/installation/#mounting-and-displaying-on-a-tablet) with "Hide Navigation Bar" and "Hide Status Bar" enabled
 3. **For desktop/Pi kiosk**: Launch Chrome/Chromium with `--kiosk` flag pointed at the Beacon URL
-4. **For standalone Docker**: Use the container's direct URL (e.g., `http://YOUR_DOCKER_HOST:3000`)
+4. **For standalone Docker**: On your trusted home network, use the container's URL (e.g., `http://YOUR_DOCKER_HOST:3000`). Do not forward that port to the internet. See [Is it safe to expose Beacon to the internet?](#is-it-safe-to-expose-beacon-to-the-internet).
 
 See the [Installation guide](/docs/getting-started/installation/#mounting-and-displaying-on-a-tablet) for detailed kiosk setup instructions.
 
@@ -255,7 +265,7 @@ On Docker, your data survives only if you mounted a volume at `/data`, for examp
 
 This means Beacon cannot connect to Home Assistant. Check:
 1. The HA token is configured (add-on: automatic; Docker or Kubernetes: `HA_URL` and `HA_TOKEN`, a long-lived access token, from **1.50.1**; dev: `VITE_HA_TOKEN`)
-2. On a standalone container, `HA_URL` is the Home Assistant base URL and is reachable from the container. The browser only needs to reach Beacon. In development, the browser must be able to reach `VITE_HA_URL`.
+2. On a standalone container, `HA_URL` is the Home Assistant base URL and is reachable from the container. On your trusted home network, the browser only needs to reach Beacon. In development, the browser must be able to reach `VITE_HA_URL`.
 3. Home Assistant is running. If `HA_URL` or `HA_TOKEN` is missing on a standalone container, the UI still loads but has no Home Assistant data, and the log says `Standalone mode needs HA_URL and HA_TOKEN`.
 
 ### Calendar is empty
