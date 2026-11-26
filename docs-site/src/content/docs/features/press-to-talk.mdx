@@ -10,6 +10,10 @@ The microphone only works when Beacon is opened over **HTTPS**, or on `localhost
 
 This needs Beacon **1.46.0** or later.
 
+:::caution
+**Known issue in 1.54.0:** Home Assistant automations and `rest_command` calls to Beacon, including chore completion by voice and "what chores are left", are refused with a "pairing required" error. A fix is coming in the next patch release.
+:::
+
 ## Upgrading from an earlier version
 
 If you already copied Beacon's voice intents into Home Assistant, update them. Chore completion by voice goes through a `rest_command` in `beacon/custom_intents/beacon_rest_command.yaml`. The install script `beacon/scripts/install-voice-intents.sh` copies the sentence file, the intent file, and that rest command file. When `configuration.yaml` has no top-level `rest_command:` key, the script appends `rest_command: !include beacon_rest_command.yaml`. When there is no top-level `intent_script:` key, the same run appends `intent_script: !include_dir_merge_named custom_intents`. If it appends either line, it first makes one timestamped backup of `configuration.yaml`. If a top-level `rest_command:` key or the Beacon rest include is already there, or if a top-level `intent_script:` key is already there, that part of the file is left unchanged and the script prints the lines to merge by hand. Until you re-run the script, older intent files keep writing to `todo.chores`.
