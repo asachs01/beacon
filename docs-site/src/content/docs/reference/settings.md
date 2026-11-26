@@ -123,7 +123,7 @@ These are the options in `beacon/config.yaml`, which Home Assistant uses for the
 | Option | Label | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `family_name` | Family Name | string | My Family | Shown in the calendar header. Uses add-on option `family_name` when Home Assistant provides it. |
-| `ha_token` | Home Assistant token | password | (empty) | Long-lived access token used for browser-side Home Assistant access. Stored as a password. |
+| `ha_token` | Home Assistant token | password | (empty) | Optional long-lived access token for the Beacon server, stored as a password. The browser never receives it. In the add-on the Supervisor token is used when this is empty. Direct-port and standalone screens pair once; ingress does not. |
 | `save_config_in_browser` | Save Configuration in Browser | boolean | true | Keep a local browser copy of settings when the add-on allows it. Uses add-on option `save_config_in_browser` when Home Assistant provides it. |
 | `theme` | Theme | string | skylight | Color theme id. The in-app picker overrides the add-on option. Uses add-on option `theme` when Home Assistant provides it. |
 | `auto_dark_mode` | Auto Dark Mode | boolean | true | Switch themes based on time of day. Uses add-on option `auto_dark_mode` when Home Assistant provides it. |

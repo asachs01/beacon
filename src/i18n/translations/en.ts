@@ -811,6 +811,31 @@ export const en = {
   'meals.dinner': 'Dinner',
   'meals.snack': 'Snack',
   'meals.nothingPlanned': 'Nothing planned',
+
+  // ---- device pairing ----
+  'pairing.title': 'Pair this device',
+  'pairing.subtitle': 'Enter a family PIN or the 6-digit pairing code from the Beacon log or from Settings on a paired screen.',
+  'pairing.secretLabel': 'Family PIN or pairing code',
+  'pairing.labelLabel': 'Name for this device',
+  'pairing.labelPlaceholder': 'Kitchen tablet',
+  'pairing.submit': 'Pair this device',
+  'pairing.failed': 'That PIN or code did not match.',
+  'pairing.locked': 'Too many tries. Try again in {minutes} min.',
+  'pairing.working': 'Pairing…',
+  'pairing.network': 'Could not reach Beacon. Check the connection and try again.',
+  'settings.nav.devices': 'Devices',
+  'settings.devices.title': 'Paired devices',
+  'settings.devices.desc': 'A device pairs once with a family PIN or the pairing code. Revoking it signs that device out immediately, including open connections.',
+  'settings.devices.pairingCodeLabel': 'Pairing code',
+  'settings.devices.pairingCodeSublabel': 'Also printed in the Beacon log at startup. Anyone with this code or a family PIN can pair a device. Generate a new code to invalidate the old one.',
+  'settings.devices.regenerate': 'New code',
+  'settings.devices.regenerated': 'The pairing code was updated. The previous code no longer works.',
+  'settings.devices.empty': 'No devices are paired yet.',
+  'settings.devices.revoke': 'Revoke',
+  'settings.devices.current': 'This device',
+  'settings.devices.lastSeen': 'Last seen {when}',
+  'settings.devices.unavailable': 'This list is available when Settings is opened on the Beacon server.',
+  'settings.devices.loadFailed': 'Could not load paired devices.',
 } as const;
 
 export type TranslationKey = keyof typeof en;

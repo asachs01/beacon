@@ -11,7 +11,9 @@ export function useIngressDetect() {
   const [compact, setCompact] = useState(false);
 
   useEffect(() => {
-    const inIngress = window !== window.parent && !!window.__BEACON_CONFIG__?.ha_token;
+    const inIngress = !!window.__BEACON_CONFIG__ && (
+      window !== window.parent || window.location.pathname.includes('/ingress/')
+    );
     setIsIngress(inIngress);
 
     if (!inIngress) return;

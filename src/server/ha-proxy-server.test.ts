@@ -17,19 +17,24 @@ let runDir = '';
 let ha: http.Server;
 let haPort = 0;
 let child: ChildProcess | null = null;
+let sessionToken = '';
 const hits: Hit[] = [];
 
 function beaconRequest(method: string, requestPath: string, body?: unknown): Promise<{ status: number; json: unknown }> {
   const payload = body === undefined ? null : Buffer.from(JSON.stringify(body));
+  const headers: Record<string, string> = {};
+  if (sessionToken) headers.authorization = `Bearer ${sessionToken}`;
+  if (payload) {
+    headers['content-type'] = 'application/json';
+    headers['content-length'] = String(payload.length);
+  }
   return new Promise((resolve, reject) => {
     const req = http.request({
       hostname: '127.0.0.1',
       port: beaconPort,
       path: requestPath,
       method,
-      headers: payload
-        ? { 'content-type': 'application/json', 'content-length': payload.length }
-        : {},
+      headers,
     }, (res) => {
       const chunks: Buffer[] = [];
       res.on('data', (chunk) => chunks.push(chunk));
@@ -123,6 +128,13 @@ describe('Home Assistant proxy allowlist on the server', () => {
     if (!started) {
       throw new Error(`Beacon server did not start:\n${Buffer.concat(log).toString('utf8')}`);
     }
+    const code = /Beacon pairing code: (\d{6})/.exec(Buffer.concat(log).toString('utf8'));
+    if (!code) throw new Error(`pairing code missing:\n${Buffer.concat(log).toString('utf8')}`);
+    const paired = await beaconRequest('POST', '/beacon-auth/pair', { secret: code[1], label: 'proxy test' });
+    if (paired.status !== 200 || !paired.json || typeof paired.json !== 'object' || !('token' in paired.json)) {
+      throw new Error(`pairing failed: ${paired.status} ${JSON.stringify(paired.json)}`);
+    }
+    sessionToken = String((paired.json as { token: string }).token);
   }, 15000);
 
   afterAll(async () => {

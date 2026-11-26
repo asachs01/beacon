@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { usePhotos } from '../hooks/usePhotos';
 import { useTranslation } from '../i18n';
+import { withDeviceSession } from '../api/device-session';
 import { NowPlayingBar } from './NowPlayingBar';
 import { MediaPlayer } from '../types/music';
 
@@ -146,7 +147,7 @@ export function PhotoFrame({
       <div className="photo-frame-image-wrapper" key={fadeKey}>
         <img
           className="photo-frame-image"
-          src={currentPhoto?.url}
+          src={currentPhoto?.url ? withDeviceSession(currentPhoto.url) : undefined}
           alt={currentPhoto?.caption || t('photoFrame.photoAlt')}
         />
       </div>

@@ -21,6 +21,26 @@ const { attachHaWsBridge } = require('./lib/ha-ws-bridge.cjs');
 const { createHomeSensorGate } = require('./lib/home-sensor-gate.cjs');
 const { handleHomeSensorEntities } = require('./lib/home-sensor-entities.cjs');
 const { evaluateHaProxyPolicy, isHaMediaUpload, proxySettingsFromStore } = require('./lib/ha-proxy-policy.cjs');
+const { createPairingLimiter } = require('./lib/pairing-rate-limit.cjs');
+const {
+  buildSessionCookie,
+  cleanLabel,
+  createSessionStore,
+  pairingSecretOk,
+  readFamilyPins,
+  requestIsSecure,
+} = require('./lib/device-sessions.cjs');
+const {
+  classifyPath,
+  clientIp,
+  headersForUpstream,
+  stripSessionQuery,
+  createSocketRegistry,
+  isTrustedIngress,
+  readPresentedToken,
+  retryAfterSeconds,
+} = require('./lib/device-auth.cjs');
+const { warnIfBrowserTokenSet } = require('./lib/runtime-config.cjs');
 
 // BEACON_PORT is for tests. The add-on keeps listening on 3000.
 const PORT = process.env.BEACON_PORT ? Number(process.env.BEACON_PORT) : 3000;
@@ -73,6 +93,171 @@ const MIME_TYPES = {
 
 // Ensure data directory exists
 try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch { /* ignore */ }
+
+const deviceSockets = createSocketRegistry();
+const sessionStore = createSessionStore({
+  dataDir: DATA_DIR,
+  onRevoke(id) { deviceSockets.closeSession(id); },
+});
+const pairingLimiter = createPairingLimiter({
+  onLockout({ scope, ip, until }) {
+    const who = scope === 'global' ? 'all clients' : ip;
+    console.warn(`[beacon] pairing lockout for ${who} until ${new Date(until).toISOString()}`);
+  },
+});
+
+function ingressTrusted(req) {
+  return isTrustedIngress({
+    mode: HA_MODE === 'addon' ? 'addon' : 'standalone',
+    remoteAddress: req.socket && req.socket.remoteAddress,
+  });
+}
+
+function json(res, status, body, extraHeaders) {
+  const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...extraHeaders };
+  res.writeHead(status, headers);
+  res.end(JSON.stringify(body));
+}
+
+/** Session cookie, bearer token, or (for websockets and native media) query. Ingress skips this. */
+function establishedSession(req) {
+  if (ingressTrusted(req)) return { ok: true, via: 'ingress', session: null };
+  const token = readPresentedToken(req);
+  const session = token ? sessionStore.verify(token) : null;
+  if (!session) return { ok: false };
+  sessionStore.touch(session.id);
+  return { ok: true, via: 'session', session };
+}
+
+function requireSession(req, res) {
+  const auth = establishedSession(req);
+  if (!auth.ok) {
+    json(res, 401, { error: 'pairing_required' });
+    return null;
+  }
+  return auth;
+}
+
+function denyUpgrade(socket) {
+  try {
+    socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{"error":"pairing_required"}');
+  } catch { /* peer already gone */ }
+  socket.destroy();
+}
+
+function handleHealth(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  json(res, 200, { ok: true });
+}
+
+function handleSessionStatus(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const auth = establishedSession(req);
+  json(res, 200, { paired: auth.ok, ingress: auth.ok && auth.via === 'ingress' });
+}
+
+function handlePair(req, res) {
+  if (req.method !== 'POST') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const ip = clientIp(req);
+  collectBody(req).then(async (bodyBuf) => {
+    const gate = pairingLimiter.check(ip);
+    if (!gate.ok) {
+      const retryAfter = retryAfterSeconds(gate.retryAfterMs);
+      json(res, 429, { error: 'pairing_locked', retryAfter }, { 'Retry-After': String(retryAfter) });
+      return;
+    }
+    let payload = {};
+    try {
+      payload = JSON.parse((bodyBuf || '{}').toString('utf8'));
+    } catch {
+      pairingLimiter.fail(ip);
+      json(res, 401, { error: 'pairing_failed' });
+      return;
+    }
+    const pins = await readFamilyPins(DATA_DIR);
+    const ok = pairingSecretOk(payload.secret, sessionStore.pairingCode(), pins);
+    if (!ok) {
+      const failed = pairingLimiter.fail(ip);
+      if (failed.scope === 'ip' || failed.scope === 'global') {
+        const retryAfter = retryAfterSeconds(failed.retryAfterMs);
+        json(res, 429, { error: 'pairing_locked', retryAfter }, { 'Retry-After': String(retryAfter) });
+        return;
+      }
+      json(res, 401, { error: 'pairing_failed' });
+      return;
+    }
+    pairingLimiter.success(ip);
+    const created = await sessionStore.createSession(cleanLabel(payload.label));
+    json(res, 200, { ok: true, token: created.token, device: created.session }, {
+      'Set-Cookie': buildSessionCookie(created.token, { secure: requestIsSecure(req) }),
+    });
+  }).catch((err) => {
+    if (!res.headersSent) json(res, 400, { error: err.message || 'Bad request' });
+  });
+}
+
+function handleDeviceList(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const auth = requireSession(req, res);
+  if (!auth) return;
+  json(res, 200, {
+    pairingCode: sessionStore.pairingCode(),
+    devices: sessionStore.list(auth.session && auth.session.id),
+  });
+}
+
+function handleDeviceRevoke(req, res) {
+  if (req.method !== 'POST') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const auth = requireSession(req, res);
+  if (!auth) return;
+  collectBody(req).then(async (bodyBuf) => {
+    let payload = {};
+    try {
+      payload = JSON.parse((bodyBuf || '{}').toString('utf8'));
+    } catch {
+      json(res, 400, { error: 'Invalid JSON' });
+      return;
+    }
+    if (!payload.id || typeof payload.id !== 'string') {
+      json(res, 400, { error: 'Missing device id' });
+      return;
+    }
+    const removed = await sessionStore.revoke(payload.id);
+    json(res, removed ? 200 : 404, removed ? { ok: true } : { error: 'Device not found' });
+  }).catch((err) => {
+    if (!res.headersSent) json(res, 400, { error: err.message || 'Bad request' });
+  });
+}
+
+function handlePairingCodeRegenerate(req, res) {
+  if (req.method !== 'POST') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const auth = requireSession(req, res);
+  if (!auth) return;
+  sessionStore.regeneratePairingCode().then((code) => {
+    console.log('Beacon pairing code regenerated');
+    json(res, 200, { pairingCode: code });
+  }).catch((err) => {
+    if (!res.headersSent) json(res, 500, { error: err.message });
+  });
+}
 
 async function serveStatic(req, res) {
   let filePath = path.join(DIST, req.url === '/' ? '/index.html' : req.url.split('?')[0]);
@@ -207,9 +392,10 @@ async function proxyToHAAsync(req, res) {
   }
 
   const settings = await loadHaProxySettings();
+  const upstreamPath = stripSessionQuery(req.url);
   const decision = evaluateHaProxyPolicy(
     req.method,
-    req.url,
+    upstreamPath,
     parseProxyJsonBody(body, req.headers['content-type']),
     settings,
   );
@@ -218,7 +404,7 @@ async function proxyToHAAsync(req, res) {
     return;
   }
 
-  const targetUrl = `${HA_API_BASE}${req.url}`;
+  const targetUrl = `${HA_API_BASE}${upstreamPath}`;
   const proxyReq = openHaRequest(targetUrl, {
     method: req.method,
     body,
@@ -1067,6 +1253,39 @@ function handleVoiceAction(req, res) {
 }
 
 const server = http.createServer((req, res) => {
+  const pathname = (req.url || '/').split('?')[0];
+
+  // Session or verified ingress. The Home Assistant proxy allowlist, when
+  // present, still applies inside /api/* after this gate.
+  if (classifyPath(pathname) === 'protected') {
+    if (!requireSession(req, res)) return;
+  }
+
+  if (pathname === '/health') {
+    handleHealth(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/pair') {
+    handlePair(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/session') {
+    handleSessionStatus(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/devices') {
+    handleDeviceList(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/devices/revoke') {
+    handleDeviceRevoke(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/pairing-code') {
+    handlePairingCodeRegenerate(req, res);
+    return;
+  }
+
   // Voice / natural-language action API
   if (req.url === '/beacon-action/voice') {
     handleVoiceAction(req, res);
@@ -1169,14 +1388,25 @@ const server = http.createServer((req, res) => {
 // and only forwards the read commands that bridge allows.
 // /api/websocket is a raw pass-through. The server token is not attached
 // there; the browser authenticates itself after auth_required.
+// Both require a paired session or a verified ingress connection.
 server.on('upgrade', (req, socket, head) => {
   const pathOnly = (req.url || '').split('?')[0];
+  let auth = null;
+  if (classifyPath(pathOnly) === 'protected') {
+    auth = establishedSession(req);
+    if (!auth.ok) {
+      denyUpgrade(socket);
+      return;
+    }
+    if (auth.session) deviceSockets.track(auth.session.id, socket);
+  }
   if (pathOnly === '/beacon-ws/ha') {
     if (!HA_ACCESS_TOKEN || !HA_WS_URL) {
       socket.destroy();
       return;
     }
     haBridgeServer.handleUpgrade(req, socket, head, (browserWs) => {
+      if (auth && auth.session) deviceSockets.track(auth.session.id, browserWs);
       attachHaWsBridge(browserWs, {
         url: HA_WS_URL,
         token: HA_ACCESS_TOKEN,
@@ -1193,7 +1423,7 @@ server.on('upgrade', (req, socket, head) => {
     return;
   }
 
-  const target = describeHaHttpTarget(`${HA_API_BASE}${req.url}`);
+  const target = describeHaHttpTarget(`${HA_API_BASE}${stripSessionQuery(req.url)}`);
   const lib = target.secure ? https : http;
   const defaultPort = target.secure ? 443 : 80;
   const proxyReq = lib.request({
@@ -1202,7 +1432,7 @@ server.on('upgrade', (req, socket, head) => {
     path: target.path,
     method: 'GET',
     headers: {
-      ...req.headers,
+      ...headersForUpstream(req),
       host: target.port === defaultPort ? target.hostname : `${target.hostname}:${target.port}`,
     },
   });
@@ -1225,18 +1455,11 @@ server.on('upgrade', (req, socket, head) => {
   proxyReq.end();
 });
 
-server.listen(PORT, () => {
-  console.log(`Beacon server listening on port ${PORT}`);
-  console.log(`Mode: ${HA_MODE === 'addon' ? 'add-on' : 'standalone'}`);
-  console.log(`Home Assistant token: ${HA_ACCESS_TOKEN ? 'available' : 'NOT available'}`);
-  console.log(`Data directory: ${DATA_DIR}`);
-  const configError = standaloneConfigError(haConnection);
-  if (configError) console.error(configError);
-});
-
-// Fill the photo cache soon after boot, then every 6 hours. A failed
-// refresh keeps the files already on disk.
-const googlePhotoBoot = setTimeout(() => {
+function startBackgroundJobs() {
+  if (process.env.BEACON_DISABLE_JOBS === '1') return;
+  // Fill the photo cache soon after boot, then every 6 hours. A failed
+  // refresh keeps the files already on disk.
+  const googlePhotoBoot = setTimeout(() => {
   googlePhotos.refresh().catch((err) => {
     console.warn(`Google Photos refresh failed: ${err.message}`);
   });
@@ -1257,5 +1480,32 @@ const privilegeBoot = setTimeout(() => {
 const privilegeTimer = setInterval(() => {
   privilegeTick().catch((err) => console.warn(`[beacon] privilege sync failed: ${err.message}`));
 }, 30_000);
-privilegeBoot.unref?.();
-privilegeTimer.unref?.();
+  privilegeBoot.unref?.();
+  privilegeTimer.unref?.();
+}
+
+function startBeaconServer() {
+  warnIfBrowserTokenSet();
+  return sessionStore.load().then((code) => {
+    console.log(`Beacon pairing code: ${code}`);
+    server.listen(PORT, () => {
+      const address = server.address();
+      const port = address && typeof address === 'object' ? address.port : PORT;
+      console.log(`Beacon server listening on port ${port}`);
+      console.log(`Mode: ${HA_MODE === 'addon' ? 'add-on' : 'standalone'}`);
+      console.log(`Home Assistant token: ${HA_ACCESS_TOKEN ? 'available' : 'NOT available'}`);
+      console.log(`Data directory: ${DATA_DIR}`);
+      const configError = standaloneConfigError(haConnection);
+      if (configError) console.error(configError);
+    });
+    startBackgroundJobs();
+    return server;
+  }).catch((err) => {
+    console.error(`[beacon] failed to start: ${err.message}`);
+    process.exit(1);
+  });
+}
+
+if (require.main === module) {
+  startBeaconServer();
+}

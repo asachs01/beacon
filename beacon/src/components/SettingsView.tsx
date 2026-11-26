@@ -9,6 +9,7 @@ import {
   Monitor,
   ListChecks,
   Info,
+  Smartphone,
   Check,
   Pencil,
   Trash2,
@@ -39,6 +40,7 @@ import { PhotoSourceSettings } from './PhotoSourceSettings';
 import { EntityPicker } from './cards/EntityPicker';
 import { PRIVILEGE_DOMAINS } from '../api/chore-privileges';
 import { guestPinProblem } from '../display/guest-mode';
+import { PairedDevicesSettings } from './PairedDevicesSettings';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -51,6 +53,7 @@ type SettingsSection =
   | 'calendar'
   | 'integrations'
   | 'display'
+  | 'devices'
   | 'chores'
   | 'about';
 
@@ -87,6 +90,7 @@ const NAV_ITEMS: Array<{ id: SettingsSection; labelKey: TranslationKey; icon: Re
   { id: 'calendar', labelKey: 'settings.nav.calendar', icon: <CalendarDays size={18} /> },
   { id: 'integrations', labelKey: 'settings.nav.integrations', icon: <Plug size={18} /> },
   { id: 'display', labelKey: 'settings.nav.display', icon: <Monitor size={18} /> },
+  { id: 'devices', labelKey: 'settings.nav.devices', icon: <Smartphone size={18} /> },
   { id: 'chores', labelKey: 'settings.nav.chores', icon: <ListChecks size={18} /> },
   { id: 'about', labelKey: 'settings.nav.about', icon: <Info size={18} /> },
 ];
@@ -418,6 +422,8 @@ export function SettingsView({
         return renderIntegrations();
       case 'display':
         return renderDisplay();
+      case 'devices':
+        return <PairedDevicesSettings />;
       case 'chores':
         return renderChores();
       case 'about':

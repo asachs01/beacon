@@ -116,8 +116,8 @@ Beacon uses a runtime configuration injection system that works across all deplo
 import { getConfig } from './config';
 
 const config = getConfig();
-// config.ha_url       - Home Assistant URL
-// config.ha_token     - Access token
+// config.ha_url       - Home Assistant URL (empty in the add-on; the page uses Beacon)
+// config.ha_token     - Empty unless a local dev build set VITE_HA_TOKEN or onboarding saved one
 // config.family_name  - Family name
 // config.theme        - Theme ID
 // config.auto_dark_mode - Auto dark mode flag
@@ -135,8 +135,7 @@ In add-on mode, `run.sh` generates this JavaScript object:
 
 ```javascript
 window.__BEACON_CONFIG__ = {
-  ha_url: "http://supervisor/core",
-  ha_token: "SUPERVISOR_TOKEN_VALUE",
+  ha_url: "",
   family_name: "Sachs",
   theme: "midnight",
   auto_dark_mode: true,
@@ -146,6 +145,8 @@ window.__BEACON_CONFIG__ = {
   screen_saver_timeout: 5
 };
 ```
+
+`ha_url` is empty in the add-on so the page calls this Beacon server. There is no `ha_token` field. Home Assistant tokens stay on the server. `HA_BROWSER_TOKEN`, if set in the environment, is ignored and a startup warning is logged.
 
 This is injected as a `<script>` tag in `index.html` before the main application bundle loads.
 
