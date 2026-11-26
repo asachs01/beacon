@@ -146,7 +146,7 @@ window.__BEACON_CONFIG__ = {
 };
 ```
 
-`ha_url` is empty in the add-on so the page calls this Beacon server. There is no `ha_token` field. Home Assistant tokens stay on the server. `HA_BROWSER_TOKEN`, if set in the environment, is ignored and a startup warning is logged. It is deprecated from Beacon **TODO**, so remove it from your configuration. See [Pairing a device](/docs/getting-started/pairing/#ha_browser_token-is-no-longer-used).
+`ha_url` is empty in the add-on so the page calls this Beacon server. There is no `ha_token` field. Home Assistant tokens stay on the server. `HA_BROWSER_TOKEN`, if set in the environment, is ignored and a startup warning is logged. It is deprecated from Beacon **1.54.0**, so remove it from your configuration. See [Pairing a device](/docs/getting-started/pairing/#ha_browser_token-is-no-longer-used).
 
 This is injected as a `<script>` tag in `index.html` before the main application bundle loads.
 

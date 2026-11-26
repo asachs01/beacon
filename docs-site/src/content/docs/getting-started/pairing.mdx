@@ -6,7 +6,7 @@ order: 5.5
 
 # Pairing a device
 
-This needs Beacon **TODO** or later.
+This needs Beacon **1.54.0** or later.
 
 Pairing tells Beacon, once, that a screen is one of yours. After that, the screen stays paired and you don't enter anything again.
 
@@ -67,7 +67,7 @@ If Beacon sits behind a [reverse proxy](/docs/getting-started/deployment/#revers
 
 ## `HA_BROWSER_TOKEN` is no longer used
 
-Older setups could set `HA_BROWSER_TOKEN`. From Beacon **TODO**, the browser goes through Beacon's server instead, and the variable is ignored. If it's still set, Beacon logs a deprecation warning at startup and does nothing with the value. Remove it from your configuration. Your Home Assistant token (`HA_TOKEN`, or the add-on's `ha_token` option) stays on the server and is not changed. See [Configuration](/docs/customization/configuration/).
+Older setups could set `HA_BROWSER_TOKEN`. From Beacon **1.54.0**, the browser goes through Beacon's server instead, and the variable is ignored. If it's still set, Beacon logs a deprecation warning at startup and does nothing with the value. Remove it from your configuration. Your Home Assistant token (`HA_TOKEN`, or the add-on's `ha_token` option) stays on the server and is not changed. See [Configuration](/docs/customization/configuration/).
 
 ## Related
 

@@ -26,13 +26,13 @@ It works in the Home Assistant add-on and in standalone mode (`HA_URL` and `HA_T
 
 The socket is still read-only by allowlist: `get_states`, a `state_changed` subscription, unsubscribe of a subscription this page opened, and `ping`. Other commands are refused on the server and are not sent to Home Assistant. If the browser itself is signed in to Home Assistant, the card uses that connection instead.
 
-The picker catalog does not include state values. In Beacon 1.53.1 and earlier, any device that can open Beacon can open it. From Beacon **TODO**, a device that opens Beacon directly has to be [paired](/docs/getting-started/pairing/) first. Separately, from 1.53.1 Beacon only passes along the Home Assistant calls its own screens use. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/).
+The picker catalog does not include state values. In Beacon 1.53.1 and earlier, any device that can open Beacon can open it. From Beacon **1.54.0**, a device that opens Beacon directly has to be [paired](/docs/getting-started/pairing/) first. Separately, from 1.53.1 Beacon only passes along the Home Assistant calls its own screens use. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/).
 
 :::caution
 Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
 :::
 
-From Beacon **TODO**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
+From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
 
 
 ## What you see
