@@ -69,10 +69,14 @@ export class HomeAssistantClient {
   private maxReconnectDelay = 30000;
   private onConnectionChange?: (connected: boolean) => void;
 
-  constructor(url: string, token: string) {
-    this.url = url.replace(/^http/, 'ws');
-    if (!this.url.endsWith('/api/websocket')) {
-      this.url = this.url.replace(/\/$/, '') + '/api/websocket';
+  constructor(url: string, token: string, options?: { socketUrl?: string }) {
+    if (options?.socketUrl) {
+      this.url = options.socketUrl;
+    } else {
+      this.url = url.replace(/^http/, 'ws');
+      if (!this.url.endsWith('/api/websocket')) {
+        this.url = this.url.replace(/\/$/, '') + '/api/websocket';
+      }
     }
     this.token = token;
   }

@@ -53,6 +53,7 @@ Guest mode is a list of what is hidden, not a list of what is allowed. While it 
 - Adding, editing, or deleting chores, and claiming an unassigned chore
 - Revealing kiosk navigation or leaving [Kid Display](/docs/features/kid-display/) with the guest PIN
 - Anything that shows where the family is (whereabouts features, including later who's-home or location views). These stay hidden unless a feature is registered to allow guests. See [For contributors](#for-contributors).
+- The [Home sensors](/docs/features/home-sensors/) card (temperatures, doors, and other entities you picked). It is hidden unless a registration allows guests.
 - Calendars marked **Hide from guests** (see below)
 
 Meals, photos, music, and the leaderboard stay visible, along with the calendar (view only), chores and tasks, the grocery list, and timers. A feature that is not registered stays visible.
@@ -101,6 +102,7 @@ Feature visibility lives in `src/display/guest-mode.ts`. The registry is a denyl
 
 - `kind: 'screen'` is visible to guests unless you set `allowGuests: false`.
 - `kind: 'whereabouts'` is hidden from guests unless you set `allowGuests: true`. Use this for anything that shows where the family is. `presence` and `location` are already registered and hidden by default, so a later who's-home or location view can plug in without a new default.
+- `kind: 'sensors'` is also hidden from guests unless you set `allowGuests: true`. The [Home sensors](/docs/features/home-sensors/) card is registered as `homeSensors`.
 - An id that is not registered stays visible. Meals, photos, music, and the leaderboard are left unregistered on purpose.
 
 Redeeming rewards is gated as `rewardsRedeem`. Creating, editing, and deleting events are gated as `createEvents`, `editEvents`, and `deleteEvents`. Calendar filtering uses `filterEventsForGuest` and `filterCalendarsForGuest`. Dashboard and calendar chore check-offs share `src/display/checklist-completion.ts` and store optional `by: 'guest'` on the completion; older completions have no `by` and stay valid. An unassigned guest check-off uses `UNCREDITED_MEMBER_ID` (an empty `member_id`) so it awards no points and no streak.

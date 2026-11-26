@@ -10,6 +10,7 @@ import {
 import { normalizeCalendarLayout, type CalendarLayout } from '../types';
 import { isAddOn } from '../utils/ha-env';
 import { publishChoreResetTime } from '../api/chore-reset-time';
+import { normalizeHomeSensorSettings, type HomeSensorPick } from '../home-sensors/settings';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,6 +66,19 @@ export interface BeaconSettings {
   photoDirectory: string;
   photoInterval: number;
   photoTransition: 'fade' | 'slide';
+  /**
+   * Home sensors dashboard card. Off until a parent turns it on, so existing
+   * installs keep the dashboard they already have. The card is also absent
+   * from the Family and Classic presets until someone adds it in edit mode.
+   */
+  homeSensorsEnabled: boolean;
+  /**
+   * Entities shown on the Home sensors card. Each may set a friendly name
+   * and an icon. Empty until someone picks them. A reading that Home
+   * Assistant has not updated for 3 hours is shown as stale, not as the
+   * last value.
+   */
+  homeSensors: HomeSensorPick[];
 
   // Dashboard
   dashboardLayout: 'default' | 'classic' | 'compact';
@@ -182,6 +196,8 @@ function buildDefaults(): BeaconSettings {
     photoDirectory: config.photo_directory,
     photoInterval: config.photo_interval,
     photoTransition: 'fade',
+    homeSensorsEnabled: false,
+    homeSensors: [],
 
     dashboardLayout: 'default',
     advancedDashboard: false,
@@ -270,11 +286,16 @@ export function withMagicImportDefault(
   return { ...settings, magicImport: addOn };
 }
 
+function withHomeSensors(settings: BeaconSettings): BeaconSettings {
+  const normalized = normalizeHomeSensorSettings(settings);
+  return { ...settings, ...normalized };
+}
+
 function withUnstoredDefaults(
   settings: BeaconSettings,
   stored: Partial<BeaconSettings> | null | undefined,
 ): BeaconSettings {
-  return withMagicImportDefault(withVoiceButtonDefault(settings, stored), stored);
+  return withHomeSensors(withMagicImportDefault(withVoiceButtonDefault(settings, stored), stored));
 }
 
 function withNormalizedFonts(settings: BeaconSettings): BeaconSettings {

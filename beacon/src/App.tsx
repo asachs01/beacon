@@ -56,6 +56,7 @@ import { filterCalendarsForGuest, filterEventsForGuest, guestCanSee, guestMayMut
 import { checklistCompletedIds, checklistGuestCheckedIds, planChecklistToggle } from './display/checklist-completion';
 import { ToastHost } from './components/ToastHost';
 import { useGuestMode } from './hooks/useGuestMode';
+import { attachDirectHaClient } from './api/home-sensor-stream';
 import { DEMO_CALENDARS, DEMO_EVENTS } from './demo/fixtures';
 import { demoInitialView } from './demo/location';
 import { normalizeNavigateView } from './voice/assist';
@@ -77,6 +78,11 @@ export function App() {
   } = useSettings();
   const fontStatus = useAppliedFonts(settings.headingFont, settings.bodyFont);
   const guest = useGuestMode(settings.guestTimeoutHours, settings.guestPin);
+
+  useEffect(() => {
+    attachDirectHaClient(client());
+    return () => attachDirectHaClient(null);
+  }, [client, connected]);
 
   const i18n = useMemo(() => createI18n(settings.locale), [settings.locale]);
   const { t } = i18n;
@@ -847,6 +853,9 @@ export function App() {
               groceryListId={settings.defaultGroceryList || 'beacon-shopping'}
               grocyExpiringEnabled={settings.grocyExpiringEnabled}
               grocyMissingEnabled={settings.grocyMissingEnabled}
+              guestActive={guest.active}
+              homeSensorsEnabled={settings.homeSensorsEnabled}
+              homeSensors={settings.homeSensors}
               grocyEnabled={settings.grocyEnabled}
               connected={connected}
             />

@@ -82,6 +82,8 @@ const settings = {
   photoDirectory: '/media/beacon/photos',
   photoInterval: 30,
   photoTransition: 'fade',
+  homeSensorsEnabled: false,
+  homeSensors: [],
   dashboardLayout: 'default',
   advancedDashboard: false,
   screenSaverEnabled: true,

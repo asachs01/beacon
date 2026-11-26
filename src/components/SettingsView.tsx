@@ -28,6 +28,7 @@ import type { FontApplyStatus } from '../hooks/useAppliedFonts';
 import { FontSettings } from './FontSettings';
 import { getConfig } from '../config';
 import { isAddOn } from '../utils/ha-env';
+import { HomeSensorsSettings } from './HomeSensorsSettings';
 import { buildFocusUrl } from '../focus';
 import { useRoutines } from '../hooks/useRoutines';
 import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
@@ -1424,10 +1425,16 @@ export function SettingsView({
             className="settings-input"
             value={settings.weatherEntity}
             onChange={(e) => onUpdateSettings({ weatherEntity: e.target.value })}
-            placeholder="weather.home"
-          />
+          placeholder="weather.home"
+        />
         </div>
       </div>
+
+      <HomeSensorsSettings
+        enabled={settings.homeSensorsEnabled}
+        sensors={settings.homeSensors}
+        onChange={onUpdateSettings}
+      />
 
       <div className="settings-group">
         <div className="settings-group-title">{t('settings.integrations.grocyTitle')}</div>

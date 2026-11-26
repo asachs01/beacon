@@ -1,0 +1,48 @@
+---
+title: "Home sensors"
+description: "A read-only dashboard card for a few Home Assistant entities you pick, such as temperature, a door, or the washer."
+order: 1.5
+---
+
+# Home sensors
+
+Home sensors is a dashboard card for a few Home Assistant entities: a temperature, a door, the garage, or whether the washer is done. It is read-only. It does not toggle devices, call services, or show camera feeds.
+
+The card is **off** until you turn it on. Existing dashboards are unchanged, and the card is not part of the Family or Classic layout presets.
+
+This needs Beacon **1.53.0** or later.
+
+## Turn it on
+
+1. Open **Settings → Integrations → Home sensors**.
+2. Turn on **Home sensors card**.
+3. Pick the entities you want. The list is whatever this Home Assistant connection can actually read. Each entity can have its own name and icon (an emoji or a short label). Leave the name blank to use Home Assistant's friendly name.
+4. Turn on **Settings → Appearance → Advanced Dashboard** if it is not already on.
+5. On the dashboard, choose **Edit dashboard** and add the **Home sensors** card. You can put it in the top bar, the main area, or the sidebar.
+
+The picker does not include `camera` entities. The card never shows a camera image.
+
+It works in the Home Assistant add-on and in standalone mode (`HA_URL` and `HA_TOKEN`). The browser does not need its own token: the add-on and standalone server subscribe with the token they already use. That socket is `/beacon-ws/ha`. It is read-only by allowlist: `get_states`, a `state_changed` subscription, unsubscribe of a subscription this page opened, and `ping`. Other commands are refused on the server and are not sent to Home Assistant. If the browser itself is signed in to Home Assistant, the card uses that connection instead.
+
+## What you see
+
+Each row is a name and a state. Temperatures keep their unit. A door or garage shows **Open** or **Closed**. A running sensor shows **Running** or **Idle**.
+
+Updates arrive over Home Assistant's websocket (`get_states`, then `state_changed`). The card does not poll.
+
+| State | What the card shows |
+| --- | --- |
+| `unavailable` | **Unavailable** |
+| `unknown`, or a blank state | **Unknown** |
+| No update for 3 hours | **No update in 3 h** (or the real age, such as **No update in 4 h**) |
+| A current value | The value, with its unit when Home Assistant sends one |
+
+Three hours is the staleness window (`HOME_SENSOR_STALE_MS` in `src/home-sensors/format.ts`). Freshness uses the newest of `last_reported`, `last_updated`, and `last_changed`. A stale row does not keep showing the old number or the old door state.
+
+If Home Assistant removes an entity, the row says **Unavailable**.
+
+## Who can see it
+
+The card is hidden while [guest mode](/docs/features/guest-mode/) is on. It is registered as the `homeSensors` feature with kind `sensors`, which guests cannot see unless that registration is changed to allow them.
+
+It is not on [Kid Display](/docs/features/kid-display/). Kid Display still shows only that family member's routine and chores.

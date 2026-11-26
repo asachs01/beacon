@@ -4,6 +4,7 @@ import { Chore, FamilyMember } from './family';
 import { BeaconRecipe, DayMenu, MealPlanEntry, MealType } from './meals';
 import type { TaskmateUser } from './taskmate';
 import type { TranslationKey } from '../i18n/translations/en';
+import type { HomeSensorPick } from '../home-sensors/types';
 
 export interface TodoItem {
   uid: string;
@@ -100,6 +101,13 @@ export interface DashboardCardContext {
   onToggleChore: (choreId: string) => void;
   /** Chore ids checked off by a guest. Omitted when none of today's completions were. */
   guestCheckedChoreIds?: ReadonlySet<string>;
+  /** True while guest mode is on. The home sensors card hides itself. */
+  guestActive: boolean;
+  /** Kid Display never mounts this dashboard, and the card stays hidden if it did. */
+  kidDisplay: boolean;
+  /** Settings → Integrations. Off until a parent enables the card. */
+  homeSensorsEnabled: boolean;
+  homeSensors: HomeSensorPick[];
   /** Home Assistant is reachable. Shopping cards use this only when Grocy is on. */
   connected?: boolean;
   /** Settings → Integrations → Grocy. Off leaves the shopping card on HA todo lists. */

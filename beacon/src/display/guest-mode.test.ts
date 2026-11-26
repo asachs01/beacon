@@ -224,6 +224,12 @@ describe('guest visibility registry', () => {
     registerGuestFeature({ id: 'whosHome', kind: 'whereabouts', allowGuests: true });
     expect(guestCanSee(true, 'whosHome')).toBe(true);
   });
+
+  it('hides home sensors from guests unless a registration allows them', () => {
+    expect(guestFeatureRegistration('homeSensors')?.kind).toBe('sensors');
+    expect(guestCanSee(true, 'homeSensors')).toBe(false);
+    expect(guestCanSee(false, 'homeSensors')).toBe(true);
+  });
 });
 
 describe('guest completion marker', () => {

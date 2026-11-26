@@ -20,6 +20,7 @@ import type { TaskmateUser } from '../types/taskmate';
 import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
 import { useTranslation } from '../i18n';
 import { addIngredientsToGroceryList } from '../api/grocery-write';
+import type { HomeSensorPick } from '../home-sensors/types';
 
 export type { TodoItem } from '../types/dashboard-cards';
 
@@ -48,6 +49,9 @@ interface DashboardViewProps {
   groceryListId?: string;
   grocyExpiringEnabled?: boolean;
   grocyMissingEnabled?: boolean;
+  guestActive?: boolean;
+  homeSensorsEnabled?: boolean;
+  homeSensors?: HomeSensorPick[];
   /** Settings → Integrations → Grocy. The shopping card reads this from context. */
   grocyEnabled?: boolean;
   /** Home Assistant connection for the shopping card's Grocy list. */
@@ -95,6 +99,9 @@ export function DashboardView({
   groceryListId = 'beacon-shopping',
   grocyExpiringEnabled = false,
   grocyMissingEnabled = false,
+  guestActive = false,
+  homeSensorsEnabled = false,
+  homeSensors = [],
   grocyEnabled = false,
   connected = false,
 }: DashboardViewProps) {
@@ -190,6 +197,10 @@ export function DashboardView({
     completedChoreIds,
     onToggleChore,
     guestCheckedChoreIds,
+    guestActive,
+    kidDisplay: false,
+    homeSensorsEnabled,
+    homeSensors,
     connected,
     grocyEnabled,
   };
