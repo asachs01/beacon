@@ -3,6 +3,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { SITE_URL } from "./site.config.mjs";
+import { remarkCaution } from "./src/lib/remark-caution.mjs";
 
 /** "Edit this page" links. DocsLayout reads this via Vite define. */
 const githubEditBase = "https://github.com/asachs01/beacon/edit/main/";
@@ -10,7 +11,7 @@ const githubEditBase = "https://github.com/asachs01/beacon/edit/main/";
 export default defineConfig({
   site: SITE_URL,
   integrations: [
-    mdx(),
+    mdx({ remarkPlugins: [remarkCaution] }),
     sitemap({
       filter: (page) =>
         !page.endsWith("/robots.txt") &&
@@ -36,6 +37,7 @@ export default defineConfig({
     },
   },
   markdown: {
+    remarkPlugins: [remarkCaution],
     shikiConfig: {
       theme: "github-dark",
       wrap: true,

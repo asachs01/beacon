@@ -37,7 +37,11 @@ wget -qO /dev/null http://localhost:3000/ || exit 1
 
 ## Docker standalone deployment
 
-For running Beacon outside of Home Assistant's add-on system (Docker, Docker Compose, or Kubernetes). The container proxies Home Assistant, so `HA_URL` must be reachable from the container. The browser only needs to reach Beacon.
+For running Beacon outside of Home Assistant's add-on system (Docker, Docker Compose, or Kubernetes). The container talks to Home Assistant, so `HA_URL` must be reachable from the container. On your trusted home network, the browser only needs to reach Beacon; it does not talk to Home Assistant directly.
+
+:::caution
+Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+:::
 
 This needs Beacon **1.50.1** or later. **Changed in 1.50.1.**
 
@@ -122,7 +126,12 @@ Use `wss://` when Home Assistant is served over HTTPS. On a standalone container
 
 ## Reverse proxy setup
 
-If you want to access Beacon from outside your local network or behind a reverse proxy.
+If you put Beacon behind a reverse proxy. A reverse proxy that is reachable from outside your LAN must require authentication. Do not forward Beacon's port on its own.
+
+:::caution
+Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+:::
+
 
 ### Nginx
 
@@ -163,7 +172,7 @@ Caddy handles SSL certificates automatically via Let's Encrypt.
 
 - The standalone container calls Home Assistant itself. The browser talks to Beacon, and Beacon calls `HA_URL` with `HA_TOKEN`. The reverse proxy in front of Beacon does not need to reach Home Assistant.
 - A development server (`npm run dev`) is different: the browser talks to Home Assistant directly, so that browser must be able to reach `VITE_HA_URL`.
-- For best results, keep Beacon and HA on the same network and access Beacon via the reverse proxy.
+- Keep Beacon and Home Assistant on the same trusted network. If the reverse proxy is reachable from outside your LAN, it must require authentication.
 
 ---
 
@@ -338,7 +347,7 @@ Use `wss://` when Home Assistant is served over HTTPS. This workaround was not t
 ### Beacon loads but shows "Demo Mode"
 
 This means Beacon could not connect to Home Assistant. The UI can still load. Check:
-1. `HA_URL` is set as a base URL (no `/api` path) and is reachable from the container. The browser only needs to reach Beacon.
+1. `HA_URL` is set as a base URL (no `/api` path) and is reachable from the container. On your trusted home network, the browser only needs to reach Beacon.
 2. `HA_TOKEN` is a valid long-lived access token
 3. You did not set `SUPERVISOR_TOKEN` on a standalone container
 4. The Home Assistant instance is running and the API is accessible
