@@ -108,6 +108,10 @@ export interface DashboardCardContext {
   /** Settings → Integrations. Off until a parent enables the card. */
   homeSensorsEnabled: boolean;
   homeSensors: HomeSensorPick[];
+  /** Home Assistant is reachable. Shopping cards use this only when Grocy is on. */
+  connected?: boolean;
+  /** Settings → Integrations → Grocy. Off leaves the shopping card on HA todo lists. */
+  grocyEnabled?: boolean;
 }
 
 export interface DashboardCardProps {

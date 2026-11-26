@@ -112,26 +112,38 @@ export class GrocyClient {
     if (!(await this.isReady())) return [];
 
     try {
-      const found = await firstEntity(GROCY_EXPIRING_ENTITIES);
-      if (!found) return [];
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() + days);
-      return readGrocyList(found.attributes, EXPIRING_KEYS)
-        .filter((item) => {
-          const raw = text(item.best_before_date);
-          if (!raw) return false;
-          return new Date(raw) <= cutoff;
-        })
-        .map((item) => toProductItem(item, 'expiring'));
+      const read = await this.readExpiringProducts(days);
+      return read.items;
     } catch (err) {
       console.warn('Beacon: Failed to fetch expiring products', err);
       return [];
     }
   }
 
-  /** Every product on the expiring sensor. `present` is false when the sensor is absent. */
-  async readExpiringProducts(): Promise<GrocySensorRead> {
-    return this.readProductSensor(GROCY_EXPIRING_ENTITIES, EXPIRING_KEYS, 'expiring');
+  /**
+   * Products on the expiring sensor whose best-before date is within `days`
+   * (default 3). `present` is false when neither entity id exists.
+   *
+   * The HACS integration at c7863c2 publishes this as a binary sensor attribute,
+   * not a filtered 3-day list. `coordinator.py` stores whatever
+   * `grocy_data.async_update_expiring_products` returns, and that method calls
+   * `api.due_products(True)` (grocy_data.py L127–L131). `binary_sensor.py`
+   * L80–L82 puts those rows on the attribute `expiring_products` via
+   * `x.as_dict()`. pygrocy2 2.4.1 `Product.as_dict` (base.py L15–L20) emits
+   * the property `best_before_date` (product.py L95, L166–L167), copied from
+   * `CurrentStockResponse.best_before_date` (grocy_api_client.py L135–L138).
+   * `due_products` (grocy.py L58–L65) builds `Product` from that stock row.
+   * There is no separate `due_date` on these rows. `json_encoder.py` L14–L16
+   * writes the date with `isoformat()`. Older installs may still use
+   * `sensor.grocy_expiring_products`; that id is the second candidate.
+   */
+  async readExpiringProducts(days = 3): Promise<GrocySensorRead> {
+    const found = await firstEntity(GROCY_EXPIRING_ENTITIES);
+    if (!found) return { present: false, items: [] };
+    const items = readGrocyList(found.attributes, EXPIRING_KEYS)
+      .filter((item) => isDueWithinDays(text(item.best_before_date), days))
+      .map((item) => toProductItem(item, 'expiring'));
+    return { present: true, items };
   }
 
   async readMissingProducts(): Promise<GrocySensorRead> {
@@ -300,6 +312,21 @@ async function firstEntity(entityIds: readonly string[]) {
     if (state) return state;
   }
   return null;
+}
+
+/**
+ * Local calendar day of `best_before_date` is on or before today + `days`.
+ * `YYYY-MM-DD` (and an isoformat datetime with that prefix) is read as a
+ * local date so a UTC parse cannot shift the day.
+ */
+function isDueWithinDays(raw: string, days: number, now = new Date()): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+  if (!match) return false;
+  const due = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  if (Number.isNaN(due.getTime())) return false;
+  const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  cutoff.setDate(cutoff.getDate() + days);
+  return due.getTime() <= cutoff.getTime();
 }
 
 function quantityLabel(item: Record<string, unknown>): string | undefined {

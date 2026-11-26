@@ -52,6 +52,10 @@ interface DashboardViewProps {
   guestActive?: boolean;
   homeSensorsEnabled?: boolean;
   homeSensors?: HomeSensorPick[];
+  /** Settings → Integrations → Grocy. The shopping card reads this from context. */
+  grocyEnabled?: boolean;
+  /** Home Assistant connection for the shopping card's Grocy list. */
+  connected?: boolean;
 }
 
 function GrocySidebarCards({ expiring, missing }: { expiring: boolean; missing: boolean }) {
@@ -98,6 +102,8 @@ export function DashboardView({
   guestActive = false,
   homeSensorsEnabled = false,
   homeSensors = [],
+  grocyEnabled = false,
+  connected = false,
 }: DashboardViewProps) {
   const { t } = useTranslation();
   const [now, setNow] = useState(new Date());
@@ -195,6 +201,8 @@ export function DashboardView({
     kidDisplay: false,
     homeSensorsEnabled,
     homeSensors,
+    connected,
+    grocyEnabled,
   };
 
   // The legacy composition deliberately bypasses cards, GridStack, persisted

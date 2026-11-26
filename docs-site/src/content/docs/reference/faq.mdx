@@ -134,7 +134,7 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 ### Can a babysitter use Beacon without full access?
 
-**Yes, from 1.51.0.** Set a guest PIN under **Settings → Display → Guest mode**. It is empty by default. The same hidden-corner gesture plus that PIN starts guest mode, and a **Guest** badge stays on the screen. Guest mode hides Settings, family and rewards changes, Magic Import, event create/edit/delete, and calendars marked **Hide from guests**. Meals, photos, music, and the leaderboard stay visible. A guest can still check off chores and tasks, add grocery items, and use timers. Chores they check off still count for points and streaks, and show **Checked off by Guest**. Guests can always leave guest mode from inside the app: a family PIN leaves it, or the guest PIN when no family PIN is set. Guest mode only limits what this Beacon screen shows. It is not a security boundary. Home Assistant and the API stay reachable on the network. See [Guest mode](/docs/features/guest-mode/).
+**Yes, from 1.51.0.** Set a guest PIN under **Settings → Display → Guest mode**. It is empty by default. The same hidden-corner gesture plus that PIN starts guest mode, and a **Guest** badge stays on the screen. Guest mode hides Settings, family and rewards changes, Magic Import, event create/edit/delete, and calendars marked **Hide from guests**. Meals, photos, music, and the leaderboard stay visible. A guest can still check off chores and tasks, add grocery items, and use timers. Chores they check off still count for points and streaks, and show **Checked off by Guest** on chore rows (Home Assistant to-do items don't get the label). From 1.52.0, an unassigned guest check-off is recorded as Guest and earns no points. Guests can earn rewards but cannot redeem them. Guests can always leave guest mode from inside the app: a family PIN leaves it, or the guest PIN when no family PIN is set. Guest mode only limits what this Beacon screen shows. It is not a security boundary. Home Assistant and the API stay reachable on the network. See [Guest mode](/docs/features/guest-mode/).
 
 ### Can kids earn money for doing chores?
 
@@ -162,11 +162,11 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 ### Does it have a grocery list?
 
-**Yes.** The Grocery view shows Home Assistant to-do lists, including AnyList lists. You can view the list, add items, and check them off. See [Grocery](/docs/features/grocery/).
+**Yes.** The Grocery view shows Home Assistant to-do lists, including AnyList lists. From **1.52.1**, turning on **Grocy Integration** also adds a list named **Grocy**, and checking items off on that list writes back to Grocy. See [Grocery](/docs/features/grocery/).
 
 ### Does Beacon work with Grocy?
 
-**Yes, from 1.52.0, through the [HACS Grocy integration](https://github.com/custom-components/grocy).** Open **Settings → Integrations → Grocy**. **Grocy Integration** lets [Magic Import](/docs/features/magic-import/) add items to Grocy's shopping list. Optional **Expiring products** and **Low stock** dashboard cards (off by default) read `binary_sensor.grocy_expiring_products` and `binary_sensor.grocy_missing_products`. In 1.52.0, checking an item off on the Grocery screen updates the Home Assistant to-do list; it does not sync to Grocy yet. That comes in a later release. Beacon does not sync Grocy chores or Grocy's meal plan; it has its own [chores](/docs/features/chores/) and [meal planner](/docs/features/meals/). See [Grocery](/docs/features/grocery/).
+**Yes, from 1.52.0, through the [HACS Grocy integration](https://github.com/custom-components/grocy).** Open **Settings → Integrations → Grocy**. **Grocy Integration** lets [Magic Import](/docs/features/magic-import/) add items to Grocy's shopping list. Optional **Expiring products** and **Low stock** dashboard cards (off by default) read `binary_sensor.grocy_expiring_products` and `binary_sensor.grocy_missing_products`. From 1.52.1, with Grocy Integration on, the Grocery screen includes a list named Grocy and check-offs on that list write the shopping-list done flag. The expiring card shows only items due within 3 days. Beacon does not sync Grocy chores or Grocy's meal plan; it has its own [chores](/docs/features/chores/) and [meal planner](/docs/features/meals/). See [Grocery](/docs/features/grocery/).
 
 ### Does it send notifications?
 

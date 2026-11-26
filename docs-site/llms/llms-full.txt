@@ -97,8 +97,7 @@ Text import shipped in [v1.47.0](https://github.com/asachs01/beacon/releases/tag
 ### Grocery
 URL: __SITE_URL__/docs/features/grocery/
 
-Shopping lists from built-in local lists, Home Assistant to-do entities, or AnyList.
-
+Shopping lists from built-in local lists, Home Assistant to-do entities, or AnyList. From [v1.52.0](https://github.com/asachs01/beacon/releases/tag/v1.52.0), Beacon can also use the HACS Grocy integration (Settings → Integrations → Grocy). Magic Import can add items to Grocy's shopping list through `add_generic`. Optional expiring-products and low-stock dashboard cards (off by default) read `binary_sensor.grocy_expiring_products` and `binary_sensor.grocy_missing_products`; a card stays hidden if its entity is missing. From 1.52.1, with Grocy Integration on, the Grocery screen includes a list named Grocy and check-offs on that list write the shopping-list done flag. The expiring card shows only items due within 3 days. The meal planner's Add ingredients to grocery list still writes to the default list or the built-in Shopping List, including Home Assistant to-do lists, not Grocy.
 ### Photos
 URL: __SITE_URL__/docs/features/photos/
 
@@ -113,6 +112,12 @@ A photo screensaver with crossfade transitions and an optional clock overlay.
 URL: __SITE_URL__/docs/features/night-mode/
 
 Shipped in [v1.50.0](https://github.com/asachs01/beacon/releases/tag/v1.50.0). Off by default under Settings → Display → Night mode. You can set a schedule (default 9:00 PM to 6:30 AM; overnight ranges work; the schedule uses the device's local time) or turn it on or off manually. The Night mode switch has to be on; a manual override of Schedule, On, or Off cannot enable it by itself. While it is on, Beacon switches to the Midnight theme without rewriting the saved theme, adds a dim layer (default 30%; a CSS overlay, not a change to the device's screen brightness), and can show an optional clock-only screen. A tap removes the dim layer and the clock-only screen for 60 seconds, so the dashboard is back at full brightness, still in the Midnight theme. A finished countdown timer wakes the screen and holds it until the alarm is dismissed, and for at least 60 seconds even if the alarm is dismissed sooner. Shared timers and Family Bell do not yet call this wake hook. Night mode also runs on the Kid Display and kiosk views when it is turned on. The dim overlay does not capture taps, and the hidden corner used to leave kiosk mode or Kid Display stays open, including when Clock only is on.
+
+
+### Guest mode
+URL: __SITE_URL__/docs/features/guest-mode/
+
+Shipped in [v1.51.0](https://github.com/asachs01/beacon/releases/tag/v1.51.0). Optional guest PIN, empty by default, under Settings → Display → Guest mode. A guest enters with the corner gesture plus that PIN, and a Guest badge stays on the screen. Guests can view the calendar, check off chores, add to the grocery list, and use timers. They can view events but cannot create, edit, or delete them, and they cannot change settings or approve imports. What is hidden is a deny-list: whereabouts features (presence and location) and calendars marked Hide from guests are hidden; meals, photos, music, and the leaderboard stay visible. Guest check-offs on a family member's chore earn points and streaks and show "Checked off by Guest" on chore rows (the Chores screen, and completed chore rows on the dashboard and calendar task lists). Home Assistant to-do items don't get the label. From [v1.52.0](https://github.com/asachs01/beacon/releases/tag/v1.52.0), an unassigned guest check-off is recorded as Guest and earns no points. Guests can earn rewards but cannot redeem them. A session ends with the family PIN, the guest PIN when no family PIN is set, the timeout (default 4 hours), or when the guest PIN is cleared or changed. Leaving kiosk or Kid Display is a separate step. Guest mode is not a security boundary: it only limits what this Beacon screen shows.
 
 ### Meals
 URL: __SITE_URL__/docs/features/meals/

@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { GroceryList } from '../types/grocery';
 import { AnyListClient } from '../api/anylist';
 import { callHaService, hasToken } from '../api/ha-rest';
+import { useGrocery } from '../hooks/useGrocery';
 import { useLocalTasks } from '../hooks/useLocalTasks';
 import { useTranslation } from '../i18n';
 
@@ -12,12 +13,14 @@ interface TodoItem {
   status: 'needs_action' | 'completed';
 }
 
-/** Unified list entry (HA or local) */
+/** Unified list entry (HA, local, or the Grocy shopping list). */
 interface UnifiedList {
   id: string;
   name: string;
-  source: 'ha' | 'local';
+  source: 'ha' | 'local' | 'grocy';
 }
+
+const GROCY_LIST_ID = 'grocy';
 
 /** Keywords that identify a list as grocery/shopping (vs tasks) */
 const GROCERY_KEYWORDS = [
@@ -38,9 +41,19 @@ interface GroceryViewProps {
   mode?: ListViewMode;
   /** Explicit list of HA todo entity IDs that are grocery/shopping lists */
   groceryListIds?: string[];
+  /** Settings → Integrations → Grocy. Off leaves this screen on HA and local lists. */
+  grocyEnabled?: boolean;
+  /** Home Assistant connection used by useGrocery. Ignored when Grocy is off. */
+  connected?: boolean;
 }
 
-export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = [] }: GroceryViewProps) {
+export function GroceryView({
+  defaultListId,
+  mode = 'grocery',
+  groceryListIds = [],
+  grocyEnabled = false,
+  connected = false,
+}: GroceryViewProps) {
   const { t } = useTranslation();
   const [haLists, setHaLists] = useState<GroceryList[]>([]);
   const [selectedListId, setSelectedListId] = useState<string>(defaultListId || '');
@@ -53,6 +66,8 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
   const anylistRef = useRef(new AnyListClient());
 
   const localTasks = useLocalTasks();
+  const grocyActive = grocyEnabled && mode === 'grocery';
+  const grocy = useGrocery(grocyActive ? connected : false, grocyActive);
 
   // Merge HA lists + local lists, then filter by mode
   const allLists = useMemo<UnifiedList[]>(() => {
@@ -71,24 +86,33 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
     };
 
     // Filter by mode: grocery lists vs task lists
-    if (mode === 'grocery') {
-      return merged.filter(l =>
+    const filtered = mode === 'grocery'
+      ? merged.filter(l =>
         l.id === 'beacon-shopping' ||
         (defaultListId != null && defaultListId !== '' && l.id === defaultListId) ||
         (l.source === 'ha' && isGroceryHA(l.id, l.name))
+      )
+      : merged.filter(l =>
+        l.id === 'beacon-todo' || (l.source === 'ha' && !isGroceryHA(l.id, l.name))
       );
-    }
-    // tasks mode: local To-Do + all HA lists that aren't grocery
-    return merged.filter(l =>
-      l.id === 'beacon-todo' || (l.source === 'ha' && !isGroceryHA(l.id, l.name))
-    );
-  }, [haLists, localTasks.lists, mode, defaultListId, groceryListIds]);
+
+    if (!grocyActive) return filtered;
+    return [{ id: GROCY_LIST_ID, name: 'Grocy', source: 'grocy' }, ...filtered];
+  }, [haLists, localTasks.lists, mode, defaultListId, groceryListIds, grocyActive]);
 
   const selectedList = allLists.find(l => l.id === selectedListId);
   const isLocal = selectedList?.source === 'local';
+  const isGrocy = selectedList?.source === 'grocy';
 
   // Items for current list
   const items = useMemo<TodoItem[]>(() => {
+    if (isGrocy) {
+      return (grocy.list?.items ?? []).map((item) => ({
+        uid: item.id,
+        summary: item.name,
+        status: item.checked ? 'completed' as const : 'needs_action' as const,
+      }));
+    }
     if (isLocal) {
       return localTasks.getTasksForList(selectedListId).map(t => ({
         uid: t.id,
@@ -97,7 +121,7 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
       }));
     }
     return haItems;
-  }, [isLocal, selectedListId, localTasks, haItems]);
+  }, [isGrocy, grocy.list, isLocal, selectedListId, localTasks, haItems]);
 
   // Discover HA todo lists (only if HA token is available)
   useEffect(() => {
@@ -158,19 +182,19 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
 
   // Reload when selected list changes (HA lists only)
   useEffect(() => {
-    if (!selectedListId || isLocal) {
+    if (!selectedListId || isLocal || isGrocy) {
       setLoading(false);
       return;
     }
     loadHaItems(selectedListId);
-  }, [selectedListId, isLocal, loadHaItems]);
+  }, [selectedListId, isLocal, isGrocy, loadHaItems]);
 
   // Refresh HA lists every 30 seconds
   useEffect(() => {
-    if (!selectedListId || isLocal) return;
+    if (!selectedListId || isLocal || isGrocy) return;
     const interval = setInterval(() => loadHaItems(selectedListId), 30_000);
     return () => clearInterval(interval);
-  }, [selectedListId, isLocal, loadHaItems]);
+  }, [selectedListId, isLocal, isGrocy, loadHaItems]);
 
   // Split items
   const uncheckedItems = useMemo(
@@ -190,7 +214,9 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
 
     setSubmitting(true);
     try {
-      if (isLocal) {
+      if (isGrocy) {
+        await grocy.addItem(trimmed);
+      } else if (isLocal) {
         localTasks.addTask(selectedListId, trimmed);
       } else {
         await anylistRef.current.addItem(selectedListId, trimmed);
@@ -204,10 +230,17 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
       setSubmitting(false);
       inputRef.current?.focus();
     }
-  }, [inputValue, submitting, selectedListId, isLocal, localTasks, loadHaItems]);
+  }, [inputValue, submitting, selectedListId, isGrocy, grocy, isLocal, localTasks, loadHaItems]);
 
   // Toggle item
   const handleToggle = useCallback(async (item: TodoItem) => {
+    if (isGrocy) {
+      const current = grocy.list?.items.find((entry) => entry.id === item.uid);
+      if (current?.checked) await grocy.uncheckItem(item.uid);
+      else await grocy.checkItem(item.uid);
+      return;
+    }
+
     if (isLocal) {
       localTasks.toggleTask(item.uid);
       return;
@@ -231,7 +264,7 @@ export function GroceryView({ defaultListId, mode = 'grocery', groceryListIds = 
         i.uid === item.uid ? { ...i, status: item.status } : i
       ));
     }
-  }, [isLocal, selectedListId, localTasks, loadHaItems]);
+  }, [isGrocy, grocy, isLocal, selectedListId, localTasks, loadHaItems]);
 
   // Delete local item (long-press or swipe equivalent)
   const handleDelete = useCallback((item: TodoItem) => {
