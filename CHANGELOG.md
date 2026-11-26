@@ -1,3 +1,10 @@
+# [1.53.0](https://github.com/asachs01/beacon/compare/v1.52.1...v1.53.0) (2026-11-26)
+
+
+### Features
+
+* **dashboard:** home sensors card ([f2b1f6b](https://github.com/asachs01/beacon/commit/f2b1f6b6a9820ebf7867c51d7cf14919e07ec39e))
+
 ## [1.52.1](https://github.com/asachs01/beacon/compare/v1.52.0...v1.52.1) (2026-11-25)
 
 
