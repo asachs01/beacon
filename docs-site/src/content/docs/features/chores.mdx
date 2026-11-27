@@ -168,15 +168,15 @@ Members with zero earnings still appear on the leaderboard (at the bottom).
 
 ## Data storage
 
-Chore data is stored in the browser's localStorage:
+Beacon's server keeps chore data as JSON files in its data folder (`/data`), so every display that uses the same Beacon server sees the same chores, check-offs, and streaks:
 
-| Key | Contents |
+| File | Contents |
 |-----|----------|
-| `beacon_chores` | List of chore definitions |
-| `beacon_completions` | Log of all chore completions with timestamps |
-| `beacon_streaks` | Streak records per member |
+| `beacon_chores.json` | List of chore definitions |
+| `beacon_completions.json` | Log of all chore completions with timestamps |
+| `beacon_streaks.json` | Streak records per member |
 
-This data persists across page reloads but is tied to the specific browser/device.
+Each browser also keeps a copy under the same names (without `.json`) in localStorage. Beacon uses that copy to draw the screen quickly and as a fallback when the server can't be reached. With the Vite dev server (`npm run dev`) there is no Beacon server, so chores live only in that browser.
 
 ---
 

@@ -354,10 +354,15 @@ The `FamilyStore` class manages family member, chore, completion, streak, and ro
 
 ### Storage
 
-- **Primary**: Browser localStorage
-- **Secondary sync**: HA `input_text.*` helpers (when connected and data < 255 chars)
+Reads and writes go through `loadData`, `loadDataSync`, and `saveData` in `src/api/beacon-store.ts`.
 
-### LocalStorage keys
+- **Server (source of truth)**: when the page is served by Beacon's server (the add-on, or the Docker or standalone container), `GET` and `PUT /beacon-data/:key` read and write `<key>.json` in the data folder (`/data`, or `BEACON_DATA` if set).
+- **Browser cache**: each `FamilyStore` write is also saved to localStorage under the same key. `loadData` asks the server first and falls back to localStorage if the request fails. The `*Sync` methods read only localStorage, for the first render.
+- **No server**: under the Vite dev server there is no `window.__BEACON_CONFIG__`, so localStorage is the only store.
+
+Family members are a special case. The browser copy and every server response carry `hasPin` instead of `pin` or `pinHash`. On `PUT`, the server merges the list with the stored one, so a member keeps their PIN hash unless the request sends a new `pin`.
+
+### Keys
 
 | Key | Contents |
 |-----|----------|
@@ -366,6 +371,7 @@ The `FamilyStore` class manages family member, chore, completion, streak, and ro
 | `beacon_completions` | `ChoreCompletion[]` |
 | `beacon_streaks` | `Streak[]` |
 | `beacon_routines` | `Routine[]` |
+| `beacon_routine_completions` | `RoutineTaskCompletion[]` |
 
 ### Member operations
 
