@@ -58,7 +58,7 @@
 
 .settings-nav-item--active {
   background: var(--bg-today);
-  color: var(--accent);
+  color: var(--color-brand-text, var(--accent));
   font-weight: 500;
   border-left-color: var(--accent);
 }
@@ -604,7 +604,7 @@
 }
 
 .settings-about-value a {
-  color: var(--accent);
+  color: var(--color-brand-text, var(--accent));
   text-decoration: none;
 }
 

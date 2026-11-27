@@ -397,7 +397,7 @@ a:focus:not(:focus-visible) {
 
 .sidebar-icon--active {
   background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent);
-  color: var(--accent, #3b82f6);
+  color: var(--color-brand-text, var(--accent, #3b82f6));
 }
 
 .sidebar-icon--active::before {
@@ -1322,7 +1322,7 @@ a:focus:not(:focus-visible) {
 .drag-ghost-title {
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--accent, #3b82f6);
+  color: var(--color-brand-text, var(--accent, #3b82f6));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1820,7 +1820,7 @@ a:focus:not(:focus-visible) {
   }
 
   .mobile-tab--active {
-    color: var(--accent, #3b82f6);
+    color: var(--color-brand-text, var(--accent, #3b82f6));
     position: relative;
   }
 
@@ -1914,7 +1914,7 @@ a:focus:not(:focus-visible) {
   }
 
   .mobile-more-item--active {
-    color: var(--accent, #3b82f6);
+    color: var(--color-brand-text, var(--accent, #3b82f6));
   }
 
   .mobile-more-theme {

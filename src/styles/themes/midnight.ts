@@ -11,6 +11,7 @@ export const midnight: Theme = {
     gridLines: '#334155',
     accent: '#f7a832',
     accentForeground: '#101d3c',
+    brandText: '#f7a832',
     headerBg: '#1e293b',
     todayHighlight: 'rgba(247, 168, 50, 0.06)',
     shadow: '0 1px 3px rgba(0, 0, 0, 0.3)',

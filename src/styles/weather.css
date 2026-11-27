@@ -219,7 +219,7 @@
 
 .weather-forecast-precip {
   font-size: 11px;
-  color: var(--accent);
+  color: var(--color-brand-text, var(--accent));
   font-weight: 500;
 }
 
@@ -343,7 +343,7 @@
   align-items: center;
   gap: 3px;
   font-size: 11px;
-  color: var(--accent);
+  color: var(--color-brand-text, var(--accent));
   font-weight: 500;
 }
 

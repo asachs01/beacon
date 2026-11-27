@@ -41,6 +41,13 @@ function applyThemeToDOM(theme: Theme): void {
   } else {
     root.style.removeProperty('--color-on-accent');
   }
+  // Gold drawn as text or an icon. Beacon Light darkens it; Beacon Dark
+  // keeps brand gold. Other themes fall back to --accent in the stylesheet.
+  if (colors.brandText) {
+    root.style.setProperty('--color-brand-text', colors.brandText);
+  } else {
+    root.style.removeProperty('--color-brand-text');
+  }
   root.style.setProperty('--shadow', colors.shadow);
 
   eventColors.forEach((color, i) => {
