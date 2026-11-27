@@ -25,6 +25,8 @@ describe('pairing UI and middleware are mounted in both trees', () => {
       expect(server).toContain("error: 'pairing_required'");
       expect(server).toContain('handlePair');
       expect(server).toContain("pathname === '/health'");
+      expect(server).toContain("pathname === '/beacon-auth/pairing-code/rotate'");
+      expect(server).toContain('credentialRequired');
       expect(server).toContain("pathOnly === '/beacon-ws/ha'");
       expect(server).toContain("req.url.startsWith('/api/websocket')");
       expect(server).not.toContain("headers['x-ingress-path']");

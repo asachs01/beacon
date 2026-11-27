@@ -70,4 +70,38 @@ describe('Paired devices settings', () => {
 
     vi.unstubAllGlobals();
   });
+
+  it('asks before rotating the pairing code', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ pairingCode: '123456', devices: [] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<PairedDevicesSettings />);
+    expect(await screen.findByText('123456')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Rotate pairing code' }));
+
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Rotate the pairing code?'));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('123456')).toBeInTheDocument();
+
+    confirm.mockReturnValue(true);
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ pairingCode: '654321' }),
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Rotate pairing code' }));
+
+    const rotateCall = fetchMock.mock.calls.find((call) => String(call[0]).includes('/beacon-auth/pairing-code/rotate'));
+    expect(rotateCall?.[1]).toMatchObject({ method: 'POST' });
+    expect(await screen.findByText('654321')).toBeInTheDocument();
+    expect(screen.getByText('The pairing code was updated. The previous code no longer works.')).toBeInTheDocument();
+
+    confirm.mockRestore();
+    vi.unstubAllGlobals();
+  });
 });

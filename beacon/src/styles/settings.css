@@ -934,6 +934,13 @@
   color: var(--text-primary);
 }
 
+.settings-pairing-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 .settings-token-controls {
   display: flex;
   flex-wrap: wrap;

@@ -37,7 +37,7 @@ const {
   requestIsSecure,
 } = require('./lib/device-sessions.cjs');
 const {
-  classifyPath,
+  credentialRequired,
   clientIp,
   headersForUpstream,
   stripSessionQuery,
@@ -291,7 +291,7 @@ function handleDeviceRevoke(req, res) {
   });
 }
 
-function handlePairingCodeRegenerate(req, res) {
+function handlePairingCodeRotate(req, res) {
   if (req.method !== 'POST') {
     json(res, 405, { error: 'Method not allowed' });
     return;
@@ -299,7 +299,8 @@ function handlePairingCodeRegenerate(req, res) {
   const auth = requireSession(req, res);
   if (!auth) return;
   sessionStore.regeneratePairingCode().then((code) => {
-    console.log('Beacon pairing code regenerated');
+    // The new code is returned to the signed-in caller and is not logged.
+    console.log('Beacon pairing code rotated');
     json(res, 200, { pairingCode: code });
   }).catch((err) => {
     if (!res.headersSent) json(res, 500, { error: err.message });
@@ -1302,9 +1303,11 @@ function handleVoiceAction(req, res) {
 const server = http.createServer((req, res) => {
   const pathname = (req.url || '/').split('?')[0];
 
-  // Session or verified ingress. The Home Assistant proxy allowlist, when
-  // present, still applies inside /api/* after this gate.
-  if (classifyPath(pathname) === 'protected') {
+  // Anything off the public allowlist needs a paired session or access
+  // token. Verified ingress (socket peer, add-on mode only) skips that
+  // check. The Home Assistant proxy allowlist still applies inside /api/*
+  // after this gate.
+  if (credentialRequired(pathname, ingressTrusted(req))) {
     if (!requireSession(req, res)) return;
   }
 
@@ -1328,8 +1331,8 @@ const server = http.createServer((req, res) => {
     handleDeviceRevoke(req, res);
     return;
   }
-  if (pathname === '/beacon-auth/pairing-code') {
-    handlePairingCodeRegenerate(req, res);
+  if (pathname === '/beacon-auth/pairing-code' || pathname === '/beacon-auth/pairing-code/rotate') {
+    handlePairingCodeRotate(req, res);
     return;
   }
   if (pathname === '/beacon-auth/access-tokens') {
@@ -1443,7 +1446,7 @@ const server = http.createServer((req, res) => {
 server.on('upgrade', (req, socket, head) => {
   const pathOnly = (req.url || '').split('?')[0];
   let auth = null;
-  if (classifyPath(pathOnly) === 'protected') {
+  if (credentialRequired(pathOnly, ingressTrusted(req))) {
     auth = establishedSession(req);
     if (!auth.ok) {
       denyUpgrade(socket);

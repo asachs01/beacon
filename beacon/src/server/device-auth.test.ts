@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   INGRESS_IP,
   classifyPath,
+  credentialRequired,
   createSocketRegistry,
   headersForUpstream,
   isTrustedIngress,
@@ -75,23 +76,64 @@ describe('route classification', () => {
     '/beacon-auth/devices',
     '/beacon-auth/devices/revoke',
     '/beacon-auth/pairing-code',
+    '/beacon-auth/pairing-code/rotate',
     '/beacon-auth/access-tokens',
+    '/v1/admin',
+    '/beacon-export',
+    '/.env',
+    '/server.js',
+    '/health/live',
+    '/beacon-auth/pair/extra',
+    '/assets',
+    '/assets/../server.js',
+    '/assets/%2e%2e/server.js',
   ];
 
-  it('protects Home Assistant, Beacon data, media, and settings routes', () => {
+  it('protects Home Assistant, Beacon data, media, settings, and unknown routes', () => {
     for (const path of protectedPaths) {
       expect(classifyPath(path), path).toBe('protected');
     }
   });
 
-  it('leaves health, pairing, and static files public', () => {
-    expect(classifyPath('/health')).toBe('public');
-    expect(classifyPath('/beacon-auth/pair')).toBe('public');
-    expect(classifyPath('/beacon-auth/session')).toBe('public');
-    expect(classifyPath('/')).toBe('public');
-    expect(classifyPath('/index.html')).toBe('public');
-    expect(classifyPath('/runtime-config.js')).toBe('public');
-    expect(classifyPath('/assets/index.js')).toBe('public');
+  it('leaves health, pairing, and the static shell public', () => {
+    const publicPaths = [
+      '/health',
+      '/beacon-auth/pair',
+      '/beacon-auth/session',
+      '/',
+      '/index.html',
+      '/runtime-config.js',
+      '/manifest.json',
+      '/manifest.webmanifest',
+      '/favicon.ico',
+      '/favicon.svg',
+      '/favicon.png',
+      '/apple-touch-icon.png',
+      '/sw.js',
+      '/service-worker.js',
+      '/assets/index.js',
+      '/assets/index.css',
+      '/assets/inter-latin.woff2',
+      '/fonts/custom.woff2',
+      '/icons/beacon.png',
+      '/src/assets/beacon-app-icon-192.png',
+      '/src/assets/beacon-favicon-32.png',
+    ];
+    for (const path of publicPaths) {
+      expect(classifyPath(path), path).toBe('public');
+    }
+  });
+
+  it('requires a credential for an unknown path unless the peer is trusted ingress', () => {
+    expect(credentialRequired('/v1/admin', false)).toBe(true);
+    expect(credentialRequired('/beacon-export', false)).toBe(true);
+    expect(credentialRequired('/.env', false)).toBe(true);
+    expect(credentialRequired('/v1/admin', true)).toBe(false);
+    expect(credentialRequired('/api/states', true)).toBe(false);
+    expect(credentialRequired('/assets/index.js', false)).toBe(false);
+    expect(credentialRequired('/health', false)).toBe(false);
+    expect(credentialRequired('/beacon-auth/pair', false)).toBe(false);
+    expect(credentialRequired('/beacon-auth/session', false)).toBe(false);
   });
 });
 
