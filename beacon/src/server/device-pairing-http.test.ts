@@ -122,7 +122,9 @@ const FORGED_INGRESS = {
   'X-Hass-Source': 'core',
 };
 
-describe('device pairing on the Beacon server', () => {
+// Each test spawns a real server (8s listen budget) and waits on sockets and
+// timers, so the 5s default flakes on busy CI runners.
+describe('device pairing on the Beacon server', { timeout: 30_000 }, () => {
   const children: ChildProcess[] = [];
   const closers: Array<() => Promise<void>> = [];
 
