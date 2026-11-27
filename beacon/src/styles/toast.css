@@ -1,0 +1,16 @@
+.beacon-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 80;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border: 1px solid var(--color-warning);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  font-family: var(--font-family-body);
+  font-size: 0.95rem;
+}

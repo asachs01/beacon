@@ -101,6 +101,8 @@ PINs are optional 4-6 digit numeric codes. When a PIN is set:
 
 Any configured family PIN unlocks two parent actions: revealing navigation while Beacon's kiosk mode is on, and leaving Kid Display. If no PIN is set, kiosk navigation appears as soon as the hidden gesture succeeds, and Kid Display asks for a simple confirmation instead. The privilege switch does not use the PIN. Checking a chore does not ask for one.
 
+The [guest PIN](/docs/features/guest-mode/) is separate. It cannot be the same digits as a family PIN, and it never opens those family-PIN gates. A family PIN leaves guest mode. When no family PIN is set, the guest PIN leaves it.
+
 ---
 
 ## Calendar assignment

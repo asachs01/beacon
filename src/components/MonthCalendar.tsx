@@ -18,6 +18,10 @@ interface MonthCalendarProps {
   hiddenCalendars: Set<string>;
   onEventClick: (event: CalendarEvent) => void;
   onSlotClick: (date: string, hour: number) => void;
+  /** Guests cannot create events. Empty days and the add button stay inert. */
+  allowCreate?: boolean;
+  /** Guests cannot edit events. Event chips no longer open the editor. */
+  allowEdit?: boolean;
   onVisibleMonthChange?: (gridStart: Date) => void;
   weekStartsOn: 0 | 1;
   calendarLayout?: CalendarLayout;
@@ -31,6 +35,8 @@ export function MonthCalendar({
   hiddenCalendars,
   onEventClick,
   onSlotClick,
+  allowCreate = true,
+  allowEdit = true,
   onVisibleMonthChange,
   weekStartsOn,
   calendarLayout = 'month',
@@ -162,8 +168,11 @@ export function MonthCalendar({
                     aria-current={isToday ? 'date' : undefined}
                     aria-busy={!loaded || undefined}
                     onClick={() => {
-                      if (loaded && dayEvents.length === 0) onSlotClick(key, 9);
-                      else setOpenDayKey(key);
+                      if (loaded && dayEvents.length === 0) {
+                        if (allowCreate) onSlotClick(key, 9);
+                        return;
+                      }
+                      setOpenDayKey(key);
                     }}
                   >
                     <button
@@ -182,7 +191,7 @@ export function MonthCalendar({
                         <EventChip
                           key={event.id}
                           event={event}
-                          onClick={() => onEventClick(event)}
+                          onClick={allowEdit ? () => onEventClick(event) : undefined}
                         />
                       ))}
                     </div>
@@ -212,14 +221,16 @@ export function MonthCalendar({
           events={openEvents}
           loaded={openDayLoaded}
           onClose={() => setOpenDayKey(null)}
+          allowEdit={allowEdit}
           onEventClick={(event) => {
+            if (!allowEdit) return;
             setOpenDayKey(null);
             onEventClick(event);
           }}
-          onAdd={() => {
+          onAdd={allowCreate ? () => {
             setOpenDayKey(null);
             onSlotClick(openDayKey, 9);
-          }}
+          } : undefined}
         />,
         document.body,
       )}
@@ -227,11 +238,24 @@ export function MonthCalendar({
   );
 }
 
-function EventChip({ event, onClick }: { event: CalendarEvent; onClick: () => void }) {
+function EventChip({ event, onClick }: { event: CalendarEvent; onClick?: () => void }) {
   const { t, dateLocale } = useTranslation();
   const pastel = getPastelColor(event.color);
   const full = getFullColor(event.color);
   const timeLabel = eventTimeLabel(event, t('common.allDay'), dateLocale);
+  const body = (
+    <>
+      <span className="month-event-chip-stripe" style={{ backgroundColor: full }} />
+      <span className="month-event-chip-title">{event.title}</span>
+    </>
+  );
+  if (!onClick) {
+    return (
+      <div className="month-event-chip" style={{ backgroundColor: pastel }} title={`${event.title} (${timeLabel})`}>
+        {body}
+      </div>
+    );
+  }
 
   return (
     <button
@@ -244,8 +268,7 @@ function EventChip({ event, onClick }: { event: CalendarEvent; onClick: () => vo
       }}
       title={`${event.title} (${timeLabel})`}
     >
-      <span className="month-event-chip-stripe" style={{ backgroundColor: full }} />
-      <span className="month-event-chip-title">{event.title}</span>
+      {body}
     </button>
   );
 }
@@ -257,13 +280,15 @@ function DayPopover({
   onClose,
   onEventClick,
   onAdd,
+  allowEdit = true,
 }: {
   day: Date;
   events: CalendarEvent[];
   loaded: boolean;
   onClose: () => void;
   onEventClick: (event: CalendarEvent) => void;
-  onAdd: () => void;
+  onAdd?: () => void;
+  allowEdit?: boolean;
 }) {
   const { t, dateLocale } = useTranslation();
   const longDate = format(day, 'EEEE, MMMM d', { locale: dateLocale });
@@ -303,27 +328,41 @@ function DayPopover({
             const full = getFullColor(event.color);
             return (
               <li key={event.id}>
-                <button
-                  type="button"
-                  className="month-popover-event"
-                  style={{ backgroundColor: pastel }}
-                  onClick={() => onEventClick(event)}
-                >
-                  <span className="month-event-chip-stripe" style={{ backgroundColor: full }} />
-                  <span className="month-popover-event-text">
-                    <span className="month-popover-event-title">{event.title}</span>
-                    <span className="month-popover-event-time">
-                      {eventTimeLabel(event, t('common.allDay'), dateLocale)}
+                {allowEdit ? (
+                  <button
+                    type="button"
+                    className="month-popover-event"
+                    style={{ backgroundColor: pastel }}
+                    onClick={() => onEventClick(event)}
+                  >
+                    <span className="month-event-chip-stripe" style={{ backgroundColor: full }} />
+                    <span className="month-popover-event-text">
+                      <span className="month-popover-event-title">{event.title}</span>
+                      <span className="month-popover-event-time">
+                        {eventTimeLabel(event, t('common.allDay'), dateLocale)}
+                      </span>
                     </span>
-                  </span>
-                </button>
+                  </button>
+                ) : (
+                  <div className="month-popover-event" style={{ backgroundColor: pastel }}>
+                    <span className="month-event-chip-stripe" style={{ backgroundColor: full }} />
+                    <span className="month-popover-event-text">
+                      <span className="month-popover-event-title">{event.title}</span>
+                      <span className="month-popover-event-time">
+                        {eventTimeLabel(event, t('common.allDay'), dateLocale)}
+                      </span>
+                    </span>
+                  </div>
+                )}
               </li>
             );
           })}
         </ul>
-        <button type="button" className="month-day-popover-add" onClick={onAdd}>
-          {t('calendar.addEventOn', { date: longDate })}
-        </button>
+        {onAdd && (
+          <button type="button" className="month-day-popover-add" onClick={onAdd}>
+            {t('calendar.addEventOn', { date: longDate })}
+          </button>
+        )}
       </div>
     </div>
   );

@@ -24,6 +24,7 @@ const SECTIONS = [
   'calendar',
   'integrations',
   'display',
+  'devices',
   'chores',
   'about',
 ] as const;

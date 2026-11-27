@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { localDayKey as localDayKeyFromTs } from './date-keys';
@@ -56,9 +56,13 @@ describe('beacon_get_meal_plan local day', () => {
     const result = await handleTool('beacon_get_meal_plan', {});
 
     expect(result.date).toBe('2026-11-20');
-    expect(result.entries).toEqual([
-      { date: '2026-11-20', meal_type: 'Dinner', name: 'Tacos' },
-    ]);
+    expect(Object.keys(result).sort()).toEqual(['date', 'days', 'entries']);
+    expect(result.entries).toHaveLength(1);
+    expect(result.entries[0]).toMatchObject({
+      date: '2026-11-20',
+      meal_type: 'Dinner',
+      name: 'Tacos',
+    });
   });
 
   it('returns the New York local day at 23:30, not tomorrow UTC', async () => {
@@ -72,9 +76,12 @@ describe('beacon_get_meal_plan local day', () => {
     const result = await handleTool('beacon_get_meal_plan', {});
 
     expect(result.date).toBe('2026-11-20');
-    expect(result.entries).toEqual([
-      { date: '2026-11-20', meal_type: 'Dinner', name: 'Tacos' },
-    ]);
+    expect(result.entries).toHaveLength(1);
+    expect(result.entries[0]).toMatchObject({
+      date: '2026-11-20',
+      meal_type: 'Dinner',
+      name: 'Tacos',
+    });
   });
 
   it('keeps an explicit YYYY-MM-DD and steps the range in local calendar days', async () => {
@@ -154,4 +161,75 @@ describe('beacon_get_meal_plan local day', () => {
     const lawn = listed.chores.find((chore: { name: string }) => chore.name === 'Lawn');
     expect(lawn.period_completions.Ada).toBe('1/1');
   });
+
+  it('merges by date and meal_type, clears a slot, and replace:true replaces the plan', async () => {
+    writeJson('beacon_meal_plans.json', [
+      { id: 'bm_tacos', date: '2026-11-20', meal_type: 'Dinner', name: 'Tacos', source: 'anylist' },
+      { id: 'bm_chili', date: '2026-11-20', meal_type: 'Dinner', name: 'Chili' },
+      { id: 'bm_oats', date: '2026-11-21', meal_type: 'Breakfast', name: 'Oatmeal' },
+    ]);
+
+    const merged = await handleTool('beacon_set_meal_plan', {
+      entries: [{ date: '2026-11-20', meal_type: 'Dinner', name: 'Enchiladas' }],
+    });
+    expect(merged.success).toBe(true);
+    expect(readStored()).toEqual([
+      { id: 'bm_tacos', date: '2026-11-20', meal_type: 'Dinner', name: 'Enchiladas', source: 'anylist' },
+      { id: 'bm_oats', date: '2026-11-21', meal_type: 'Breakfast', name: 'Oatmeal' },
+    ]);
+
+    const cleared = await handleTool('beacon_set_meal_plan', {
+      entries: [{ date: '2026-11-21', meal_type: 'Breakfast', name: '' }],
+    });
+    expect(cleared.success).toBe(true);
+    expect(readStored()).toEqual([
+      { id: 'bm_tacos', date: '2026-11-20', meal_type: 'Dinner', name: 'Enchiladas', source: 'anylist' },
+    ]);
+
+    writeJson('beacon_meal_plans.json', [
+      { id: 'bm_tacos', date: '2026-11-20', meal_type: 'Dinner', name: 'Tacos' },
+      { id: 'bm_oats', date: '2026-11-21', meal_type: 'Breakfast', name: 'Oatmeal' },
+    ]);
+    await handleTool('beacon_set_meal_plan', {
+      entries: [{ date: '2026-11-21', meal_type: 'Breakfast', name: null }],
+    });
+    expect(readStored()).toEqual([
+      { id: 'bm_tacos', date: '2026-11-20', meal_type: 'Dinner', name: 'Tacos' },
+    ]);
+
+    await handleTool('beacon_set_meal_plan', {
+      entries: [{ date: '2026-11-20', meal_type: 'Dinner', name: 'Tostadas' }],
+    });
+    expect(readStored()[0]).toMatchObject({ id: 'bm_tacos', name: 'Tostadas' });
+
+    const replaced = await handleTool('beacon_set_meal_plan', {
+      replace: true,
+      entries: [{ date: '2026-11-22', meal_type: 'Snack', name: 'Apple' }],
+    });
+    expect(replaced.success).toBe(true);
+    expect(replaced.count).toBe(1);
+    expect(readStored()).toEqual([
+      { date: '2026-11-22', meal_type: 'Snack', name: 'Apple' },
+    ]);
+  });
+
+  it('does not overwrite a malformed meal plan file', async () => {
+    const original = '{ "not": "an array" }\n';
+    writeFileSync(path.join(dataDir, 'beacon_meal_plans.json'), original);
+
+    const listed = await handleTool('beacon_get_meal_plan', { date: '2026-11-20' });
+    expect(listed.entries).toEqual([]);
+    expect(listed.date).toBe('2026-11-20');
+    expect(readFileSync(path.join(dataDir, 'beacon_meal_plans.json'), 'utf8')).toBe(original);
+
+    const merged = await handleTool('beacon_set_meal_plan', {
+      entries: [{ date: '2026-11-20', meal_type: 'Dinner', name: 'Chili' }],
+    });
+    expect(merged.success).toBe(false);
+    expect(readFileSync(path.join(dataDir, 'beacon_meal_plans.json'), 'utf8')).toBe(original);
+  });
 });
+
+function readStored() {
+  return JSON.parse(readFileSync(path.join(dataDir, 'beacon_meal_plans.json'), 'utf8'));
+}

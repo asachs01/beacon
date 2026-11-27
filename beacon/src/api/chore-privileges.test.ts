@@ -228,7 +228,7 @@ describe('chore event payloads', () => {
 });
 
 describe('privilege scheduler', () => {
-  it('applies on startup, skips the same local day, and resets at local midnight', async () => {
+  it('applies on startup, skips the same chore day, and treats an unset reset as midnight', async () => {
     let now = new Date('2026-11-21T01:00:00.000Z');
     const apply = vi.fn(async () => {});
     const tick = createPrivilegeScheduler({
@@ -253,7 +253,7 @@ describe('privilege scheduler', () => {
     now = new Date('2026-11-21T07:00:00.000Z'); // 00:00 America/Phoenix on the 21st
     await tick();
     expect(apply).toHaveBeenCalledTimes(2);
-    expect(apply.mock.calls[1][1]).toMatchObject({ reason: 'local-midnight', localDate: '2026-11-21' });
+    expect(apply.mock.calls[1][1]).toMatchObject({ reason: 'reset-time-off', localDate: '2026-11-21' });
     expect(apply.mock.calls[1][0][0]).toMatchObject({ service: 'turn_off', reason: 'incomplete' });
   });
 
@@ -271,5 +271,43 @@ describe('privilege scheduler', () => {
     await tick();
     expect(apply).not.toHaveBeenCalled();
     expect(log).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a 23:00 completion on until 04:00 when reset is 04:00', async () => {
+    // 23:00 America/Phoenix on 2026-11-20. Phoenix does not observe DST.
+    const completion = '2026-11-21T06:00:00.000Z';
+    let now = new Date('2026-11-21T07:30:00.000Z'); // 00:30 MST on the 21st
+    const apply = vi.fn(async () => {});
+    const tick = createPrivilegeScheduler({
+      now: () => now,
+      getTimeZone: async () => 'America/Phoenix',
+      getResetTime: async () => '04:00',
+      readSnapshot: async () => ({
+        members: [child()],
+        chores: [chore('dishes')],
+        completions: [done('dishes', completion)],
+      }),
+      apply,
+      hasToken: () => true,
+      log: () => {},
+    });
+
+    await tick();
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(apply.mock.calls[0][1]).toMatchObject({ reason: 'startup', localDate: '2026-11-20' });
+    expect(apply.mock.calls[0][0][0]).toMatchObject({ service: 'turn_on', reason: 'complete' });
+
+    await tick();
+    expect(apply).toHaveBeenCalledTimes(1);
+
+    now = new Date('2026-11-21T10:59:00.000Z'); // 03:59 MST
+    await tick();
+    expect(apply).toHaveBeenCalledTimes(1);
+
+    now = new Date('2026-11-21T11:00:00.000Z'); // 04:00 MST
+    await tick();
+    expect(apply).toHaveBeenCalledTimes(2);
+    expect(apply.mock.calls[1][1]).toMatchObject({ reason: 'reset-time-off', localDate: '2026-11-21' });
+    expect(apply.mock.calls[1][0][0]).toMatchObject({ service: 'turn_off', reason: 'incomplete' });
   });
 });

@@ -6,7 +6,7 @@ order: 12
 
 # Kid Display Mode
 
-Kid Display Mode locks a screen or tablet to a single family member, showing only their routine for the current time of day and their assigned chores. It is built for wall-mounted tablets in kids' rooms, where you want a focused, distraction-free view instead of the full Beacon dashboard.
+Kid Display Mode locks a screen or tablet to a single family member, showing only their routine for the current time of day and their assigned chores. It is built for wall-mounted tablets in kids' rooms, where you want a focused, distraction-free view instead of the full Beacon dashboard. The [Home sensors](/docs/features/home-sensors/) card is not shown on Kid Display.
 
 ---
 
@@ -73,7 +73,7 @@ Routine tasks and chores both use the same big tap-to-complete interaction:
 - Tap an incomplete item to check it off
 - Tap a completed item again to undo it
 
-Routine task completions **reset every day** automatically. Chore completions feed into the same streaks and leaderboard tracking used everywhere else in Beacon, recorded under that family member's ID — see [Chores](/docs/features/chores/) for how streaks and the leaderboard work.
+Routine task completions **reset every day** automatically. Chore completions feed into the same streaks and leaderboard tracking used everywhere else in Beacon, recorded under that family member's ID — see [Chores](/docs/features/chores/) for how streaks and the leaderboard work. A [guest mode](/docs/features/guest-mode/) check-off is recorded the same way, including the guest label in the family app, but Kid Display does not show **Checked off by Guest**.
 
 ---
 
@@ -87,22 +87,25 @@ Kid Display is separate from kiosk mode, and it is meant to be hard to leave by 
 
 If any family member has a PIN, Beacon asks for it before leaving. If no PIN is set, it asks you to confirm. Cancel, press Escape, or wait about 15 seconds and the prompt goes away without exiting.
 
+The same gesture can also start [guest mode](/docs/features/guest-mode/) when a guest PIN is set. The guest PIN never leaves Kid Display. Once guest mode is on, a family PIN leaves guest mode first; use the gesture again with a family PIN to leave Kid Display. When no family PIN is set, the guest PIN (or the gesture alone, if no PIN is set at all) leaves guest mode first, then the usual confirm-to-exit path applies on the next gesture. The guest timeout only ends guest mode. A **Guest** badge stays on the screen while it is active.
+
 Exiting clears the device's Kid Display assignment and strips the `?display=` parameter from the URL, returning the device to the full Beacon app.
 
 The way out is also described under [How do I hide the sidebar for wall tablets / kiosk setups?](/docs/reference/faq/#how-do-i-hide-the-sidebar-for-wall-tablets--kiosk-setups).
 
 ---
 
-## Screen saver and notifications
+## Screen saver, night mode, and notifications
 
 - The normal [Screen Saver](/docs/features/screensaver/) behavior (dim mode and the clock screensaver) still runs on kid displays according to your usual Display settings — this keeps burn-in protection active on always-on screens.
+- [Night mode](/docs/features/night-mode/) also runs on a kid display when it is turned on. The dim overlay does not capture taps, so children can still check off tasks. The hidden corner used to leave Kid Display stays open, including when Clock only is on.
 - Kid displays do **not** fire event push notifications and do not prompt for notification permission. See [Notifications](/docs/features/notifications/) for how that works on the full dashboard.
 
 ---
 
 ## Using ingress URLs for kiosk setups
 
-If you copy a Kid Display URL while accessing Beacon through Home Assistant ingress, the kiosk device will need an authenticated HA session for that URL to keep working. For dedicated kiosk browsers, it's simpler to use a direct (non-ingress) Beacon URL instead of the ingress path.
+If you copy a Kid Display URL while accessing Beacon through Home Assistant ingress, the kiosk device will need an authenticated HA session for that URL to keep working. For dedicated kiosk browsers, it's simpler to use a direct (non-ingress) Beacon URL instead of the ingress path. From Beacon **1.54.0**, a device that opens Beacon directly pairs once first (see [Pairing a device](/docs/getting-started/pairing/)). The add-on doesn't publish a port by default, so a direct URL for the add-on means you mapped the port yourself.
 
 ---
 

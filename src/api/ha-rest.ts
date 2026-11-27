@@ -2,8 +2,8 @@
  * Shared helpers for HA REST API calls.
  *
  * In add-on mode (proxy), API calls go through the ingress path to the
- * add-on's server.js which proxies to http://supervisor/core with
- * SUPERVISOR_TOKEN. No browser-side auth needed.
+ * add-on's server.js, which forwards allowlisted /api/* requests to
+ * http://supervisor/core with SUPERVISOR_TOKEN. No browser-side auth needed.
  *
  * In standalone mode, API calls go directly to the HA instance with a
  * user-provided long-lived access token.
@@ -57,6 +57,35 @@ export function setHaToken(token: string) {
  * In add-on mode, requests go through the ingress proxy (no auth header needed).
  * In standalone mode, requests go directly to HA with Bearer token.
  */
+/**
+ * POST multipart form data. Does not set Content-Type, so the browser keeps
+ * the multipart boundary. Used for the local media upload Home Assistant
+ * requires before an AI Task attachment.
+ */
+export async function haFormPost(path: string, body: FormData): Promise<unknown> {
+  const token = getHaToken();
+  const headers: Record<string, string> = {};
+  if (token && !isAddOn()) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const res = await fetch(`${getBaseUrl()}${path}`, {
+    method: 'POST',
+    body,
+    headers,
+  });
+  const text = await res.text();
+  let data: unknown = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = null;
+    }
+  }
+  if (!res.ok) throw new Error(`HA API ${res.status}: ${res.statusText}`);
+  return data;
+}
+
 export async function haFetch(path: string, options?: RequestInit): Promise<unknown> {
   const token = getHaToken();
   const headers: Record<string, string> = {

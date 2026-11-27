@@ -205,6 +205,44 @@ code, pre {
   color: var(--td-text-muted);
 }
 
+/* Starlight-style :::caution callout */
+.docs-caution {
+  margin: 1.25rem 0;
+  padding: 0.85rem 1rem 0.95rem 1rem;
+  border-left: 4px solid var(--td-warning);
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--td-warning) 14%, var(--td-bg));
+  color: var(--td-text);
+  font-style: normal;
+}
+.prose .docs-caution {
+  font-style: normal;
+  color: var(--td-text);
+}
+.docs-caution-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.45rem;
+  font-weight: 700;
+  font-style: normal;
+  color: var(--td-warning);
+}
+.docs-caution-title::before {
+  content: "";
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  background: currentColor;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 9v4'/><path d='M12 17h.01'/><path d='m10.3 4.2-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-2.8l-8-14a2 2 0 0 0-3.4 0Z'/></svg>") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 9v4'/><path d='M12 17h.01'/><path d='m10.3 4.2-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-2.8l-8-14a2 2 0 0 0-3.4 0Z'/></svg>") center / contain no-repeat;
+}
+.prose .docs-caution p {
+  margin: 0;
+  font-style: normal;
+  color: var(--td-text);
+}
+
 /* Copy button for code blocks */
 .copy-button {
   position: absolute;

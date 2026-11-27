@@ -8,7 +8,9 @@ order: 4.5
 
 Beacon can turn on a Home Assistant entity when a child finishes the chores assigned to them today, and it fires events that automations can listen for. Both are optional. Families that never pick a privilege switch and never import the blueprint keep the same chore behavior as before. This needs Beacon **1.45.0** or later.
 
-The check uses the same local calendar day as the rest of Beacon (`localDayKey`). It does not use the UTC date. An evening in US time zones is still "today" even though the stored timestamp is already the next day in UTC.
+The check uses the chore day, the same boundary as the chore chart. That day starts at **Settings → Chores → Daily Reset Time**. When the reset time is unset, empty, or not a valid `HH:mm`, the chore day starts at local midnight. It does not use the UTC date. An evening in US time zones is still today even though the stored timestamp is already the next day in UTC.
+
+A completion at 23:00 with the reset set to 04:00 stays on that chore day until 04:00. The privilege switch, the `local_date` on `beacon_chore_completed` and `beacon_all_chores_done`, and "what chores are left" all use that same day. There is no settings or completion migration: stored timestamps stay as they are, and a family that leaves the reset at `00:00` keeps the midnight boundary.
 
 ---
 
@@ -42,19 +44,19 @@ Beacon calls Home Assistant `turn_on` or `turn_off` on that entity:
 | Every chore assigned to that child today is checked | `turn_on` |
 | A chore is unchecked, or some of today's chores are still open | `turn_off` |
 | The child has no chores assigned | `turn_off` (zero chores is not "all done") |
-| The local day rolls over to midnight | `turn_off` |
-| Beacon loads, or the add-on process starts | Whichever of the above matches today |
+| The chore day rolls over at the daily reset time | `turn_off` |
+| Beacon loads, or the add-on process starts | Whichever of the above matches the current chore day |
 
 A manual toggle in Home Assistant is left alone until the next one of those moments. Beacon does not keep forcing the entity every few seconds during the day.
 
-"Today" is the chores assigned to that member, completed on the local calendar day. Weekly and one-time chores count the same way once they are assigned: if they are on the child's list, they have to be checked today for the switch to turn on.
+"Today" is the chores assigned to that member and completed during the current chore day. The chore day runs from the daily reset time until the next one. With the reset left at midnight, that is the local calendar day. Weekly and one-time chores count the same way once they are assigned: if they are on the child's list, they have to be checked during this chore day for the switch to turn on.
 
 ### Where the call runs
 
-- An open Beacon page calls the service itself. In the add-on that goes through the add-on's Home Assistant proxy. In standalone mode it uses the long-lived access token, if one is configured.
-- The add-on server also sets the switches about 15 seconds after it starts, and again when its local day changes, even if no screen is open. It checks every 30 seconds, so midnight can be up to half a minute late.
-- The server asks Home Assistant for `time_zone` (`GET /api/config`) and uses that zone for the day. If that request fails, it uses the add-on process timezone via the same `localDayKey` helper. It does not use UTC. The page uses the device timezone. Those should be the same zone as Home Assistant. If they are not, the screen and the add-on can disagree about midnight.
-- Standalone Beacon (the browser or Android app talking to Home Assistant without the add-on server) has no background scheduler. Midnight turns the switch off only while a Beacon page is open. If the page is closed overnight, the switch stays where it was until the next time Beacon opens and re-evaluates.
+- An open Beacon page calls the service itself. In the add-on that goes through the add-on's Home Assistant proxy. From **1.53.1**, that proxy only allows the entity picked as a child's **Privilege switch**. If you change it, save the family settings first. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/). In standalone mode it uses the long-lived access token, if one is configured.
+- The add-on server also sets the switches about 15 seconds after it starts, and again when the chore day changes, even if no screen is open. It checks every 30 seconds, so the reset can be up to half a minute late.
+- The server asks Home Assistant for `time_zone` (`GET /api/config`) and uses that zone for the chore day. If that request fails, it uses the add-on process timezone via the same chore-day helper. It does not use UTC. The page uses the device timezone. Those should be the same zone as Home Assistant. If they are not, the screen and the add-on can disagree about when the reset time arrives.
+- Standalone Beacon (the browser or Android app talking to Home Assistant without the add-on server) has no background scheduler. The reset turns the switch off only while a Beacon page is open. If the page is closed across the reset, the switch stays where it was until the next time Beacon opens and re-evaluates.
 - If Home Assistant cannot be reached, the chore still saves. Beacon logs the failed service call and continues.
 
 ---
@@ -82,17 +84,17 @@ Fired on every real check and uncheck.
 | `chore_id` | string | Chore id |
 | `chore_title` | string | Chore name |
 | `completed` | boolean | `true` when checked, `false` when unchecked |
-| `local_date` | string | Local day, `YYYY-MM-DD` |
+| `local_date` | string | Chore day, `YYYY-MM-DD` |
 
 ### `beacon_all_chores_done`
 
-Fired only when a check is what makes that member's chores for `local_date` complete (every assigned chore is done, and they have at least one). It is not fired when a chore is unchecked, when the member has no chores, or when today's list was already complete.
+Fired only when a check is what makes that member's chores for the current chore day complete (every assigned chore is done, and they have at least one). It is not fired when a chore is unchecked, when the member has no chores, or when that chore day's list was already complete. `local_date` is that chore day.
 
 | Field | Type | Meaning |
 |-------|------|---------|
 | `member_id` | string | Beacon family member id |
 | `member_name` | string | Name shown in Settings |
-| `local_date` | string | Local day, `YYYY-MM-DD` |
+| `local_date` | string | Chore day, `YYYY-MM-DD` |
 
 In an automation, `trigger.event.data.member_name` (and the other fields) are those values.
 
@@ -116,7 +118,7 @@ The repo includes one automation blueprint:
 
 It listens for `beacon_all_chores_done` and turns on an entity you pick. You can limit it to one child by typing that child's name exactly as it appears in Beacon. Leave the name blank to run for every member.
 
-It does **not** turn the device off at midnight or when a chore is unchecked. Use the Privilege switch in Settings for that, or write a second automation on `beacon_chore_completed` with `completed: false`.
+It does **not** turn the device off when the chore day rolls or when a chore is unchecked. Use the Privilege switch in Settings for that, or write a second automation on `beacon_chore_completed` with `completed: false`.
 
 Import it in Home Assistant:
 

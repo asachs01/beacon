@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { Chore, FamilyMember, formatChoreValue } from '../types/family';
+import { useTranslation } from '../i18n';
 
 interface ChoreCardProps {
   chore: Chore;
@@ -11,6 +12,8 @@ interface ChoreCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   currencySymbol?: string;
+  /** Today's completion was recorded with by: 'guest'. */
+  checkedOffByGuest?: boolean;
 }
 
 function formatCents(cents: number, currencySymbol: string): string {
@@ -26,7 +29,9 @@ export function ChoreCard({
   onEdit,
   onDelete,
   currencySymbol = '$',
+  checkedOffByGuest = false,
 }: ChoreCardProps) {
+  const { t } = useTranslation();
   const [animating, setAnimating] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const [swiped, setSwiped] = useState(false);
@@ -88,39 +93,45 @@ export function ChoreCard({
       <div className="chore-card-body">
         <span className={`chore-card-name ${isCompleted ? 'chore-card-name--done' : ''}`}>
           {chore.icon && <span className="chore-card-icon">{chore.icon}</span>}
-          {chore.name}
+          <span className="chore-card-title">{chore.name}</span>
         </span>
-        {value && <span className="chore-card-value">{value}</span>}
+        {isCompleted && checkedOffByGuest && (
+          <span className="guest-checked-label">{t('chores.checkedOffByGuest')}</span>
+        )}
+        {(value || onEdit || onDelete) && (
+          <div className="chore-card-meta">
+            {value && <span className="chore-card-value">{value}</span>}
+            {(onEdit || onDelete) && (
+              <div className="chore-card-actions">
+                {onEdit && (
+                  <button
+                    type="button"
+                    className="chore-card-action-btn"
+                    onClick={onEdit}
+                    aria-label={`Edit ${chore.name}`}
+                  >
+                    <Pencil size={15} />
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    type="button"
+                    className="chore-card-action-btn chore-card-action-btn--danger"
+                    onClick={handleDeleteClick}
+                    aria-label={`Delete ${chore.name}`}
+                  >
+                    {confirmDelete ? (
+                      <span className="chore-card-action-confirm">Sure?</span>
+                    ) : (
+                      <Trash2 size={15} />
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-
-      {(onEdit || onDelete) && (
-        <div className="chore-card-actions">
-          {onEdit && (
-            <button
-              type="button"
-              className="chore-card-action-btn"
-              onClick={onEdit}
-              aria-label={`Edit ${chore.name}`}
-            >
-              <Pencil size={15} />
-            </button>
-          )}
-          {onDelete && (
-            <button
-              type="button"
-              className="chore-card-action-btn chore-card-action-btn--danger"
-              onClick={handleDeleteClick}
-              aria-label={`Delete ${chore.name}`}
-            >
-              {confirmDelete ? (
-                <span className="chore-card-action-confirm">Sure?</span>
-              ) : (
-                <Trash2 size={15} />
-              )}
-            </button>
-          )}
-        </div>
-      )}
 
       <button
         type="button"

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { Chore, FamilyMember, STAR_CURRENCY, formatChoreValue } from '../types/family';
+import { Chore, FamilyMember, STAR_CURRENCY, UNCREDITED_MEMBER_ID, formatChoreValue } from '../types/family';
 import { ChoreCard } from './ChoreCard';
 import { StreakBadge } from './StreakBadge';
 import { useChores } from '../hooks/useChores';
 import { useFamily } from '../hooks/useFamily';
 import { useSettings } from '../hooks/useSettings';
 import { useTranslation } from '../i18n';
+import { completionCheckedByGuest, guestCompletionBy } from '../display/guest-mode';
 
 const CHORE_ICONS = ['🧹', '🍽️', '🐕', '🛏️', '📚', '🗑️', '👕', '🧺', '🪥', '🚿', '🧼', '💪'];
 
@@ -23,8 +24,11 @@ interface UnassignedChoreCardProps {
   members: FamilyMember[];
   onClaim: (choreId: string, memberId: string) => void;
   onComplete: (choreId: string, memberId: string) => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  allowClaim?: boolean;
+  /** Guest check-off of this open chore, stored with no family member. */
+  checkedOffByGuest?: boolean;
   currencySymbol?: string;
 }
 
@@ -35,6 +39,8 @@ function UnassignedChoreCard({
   onComplete,
   onEdit,
   onDelete,
+  allowClaim = true,
+  checkedOffByGuest = false,
   currencySymbol = '$',
 }: UnassignedChoreCardProps) {
   const { t } = useTranslation();
@@ -53,7 +59,7 @@ function UnassignedChoreCard({
 
   const handleDeleteClick = () => {
     if (confirmDelete) {
-      onDelete();
+      onDelete?.();
       setConfirmDelete(false);
     } else {
       setConfirmDelete(true);
@@ -68,12 +74,16 @@ function UnassignedChoreCard({
       <div className="chore-card-body">
         <span className="chore-card-name">
           {chore.icon && <span className="chore-card-icon">{chore.icon}</span>}
-          {chore.name}
+          <span className="chore-card-title">{chore.name}</span>
         </span>
         {value && <span className="chore-card-value">{value}</span>}
+        {checkedOffByGuest && (
+          <span className="guest-checked-label">{t('chores.checkedOffByGuest')}</span>
+        )}
       </div>
 
       <div className="chore-card-actions">
+        {allowClaim && (
         <button
           type="button"
           className="btn btn--sm btn--secondary"
@@ -84,16 +94,22 @@ function UnassignedChoreCard({
         >
           {t('chores.claim')}
         </button>
+        )}
         <button
           type="button"
           className="btn btn--sm btn--primary"
           onClick={() => {
+            if (!allowClaim) {
+              onComplete(chore.id, UNCREDITED_MEMBER_ID);
+              return;
+            }
             setPickerAction('complete');
             setShowMemberPicker(true);
           }}
         >
           {t('chores.complete')}
         </button>
+        {onEdit && (
         <button
           type="button"
           className="chore-card-action-btn"
@@ -102,6 +118,8 @@ function UnassignedChoreCard({
         >
           <Pencil size={15} />
         </button>
+        )}
+        {onDelete && (
         <button
           type="button"
           className="chore-card-action-btn chore-card-action-btn--danger"
@@ -114,6 +132,7 @@ function UnassignedChoreCard({
             <Trash2 size={15} />
           )}
         </button>
+        )}
       </div>
 
       {showMemberPicker && (
@@ -154,7 +173,7 @@ function UnassignedChoreCard({
   );
 }
 
-export function ChoresView() {
+export function ChoresView({ guestActive = false }: { guestActive?: boolean }) {
   const { t } = useTranslation();
   const { members } = useFamily();
   const { settings } = useSettings();
@@ -163,6 +182,7 @@ export function ChoresView() {
     addChore,
     updateChore,
     removeChore,
+    completionsToday,
     completeChore,
     uncompleteChore,
     isChoreCompletedToday,
@@ -262,14 +282,19 @@ export function ChoresView() {
   };
 
   const handleCompleteUnassigned = (choreId: string, memberId: string) => {
-    completeChore(choreId, memberId);
+    completeChore(choreId, memberId, guestCompletionBy(guestActive));
   };
+  const checkedByGuest = (choreId: string, memberId: string) => completionsToday.some(
+    (completion) => completion.chore_id === choreId
+      && completion.member_id === memberId
+      && completionCheckedByGuest(completion),
+  );
 
   return (
     <div className="chores-view">
       <header className="chores-view-header">
         <h1 className="chores-view-title">{t('chores.title')}</h1>
-        {members.length > 0 && (
+        {members.length > 0 && !guestActive && (
           <button
             type="button"
             className="btn btn--primary"
@@ -298,8 +323,14 @@ export function ChoresView() {
                     members={members}
                     onClaim={handleClaimChore}
                     onComplete={handleCompleteUnassigned}
-                    onEdit={() => handleStartEdit(chore)}
-                    onDelete={() => handleDeleteChore(chore.id)}
+                    onEdit={guestActive ? undefined : () => handleStartEdit(chore)}
+                    onDelete={guestActive ? undefined : () => handleDeleteChore(chore.id)}
+                    allowClaim={!guestActive}
+                    checkedOffByGuest={completionsToday.some(
+                      (completion) => completion.chore_id === chore.id
+                        && completion.member_id === UNCREDITED_MEMBER_ID
+                        && completionCheckedByGuest(completion),
+                    )}
                     currencySymbol={settings.currencySymbol}
                   />
                 ))}
@@ -354,10 +385,11 @@ export function ChoresView() {
                         chore={chore}
                         member={member}
                         isCompleted={isChoreCompletedToday(chore.id, member.id)}
-                        onComplete={() => completeChore(chore.id, member.id)}
+                        onComplete={() => completeChore(chore.id, member.id, guestCompletionBy(guestActive))}
                         onUncomplete={() => uncompleteChore(chore.id, member.id)}
-                        onEdit={() => handleStartEdit(chore)}
-                        onDelete={() => handleDeleteChore(chore.id)}
+                        onEdit={guestActive ? undefined : () => handleStartEdit(chore)}
+                        onDelete={guestActive ? undefined : () => handleDeleteChore(chore.id)}
+                        checkedOffByGuest={checkedByGuest(chore.id, member.id)}
                         currencySymbol={settings.currencySymbol}
                       />
                     ))}
@@ -365,6 +397,7 @@ export function ChoresView() {
                 )}
               </div>
 
+              {!guestActive && (
               <button
                 type="button"
                 className="chores-member-add-btn"
@@ -373,6 +406,7 @@ export function ChoresView() {
                 <Plus size={14} strokeWidth={2} />
                 {t('chores.addChoreFor', { name: member.name })}
               </button>
+              )}
             </section>
           ))}
         </div>

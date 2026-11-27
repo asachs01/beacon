@@ -70,10 +70,12 @@ npx serve dist -l 3000 -s
 ```bash
 docker build -t beacon-dev .
 docker run -d -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="..." \
-  -e HA_URL="..." \
+  -v beacon-data:/data \
+  --env-file .env \
   beacon-dev
 ```
+
+Put `HA_URL` (the Home Assistant base URL, with no `/api` path) and `HA_TOKEN` in `.env` and do not commit that file. `HA_TOKEN` is a long-lived access token from Home Assistant (Profile → Long-Lived Access Tokens). The container must be able to reach `HA_URL`. See [Deployment](/docs/getting-started/deployment/#docker-standalone-deployment).
 
 ---
 
@@ -127,7 +129,7 @@ beacon/
       useMusic.ts            # Media player state and controls
       usePhotos.ts           # Photo slideshow state
       useGrocery.ts          # Grocery list integration
-      useMealPlan.ts         # Meal plan from Grocy
+      useMealPlans.ts        # In-app meal plan and recipes
       useNotifications.ts    # Event notification system
       useTheme.ts            # Theme management and CSS property injection
     components/
@@ -146,7 +148,7 @@ beacon/
       TaskChecklist.tsx       # Dashboard task checklist
       CountdownWidget.tsx    # Dashboard countdown widget
       GroceryDrawer.tsx      # Grocery list expandable drawer
-      MealPlanBar.tsx        # Meal plan summary bar
+      MealsView.tsx          # Week meal planner
       MusicView.tsx          # Full music player view
       NowPlayingBar.tsx      # Persistent now-playing bar
       PhotoFrame.tsx         # Photo frame with slideshow

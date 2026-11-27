@@ -1,0 +1,108 @@
+---
+title: "Guest mode"
+description: "Let a sitter, grandparent, or visiting relative use the Beacon screen with a separate guest PIN, without opening Settings or other family-only actions."
+order: 11.6
+---
+
+# Guest mode
+
+Guest mode is a separate PIN for a sitter, grandparent, or visiting relative. It is empty by default, so nothing changes until you set one.
+
+Guest mode limits what the Beacon screen shows. It is not a security boundary. Home Assistant and the API stay reachable to anyone on the network.
+
+This needs Beacon **1.51.0** or later.
+
+## Turn it on
+
+Open **Settings → Display → Guest mode**.
+
+- **Guest PIN** is 4 to 6 digits. Leave it empty to keep guest mode off. The same digits cannot also be a family member's PIN, and a family PIN cannot be changed to match the guest PIN.
+- **Guest timeout** is how long guest mode stays on before it ends by itself. The choices are 1, 2, 4, 8, 12, or 24 hours, or **No timeout**. The default is 4 hours.
+
+The section in Settings also repeats that this is not a security boundary.
+
+## Entering and leaving
+
+A guest starts guest mode with the same hidden-corner gesture used for [kiosk](/docs/reference/faq/#how-do-i-hide-the-sidebar-for-wall-tablets--kiosk-setups) navigation and [Kid Display](/docs/features/kid-display/):
+
+- **Touch or mouse**: long-press the top corner for about 2 seconds, or tap that corner 3 times quickly. The corner is the top-left, or the top-right when the sidebar position is set to the right.
+- **Keyboard**: hold Escape for about 2 seconds.
+
+Then enter the guest PIN. A small **Guest** badge stays on the screen while guest mode is on.
+
+Guests can always leave guest mode from inside the app, including when the timeout is **No timeout**:
+
+- A family PIN, entered with that same corner gesture, leaves guest mode.
+- When no family PIN is set, the guest PIN leaves it. The prompt says to enter the guest PIN.
+- When neither a family PIN nor a guest PIN is set, the corner gesture itself leaves guest mode. It does not reveal kiosk navigation or leave Kid Display.
+
+**No timeout** stays on until that gesture. A timeout still ends guest mode when it runs out.
+
+The guest PIN can never open a family-PIN gate. It cannot unlock Settings, reveal kiosk navigation, leave Kid Display, or approve or reject [Magic Import](/docs/features/magic-import/). Those still need a family member's PIN, using the same check the app has today.
+
+The session is kept in this browser until it expires, including across a reload. Clearing or changing the guest PIN in Settings ends any active guest session on this browser, including one restored after a reload.
+
+## What is hidden from guests
+
+Guest mode is a list of what is hidden, not a list of what is allowed. While it is on, the following are hidden or blocked on this screen:
+
+- Settings, family members, rewards, and point balances
+- Redeeming rewards (there is no redeem screen yet; when one exists, it stays closed to guests)
+- [Magic Import](/docs/features/magic-import/) (the Import button is hidden, and a guest cannot approve or reject an import)
+- Creating, editing, or deleting calendar events
+- Adding, editing, or deleting chores, and claiming an unassigned chore
+- Revealing kiosk navigation or leaving [Kid Display](/docs/features/kid-display/) with the guest PIN
+- Anything that shows where the family is (whereabouts features, including later who's-home or location views). These stay hidden unless a feature is registered to allow guests. See [For contributors](#for-contributors).
+- The [Home sensors](/docs/features/home-sensors/) card (temperatures, doors, and other entities you picked). It is hidden unless a registration allows guests.
+- Calendars marked **Hide from guests** (see below)
+
+Meals, photos, music, and the leaderboard stay visible, along with the calendar (view only), chores and tasks, the grocery list, and timers. A feature that is not registered stays visible.
+
+If a guest tries a blocked action, the screen can show **Guests can't do that on this screen.**
+
+## Chores and rewards
+
+When a guest checks off a chore that is assigned to a family member, it still awards points and counts toward streaks, the same way a family check-off does today. A sitter keeping the routine going is the reason guest mode exists. The completion is stored on the chore's assignee (the kid the sitter is helping).
+
+From **1.52.0**, an unassigned chore a guest checks off is recorded as Guest and earns no points. It is stored with no family member (`by: 'guest'` and an empty `member_id`), so it does not count toward a streak or the leaderboard.
+
+On the [Chores](/docs/features/chores/) screen, a completed card shows **Checked off by Guest**. The same label appears on completed chore rows in the dashboard Tasks list and the calendar task list. There is no separate history screen. When that chore list is fully done, it collapses to **All done — great job!** and no longer lists each row; the Chores screen still shows the label on each completed card.
+
+If those lists are showing Home Assistant to-do items instead of chores, the rows do not get the guest label. Checking off a to-do still works; Beacon does not record a guest marker on those items.
+
+[Kid Display](/docs/features/kid-display/) records the same guest check-off, but it does not show the parent-facing label.
+
+Guests can earn rewards this way. They can never redeem them.
+
+## Hide calendars from guests
+
+Each calendar has a **Hide from guests** toggle in calendar settings. It starts off.
+
+While guest mode is on, a hidden calendar is left off every calendar view and card. The calendar comes back when guest mode ends; this does not permanently hide it for the family. It is separate from the usual hidden-calendars list.
+
+Guests can view the calendars that are not hidden. They cannot create, edit, or delete events. The quick-add Event action is hidden, empty days and hour cells do not start a new event, and events cannot be dragged.
+
+## Kid Display and kiosk
+
+Guest mode works on the main display and on Kid Display. The **Guest** badge appears on both.
+
+On a kiosk, the hidden-corner prompt can take the guest PIN to start guest mode, or a family PIN to show navigation. On Kid Display, it can take the guest PIN to start guest mode, or a family PIN to leave the display.
+
+Once guest mode is on, a family PIN through that gesture leaves guest mode first. It does not also reveal kiosk navigation or leave Kid Display in the same step. Use the gesture again with a family PIN for those exits. If no family PIN is set, the guest PIN (or the gesture alone, when no PIN is set at all) leaves guest mode first, then the usual kiosk or Kid Display path applies on the next gesture. The timeout only ends guest mode; it does not leave Kid Display or show the kiosk sidebar.
+
+## This is not a security boundary
+
+Guest mode only limits what this Beacon screen shows. It does not lock down Home Assistant, the Beacon API, or anything else on your network. Anyone who can reach those services can still use them, even while the wall display is in guest mode. The Settings copy and the on-screen description say the same thing.
+
+## For contributors
+
+`useGuestMode` in `src/hooks/useGuestMode.ts` is the hook the app calls once. It returns `{ active, canSee, enter, exit, expiresAt }`. Pass `active` and the callbacks down; do not call the hook again from a child view. The hook also takes the current guest PIN so a cleared or changed PIN drops the session, including one restored from `localStorage`.
+
+Feature visibility lives in `src/display/guest-mode.ts`. The registry is a denylist: register a feature with `registerGuestFeature`.
+
+- `kind: 'screen'` is visible to guests unless you set `allowGuests: false`.
+- `kind: 'whereabouts'` is hidden from guests unless you set `allowGuests: true`. Use this for anything that shows where the family is. `presence` and `location` are already registered and hidden by default, so a later who's-home or location view can plug in without a new default.
+- `kind: 'sensors'` is also hidden from guests unless you set `allowGuests: true`. The [Home sensors](/docs/features/home-sensors/) card is registered as `homeSensors`.
+- An id that is not registered stays visible. Meals, photos, music, and the leaderboard are left unregistered on purpose.
+
+Redeeming rewards is gated as `rewardsRedeem`. Creating, editing, and deleting events are gated as `createEvents`, `editEvents`, and `deleteEvents`. Calendar filtering uses `filterEventsForGuest` and `filterCalendarsForGuest`. Dashboard and calendar chore check-offs share `src/display/checklist-completion.ts` and store optional `by: 'guest'` on the completion; older completions have no `by` and stay valid. An unassigned guest check-off uses `UNCREDITED_MEMBER_ID` (an empty `member_id`) so it awards no points and no streak.

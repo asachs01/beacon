@@ -119,19 +119,24 @@ Content-Type: application/json
 
 ### Examples
 
+The header Beacon receives is `Authorization: Bearer <token>`. On the add-on, Beacon writes `beacon_token` into `secrets.yaml` at startup when that key is missing. On a standalone install, add that secret **before** you restart Home Assistant. See [Access tokens for automations](/docs/getting-started/pairing/#access-tokens-for-automations).
+
 ```bash
 # Add a grocery item
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "add eggs to the grocery list"}'
 
 # Control media
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "set volume to 40"}'
 
 # Check the calendar
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "what'\''s on my calendar"}'
 ```
@@ -282,8 +287,10 @@ For volume, also pass `volume_level` (0.0 to 1.0).
 
 | Tool | Description | Required inputs |
 |------|-------------|-----------------|
-| `beacon_get_meal_plan` | Get meal plan entries | `date` (optional), `days` (optional) |
-| `beacon_set_meal_plan` | Write meal plan data | `entries` (array of `{date, meal_type, name}`) |
+| `beacon_get_meal_plan` | Get meal plan entries. Response shape is `{ date, days, entries }`. | `date` (optional), `days` (optional) |
+| `beacon_set_meal_plan` | Merge meals by default. Each entry upserts one `date` + `meal_type` slot (an entry with no id still matches on date and meal type). A null or empty `name` clears that slot. Other dates stay. `replace: true` replaces the whole plan with `entries`. | `entries`; optional `replace` |
+
+**Changed in 1.48.0.** `beacon_set_meal_plan` now adds or updates only the meals you send instead of replacing the whole plan. Pass `replace: true` for the old behavior. A null or empty name clears that one date and meal slot.
 
 ### Example conversation
 
@@ -338,7 +345,7 @@ The intents reference these entities by default. Create or rename them to match:
 
 If your entities have different names, edit the installed YAML files in your HA config directory (`custom_intents/beacon.yaml` and `custom_sentences/en/beacon.yaml`).
 
-Chores do not use a todo list. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to `/beacon-action/complete-chore`. `BeaconChoreStatus` and `BeaconChoreStatusByPerson` call `rest_command.beacon_chores_left`, which GETs `/beacon-action/chores-left`. Copy `custom_intents/beacon_rest_command.yaml` into `configuration.yaml`, replace `ADDON_SLUG` with the slug from the add-on page URL, and restart Home Assistant.
+Chores do not use a todo list. `BeaconCompleteChore` and `BeaconCompleteChoreByPerson` call `rest_command.beacon_complete_chore`, which POSTs to `/beacon-action/complete-chore`. `BeaconChoreStatus` and `BeaconChoreStatusByPerson` call `rest_command.beacon_chores_left`, which GETs `/beacon-action/chores-left`. The install script copies `beacon_rest_command.yaml` and, when it can, adds the `rest_command` and `intent_script` includes to `configuration.yaml`. Replace `ADDON_SLUG` in that rest command file with the slug from the add-on page URL. The commands use `Authorization: !secret beacon_token`. The header Beacon receives is `Authorization: Bearer <token>`. On the add-on, Beacon writes that secret at startup when it is missing. On a standalone install, add `beacon_token` to `secrets.yaml` **before** you restart Home Assistant. See [Press-to-talk](/docs/features/press-to-talk/) for the upgrade steps.
 
 ### Customizing
 

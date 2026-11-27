@@ -11,6 +11,7 @@ interface CalendarSidebarProps {
   chores: Chore[];
   completedChoreIds: Set<string>;
   onToggleChore: (choreId: string) => void;
+  guestCheckedChoreIds?: ReadonlySet<string>;
   todoItems: DashboardTodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string) => void;
   members?: FamilyMember[];
@@ -21,6 +22,7 @@ export function CalendarSidebar({
   chores,
   completedChoreIds,
   onToggleChore,
+  guestCheckedChoreIds,
   todoItems,
   onToggleTodo,
   members = [],
@@ -90,6 +92,7 @@ export function CalendarSidebar({
             completedIds={completedChoreIds}
             onToggle={onToggleChore}
             members={members}
+            guestCheckedIds={guestCheckedChoreIds}
           />
         ) : (
           <p className="cal-sidebar-empty">{t('calendarSidebar.allClear')}</p>

@@ -10,11 +10,15 @@ import { FocusChores } from './FocusChores';
 import { pickRoutine, getTimeOfDay } from './period';
 import { HiddenCornerGesture, type HiddenCornerGestureHandle } from '../HiddenCornerGesture';
 import { kioskHotCorner } from '../../display/hidden-gesture';
+import { GuestBadge } from '../GuestBadge';
 
 interface FocusViewProps {
   memberId: string;
   settings: BeaconSettings;
   onExit: () => void;
+  guestActive?: boolean;
+  onEnterGuest?: () => void;
+  onExitGuest?: () => void;
 }
 
 const GREETINGS = {
@@ -23,7 +27,14 @@ const GREETINGS = {
   evening: 'Good evening',
 } as const;
 
-export function FocusView({ memberId, settings, onExit }: FocusViewProps) {
+export function FocusView({
+  memberId,
+  settings,
+  onExit,
+  guestActive = false,
+  onEnterGuest,
+  onExitGuest,
+}: FocusViewProps) {
   const { members } = useFamily();
   const routinesApi = useRoutines(memberId);
   const choresApi = useChores();
@@ -60,8 +71,9 @@ export function FocusView({ memberId, settings, onExit }: FocusViewProps) {
     }
   };
   const handleExitGranted = useCallback((granted: boolean) => {
-    if (granted) onExit();
-  }, [onExit]);
+    // Guest mode blocks leaving Kid Display. A family PIN leaves guest mode instead.
+    if (granted && !guestActive) onExit();
+  }, [guestActive, onExit]);
 
   const memberChores = useMemo(
     () => choresApi.chores.filter((c) => c.assigned_to.includes(memberId)),
@@ -139,7 +151,7 @@ export function FocusView({ memberId, settings, onExit }: FocusViewProps) {
               onToggle={(choreId) =>
                 completedChoreIds.has(choreId)
                   ? choresApi.uncompleteChore(choreId, memberId)
-                  : choresApi.completeChore(choreId, memberId)
+                  : choresApi.completeChore(choreId, memberId, guestActive ? 'guest' : undefined)
               }
             />
             {!pick && memberChores.length === 0 && (
@@ -151,12 +163,17 @@ export function FocusView({ memberId, settings, onExit }: FocusViewProps) {
         )}
       </main>
 
+      {guestActive && <GuestBadge />}
       <HiddenCornerGesture
         ref={exitGestureRef}
         purpose="kid-display"
         memberName={member.name}
         corner={kioskHotCorner(settings.sidebarPosition || 'left')}
         members={members}
+        guestPin={settings.guestPin}
+        guestActive={guestActive}
+        onEnterGuest={onEnterGuest}
+        onExitGuest={onExitGuest}
         onGrantedChange={handleExitGranted}
       />
 

@@ -43,6 +43,7 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | `defaultCalendarView` | Default Calendar View | `'week' / 'month'` | week | Week or month shown when you open the calendar |
 | `defaultCalendar` | Default Calendar | `string` | (empty) | Calendar selected when creating an event. |
 | `permanentlyHiddenCalendars` | Hidden calendars | `string[]` | [] | Calendar ids hidden from the calendar and dashboard. |
+| `guestHiddenCalendars` | Hide from guests | `string[]` | [] | Calendar ids left off every calendar view and card while guest mode is on. Default is none, so the per-calendar flag starts off. |
 | `calendarColors` | Calendar colors | `Record<string, string>` | {} | Chosen color for each calendar id. Overrides the automatic palette. |
 | `defaultEventDuration` | Default Event Duration | `30 / 60 / 120` | 60 minutes | Length of a new timed event. |
 | `notificationMinutes` | Notification Timing | `5 / 10 / 15 / 30` | 10 minutes | How long before an event Beacon notifies you. |
@@ -53,6 +54,8 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | --- | --- | --- | --- | --- |
 | `weatherEntity` | Weather Entity | `string` | weather.home | Entity used for weather display. Uses add-on option `weather_entity` when Home Assistant provides it. |
 | `grocyEnabled` | Grocy Integration | `boolean` | false | Grocery and meal planning |
+| `grocyExpiringEnabled` | Expiring products | `boolean` | false | Show products nearing their best-before date. Hidden if the Grocy sensor is missing. |
+| `grocyMissingEnabled` | Low stock | `boolean` | false | Show products below their minimum stock. Hidden if the Grocy sensor is missing. |
 | `anylistEnabled` | AnyList Integration | `boolean` | false | Shared shopping lists |
 | `defaultGroceryList` | Default Grocery List | `string` | (empty) | List shown when opening grocery view |
 | `groceryListIds` | Grocery Lists | `string[]` | [] | Select which HA todo entities are grocery/shopping lists |
@@ -61,6 +64,8 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | `photoDirectory` | Source Directory | `string` | /media/beacon/photos | A /media path, or any Home Assistant media-source id. Browse to pick a folder. Uses add-on option `photo_directory` when Home Assistant provides it. |
 | `photoInterval` | Slideshow Interval | `number` | 30 seconds | Seconds between photo changes. Uses add-on option `photo_interval` when Home Assistant provides it. |
 | `photoTransition` | Transition Style | `'fade' / 'slide'` | fade | How the photo frame moves between pictures. |
+| `homeSensorsEnabled` | Home sensors card | `boolean` | false | Show the Home sensors dashboard card. Off until enabled, so existing dashboards stay as they are. Add the card in dashboard edit mode. It is not part of the Family or Classic presets, it is hidden from guests, and it is not on Kid Display. |
+| `homeSensors` | Sensors | `HomeSensorPick[]` | [] | Entities to show, each with an optional friendly name and icon. Empty until you pick them. The picker lists only entities the Home Assistant token can read. A reading that has not been updated for 3 hours is shown as stale instead of the last value. |
 
 ### Dashboard
 
@@ -80,14 +85,25 @@ Generated from `src/hooks/useSettings.ts`, the English UI strings, and the Home 
 | `showSeconds` | Show Seconds on Clock | `boolean` | false | Display seconds in the header clock |
 | `kioskMode` | Kiosk Mode | `boolean` | false | Hide the sidebar for a cleaner display |
 | `kioskRevealGesture` | Reveal navigation gesture | `boolean` | true | On by default. In kiosk mode, long-press the top corner for 2 seconds or tap it 3 times quickly to show the sidebar. Hold Escape on a keyboard. It hides again after 15 seconds of inactivity. A family PIN is required when one is set. |
+| `guestPin` | Guest PIN | `string` | (empty) | 4-6 digits. Empty means guest mode is off. Guest mode limits what this Beacon screen shows. It is not a security boundary. Home Assistant and Beacon stay reachable on the network. Clearing or changing this PIN ends an active guest session, including one restored after reload. |
+| `guestTimeoutHours` | Guest timeout | `number / null` | 4 | Hours before guest mode ends on its own. Null means no timeout. A family PIN can leave guest mode. When no family PIN is set, the guest PIN leaves it, or the corner gesture alone when neither PIN is set. Default is 4 hours. |
 | `voiceButton` | Voice button | `boolean` | true | Show hold-to-talk on the wall. On by default in the Home Assistant add-on. The mic needs HTTPS or localhost; ingress over HTTPS works, and a plain HTTP kiosk keeps the text box. |
+| `magicImport` | Magic Import | `boolean` | true | Show Import on the dashboard and calendar. On by default in the Home Assistant add-on. Pasted text is processed by your Home Assistant conversation agent, or a local parser. |
+| `magicImportUseHaAgent` | Magic Import: use Home Assistant conversation agent | `boolean` | true | On by default. When on, pasted text is processed by your Home Assistant conversation agent, or a local parser if that agent is unavailable. When off, Beacon always uses the local parser. Beacon itself sends the text nowhere. It stays in your home unless your Home Assistant conversation agent is a cloud service; in that case HA sends it to that provider. |
+| `magicImportAiTaskEntity` | Magic Import: AI Task entity for photos | `string` | (empty) | Empty by default. Photos and scanned PDFs are processed by this Home Assistant AI Task entity. Beacon itself sends the file nowhere else. A cloud entity sends the file to that provider. Needs Home Assistant 2025.8 or newer and an admin token so the photo can be uploaded to the local media source for the task, then removed. Text in a PDF still uses the conversation agent or the local parser. |
+| `nightModeEnabled` | Night mode | `boolean` | false | Use a dark theme and dim the screen on a schedule |
+| `nightModeStart` | Starts | `string` | 21:00 | Local time (HH:mm) when night mode begins. A start later than the end crosses midnight. |
+| `nightModeEnd` | Ends | `string` | 06:30 | Local time (HH:mm) when night mode ends. The end minute is not included. |
+| `nightModeOverride` | Manual override | `'schedule' / 'on' / 'off'` | schedule | On keeps night mode up. Off keeps it down. Schedule follows the times above. |
+| `nightModeBrightness` | Brightness | `number` | 30 | How bright the screen stays while night mode is dimmed |
+| `nightModeClockOnly` | Clock only | `boolean` | false | Show a large clock and the date. Tap the screen to see the dashboard for a minute. |
 
 ### Chores
 
 | Setting | Label | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `choresEnabled` | Enable Chores | `boolean` | true | Show chore tracking and rewards |
-| `choresResetTime` | Daily Reset Time | `string` | 00:00 | When daily chores reset |
+| `choresResetTime` | Daily Reset Time | `string` | 00:00 | When the chore day starts (HH:mm). Privilege switches, chore-event local_date, "what chores are left," and streaks use this same day. Unset, empty, or invalid values are treated as 00:00 (local midnight). |
 | `streakDays` | Streak Duration | `number` | 7 days | Days needed to maintain a streak |
 | `currencySymbol` | Currency Symbol | `string` | $ | Symbol shown beside chore rewards. |
 | `payoutSchedule` | Payout Schedule | `'weekly' / 'monthly'` | weekly | How often chore earnings are totaled. |
@@ -107,7 +123,7 @@ These are the options in `beacon/config.yaml`, which Home Assistant uses for the
 | Option | Label | Type | Default | Description |
 | --- | --- | --- | --- | --- |
 | `family_name` | Family Name | string | My Family | Shown in the calendar header. Uses add-on option `family_name` when Home Assistant provides it. |
-| `ha_token` | Home Assistant token | password | (empty) | Long-lived access token used for browser-side Home Assistant access. Stored as a password. |
+| `ha_token` | Home Assistant token | password | (empty) | Optional long-lived access token for the Beacon server, stored as a password. The browser never receives it. In the add-on the Supervisor token is used when this is empty. Direct-port and standalone screens pair once; ingress does not. |
 | `save_config_in_browser` | Save Configuration in Browser | boolean | true | Keep a local browser copy of settings when the add-on allows it. Uses add-on option `save_config_in_browser` when Home Assistant provides it. |
 | `theme` | Theme | string | skylight | Color theme id. The in-app picker overrides the add-on option. Uses add-on option `theme` when Home Assistant provides it. |
 | `auto_dark_mode` | Auto Dark Mode | boolean | true | Switch themes based on time of day. Uses add-on option `auto_dark_mode` when Home Assistant provides it. |

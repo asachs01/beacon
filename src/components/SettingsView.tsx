@@ -9,6 +9,7 @@ import {
   Monitor,
   ListChecks,
   Info,
+  Smartphone,
   Check,
   Pencil,
   Trash2,
@@ -28,14 +29,18 @@ import type { FontApplyStatus } from '../hooks/useAppliedFonts';
 import { FontSettings } from './FontSettings';
 import { getConfig } from '../config';
 import { isAddOn } from '../utils/ha-env';
+import { HomeSensorsSettings } from './HomeSensorsSettings';
 import { buildFocusUrl } from '../focus';
 import { useRoutines } from '../hooks/useRoutines';
 import { resolveCalendarColor, CALENDAR_COLOR_PRESETS } from '../types';
 import { useTranslation, type TranslationKey } from '../i18n';
 import { demoSettingsSection } from '../demo/location';
+import { DailyResetTimeField } from './DailyResetTimeField';
 import { PhotoSourceSettings } from './PhotoSourceSettings';
 import { EntityPicker } from './cards/EntityPicker';
 import { PRIVILEGE_DOMAINS } from '../api/chore-privileges';
+import { guestPinProblem } from '../display/guest-mode';
+import { PairedDevicesSettings } from './PairedDevicesSettings';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,6 +53,7 @@ type SettingsSection =
   | 'calendar'
   | 'integrations'
   | 'display'
+  | 'devices'
   | 'chores'
   | 'about';
 
@@ -84,6 +90,7 @@ const NAV_ITEMS: Array<{ id: SettingsSection; labelKey: TranslationKey; icon: Re
   { id: 'calendar', labelKey: 'settings.nav.calendar', icon: <CalendarDays size={18} /> },
   { id: 'integrations', labelKey: 'settings.nav.integrations', icon: <Plug size={18} /> },
   { id: 'display', labelKey: 'settings.nav.display', icon: <Monitor size={18} /> },
+  { id: 'devices', labelKey: 'settings.nav.devices', icon: <Smartphone size={18} /> },
   { id: 'chores', labelKey: 'settings.nav.chores', icon: <ListChecks size={18} /> },
   { id: 'about', labelKey: 'settings.nav.about', icon: <Info size={18} /> },
 ];
@@ -230,6 +237,13 @@ export function SettingsView({
   const [kidDisplayMemberId, setKidDisplayMemberId] = useState('');
   const [copiedFocusUrl, setCopiedFocusUrl] = useState(false);
   const [colorEditId, setColorEditId] = useState<string | null>(null);
+  const [guestPinDraft, setGuestPinDraft] = useState(settings.guestPin);
+  const [guestPinError, setGuestPinError] = useState<string | null>(null);
+  const [memberPinError, setMemberPinError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setGuestPinDraft(settings.guestPin);
+  }, [settings.guestPin]);
 
   // ---- Routine editor state ----
   const routinesApi = useRoutines();
@@ -301,6 +315,11 @@ export function SettingsView({
 
   const handleSaveMember = useCallback(() => {
     if (!memberForm.name.trim()) return;
+    if (guestPinProblem(settings.guestPin, [memberForm.pin]) === 'matches-member') {
+      setMemberPinError(t('settings.family.pinMatchesGuest'));
+      return;
+    }
+    setMemberPinError(null);
     const data = {
       name: memberForm.name.trim(),
       avatar: memberForm.avatar,
@@ -323,7 +342,7 @@ export function SettingsView({
     setMemberFormMode('list');
     setMemberForm(EMPTY_FORM);
     setEditingMember(null);
-  }, [memberForm, memberFormMode, editingMember, onAddMember, onUpdateMember]);
+  }, [memberForm, memberFormMode, editingMember, onAddMember, onUpdateMember, settings.guestPin, t]);
 
   const handleDeleteMember = useCallback(
     (id: string) => {
@@ -403,6 +422,8 @@ export function SettingsView({
         return renderIntegrations();
       case 'display':
         return renderDisplay();
+      case 'devices':
+        return <PairedDevicesSettings />;
       case 'chores':
         return renderChores();
       case 'about':
@@ -1063,13 +1084,18 @@ export function SettingsView({
               value={memberForm.pin}
               onChange={(e) => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                setMemberPinError(null);
                 setMemberForm((f) => ({ ...f, pin: val }));
               }}
               placeholder="****"
               inputMode="numeric"
               maxLength={6}
+              aria-invalid={memberPinError ? true : undefined}
             />
           </div>
+          {memberPinError && (
+            <p className="kiosk-reveal-error" role="alert" style={{ margin: '0 20px 12px' }}>{memberPinError}</p>
+          )}
           {memberForm.role === 'child' && (
             <div className="settings-row" style={{ alignItems: 'flex-start' }}>
               <div>
@@ -1260,6 +1286,20 @@ export function SettingsView({
                     }}
                   />
                 </div>
+                <div className="settings-row">
+                  <div>
+                    <div className="settings-row-label">{t('settings.calendar.hideFromGuests')}</div>
+                    <div className="settings-row-sublabel">{t('settings.calendar.hideFromGuestsHint')}</div>
+                  </div>
+                  <Toggle
+                    checked={(settings.guestHiddenCalendars ?? []).includes(cal.id)}
+                    onChange={(hide) => {
+                      const next = (settings.guestHiddenCalendars ?? []).filter((id) => id !== cal.id);
+                      if (hide) next.push(cal.id);
+                      onUpdateSettings({ guestHiddenCalendars: next });
+                    }}
+                  />
+                </div>
                 {open && (
                   <div className="settings-color-editor">
                     <div className="settings-color-grid">
@@ -1391,10 +1431,16 @@ export function SettingsView({
             className="settings-input"
             value={settings.weatherEntity}
             onChange={(e) => onUpdateSettings({ weatherEntity: e.target.value })}
-            placeholder="weather.home"
-          />
+          placeholder="weather.home"
+        />
         </div>
       </div>
+
+      <HomeSensorsSettings
+        enabled={settings.homeSensorsEnabled}
+        sensors={settings.homeSensors}
+        onChange={onUpdateSettings}
+      />
 
       <div className="settings-group">
         <div className="settings-group-title">{t('settings.integrations.grocyTitle')}</div>
@@ -1411,6 +1457,26 @@ export function SettingsView({
           <Toggle
             checked={settings.grocyEnabled}
             onChange={(v) => onUpdateSettings({ grocyEnabled: v })}
+          />
+        </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.integrations.grocyExpiringLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.integrations.grocyExpiringSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.grocyExpiringEnabled}
+            onChange={(v) => onUpdateSettings({ grocyExpiringEnabled: v })}
+          />
+        </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.integrations.grocyMissingLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.integrations.grocyMissingSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.grocyMissingEnabled}
+            onChange={(v) => onUpdateSettings({ grocyMissingEnabled: v })}
           />
         </div>
       </div>
@@ -1589,6 +1655,41 @@ export function SettingsView({
             onChange={(v) => onUpdateSettings({ voiceButton: v })}
           />
         </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.display.magicImportLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.magicImportSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.magicImport}
+            onChange={(v) => onUpdateSettings({ magicImport: v })}
+          />
+        </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.display.magicImportHaAgentLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.magicImportHaAgentSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.magicImportUseHaAgent}
+            onChange={(v) => onUpdateSettings({ magicImportUseHaAgent: v })}
+          />
+        </div>
+        <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+          <div>
+            <div className="settings-row-label">{t('settings.display.magicImportAiTaskLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.magicImportAiTaskSublabel')}</div>
+          </div>
+          <div style={{ minWidth: 240, maxWidth: 360, flex: 1 }}>
+            <EntityPicker
+              id="magic-import-ai-task"
+              value={settings.magicImportAiTaskEntity}
+              domains={['ai_task']}
+              emptyLabel={t('common.none')}
+              onChange={(entityId) => onUpdateSettings({ magicImportAiTaskEntity: entityId })}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="settings-group">
@@ -1676,6 +1777,149 @@ export function SettingsView({
             onChange={(v) => onUpdateSettings({ kioskRevealGesture: v })}
           />
         </div>
+      </div>
+
+      <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.display.guestModeTitle')}</h2>
+      <p className="settings-section-desc">{t('settings.display.guestModeDesc')}</p>
+      <div className="settings-group">
+        <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+          <div>
+            <label className="settings-row-label" htmlFor="guest-pin">{t('settings.display.guestPinLabel')}</label>
+            <div className="settings-row-sublabel">{t('settings.display.guestPinSublabel')}</div>
+          </div>
+          <input
+            id="guest-pin"
+            type="password"
+            className="settings-input"
+            style={{ width: 120 }}
+            value={guestPinDraft}
+            onChange={(e) => {
+              const next = e.target.value.replace(/\D/g, '').slice(0, 6);
+              setGuestPinDraft(next);
+              const problem = guestPinProblem(next, members.map((member) => member.pin));
+              if (problem === 'matches-member') {
+                setGuestPinError(t('settings.display.guestPinMatchesMember'));
+                return;
+              }
+              if (problem === 'length') {
+                setGuestPinError(t('settings.display.guestPinLength'));
+                return;
+              }
+              setGuestPinError(null);
+              onUpdateSettings({ guestPin: next });
+            }}
+            placeholder="****"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={6}
+            aria-invalid={guestPinError ? true : undefined}
+          />
+        </div>
+        {guestPinError && (
+          <p className="kiosk-reveal-error" role="alert" style={{ margin: '0 20px 12px' }}>{guestPinError}</p>
+        )}
+        <div className="settings-row">
+          <div>
+            <label className="settings-row-label" htmlFor="guest-timeout">{t('settings.display.guestTimeoutLabel')}</label>
+            <div className="settings-row-sublabel">{t('settings.display.guestTimeoutSublabel')}</div>
+          </div>
+          <select
+            id="guest-timeout"
+            className="settings-select"
+            value={settings.guestTimeoutHours == null ? 'none' : String(settings.guestTimeoutHours)}
+            onChange={(e) => {
+              const value = e.target.value;
+              onUpdateSettings({
+                guestTimeoutHours: value === 'none' ? null : Number(value),
+              });
+            }}
+          >
+            {[1, 2, 4, 8, 12, 24].map((hours) => (
+              <option key={hours} value={String(hours)}>
+                {hours === 1
+                  ? t('settings.display.guestTimeoutHour')
+                  : t('settings.display.guestTimeoutHours', { count: hours })}
+              </option>
+            ))}
+            <option value="none">{t('settings.display.guestTimeoutNone')}</option>
+          </select>
+        </div>
+      </div>
+
+      <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.display.nightModeTitle')}</h2>
+      <p className="settings-section-desc">{t('settings.display.nightModeDesc')}</p>
+      <div className="settings-group">
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('settings.display.nightModeEnabledLabel')}</div>
+            <div className="settings-row-sublabel">{t('settings.display.nightModeEnabledSublabel')}</div>
+          </div>
+          <Toggle
+            checked={settings.nightModeEnabled}
+            onChange={(v) => onUpdateSettings({ nightModeEnabled: v })}
+          />
+        </div>
+        {settings.nightModeEnabled && (
+          <>
+            <div className="settings-row">
+              <div className="settings-row-label">{t('settings.display.nightModeStartLabel')}</div>
+              <input
+                type="time"
+                className="settings-time-input"
+                value={settings.nightModeStart}
+                onChange={(e) => onUpdateSettings({ nightModeStart: e.target.value })}
+              />
+            </div>
+            <div className="settings-row">
+              <div className="settings-row-label">{t('settings.display.nightModeEndLabel')}</div>
+              <input
+                type="time"
+                className="settings-time-input"
+                value={settings.nightModeEnd}
+                onChange={(e) => onUpdateSettings({ nightModeEnd: e.target.value })}
+              />
+            </div>
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">{t('settings.display.nightModeOverrideLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.display.nightModeOverrideSublabel')}</div>
+              </div>
+              <Segment
+                value={settings.nightModeOverride}
+                options={[
+                  { value: 'schedule', label: t('settings.display.nightModeOverrideSchedule') },
+                  { value: 'on', label: t('settings.display.nightModeOverrideOn') },
+                  { value: 'off', label: t('settings.display.nightModeOverrideOff') },
+                ]}
+                onChange={(v) => onUpdateSettings({ nightModeOverride: v })}
+              />
+            </div>
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">{t('settings.display.nightModeBrightnessLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.display.nightModeBrightnessSublabel')}</div>
+              </div>
+              <Slider
+                value={settings.nightModeBrightness}
+                min={5}
+                max={100}
+                step={5}
+                unit="%"
+                onChange={(v) => onUpdateSettings({ nightModeBrightness: v })}
+              />
+            </div>
+            <div className="settings-row">
+              <div>
+                <div className="settings-row-label">{t('settings.display.nightModeClockOnlyLabel')}</div>
+                <div className="settings-row-sublabel">{t('settings.display.nightModeClockOnlySublabel')}</div>
+              </div>
+              <Toggle
+                checked={settings.nightModeClockOnly}
+                onChange={(v) => onUpdateSettings({ nightModeClockOnly: v })}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <h2 className="settings-section-title" style={{ marginTop: 32 }}>{t('settings.display.kidDisplayTitle')}</h2>
@@ -1778,14 +2022,15 @@ export function SettingsView({
           <div className="settings-group">
             <div className="settings-row">
               <div>
-                <div className="settings-row-label">{t('settings.chores.dailyResetTimeLabel')}</div>
+                <label htmlFor="chores-reset-time" className="settings-row-label">
+                  {t('settings.chores.dailyResetTimeLabel')}
+                </label>
                 <div className="settings-row-sublabel">{t('settings.chores.dailyResetTimeSublabel')}</div>
               </div>
-              <input
-                type="time"
-                className="settings-time-input"
+              <DailyResetTimeField
+                id="chores-reset-time"
                 value={settings.choresResetTime}
-                onChange={(e) => onUpdateSettings({ choresResetTime: e.target.value })}
+                onChange={(choresResetTime) => onUpdateSettings({ choresResetTime })}
               />
             </div>
             <div className="settings-row">

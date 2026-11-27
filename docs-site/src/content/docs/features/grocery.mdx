@@ -1,67 +1,114 @@
 ---
 title: "Grocery"
-description: "Set up grocery list integration with Grocy or AnyList in Beacon — shopping lists, quick-add, and expiring items."
+description: "Set up grocery lists in Beacon with Home Assistant to-do lists, AnyList, and the HACS Grocy integration — including optional expiring and low-stock cards."
 order: 5
 ---
 
 # Grocery
 
-Beacon integrates with **Grocy** and **AnyList** through Home Assistant to display and manage your grocery shopping lists. You can view items, add new ones, check them off, and see alerts for expiring products.
+The Grocery view shows shopping lists from Home Assistant to-do entities, including AnyList lists. With **Grocy Integration** on, it also shows a list named **Grocy** beside those lists. Beacon talks to [Grocy](https://grocy.info/) through the HACS Grocy integration: you can add, check, and uncheck items on that list, add items with [Magic Import](/docs/features/magic-import/), and turn on optional dashboard cards for expiring and low-stock products.
+
+A guest in [guest mode](/docs/features/guest-mode/) can still add items to the grocery list.
+
+This needs Beacon **1.52.0** or later. A Grocy list on the Grocery screen, and check-offs that write back to Grocy, need **1.52.1** or later.
 
 ---
 
-## How the integration works
+## How lists are chosen
 
-![Grocery list (demo data)](/docs/images/screenshots/grocery.png)
+The Grocery view in the sidebar manages Home Assistant to-do lists and local lists. With **Grocy Integration** on, it adds a list named **Grocy** next to those lists. It does not replace them. Turn the integration off and the Grocery screen is unchanged: only the Home Assistant and local lists remain.
 
-Beacon tries two grocery sources in order:
+From **1.52.1**, a **Shopping** card on the [advanced dashboard](/docs/features/dashboard/) also shows a **Grocy** section when the integration is on, with the same add and check-off path as the Grocery screen. That card lists unchecked Grocy items. The default Family and Classic layouts do not include a Shopping card; you add it in dashboard edit mode. When the integration is off, the Shopping card stays on its Home Assistant to-do list, if one is set.
 
-1. **Grocy**: If the `sensor.grocy_shopping_list` entity exists and has items, Grocy is used
-2. **AnyList**: If Grocy is not available, Beacon looks for `todo.anylist_*` entities
-3. **None**: If neither is available, the grocery drawer shows a message to connect a service
+Checking, unchecking, or adding on the Grocy list writes to Grocy (`grocy.update_generic` with `{ done: 1 }` or `{ done: 0 }`, or `grocy.add_generic`). Those actions do not add the product to stock and do not call the Home Assistant todo services. A failed write shows “Couldn't update the Grocy shopping list.” Other lists on that screen keep their Home Assistant or local paths.
 
-The source detection happens automatically — you do not need to configure which service to use.
+For AnyList, Beacon looks for `todo.anylist_*` entities. If no list is available, the grocery screen shows a message to connect a service.
+
+Two optional dashboard cards, both off by default, live in the same Grocy settings group: **Expiring products** and **Low stock**. Each card stays hidden when its Home Assistant entity is missing. The expiring card lists only products whose `best_before_date` falls within 3 days. Grocy's due-products sensor can use a longer window; Beacon filters that attribute. Older setups that still expose `sensor.grocy_expiring_products` use the same filter. See [Grocy](#grocy).
 
 ---
 
-## Grocy integration setup
+## Grocy
 
-[Grocy](https://grocy.info/) is a self-hosted groceries and household management solution. To use it with Beacon:
+Grocy support requires the HACS integration [custom-components/grocy](https://github.com/custom-components/grocy). Install that integration, then enter your Grocy URL and API key there. Grocy itself can run as a Home Assistant add-on or as its own install; Beacon talks only to the integration's entities and services.
+
+### Settings
+
+Open **Settings → Integrations → Grocy**. All three switches start off.
+
+- **Grocy Integration** — shows a **Grocy** list on the Grocery screen and lets [Magic Import](/docs/features/magic-import/) add items to Grocy. The Grocy client stays on Grocy when this is on, even if the list is empty, instead of falling through to AnyList.
+- **Expiring products** — a dashboard card that reads `binary_sensor.grocy_expiring_products` (or the older id `sensor.grocy_expiring_products`) and keeps products whose `best_before_date` is within 3 days.
+- **Low stock** — a dashboard card that reads `binary_sensor.grocy_missing_products` (or the older id `sensor.grocy_missing_products`).
+
+If a card's entity is missing, that card is not shown.
+
+### Shopping-list client
+
+Beacon's Grocy client reads the shopping list from `sensor.grocy_shopping_list` (the `products` attribute). Product names come from the row's product data (or `sensor.grocy_stock`), then the item's note, then `Product #<id>` if neither is available.
+
+- Adding an item calls `grocy.add_generic` with `entity_type: shopping_list` and `{ note, amount: 1 }`. It does not purchase or stock the product. The Grocery screen uses this for the Grocy list. Magic Import uses it when the destination list is Grocy.
+- Checking or unchecking an item calls `grocy.update_generic` with `entity_type: shopping_list`, the item's `object_id`, and `{ done: 1 }` or `{ done: 0 }`. That only sets the shopping-list done flag. It does not add the product to stock. From **1.52.1**, the Grocery screen uses these calls for the Grocy list. Home Assistant and local lists on that screen are unchanged.
+- If a Grocy write fails, Beacon shows the toast **Couldn't update the Grocy shopping list.**
+
+### What is not in this version
+
+Beacon does not sync Grocy chores or Grocy's meal plan. Beacon already has its own [chores](/docs/features/chores/) and [meal planner](/docs/features/meals/). Adding recipe ingredients to a grocery list writes to the default list or the built-in Shopping List (including Home Assistant to-do lists); it does not write to Grocy.
+
+---
+
+## Behavior changes
+
+In **1.52.0**:
+
+- [Magic Import](/docs/features/magic-import/) can add items to Grocy when **Grocy Integration** is on.
+- Optional **Expiring products** and **Low stock** cards can be turned on under **Settings → Integrations → Grocy**.
+- The Grocery screen still showed only Home Assistant and local lists. Checking an item off there updated that list, not Grocy.
+
+In **1.52.1**:
+
+- With **Grocy Integration** on, a list named **Grocy** appears on the Grocery screen next to the existing lists, and check-offs on that list write to Grocy.
+- The expiring card shows only items due within 3 days. It stays hidden when the sensor is missing, and it still accepts the older `sensor.grocy_expiring_products` id.
+
+---
+
+## Grocy setup
 
 ### Step 1: Install Grocy
 
 If you do not already have Grocy running:
 
-1. Install the **Grocy** add-on from the Home Assistant Add-on Store
-2. Start the add-on and complete the initial Grocy setup through its web UI
+1. Install the **Grocy** add-on from the Home Assistant Add-on Store, or run Grocy on its own
+2. Complete the initial Grocy setup through its web UI
 3. Add some products and a shopping list
 
-### Step 2: Install the Grocy integration in Home Assistant
+### Step 2: Install the HACS Grocy integration
 
-1. Go to **Settings > Devices & Services**
-2. Click **Add Integration**
-3. Search for **Grocy**
-4. Enter your Grocy URL and API key (found in Grocy's settings)
-5. Click **Submit**
+1. Install [custom-components/grocy](https://github.com/custom-components/grocy) through HACS (Home Assistant Community Store)
+2. Restart Home Assistant
+3. Go to **Settings > Devices & Services**
+4. Click **Add Integration** and search for **Grocy**
+5. Enter your Grocy URL and API key (found in Grocy's settings)
+6. Click **Submit**
 
 ### Step 3: Verify the entities
 
-After the integration is set up, verify these entities exist:
+After the integration is set up, verify these entities exist in **Developer Tools > States**:
 
-- `sensor.grocy_shopping_list` — your shopping list items
-- `sensor.grocy_expiring_products` — products nearing their best-before date
+- `sensor.grocy_shopping_list` — shopping list items (`products`)
+- `binary_sensor.grocy_expiring_products` — products nearing their best-before date (`expiring_products`). Older setups may still expose `sensor.grocy_expiring_products`.
+- `binary_sensor.grocy_missing_products` — products under minimum stock (`missing_products`). Older setups may still expose `sensor.grocy_missing_products`.
 
-Check in **Developer Tools > States** by searching for "grocy".
+### Step 4: Turn Grocy on in Beacon
 
-### Step 4: Open Beacon
+Open **Settings → Integrations → Grocy**. Turn on **Grocy Integration** so Magic Import can add items and the Grocery screen includes a **Grocy** list. Turn on **Expiring products** and **Low stock** if you want those cards on the dashboard.
 
-Navigate to the Grocery view (shopping cart icon in the sidebar). You should see your Grocy shopping list with a "via Grocy" label.
+Open the Grocery view (shopping cart icon in the sidebar). The list selector includes **Grocy** alongside your Home Assistant lists.
 
 ---
 
 ## AnyList integration setup
 
-[AnyList](https://www.anylist.com/) is a popular shared grocery list app. Since AnyList has no official public API, the integration works through a custom Home Assistant integration.
+[AnyList](https://www.anylist.com/) is a shared grocery list app. Since AnyList has no official public API, the integration works through a custom Home Assistant integration.
 
 ### Step 1: Install the AnyList integration
 
@@ -82,7 +129,7 @@ The integration creates `todo.anylist_*` entities for each of your AnyList lists
 
 ### Step 3: Open Beacon
 
-Navigate to the Grocery view. You should see your AnyList items with a "via AnyList" label. Beacon uses the first discovered AnyList entity as the primary list.
+Navigate to the Grocery view. You should see your AnyList items. Beacon uses the first discovered AnyList entity as the primary list when it is choosing among AnyList lists.
 
 ---
 
@@ -92,86 +139,86 @@ Navigate to the Grocery view. You should see your AnyList items with a "via AnyL
 
 Click the **shopping cart icon** in the sidebar. On mobile, tap **More** then **Grocery**.
 
-The grocery drawer shows:
+The grocery screen shows:
 
-1. **Handle bar**: Tap to expand/collapse. Shows the "Grocery" label, unchecked item count badge, and source indicator
-2. **Quick-add input**: A text field to add new items
-3. **Expiring items alert**: A yellow alert bar when products are nearing expiration (Grocy only)
-4. **Shopping list**: All items sorted with unchecked items first, then checked items, alphabetically within each group
+1. **List selector**: Home Assistant and local lists. With Grocy Integration on, a **Grocy** list is included too.
+2. **Quick-add input**: a text field to add new items. On the Grocy list this calls `grocy.add_generic`.
+3. **Shopping list**: unchecked items first, then checked items. Checking a Grocy item writes the shopping-list `done` flag. Other lists stay on their Home Assistant or local path.
 
 ### Quick-add items
 
 1. Tap the text input at the top of the list
 2. Type the item name (e.g., "Milk")
 3. Tap **Add** or press Enter
-4. The item is added to your shopping list and synced to Grocy/AnyList
+4. The item is added to the selected list. A Home Assistant list uses `todo.add_item`. The Grocy list uses `grocy.add_generic`.
+
+You can also paste a list (or a message that includes one), or add a photo or PDF, with [Magic Import](/docs/features/magic-import/). Review the draft items, then approve them. Pasted text is processed by your Home Assistant conversation agent, or a local parser. Photos and scanned PDFs are processed by your Home Assistant AI Task entity. When **Grocy Integration** is on, Magic Import can send a draft item to Grocy.
 
 ### Checking off items
 
 1. Tap any item in the list
-2. If unchecked, it becomes checked (moves to the bottom of the list with a checkmark)
-3. If already checked, tapping unchecks it (moves back to the top)
+2. If unchecked, it becomes checked
+3. If already checked, tapping unchecks it
 
-Updates are optimistic — the UI updates immediately while the API call happens in the background.
+Updates are optimistic — the UI updates immediately while the API call happens in the background. On the Grocy list, that call is `grocy.update_generic` with `{ done: 1 }` or `{ done: 0 }`. It does not add the product to stock. A failed write shows **Couldn't update the Grocy shopping list.** and puts the check back. Home Assistant and local lists are unchanged.
 
 ### Item details
 
 Each item may show:
 - **Name**: The item name
-- **Quantity**: Number or amount (if set in Grocy/AnyList)
+- **Quantity**: Number or amount (if set)
 - **Category**: Product category or group (if available)
 
 ---
 
-## Expiring items alerts
+## Expiring and low-stock cards
 
-When using Grocy, Beacon checks for products expiring within the next 3 days. If any are found:
+When **Expiring products** or **Low stock** is on under **Settings → Integrations → Grocy**, Beacon shows that card on the dashboard sidebar. The expiring card reads `expiring_products` and keeps products whose `best_before_date` is within the next 3 days. Products with no date, or a date further out, stay off the card. The low-stock card lists products below their minimum stock. An empty sensor still shows the card, with **Nothing expiring soon** or **Nothing low or missing**. If the entity is not in Home Assistant, the card is hidden. Older setups that still expose `sensor.grocy_expiring_products` or `sensor.grocy_missing_products` use those ids.
 
-- A yellow alert bar appears at the top of the grocery list
-- The alert shows the count and names of the first 3 expiring items
-- Example: "3 items expiring soon: Milk, Yogurt, Eggs..."
-
-This feature is only available with Grocy (AnyList does not track expiration dates).
+These cards are only available with Grocy. AnyList does not track expiration dates or minimum stock in Beacon.
 
 ---
 
 ## Meal plan display
 
-Today's meals show in the dashboard's **Menu** widget, not on the grocery screen. Beacon does not currently read Grocy's meal plan (`sensor.grocy_meal_plan`) into that widget. See [Meals](/docs/features/meals/) for how to get meals onto the display.
+Today's meals show in the dashboard's **Menu** widget, not on the grocery screen. Beacon does not read Grocy's meal plan (`sensor.grocy_meal_plan`) into that widget. See [Meals](/docs/features/meals/) for how to get meals onto the display.
 
 ---
 
 ## Data refresh
 
-- The grocery list refreshes automatically every 2 minutes
-- Adding, checking, or unchecking an item triggers an immediate refresh
-- The expiring products alert refreshes with the list
+- Home Assistant grocery lists refresh automatically every 30 seconds
+- The Grocy list refreshes automatically every 2 minutes
+- Adding, checking, or unchecking an item triggers a refresh
+- The expiring products card reads the Grocy sensor on its own schedule
 
 ---
 
 ## Troubleshooting
 
-### "Connect Grocy or AnyList in Home Assistant to see your lists"
+### "No lists available"
 
-This message appears when Beacon cannot find either a Grocy or AnyList integration. Verify:
+The Grocery view shows this when it cannot find a Home Assistant or local shopping list to open. Verify:
 
-1. The Grocy integration is set up and `sensor.grocy_shopping_list` exists in HA
-2. OR the AnyList integration is set up and `todo.anylist_*` entities exist
-3. Beacon is connected to Home Assistant (no "Connecting..." badge)
+1. A Home Assistant to-do list or `todo.anylist_*` entity exists, and **Settings → Integrations** points Beacon at the right lists if you have set them
+2. Beacon is connected to Home Assistant (no "Connecting..." badge)
 
-### Items do not sync back to the app
+An empty list shows **No items yet — add one above**. With **Grocy Integration** on, the **Grocy** list is still in the selector even when `sensor.grocy_shopping_list` is empty.
 
-Beacon uses Home Assistant's REST API to communicate with Grocy/AnyList. Check:
+### Items do not sync back to Grocy
+
+Check-offs sync to Grocy only on the **Grocy** list, and only when **Grocy Integration** is on. Home Assistant and local lists on the same screen stay on their own paths. Adds that go through Magic Import when Grocy is the destination call `grocy.add_generic`. If a Grocy write fails, look for the toast **Couldn't update the Grocy shopping list.** Also check:
 
 1. The Home Assistant token is valid
-2. The Grocy/AnyList integration is functioning (check **Developer Tools > States** for the entity)
-3. Open the browser console (F12) and look for "Beacon: Failed to..." error messages
+2. The HACS Grocy integration is functioning (check **Developer Tools > States** for the entity)
+3. **Grocy Integration** is on under **Settings → Integrations → Grocy**
+4. You are checking an item on the **Grocy** list, not a Home Assistant to-do list
 
-### Expiring items alert does not appear
+### Expiring or low-stock cards do not appear
 
-1. Verify `sensor.grocy_expiring_products` exists in Home Assistant
-2. Ensure products in Grocy have best-before dates set
-3. The alert only shows products expiring within the next 3 days
+1. Turn on **Expiring products** or **Low stock** under **Settings → Integrations → Grocy**
+2. Verify `binary_sensor.grocy_expiring_products` or `binary_sensor.grocy_missing_products` exists (or the older `sensor.*` ids)
+3. For expiring products, ensure products in Grocy have best-before dates set. The card only lists products whose `best_before_date` is within the next 3 days
 
 ### AnyList shows wrong list
 
@@ -181,4 +228,4 @@ Beacon uses the first `todo.anylist_*` entity it discovers. If you have multiple
 
 1. Make sure the input is not empty (whitespace-only is rejected)
 2. Check the browser console for errors
-3. Verify the underlying service (`grocy.add_generic` or `todo.add_item`) works by calling it from **Developer Tools > Services** in HA
+3. Verify the underlying service (`todo.add_item`, or `grocy.add_generic` when adding to Grocy) works by calling it from **Developer Tools > Services** in HA

@@ -9,6 +9,7 @@ import { ShoppingCard } from './ShoppingCard';
 import { HaEntityCard } from './HaEntityCard';
 import { HaEntitiesListCard } from './HaEntitiesListCard';
 import { HaToggleCard } from './HaToggleCard';
+import { HomeSensorsCard } from './HomeSensorsCard';
 
 export const cardRegistry: Record<string, CardDefinition> = {
   'clock-weather': {
@@ -125,6 +126,15 @@ export const cardRegistry: Record<string, CardDefinition> = {
       { type: 'text', key: 'title', labelKey: 'cards.common.titleLabel' },
       { type: 'text', key: 'subtitle', labelKey: 'cards.common.subtitleLabel' },
     ],
+    allowedRegions: ['topbar', 'sidebar', 'main'],
+  },
+  'home-sensors': {
+    type: 'home-sensors',
+    displayNameKey: 'cards.homeSensors.displayName',
+    icon: '🌡️',
+    component: HomeSensorsCard,
+    defaultConfig: {},
+    defaultSize: 'md',
     allowedRegions: ['topbar', 'sidebar', 'main'],
   },
 };

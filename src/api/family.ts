@@ -5,9 +5,11 @@ import {
   Streak,
   Routine,
   RoutineTaskCompletion,
+  UNCREDITED_MEMBER_ID,
+  memberCreditedForCompletion,
 } from '../types/family';
 import { loadData, loadDataSync, saveData } from './beacon-store';
-import { localDayKey } from './date-keys';
+import { advanceStreak, choreDayKey, localDayKey } from './date-keys';
 import { applyPrivilegeDecision, publishChoreEvents } from './chore-bridge';
 import {
   eventsForChoreChange,
@@ -26,6 +28,14 @@ const STORAGE_KEYS = {
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function choreToday(resetTime?: string | null): string {
+  return choreDayKey(undefined, null, resetTime);
+}
+
+function completedOnChoreDay(completedAt: string, today: string, resetTime?: string | null): boolean {
+  return choreDayKey(completedAt, null, resetTime) === today;
 }
 
 /**
@@ -120,12 +130,10 @@ export class FamilyStore {
     return loadDataSync<ChoreCompletion[]>(STORAGE_KEYS.completions, []);
   }
 
-  async getCompletionsToday(): Promise<ChoreCompletion[]> {
-    const today = localDayKey();
+  async getCompletionsToday(resetTime?: string | null): Promise<ChoreCompletion[]> {
+    const today = choreToday(resetTime);
     const completions = await this.getCompletions();
-    return completions.filter(
-      (c) => localDayKey(c.completed_at) === today
-    );
+    return completions.filter((c) => completedOnChoreDay(c.completed_at, today, resetTime));
   }
 
   async getCompletionsForPeriod(startDate: string, endDate: string): Promise<ChoreCompletion[]> {
@@ -136,36 +144,52 @@ export class FamilyStore {
     });
   }
 
-  async completeChore(choreId: string, memberId: string, verifiedBy?: string): Promise<ChoreCompletion> {
+  async completeChore(
+    choreId: string,
+    memberId: string,
+    verifiedBy?: string,
+    resetTime?: string | null,
+    by?: ChoreCompletion['by'],
+  ): Promise<ChoreCompletion> {
+    const chores = this.getChoresSync();
+    const chore = chores.find((entry) => entry.id === choreId);
+    const creditedMemberId = memberCreditedForCompletion(memberId, chore?.assigned_to, by);
     const completions = await this.getCompletions();
-    const today = localDayKey();
+    const today = choreToday(resetTime);
     const existing = completions.find(
       (c) =>
         c.chore_id === choreId &&
-        c.member_id === memberId &&
-        localDayKey(c.completed_at) === today
+        c.member_id === creditedMemberId &&
+        completedOnChoreDay(c.completed_at, today, resetTime)
     );
     if (existing) return existing;
-    const chores = this.getChoresSync();
-    const progressBefore = memberProgress(memberId, chores, completions, today);
+    const uncredited = creditedMemberId === UNCREDITED_MEMBER_ID;
+    const progressBefore = uncredited
+      ? { completed: 0, total: 0 }
+      : memberProgress(creditedMemberId, chores, completions, today, null, resetTime);
     const completion: ChoreCompletion = {
       chore_id: choreId,
-      member_id: memberId,
+      member_id: creditedMemberId,
       completed_at: new Date().toISOString(),
       verified_by: verifiedBy,
+      ...(by === 'guest' ? { by: 'guest' as const } : {}),
     };
     completions.push(completion);
     await saveData(STORAGE_KEYS.completions, completions);
 
-    // Update streaks
-    await this.updateStreakForMember(memberId);
+    // A guest check-off with no assignee is not a family member's chore.
+    if (uncredited) return completion;
 
-    const progressAfter = memberProgress(memberId, chores, completions, today);
+    // Count the streak on this chore day. Older streak rows are not rewritten.
+    await this.updateStreakForMember(creditedMemberId, resetTime);
+
+    const progressAfter = memberProgress(creditedMemberId, chores, completions, today, null, resetTime);
     void this.emitChoreChange({
       choreId,
-      memberId,
+      memberId: creditedMemberId,
       completed: true,
       localDate: today,
+      resetTime,
       completions,
       progressBefore,
       progressAfter,
@@ -174,26 +198,27 @@ export class FamilyStore {
     return completion;
   }
 
-  async uncompleteChore(choreId: string, memberId: string): Promise<boolean> {
+  async uncompleteChore(choreId: string, memberId: string, resetTime?: string | null): Promise<boolean> {
     const completions = await this.getCompletions();
-    const today = localDayKey();
+    const today = choreToday(resetTime);
     const index = completions.findIndex(
       (c) =>
         c.chore_id === choreId &&
         c.member_id === memberId &&
-        localDayKey(c.completed_at) === today
+        completedOnChoreDay(c.completed_at, today, resetTime)
     );
     if (index === -1) return false;
     const chores = this.getChoresSync();
-    const progressBefore = memberProgress(memberId, chores, completions, today);
+    const progressBefore = memberProgress(memberId, chores, completions, today, null, resetTime);
     completions.splice(index, 1);
     await saveData(STORAGE_KEYS.completions, completions);
-    const progressAfter = memberProgress(memberId, chores, completions, today);
+    const progressAfter = memberProgress(memberId, chores, completions, today, null, resetTime);
     void this.emitChoreChange({
       choreId,
       memberId,
       completed: false,
       localDate: today,
+      resetTime,
       completions,
       progressBefore,
       progressAfter,
@@ -210,6 +235,7 @@ export class FamilyStore {
     memberId: string;
     completed: boolean;
     localDate: string;
+    resetTime?: string | null;
     completions: ChoreCompletion[];
     progressBefore: { completed: number; total: number };
     progressAfter: { completed: number; total: number };
@@ -241,7 +267,7 @@ export class FamilyStore {
       });
       await publishChoreEvents(events);
       await applyPrivilegeDecision(
-        privilegeDecision(member, chores, args.completions, args.localDate),
+        privilegeDecision(member, chores, args.completions, args.localDate, null, args.resetTime),
       );
     } catch (err) {
       console.warn('[beacon] chore side effects failed', err);
@@ -260,33 +286,21 @@ export class FamilyStore {
     return existing ?? { member_id: memberId, current: 0, longest: 0, last_completed: '' };
   }
 
-  private async updateStreakForMember(memberId: string): Promise<void> {
+  /**
+   * Count this completion on the chore day from Daily Reset Time.
+   * A row that already counted this chore day is left untouched, including
+   * rows saved before streaks stored `last_chore_day`.
+   */
+  private async updateStreakForMember(memberId: string, resetTime?: string | null): Promise<void> {
     const streaks = await this.getStreaks();
-    const today = localDayKey();
-    const yesterday = localDayKey(Date.now() - 86400000);
-
-    let streak = streaks.find((s) => s.member_id === memberId);
-    if (!streak) {
-      streak = { member_id: memberId, current: 0, longest: 0, last_completed: '' };
-      streaks.push(streak);
-    }
-
-    const lastDate = localDayKey(streak.last_completed);
-
-    if (lastDate === today) {
-      // Already counted today
-      return;
-    }
-
-    if (lastDate === yesterday) {
-      streak.current += 1;
-    } else {
-      streak.current = 1;
-    }
-
-    streak.longest = Math.max(streak.longest, streak.current);
-    streak.last_completed = new Date().toISOString();
-
+    const index = streaks.findIndex((streak) => streak.member_id === memberId);
+    const existing: Streak = index === -1
+      ? { member_id: memberId, current: 0, longest: 0, last_completed: '' }
+      : streaks[index];
+    const updated = advanceStreak(existing, new Date(), null, resetTime);
+    if (updated === existing) return;
+    if (index === -1) streaks.push(updated);
+    else streaks[index] = updated;
     await saveData(STORAGE_KEYS.streaks, streaks);
   }
 
@@ -333,20 +347,23 @@ export class FamilyStore {
   }
 
   async getRoutineTaskCompletionsToday(): Promise<RoutineTaskCompletion[]> {
+    // Routines are clock-tied, not chore-chart-tied: the day is calendar midnight.
     const today = localDayKey();
     const completions = await this.getRoutineTaskCompletions();
+    // Same calendar-midnight day: routines are clock-tied, not chore-chart-tied.
     return completions.filter((c) => localDayKey(c.completed_at) === today);
   }
 
   async completeRoutineTask(routineId: string, taskId: string, memberId: string): Promise<void> {
     const completions = await this.getRoutineTaskCompletions();
+    // Routines are clock-tied, not chore-chart-tied: the day is calendar midnight.
     const today = localDayKey();
     const exists = completions.some(
       (c) =>
         c.routine_id === routineId &&
         c.task_id === taskId &&
         c.member_id === memberId &&
-        localDayKey(c.completed_at) === today
+        localDayKey(c.completed_at) === today // calendar midnight; routines are clock-tied, not chore-chart-tied
     );
     if (exists) return;
     completions.push({
@@ -360,13 +377,14 @@ export class FamilyStore {
 
   async uncompleteRoutineTask(routineId: string, taskId: string, memberId: string): Promise<boolean> {
     const completions = await this.getRoutineTaskCompletions();
+    // Routines are clock-tied, not chore-chart-tied: the day is calendar midnight.
     const today = localDayKey();
     const index = completions.findIndex(
       (c) =>
         c.routine_id === routineId &&
         c.task_id === taskId &&
         c.member_id === memberId &&
-        localDayKey(c.completed_at) === today
+        localDayKey(c.completed_at) === today // calendar midnight; routines are clock-tied, not chore-chart-tied
     );
     if (index === -1) return false;
     completions.splice(index, 1);

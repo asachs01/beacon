@@ -8,6 +8,16 @@ order: 1
 
 The dashboard is Beacon's default view — the first thing you see when you open the app. It is designed to give you a glanceable summary of the day from across the room.
 
+When [Magic Import](/docs/features/magic-import/) is on, an **Import** button sits at the lower left so you can paste a school email, a text, or a list, or add a photo or PDF, and review the drafts before saving. The button is hidden in kiosk mode, and while [guest mode](/docs/features/guest-mode/) is on.
+
+To dim the wall in the evening, turn on [Night mode](/docs/features/night-mode/) under **Settings → Display**. It is off until you enable it. A tap, or a finished countdown timer, brings the dashboard back for at least 60 seconds.
+
+Optional [Grocy](/docs/features/grocery/) cards can appear in the sidebar. **Expiring products** and **Low stock** (off by default, under **Settings → Integrations → Grocy**) need Beacon **1.52.0** or later. From **1.52.1**, the expiring card lists only items due within 3 days, and a **Shopping** card you add in dashboard edit mode also shows a Grocy list when **Grocy Integration** is on. Checking an item off there writes the shopping-list done flag and does not change stock.
+
+The **HA Toggle** card switches Home Assistant entities from the dashboard. From **1.53.1**, Beacon only switches entities that are on an HA Toggle card in your saved layout, so leave **Edit Dashboard** after adding one. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/).
+
+From **1.53.0**, a read-only [Home sensors](/docs/features/home-sensors/) card can show a few Home Assistant entities you pick under **Settings → Integrations → Home sensors**. It is off by default and is not in the Family, Classic, or Compact layouts. After you turn it on, add it with **Edit Dashboard**. It is hidden from guests and is not on Kid Display.
+
 ---
 
 ## Layout presets
@@ -22,7 +32,7 @@ The Family layout is a per-member calendar view designed for a family command ce
 
 - **Top bar**: The current time (styled in the theme's accent color), the date, and a compact weather widget. Clicking the weather widget opens the full weather view.
 - **Main area**: One column per family member. Each column shows the member's avatar, their name (color-coded to match their assigned color), and their calendar events for the day. Only members with a `calendar_entity` assigned in **Settings > Family Members** get a column. Events that don't match any member's calendar appear in an **"Other"** column.
-- **Sidebar** (300px, right side): Contains the **Menu** widget (today's meals from AnyList) and the **Tasks** widget (todo items from Home Assistant or chores).
+- **Sidebar** (300px, right side): Contains the **Menu** widget (today's meals from AnyList) and the **Tasks** widget (todo items from Home Assistant or chores). If you turn on **Expiring products** or **Low stock** under **Settings → Integrations → Grocy**, those cards also appear here. See [Grocery](/docs/features/grocery/).
 
 ### Classic
 
@@ -76,8 +86,9 @@ The meal plan widget appears in the sidebar (Family layout) or the right column 
 | Breakfast | Sunrise |
 | Lunch | Sun |
 | Dinner | Moon |
+| Snack | Apple |
 
-Meal data is written to Beacon by the MCP tools or the AnyList sync script. See [Meals](/docs/features/meals/). If no meals are planned for today, the widget is hidden.
+The card stays visible when today has no meals, with an **Add meal** row for each type so you can add one from the dashboard. Tap a row to edit it, or **Plan the week** to open the [Meals](/docs/features/meals/) week view. You can also fill the plan from Beacon's MCP tools or the AnyList sync script.
 
 ---
 

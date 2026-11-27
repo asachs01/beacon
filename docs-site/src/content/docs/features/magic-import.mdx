@@ -1,0 +1,117 @@
+---
+title: "Magic Import"
+description: "Paste a school email, a text, or a list, or add a photo or PDF, review the draft events and list items, and save the ones you want."
+order: 2.5
+---
+
+# Magic Import
+
+Paste a school email, a text message, or a list into Beacon, or add a photo or a PDF. It finds calendar events and grocery or to-do items, shows you the drafts, and waits for you to approve them. Nothing is saved until you do.
+
+Skylight Calendar's Calendar Plus already includes a Magic Import that can take forwarded emails, PDFs, and photos of flyers. Beacon can now take a photo or a PDF too, but it still does not read forwarded email, so that gap is not fully closed. Photos and scanned PDFs stay off until you pick an AI Task entity. Beacon's version is free, approved with the family PIN, and pasted text (and text PDFs) can use a local parser.
+
+Pasted text is processed by your Home Assistant conversation agent, or a local parser. Photos and scanned PDFs are processed by your Home Assistant AI Task entity.
+
+Pasted text needs Beacon **1.47.0** or later. Photos and PDFs need Beacon **1.49.0** or later, and Home Assistant **2025.8** or newer.
+
+## Where to find it
+
+- On the dashboard, **Import** sits at the lower left.
+- On the calendar, **Import** is in the header, next to the clock.
+
+The button is hidden in kiosk mode, while [guest mode](/docs/features/guest-mode/) is on, and it is not on [Kid Display](/docs/features/kid-display/). To show or hide it, use **Settings → Display → Magic Import**. A guest PIN can never approve or reject an import.
+
+## Settings
+
+**Settings → Display → Magic Import** shows or hides the Import button. It is on by default in the Home Assistant add-on. In a standalone browser, it starts off until you turn it on. A saved on or off choice wins on later visits.
+
+**Settings → Display → Magic Import: use Home Assistant conversation agent** is on by default, including when the setting has never been saved. When it is on, pasted text is processed by your Home Assistant conversation agent, or a local parser if that agent is unavailable. Turning it off forces the local parser. It also turns off photo and scanned-PDF import. A PDF that contains text still uses the local parser.
+
+**Settings → Display → Magic Import: AI Task entity for photos** is empty by default. Pick an `ai_task` entity to read photos and scanned PDFs. Leaving it empty does not change pasted text.
+
+## Paste, review, and approve
+
+1. Open **Import**. Paste a message, choose **Add a photo or PDF**, or **Take a photo** on a phone or the Capacitor app.
+2. Choose **Find items**. Beacon reads the text or the file, then shows a review list.
+3. Check each draft. You can edit the fields, change the calendar or list, or remove a draft you do not want.
+4. Choose **Approve** to save what's left, or **Reject** to discard everything and close the dialog.
+
+The paste screen and the review screen both name the path that will run or that already ran. When Home Assistant will read the text, they show the conversation agent's name and entity id, and label it **local**, **cloud**, or **may be cloud**. When the local parser will run, they say a local parser will read it (or already did). A photo or a scanned PDF names the AI Task entity the same way: **local**, **cloud**, or **may be cloud**. Beacon never says the local parser read a photo.
+
+If any family member has a PIN, Approve and Reject ask for a family PIN first. It is the same digits used to reveal kiosk navigation and to leave Kid Display. If no family PIN is set, Approve saves immediately.
+
+Drafts exist only while the dialog is open. Closing it without approving discards them. Existing calendar events, list items, and other stored records are not rewritten.
+
+## Privacy
+
+Pasted text is processed by your Home Assistant conversation agent, or a local parser. Beacon itself sends the text nowhere. Home Assistant sends it to a provider only when the conversation agent is a cloud service — for example the OpenAI or Google AI integrations. Only the local parser, or a local conversation agent, keeps the text in the home.
+
+A photo or scanned PDF is processed by your Home Assistant AI Task entity. Beacon itself sends the file nowhere else, and it never saves the file to its own storage (add-on `/data` or `localStorage`). For the task it briefly uploads the file to Home Assistant's local media source and deletes it afterward. If that delete fails, the review screen tells you and names the file still in Home Assistant's media folder. If the AI Task entity is a cloud service, that provider receives the file.
+
+## Home Assistant agent or local parser
+
+When **Magic Import: use Home Assistant conversation agent** is on and a conversation agent is available, Beacon asks that agent for a JSON reply through Home Assistant (the same `conversation.process` path [press-to-talk](/docs/features/press-to-talk/) uses). If the setting is off, there is no agent, the agent errors, or the reply is not valid JSON in the expected shape, Beacon uses the local parser instead.
+
+Beacon labels the named agent using its entity id and name:
+
+- **Local:** built-in Assist (`conversation.home_assistant`, or an agent named Home Assistant), plus known on-device integrations such as Ollama, LocalAI, a local LLM, and llama.cpp.
+- **Cloud:** hosted integrations such as OpenAI, ChatGPT, Google, Gemini, Google Generative AI, Anthropic, Claude, Groq, OpenRouter, Mistral, Perplexity, Amazon Bedrock, Azure, Nabu Casa, and Home Assistant Cloud.
+- **May be cloud:** any other agent Beacon does not recognize, and the case where Home Assistant has conversation set up but Beacon cannot see the agent id.
+
+A cloud hint in the agent's entity id is treated as cloud. A local hint in the entity id is treated as local even when the display name looks like a hosted model.
+
+### What the local parser can find
+
+These kinds of phrases parse well on the local path:
+
+- `Field trip Fri Dec 5 at 9am at the museum.`
+- `Practice tomorrow at 3pm`
+- `Lesson next Tuesday`
+- `Piano 12/5 from 3pm to 4:30pm`
+- A bullet list under a heading such as `Please bring:` becomes grocery items. A heading such as `Homework:` becomes to-do items.
+- A short stack of lines such as `milk` / `eggs` / `bread` becomes list items.
+
+Relative dates such as `today`, `tomorrow`, and `next Tuesday` use the display's timezone, not UTC. Numeric dates such as `12/5` follow the display locale (month-first in `en-US`).
+
+The conversation agent can often read messier prose. It is still limited to the same kinds of drafts: events and grocery or to-do items. Beacon does not invent items that are not in the message, and it rejects an agent reply that does not match the expected shape.
+
+## Draft fields
+
+Event drafts include a title, date, start and end time or all-day, and optional location and notes. Each draft can be assigned to a calendar. If a timed event has no end time, Beacon uses the default event duration from settings (one hour when that value is missing or not positive). Local calendar events can store a location when one is provided.
+
+List drafts are grocery or to-do items. Each one can be assigned to a list. Grocery items go to your default grocery list when it is available, otherwise the built-in shopping list, then the first list Beacon can use. To-do items follow the same rule with the built-in to-do list. Items can be saved to a local list, a Home Assistant to-do list, or Grocy when Grocy is enabled.
+
+## Photos and PDFs
+
+Add one JPEG, PNG, HEIC, or PDF. **Take a photo** appears in the Capacitor app, and on a phone or tablet with a coarse pointer, and opens the camera. The review screen is the same one pasted text uses, and Approve still asks for the family PIN. Nothing is written before that.
+
+- A JPEG or PNG is sent to the AI Task entity you picked.
+- HEIC is converted to JPEG when the browser can decode it. Otherwise Beacon shows this error and stops: "This photo format (HEIC) can't be read on this device. Try a JPEG or PNG, or change your camera to Most Compatible."
+- A PDF with text is read in the browser and then follows the pasted-text path, so it can use the local parser or the conversation agent. Only the first 5 pages of text are used.
+- A scanned PDF, with almost no text, uses page 1 as an image and sends it to the AI Task entity through `ai_task.generate_data`. If that path is off, Beacon says so. A failed photo or scan read does not fall back to the local parser.
+- One file per import, up to 10 MB.
+
+Photo and scan import is unavailable until **Magic Import: AI Task entity for photos** is set, and while **use Home Assistant conversation agent** is off.
+
+### Home Assistant setup
+
+- Home Assistant **2025.8** or newer. That is when `ai_task.generate_data` gained attachments.
+- In the AI integration (OpenAI, Google, Ollama, or another), add the AI Task sub-entry so an `ai_task.*` entity exists. Pick that entity in Beacon under **Settings → Display → Magic Import: AI Task entity for photos**. A local integration such as Ollama is labeled local. OpenAI, Google, and Anthropic are labeled cloud. Anything else may be cloud, using the same classifier as conversation agents.
+- The long-lived token, or the add-on Supervisor token, must be an admin. Home Assistant only lets an admin upload to the local media source.
+- Home Assistant needs its local media folder (the default `media` directory is enough). `ai_task.generate_data` does not accept inline image bytes, so Beacon uploads the file to the local media source, calls the task with that `media_content_id`, then deletes the file. In the add-on those calls go through `/beacon-action/media-upload`, `/beacon-action/media-browse`, and `/beacon-action/media-remove` so ingress does not rewrite the upload. If the delete fails, the review screen names the file still in Home Assistant's media folder.
+
+## Limits and troubleshooting
+
+- Beacon does not read forwarded email.
+- One file per import, up to 10 MB. Two files at once shows "Choose one file at a time." A larger file shows "This file is larger than 10 MB. Choose a smaller photo or PDF." An unsupported type shows "Choose a JPEG, PNG, HEIC, or PDF."
+- If photo and scan import is off because the local parser is forced, Beacon shows: "Photo and scanned-PDF import is unavailable because Magic Import is set to the local parser. The local parser reads text, not photos. A PDF that contains text still works."
+- If no AI Task entity is set, it shows: "Photo and scanned-PDF import needs an AI Task entity. Choose one in Settings under Magic Import: AI Task entity for photos. A PDF that contains text still works."
+- If the AI Task entity cannot read the photo, it shows: "Home Assistant's AI Task entity could not read this photo. Nothing was saved." A failed image read does not fall back to the local parser.
+- If the upload to Home Assistant fails, it explains that photo import needs Home Assistant 2025.8 or newer, an admin token, and a local media folder.
+- If the temporary media file cannot be deleted, the review screen says Home Assistant still has the file in its media folder and names it, so you can remove it there.
+- When Home Assistant reads pasted text, Beacon sends the first 8,000 characters to the conversation agent.
+- If nothing is found, the review screen says to include a date like “Fri Dec 5” or a bullet list.
+- If some drafts cannot be saved, those stay in the list with an error so you can fix them and try again.
+- Events need a calendar to write to. List items need a list. A blank title is not saved.
+
+See also [Calendar](/docs/features/calendar/) and [Grocery](/docs/features/grocery/).

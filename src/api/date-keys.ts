@@ -22,6 +22,9 @@
  *
  * Implemented in `lib/local-day-key.cjs` (re-exported by `local-day-key.cjs`)
  * so the CommonJS MCP server and the add-on process can require the same
- * function. This module re-exports it.
+ * function. This module re-exports it. `addCalendarDays` lives there too:
+ * stepping a YYYY-MM-DD key with `Date.UTC` or `toISOString().slice(0, 10)`
+ * repeats a day across the US spring-forward.
  */
-export { localDayKey } from './local-day-key.cjs';
+export { addCalendarDays, localDayKey } from './local-day-key.cjs';
+export { advanceStreak, choreDayKey } from './chore-day.cjs';

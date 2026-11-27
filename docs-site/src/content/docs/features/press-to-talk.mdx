@@ -10,27 +10,44 @@ The microphone only works when Beacon is opened over **HTTPS**, or on `localhost
 
 This needs Beacon **1.46.0** or later.
 
+:::caution
+**Changed in 1.54.1:** Home Assistant automations need an access token. Update from 1.54.0 if chore completion or "what chores are left" is refused. See [Access tokens for automations](/docs/getting-started/pairing/#access-tokens-for-automations).
+:::
+
 ## Upgrading from an earlier version
 
-If you already copied Beacon's voice intents into Home Assistant, update them. Chore completion by voice now goes through a new `rest_command` in `beacon/custom_intents/beacon_rest_command.yaml`. The install script `beacon/scripts/install-voice-intents.sh` copies the sentence file, the intent file, and that rest command file. When `configuration.yaml` has no top-level `rest_command:` key, the script backs up `configuration.yaml` with a timestamp and appends `rest_command: !include beacon_rest_command.yaml`. If that key or the include is already there, the script leaves `configuration.yaml` unchanged and prints the exact lines to merge by hand. Until you re-run the script or copy the files over by hand, the old intents keep writing to `todo.chores`.
+If you already copied Beacon's voice intents into Home Assistant, update them. Chore completion by voice goes through a `rest_command` in `beacon/custom_intents/beacon_rest_command.yaml`. The install script `beacon/scripts/install-voice-intents.sh` copies the sentence file, the intent file, and that rest command file. When `configuration.yaml` has no top-level `rest_command:` key, the script appends `rest_command: !include beacon_rest_command.yaml`. When there is no top-level `intent_script:` key, the same run appends `intent_script: !include_dir_merge_named custom_intents`. If it appends either line, it first makes one timestamped backup of `configuration.yaml`. If a top-level `rest_command:` key or the Beacon rest include is already there, or if a top-level `intent_script:` key is already there, that part of the file is left unchanged and the script prints the lines to merge by hand. Until you re-run the script, older intent files keep writing to `todo.chores`.
 
-1. Update the files:
+**Changed in 1.46.3.** The script now also adds the `intent_script` include when that key is not already present. If `intent_script:` already exists, it leaves that part of the file alone and prints the line to merge by hand. Upgrading is: re-run the script, merge any lines it prints, and restart Home Assistant.
+
+Replace `ADDON_SLUG` in the copied rest command file with the slug at the end of the add-on page URL (**Settings → Add-ons → Beacon**). From Home Assistant core, the add-on listens on port 3000 of the Supervisor network. Chore completion is `POST http://ADDON_SLUG:3000/beacon-action/complete-chore`. "What chores are left" is `GET http://ADDON_SLUG:3000/beacon-action/chores-left?member=`.
+
+Those calls send `Authorization: !secret beacon_token`. The header Beacon receives is `Authorization: Bearer <token>`. On the add-on, Beacon writes `beacon_token` into `secrets.yaml` at startup when that key is missing, so you do not paste it yourself. On a standalone install, add the secret **before** you restart Home Assistant, or Home Assistant will not load:
+
+```yaml
+beacon_token: "Bearer <paste the token here>"
+```
+
+Create that token under **Settings → Devices → Create access token** and copy it once. See [Access tokens for automations](/docs/getting-started/pairing/#access-tokens-for-automations). A curl looks like this:
+
+```bash
+curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "mark dishes as done"}'
+```
+
+1. Re-run the script:
 
    ```bash
    beacon/scripts/install-voice-intents.sh /config
    ```
 
-   That copies `custom_sentences/en/beacon.yaml`, `custom_intents/beacon.yaml`, and `beacon_rest_command.yaml`. It wires `configuration.yaml` when it safely can. Pass `--dry-run` to print the plan without writing files.
+   Pass `--dry-run` to print the plan without copying files, editing `configuration.yaml`, or running `ha core check`. On a real run, the script runs `ha core check` when the `ha` command is available and prints the result.
 
-2. In `configuration.yaml`, if it is not already there:
+2. Merge any lines the script prints.
 
-   ```yaml
-   intent_script: !include_dir_merge_named custom_intents
-   ```
-
-3. If the script appended the include, `beacon_rest_command.yaml` is already loaded. If it printed merge lines instead, add those under your existing `rest_command:` key. Replace `ADDON_SLUG` with the slug at the end of the add-on page URL (**Settings → Add-ons → Beacon**). From Home Assistant core, the add-on listens on port 3000 of the Supervisor network. Chore completion is `POST http://ADDON_SLUG:3000/beacon-action/complete-chore`. "What chores are left" is `GET http://ADDON_SLUG:3000/beacon-action/chores-left?member=`.
-
-4. The script runs `ha core check` when the `ha` command is available and prints the result. Restart Home Assistant so the new rest commands exist. Reloading Conversation is not enough for a new `rest_command`. After a restart, reload Conversation under **Developer Tools → YAML** if you only changed sentences.
+3. Restart Home Assistant. Reloading Conversation is not enough for a new `rest_command`. After a restart, reload Conversation under **Developer Tools → YAML** if you only changed sentences.
 
 The wall's hold-to-talk button can still complete a chore through Beacon's own voice API if Assist errors because the rest command is missing. A speaker that is not the wall still needs the updated intents and rest commands. A conversation agent has to be set up; the built-in Home Assistant agent is enough (**Settings → Voice assistants**).
 
@@ -103,7 +120,7 @@ Assist uses the same chore endpoints once the rest commands are installed. `Beac
 
 ## Home Assistant setup
 
-Follow the steps in [Upgrading from an earlier version](#upgrading-from-an-earlier-version) to install or update the sentence files, include the intent scripts, let the script wire `rest_command` when it safely can (or merge the lines it prints), and restart Home Assistant.
+Follow the steps in [Upgrading from an earlier version](#upgrading-from-an-earlier-version): run the install script, merge any lines it prints, and restart Home Assistant.
 
 Then:
 

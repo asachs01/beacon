@@ -1,3 +1,134 @@
+## [1.54.3](https://github.com/asachs01/beacon/compare/v1.54.2...v1.54.3) (2026-11-27)
+
+
+### Bug Fixes
+
+* **auth:** keep house settings off the public runtime script ([#151](https://github.com/asachs01/beacon/issues/151)) ([0145c25](https://github.com/asachs01/beacon/commit/0145c250c542cec7665cc9eaee11ccdc272ba829))
+
+## [1.54.2](https://github.com/asachs01/beacon/compare/v1.54.1...v1.54.2) (2026-11-27)
+
+
+### Bug Fixes
+
+* **auth:** require a session for unknown paths ([#147](https://github.com/asachs01/beacon/issues/147)) ([e4b2488](https://github.com/asachs01/beacon/commit/e4b24885a74a48dd1619ee0151d5cb197b03f56d))
+
+## [1.54.1](https://github.com/asachs01/beacon/compare/v1.54.0...v1.54.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **pairing:** let Home Assistant automations reach Beacon after pairing ([d44aa24](https://github.com/asachs01/beacon/commit/d44aa2480fcac100bb0839e75ba3ca6ac7152383))
+
+# [1.54.0](https://github.com/asachs01/beacon/compare/v1.53.1...v1.54.0) (2026-11-26)
+
+
+### Features
+
+* **security:** device pairing and sessions for Beacon server endpoints ([de3ff23](https://github.com/asachs01/beacon/commit/de3ff238bb39b77bd6176b92a20c509ef2dfeb70))
+
+## [1.53.1](https://github.com/asachs01/beacon/compare/v1.53.0...v1.53.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **home-sensors:** only stream picked entities over the HA bridge ([7268a74](https://github.com/asachs01/beacon/commit/7268a74bc57f82cb1a7d5ad4ccfc28bee8527192))
+* **security:** restrict the Home Assistant API proxy to an allowlist ([9f3fae3](https://github.com/asachs01/beacon/commit/9f3fae37cc4a8378a1011731db19ad09646b4316))
+
+# [1.53.0](https://github.com/asachs01/beacon/compare/v1.52.1...v1.53.0) (2026-11-26)
+
+
+### Features
+
+* **dashboard:** home sensors card ([f2b1f6b](https://github.com/asachs01/beacon/commit/f2b1f6b6a9820ebf7867c51d7cf14919e07ec39e))
+
+## [1.52.1](https://github.com/asachs01/beacon/compare/v1.52.0...v1.52.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **grocy:** show the Grocy list on the Grocery screen and sync check-offs ([#129](https://github.com/asachs01/beacon/issues/129)) ([0455238](https://github.com/asachs01/beacon/commit/045523881d9866d04c98eb62359a12738c3053c0))
+
+# [1.52.0](https://github.com/asachs01/beacon/compare/v1.51.0...v1.52.0) (2026-11-25)
+
+
+### Bug Fixes
+
+* **guest:** unassigned guest check-offs record as Guest with no points ([6cbb203](https://github.com/asachs01/beacon/commit/6cbb20365f28351e8d1c7f390f19f6959cf692e2))
+
+
+### Features
+
+* **grocy:** write the shopping-list done flag and optional stock cards ([a6627ae](https://github.com/asachs01/beacon/commit/a6627ae1efa8a10926e12d19e3c8fd2c2721920a))
+
+# [1.51.0](https://github.com/asachs01/beacon/compare/v1.50.1...v1.51.0) (2026-11-25)
+
+
+### Bug Fixes
+
+* **guest:** record guest check-offs and always allow exit ([3336882](https://github.com/asachs01/beacon/commit/3336882f1787ee3b9c0d237472542e4d64585f70))
+
+
+### Features
+
+* **display:** guest mode with guest PIN ([#124](https://github.com/asachs01/beacon/issues/124)) ([5dddd0f](https://github.com/asachs01/beacon/commit/5dddd0fa83c1a56fc09e52e4696c0ab6b6e179f7))
+
+## [1.50.1](https://github.com/asachs01/beacon/compare/v1.50.0...v1.50.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **standalone:** honor HA_URL and HA_TOKEN outside the Supervisor ([6dca53b](https://github.com/asachs01/beacon/commit/6dca53bc652194ee7651e631bf48d3b94de5c422)), closes [#119](https://github.com/asachs01/beacon/issues/119)
+
+# [1.50.0](https://github.com/asachs01/beacon/compare/v1.49.0...v1.50.0) (2026-11-25)
+
+
+### Features
+
+* **display:** night mode ([#116](https://github.com/asachs01/beacon/issues/116)) ([3b2dbca](https://github.com/asachs01/beacon/commit/3b2dbca545359fc0d984b7161055e721a0689c2b))
+
+# [1.49.0](https://github.com/asachs01/beacon/compare/v1.48.0...v1.49.0) (2026-11-23)
+
+
+### Features
+
+* **import:** accept one photo or PDF in Magic Import ([#113](https://github.com/asachs01/beacon/issues/113)) ([8eb71b0](https://github.com/asachs01/beacon/commit/8eb71b0f826705f9b73c0b743f6ecc8ab4bb56f1))
+
+# [1.48.0](https://github.com/asachs01/beacon/compare/v1.47.0...v1.48.0) (2026-11-23)
+
+
+### Features
+
+* **meals:** add an in-app meal planner ([#109](https://github.com/asachs01/beacon/issues/109)) ([6101465](https://github.com/asachs01/beacon/commit/61014651a4e769afdc652c514ee85159b6f6d503))
+
+# [1.47.0](https://github.com/asachs01/beacon/compare/v1.46.4...v1.47.0) (2026-11-23)
+
+
+### Features
+
+* **import:** add local magic import for pasted text ([#104](https://github.com/asachs01/beacon/issues/104)) ([f1f8bd8](https://github.com/asachs01/beacon/commit/f1f8bd8ade40df8f113b2211b1614e91614c0b31))
+
+## [1.46.4](https://github.com/asachs01/beacon/compare/v1.46.3...v1.46.4) (2026-11-23)
+
+
+### Bug Fixes
+
+* **chores:** count streaks by the daily reset time ([e0ff6fd](https://github.com/asachs01/beacon/commit/e0ff6fd74f9727f23fdfaaed76f1d8a6aec0aa0c))
+
+## [1.46.3](https://github.com/asachs01/beacon/compare/v1.46.2...v1.46.3) (2026-11-23)
+
+
+### Bug Fixes
+
+* **voice:** append the intent_script include from the installer ([#101](https://github.com/asachs01/beacon/issues/101)) ([13a9dd2](https://github.com/asachs01/beacon/commit/13a9dd28a63a09f36517db8dd5d25ed5b9f40b38))
+
+## [1.46.2](https://github.com/asachs01/beacon/compare/v1.46.1...v1.46.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* **chores:** follow the daily reset time for privilege and chores-left days ([99bce4f](https://github.com/asachs01/beacon/commit/99bce4f812a83a9d6209c66b4cfbd12038e90784))
+* **chores:** show full chore names in stacked and landscape columns ([#98](https://github.com/asachs01/beacon/issues/98)) ([cc4c23d](https://github.com/asachs01/beacon/commit/cc4c23db896a3b1501120d29c37e612556da39c3))
+
 ## [1.46.1](https://github.com/asachs01/beacon/compare/v1.46.0...v1.46.1) (2026-11-23)
 
 

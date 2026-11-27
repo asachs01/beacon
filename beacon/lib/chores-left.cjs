@@ -3,13 +3,15 @@
 /**
  * GET /beacon-action/chores-left?member=
  *
- * Reads remaining chores from FamilyStore for the household's local day.
- * A chore is left when that assignment has no completion today. "Today"
- * uses Home Assistant's time zone when the server knows it. An optional
- * member name limits the list to one person.
+ * Reads remaining chores from FamilyStore for the household's chore day.
+ * A chore is left when that assignment has no completion in that day.
+ * The day starts at the configured chore reset time (local midnight when
+ * unset) in Home Assistant's time zone when the server knows it. An
+ * optional member name limits the list to one person.
  */
 
 const { dayKey } = require('./chore-privileges.cjs');
+const { resolveResetTime } = require('./chore-day.cjs');
 const { assignmentPairs, matchMembers } = require('./chore-match.cjs');
 const { readList, FILES } = require('./complete-chore.cjs');
 
@@ -19,12 +21,12 @@ function joinNames(names) {
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 }
 
-function doneToday(completions, choreId, memberId, today, timeZone) {
+function doneToday(completions, choreId, memberId, today, timeZone, resetTime) {
   return (Array.isArray(completions) ? completions : []).some((entry) => (
     entry
     && entry.chore_id === choreId
     && entry.member_id === memberId
-    && dayKey(entry.completed_at, timeZone || null) === today
+    && dayKey(entry.completed_at, timeZone || null, resetTime) === today
   ));
 }
 
@@ -60,8 +62,8 @@ function memberSpeech(person, assigned, left) {
  * Remaining assignments for the local day.
  * Returns a reply. Does not write.
  */
-function listChoresLeft({ members, chores, completions, name, now, timeZone }) {
-  const today = dayKey(now || new Date(), timeZone || null);
+function listChoresLeft({ members, chores, completions, name, now, timeZone, resetTime }) {
+  const today = dayKey(now || new Date(), timeZone || null, resetTime);
   const pairs = assignmentPairs(chores, members);
   const memberQuery = String(name || '').trim();
   let pool = pairs;
@@ -97,7 +99,7 @@ function listChoresLeft({ members, chores, completions, name, now, timeZone }) {
 
   const left = pool.filter((pair) => {
     if (!pair.member) return true;
-    return !doneToday(completions, pair.chore.id, pair.member.id, today, timeZone);
+    return !doneToday(completions, pair.chore.id, pair.member.id, today, timeZone, resetTime);
   });
 
   if (!person && pairs.length === 0) {
@@ -136,12 +138,13 @@ async function listStoredChores(deps, name) {
       timeZone = null;
     }
   }
+  const resetTime = await resolveResetTime(deps);
   const [members, chores, completions] = await Promise.all([
     readList(dataDir, FILES.members),
     readList(dataDir, FILES.chores),
     readList(dataDir, FILES.completions),
   ]);
-  return listChoresLeft({ members, chores, completions, name, now, timeZone });
+  return listChoresLeft({ members, chores, completions, name, now, timeZone, resetTime });
 }
 
 function readBody(req, maxSize = 1024 * 1024) {

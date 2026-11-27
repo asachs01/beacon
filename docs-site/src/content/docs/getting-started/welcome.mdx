@@ -24,7 +24,7 @@ The dashboard view shows a large clock, a personalized greeting ("Good morning, 
 Add up to 8 family members with custom avatars (55+ emoji options across 5 categories), colors, roles (parent or child), and optional PINs. Assign chores with dollar values and track completion streaks on a leaderboard.
 
 ### Grocery lists
-Connect Grocy or AnyList through Home Assistant to manage shopping lists directly from the display. Quick-add items, check them off, and get alerts when products are about to expire. Today's meals can appear on the dashboard; the plan is filled from AnyList or an AI assistant, not from Grocy. See [Meals](/docs/features/meals/).
+Connect Grocy or AnyList through Home Assistant to manage shopping lists directly from the display. Quick-add items, check them off, and get alerts when products are about to expire. Today's meals appear on the dashboard Menu card, which is editable even on empty days, and you can plan breakfast, lunch, dinner, and snacks on the week grid in the [Meals](/docs/features/meals/) ([v1.48.0](https://github.com/asachs01/beacon/releases/tag/v1.48.0)) view (the grid follows Settings → General → Week Starts On). You can also fill the plan from the AnyList sync or the MCP meal tools. From a recipe, Add ingredients to grocery list writes to the default list or the built-in Shopping List, including Home Assistant to-do lists; it does not write to Grocy. Grocy's own meal plan also does not feed the Menu card.
 
 ### Music controls
 Control any Music Assistant or media player entity in Home Assistant. See album art, track info, and a progress bar. Switch between multiple speakers. A persistent "Now Playing" bar appears at the bottom of any view when music is playing.
@@ -45,7 +45,7 @@ Browser push notifications and Home Assistant mobile app notifications fire 10 m
 After 5 minutes of inactivity the screen dims. After 10 minutes a clock screensaver appears with the time and date, repositioning every 30 seconds to prevent burn-in. Any touch or movement wakes the display.
 
 ### Self-hosted and private
-Your family's data stays on your local network. No accounts, no cloud services, no telemetry. Calendar data flows from Google/CalDAV through Home Assistant to Beacon — never to an external server.
+Beacon is self-hosted: it runs on your Home Assistant or your own server, with no Beacon account, no Beacon cloud, and no telemetry. Calendar data flows from Google/CalDAV through Home Assistant to Beacon, and Beacon doesn't send it anywhere else. Features you connect to outside services, such as a cloud Assist agent, an AI Task for photo import, or Google Photos shared albums, send data to those services. Keep Beacon on your trusted home network; see [Is it safe to expose Beacon to the internet?](/docs/reference/faq/#is-it-safe-to-expose-beacon-to-the-internet).
 
 ### Free forever
 Beacon is open source under the MIT license. No subscriptions, no premium tiers, no "free trial" that expires.

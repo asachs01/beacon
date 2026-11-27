@@ -44,14 +44,18 @@ Content-Type: application/json
 | `mark <chore> as done` / `I finished <chore>` / `<name> finished <chore>` | Completes a Beacon chore in FamilyStore |
 | `check off <item>` / `complete <item>` / `finish <item>` | Marks a todo item as completed |
 
+The header Beacon receives is `Authorization: Bearer <token>`. On the add-on, Beacon writes `beacon_token` into `secrets.yaml` at startup when that key is missing. On a standalone install, add that secret **before** you restart Home Assistant.
+
 ```bash
 # Add an item
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "add eggs to the grocery list"}'
 
 # Complete a chore
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "mark dishes as done"}'
 ```
@@ -69,6 +73,7 @@ The voice API automatically finds the best media player: it prefers one that is 
 
 ```bash
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "set volume to 40"}'
 ```
@@ -83,6 +88,7 @@ Valid views: `dashboard`, `calendar`, `grocery`, `chores`, `music`, `photos`, `s
 
 ```bash
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "show the calendar"}'
 ```
@@ -96,6 +102,7 @@ curl -X POST http://<beacon-host>:8099/beacon-action/voice \
 
 ```bash
 curl -X POST http://<beacon-host>:8099/beacon-action/voice \
+  -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json' \
   -d '{"text": "what'\''s on my calendar"}'
 ```
@@ -254,6 +261,41 @@ Supported actions: `play`, `pause`, `next`, `previous`, `volume`. For volume, in
 
 Reads/writes Beacon's local chore data files (`beacon_chores.json`, `beacon_family_members.json`, `beacon_completions.json` in the data directory).
 
+#### Meal plan tools
+
+**`beacon_get_meal_plan`** -- Read meals for a local calendar day (default today) or a range.
+
+```json
+{ "date": "2026-11-20", "days": 7 }
+```
+
+The response shape is unchanged: `{ "date", "days", "entries" }`.
+
+**`beacon_set_meal_plan`** -- Update the meal plan. The default mode is **merge**:
+
+**Changed in 1.48.0.** `beacon_set_meal_plan` now adds or updates only the meals you send instead of replacing the whole plan. Pass `replace: true` for the old behavior. A null or empty name clears that one date and meal slot.
+
+- Each entry upserts the one slot for its `date` and `meal_type`.
+- An entry with no `id` still matches on `date` and `meal_type`.
+- A `null` or empty `name` clears that slot and removes every entry for that date and meal type.
+- Meals on other dates are left untouched.
+
+```json
+{ "entries": [{ "date": "2026-11-20", "meal_type": "Dinner", "name": "Tacos" }] }
+```
+
+Clear Tuesday dinner without touching the rest of the plan:
+
+```json
+{ "entries": [{ "date": "2026-11-20", "meal_type": "Dinner", "name": "" }] }
+```
+
+Pass `replace: true` to replace the whole plan with `entries`. That is the previous replace-all behavior.
+
+```json
+{ "replace": true, "entries": [{ "date": "2026-11-20", "meal_type": "Dinner", "name": "Tacos" }] }
+```
+
 ### Protocol details
 
 The MCP server communicates over stdio using JSON-RPC 2.0. It implements the MCP `2024-11-05` protocol version and supports `initialize`, `tools/list`, `tools/call`, and `ping` methods.
@@ -289,14 +331,23 @@ beacon/scripts/install-voice-intents.sh
 
 # Or specify it explicitly
 beacon/scripts/install-voice-intents.sh /config
+
+# Print the plan without writing files
+beacon/scripts/install-voice-intents.sh --dry-run /config
 ```
 
-This copies two files into your HA config:
+The script copies these files into your HA config:
 - `custom_sentences/en/beacon.yaml` -- sentence patterns that HA Assist will recognize
 - `custom_intents/beacon.yaml` -- intent handlers that call HA services in response
+- `beacon_rest_command.yaml` -- the `rest_command` used to complete Beacon chores and read what's left
 
-After installing, reload the Conversation integration:
-**Developer Tools > YAML configuration reloading > Conversation**
+When `configuration.yaml` has no top-level `rest_command:` key, the script appends `rest_command: !include beacon_rest_command.yaml`. When it has no top-level `intent_script:` key, the same run appends `intent_script: !include_dir_merge_named custom_intents`. If it appends either line, it first makes one timestamped backup of `configuration.yaml`. If a top-level `rest_command:` key or the Beacon rest include is already there, or if a top-level `intent_script:` key is already there, that part of the file is left unchanged and the script prints the lines to merge by hand.
+
+`--dry-run` prints the plan without copying files, editing `configuration.yaml`, or running `ha core check`.
+
+After a real run, merge any lines the script prints, then restart Home Assistant. Reloading Conversation is not enough for a new `rest_command`. Sentence-only changes can reload under **Developer Tools > YAML configuration reloading > Conversation**.
+
+Full upgrade and setup steps are in `docs-site/src/content/docs/features/press-to-talk.mdx`.
 
 ### Prerequisites
 

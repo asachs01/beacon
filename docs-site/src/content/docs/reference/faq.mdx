@@ -14,7 +14,9 @@ faq:
   - question: "Does Beacon work offline?"
     answer: "Mostly. Beacon runs entirely on your local network and never needs its own cloud service. The display keeps a local copy of its data, and the built-in fonts and themes need no internet. Anything that comes from the internet still needs it: Google Calendar sync and weather reach you through Home Assistant, and Google Fonts are downloaded when you pick one."
   - question: "Is my family's data private?"
-    answer: "Yes. Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account."
+    answer: "Yes. Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account. From Beacon 1.54.3, a device that hasn't paired can read only your family name, theme and auto dark mode setting, never tokens or your family's data."
+  - question: "Is it safe to expose Beacon to the internet?"
+    answer: "No. Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the security advisory GHSA-rj98-fx8p-896h). Update to 1.54.3 or later and pair your devices. Even unpaired, a device that reaches the port can read the small setup file the pairing screen loads. From Beacon 1.54.3 that's only your family name, the theme and whether auto dark mode is on; earlier versions also included Beacon's Home Assistant address (standalone and Docker installs) and a few more display settings. It can't read tokens or your family's data. Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet. For remote access, use the add-on's ingress panel (behind Home Assistant login), Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication."
   - question: "How do I update Beacon?"
     answer: "On the add-on, go to Settings → Add-ons → Beacon and click Update. For Docker, rolling back, and fixing a failed update, see the Updating and Troubleshooting docs page."
 ---
@@ -47,7 +49,17 @@ Skylight sells its own screen, and meal planning, photos and some other features
 
 ### Is my family's data private?
 
-**Yes.** Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account. See [Does Beacon send my data anywhere?](#does-beacon-send-my-data-anywhere)
+**Yes.** Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account. From Beacon 1.54.3, a device that hasn't paired can read only your family name, theme and auto dark mode setting, never tokens or your family's data. See [Does Beacon send my data anywhere?](#does-beacon-send-my-data-anywhere). For keeping Beacon's port on your LAN, see [Is it safe to expose Beacon to the internet?](#is-it-safe-to-expose-beacon-to-the-internet).
+
+### Is it safe to expose Beacon to the internet?
+
+**No.**
+
+:::caution
+Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the [security advisory](https://github.com/asachs01/beacon/security/advisories/GHSA-rj98-fx8p-896h)). Update to **1.54.3** or later and [pair your devices](/docs/getting-started/pairing/). Even unpaired, a device that reaches the port can read the small setup file the pairing screen loads. From Beacon 1.54.3 that's only your family name, the theme and whether auto dark mode is on; earlier versions also included Beacon's Home Assistant address (standalone and Docker installs) and a few more display settings. It can't read tokens or your family's data. Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+:::
+
+From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
 
 ### How do I update Beacon?
 
@@ -67,9 +79,15 @@ Beacon also works with **any calendar source** Home Assistant supports, includin
 
 **Yes.** Beacon supports full CRUD operations on calendar events. Tap the + button or a time slot to create events. Tap an existing event to edit or delete it. You can even drag events to reschedule them. See [Calendar](/docs/features/calendar/).
 
+### Can Beacon add events from a text or email I paste in?
+
+**Yes.** Pasted text needs Beacon **1.47.0** or later. Photos and PDFs need Beacon **1.49.0** or later, and Home Assistant **2025.8** or newer. Open **Import** on the dashboard or calendar, paste the text or add one photo or PDF, review the drafts, and approve them with a family PIN when one is set. Skylight Calendar's Calendar Plus Magic Import can also take forwarded emails; Beacon still does not, so that gap is not fully closed. What sets Beacon's apart is that it is free, approved with the family PIN, and pasted text (and text PDFs) can use a local parser. The paste and review screens name the Home Assistant conversation agent or AI Task entity and its entity id, and label it local, cloud, or may be cloud. Pasted text is processed by your Home Assistant conversation agent, or a local parser. Photos and scanned PDFs are processed by your Home Assistant AI Task entity. A cloud AI Task entity sends the file to that provider. **Settings → Display → Magic Import: use Home Assistant conversation agent** is on by default; turning it off forces the local parser and turns photo and scan import off. **Magic Import: AI Task entity for photos** is empty until you pick an `ai_task` entity. Beacon itself sends the text nowhere, and sends the file nowhere else. See [Magic Import](/docs/features/magic-import/).
+
 ### Does Beacon send my data anywhere?
 
-**No.** Beacon runs entirely on your local network. It communicates only with your Home Assistant instance — never with any external server. There is no telemetry, analytics, or cloud dependency.
+**No, with one caveat.** Beacon itself sends nothing to outside servers. It runs on your local network and talks only to your Home Assistant instance. There is no telemetry, analytics, or cloud dependency of Beacon's own.
+
+The exception is [Magic Import](/docs/features/magic-import/). Only if Magic Import is on, and your Home Assistant conversation agent is a cloud service, does Home Assistant send the pasted text to that provider. A photo or scanned PDF is processed by your Home Assistant AI Task entity. Beacon itself sends the file nowhere else. It briefly uploads the file to Home Assistant's local media source for the task and deletes it afterward, and the review screen tells you if that delete fails. If that entity is a cloud service, Home Assistant sends the file to that provider. To force the local parser, turn off **Settings → Display → Magic Import: use Home Assistant conversation agent**. That also turns photo and scan import off. The AI Task entity for photos is empty until you choose one.
 
 Data flow: `Google/CalDAV -> Home Assistant -> Beacon (local only)`
 
@@ -116,11 +134,19 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 ### Does it have a dark mode?
 
-**Yes.** Beacon ships with 7 themes, including 4 dark themes: Midnight, Dracula, Monokai, and (partially dark) Nord. There is also an "Auto" mode that switches between Skylight (light) and Midnight (dark) based on time of day. See [Themes](/docs/customization/themes/).
+**Yes.** Beacon ships with 7 themes, including 4 dark themes: Midnight, Dracula, Monokai, and (partially dark) Nord. There is also an "Auto" mode that switches between Skylight (light) and Midnight (dark) based on time of day. See [Themes](/docs/customization/themes/). To dim the wall on a schedule, see [Night mode](/docs/features/night-mode/).
+
+### Can Beacon dim the screen at night?
+
+**Yes, from 1.50.0.** Open **Settings → Display → Night mode** and turn it on. It is off by default. You set start and end times in the device's local clock (overnight windows work; the default is 9:00 PM to 6:30 AM), or use a manual On or Off override. While it is on, Beacon switches to the Midnight theme and dims the dashboard with an overlay. An optional Clock only screen shows a large clock and the date. A tap brings the dashboard back for 60 seconds. A finished countdown timer wakes the screen and holds it until the alarm is dismissed, for at least 60 seconds. Beacon does not ship a plugin that changes the tablet's hardware brightness; a typical install only uses the overlay. This is separate from the idle [Screen Saver](/docs/features/screensaver/). See [Night mode](/docs/features/night-mode/).
 
 ### Can multiple family members use it?
 
 **Yes.** Add up to 8 family members with custom avatars, colors, and roles. Each member's chores and streaks are tracked independently. The leaderboard shows earnings per member. See [Family Members](/docs/features/family/).
+
+### Can a babysitter use Beacon without full access?
+
+**Yes, from 1.51.0.** Set a guest PIN under **Settings → Display → Guest mode**. It is empty by default. The same hidden-corner gesture plus that PIN starts guest mode, and a **Guest** badge stays on the screen. Guest mode hides Settings, family and rewards changes, Magic Import, event create/edit/delete, and calendars marked **Hide from guests**. Meals, photos, music, and the leaderboard stay visible. A guest can still check off chores and tasks, add grocery items, and use timers. Chores they check off still count for points and streaks, and show **Checked off by Guest** on chore rows (Home Assistant to-do items don't get the label). From 1.52.0, an unassigned guest check-off is recorded as Guest and earns no points. Guests can earn rewards but cannot redeem them. Guests can always leave guest mode from inside the app: a family PIN leaves it, or the guest PIN when no family PIN is set. Guest mode only limits what this Beacon screen shows. It is not a security boundary. Home Assistant and the API stay reachable on the network. See [Guest mode](/docs/features/guest-mode/).
 
 ### Can kids earn money for doing chores?
 
@@ -128,7 +154,7 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 ### Can Beacon turn off Wi-Fi or the TV until chores are done?
 
-**Yes, from 1.45.0.** For each child, pick a Home Assistant switch, input boolean, light, or fan under **Settings > Family Members**. Beacon turns that entity on when the child finishes today's chores, and off when a chore is unchecked, at local midnight, and when Beacon restarts. Existing settings are left as they are. See [Chore privileges](/docs/features/chore-privileges/).
+**Yes, from 1.45.0.** For each child, pick a Home Assistant switch, input boolean, light, or fan under **Settings > Family Members**. Beacon turns that entity on when the child finishes today's chores, and off when a chore is unchecked, at the chore reset time (local midnight when that time is unset), and when Beacon restarts. Existing settings are left as they are. See [Chore privileges](/docs/features/chore-privileges/).
 
 ### Can I talk to Beacon?
 
@@ -142,9 +168,29 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 **Yes.** Beacon has a built-in timer with countdown (1, 5, 10, 15, 30 minute presets) and stopwatch modes. The countdown plays an audio alert when finished. See [Timer](/docs/features/timer/).
 
+### Can Beacon plan our meals?
+
+**Yes, from 1.48.0.** Open **Meals** in the sidebar for a week grid of Breakfast, Lunch, Dinner, and Snack, or edit today from the dashboard Menu card (the card stays visible when nothing is planned yet). You can name a meal, add notes, tie it to a Beacon recipe, and add that recipe's ingredients to the grocery list. An assistant can also set meals through Beacon's MCP server: by default it adds or updates only the meals you send, and a null or empty name clears that one slot. See [Meals](/docs/features/meals/).
+
 ### Does it have a grocery list?
 
-**Yes.** Beacon integrates with Grocy and AnyList through Home Assistant. You can view your shopping list, add items, check them off, and see expiring product alerts. See [Grocery](/docs/features/grocery/).
+**Yes.** The Grocery view shows Home Assistant to-do lists, including AnyList lists. From **1.52.1**, turning on **Grocy Integration** also adds a list named **Grocy**, and checking items off on that list writes back to Grocy. See [Grocery](/docs/features/grocery/).
+
+### Does Beacon work with Grocy?
+
+**Yes, from 1.52.0, through the [HACS Grocy integration](https://github.com/custom-components/grocy).** Open **Settings → Integrations → Grocy**. **Grocy Integration** lets [Magic Import](/docs/features/magic-import/) add items to Grocy's shopping list. Optional **Expiring products** and **Low stock** dashboard cards (off by default) read `binary_sensor.grocy_expiring_products` and `binary_sensor.grocy_missing_products`. From 1.52.1, with Grocy Integration on, the Grocery screen includes a list named Grocy and check-offs on that list write the shopping-list done flag. The expiring card shows only items due within 3 days. Beacon does not sync Grocy chores or Grocy's meal plan; it has its own [chores](/docs/features/chores/) and [meal planner](/docs/features/meals/). See [Grocery](/docs/features/grocery/).
+
+### Can Beacon show Home Assistant sensors?
+
+**Yes, from 1.53.0.** Turn on **Home sensors card** under **Settings → Integrations → Home sensors**, pick the entities, then add the **Home sensors** card in dashboard edit mode. It is read-only on purpose: it does not toggle devices, call services, or show camera feeds. Updates arrive live over the Home Assistant websocket. If an entity is unavailable or has not updated in 3 hours, the card says so instead of showing an old value. The card is hidden from guests and is not on Kid Display. See [Home sensors](/docs/features/home-sensors/).
+
+### Why does Beacon say a Home Assistant call is not allowed?
+
+**Since 1.53.1, Beacon only passes along the Home Assistant calls its own screens use.** Anything else gets a 403 error that says the call is **not allowed by Beacon**. Toggles need the entity on an HA Toggle card (leave **Edit Dashboard** so the layout saves). Chore privileges need the entity set as the child's **Privilege switch**. Music needs a **Default Player** in **Settings → Integrations**. Scripts, shell commands, and calls aimed at an area, device, label, or floor are always refused. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/).
+
+### Why is Beacon asking me to pair this device?
+
+**From Beacon 1.54.0, a device that opens Beacon directly on its port pairs once.** That covers Docker and standalone installs, the native iOS and Android apps, and any add-on where you mapped the port by hand. Enter a family PIN or the 6-digit pairing code. The code is printed in the Beacon log at startup (`Beacon pairing code: NNNNNN`) and shown in **Settings → Devices** on a screen that's already paired. After you pair, the device stays paired until you choose **Revoke** in **Settings → Devices**. Opening Beacon from the Home Assistant sidebar needs no pairing. From Beacon 1.54.2, anything beyond the pairing screen needs a paired device or an access token; automations that send `beacon_token` keep working. After an update, a wall tablet that opens Beacon directly shows the pairing screen once. See [Pairing a device](/docs/getting-started/pairing/).
 
 ### Does it send notifications?
 
@@ -194,7 +240,7 @@ Nothing is shown until you reveal it. **Reveal navigation gesture** (same screen
 - **Touch or mouse**: long-press the top corner for about 2 seconds, or tap that corner 3 times quickly. The corner is the top-left, or the top-right when the sidebar position is set to the right.
 - **Keyboard**: hold Escape for about 2 seconds (outside a text field). You can also focus the same corner and hold Enter or Space, or press it 3 times quickly.
 
-The sidebar stays up for about 15 seconds after the last tap, click, or key press, then hides again. If any family member has a PIN, Beacon asks for that PIN before showing navigation. Turn the gesture off under **Settings > Display** when this screen should stay locked with no way back from the display itself.
+The sidebar stays up for about 15 seconds after the last tap, click, or key press, then hides again. If any family member has a PIN, Beacon asks for that PIN before showing navigation. The same gesture can also start [guest mode](/docs/features/guest-mode/) when a guest PIN is set; the guest PIN never reveals navigation. Turn the gesture off under **Settings > Display** when this screen should stay locked with no way back from the display itself.
 
 **Kid Display** is a different mode (one child's routines and chores). The same corner gesture — long-press or 3 quick taps, or holding Escape — is the way out. When a family PIN is set, it is required. When no PIN is set, Beacon asks you to confirm. Five taps on the clock still opens that same PIN or confirm step.
 
@@ -203,7 +249,7 @@ The sidebar stays up for about 15 seconds after the last tap, click, or key pres
 1. **Find the direct URL**: In HA, click "Open Web UI" on the Beacon add-on page, or use the direct ingress URL (typically `http://YOUR_HA_IP:8123/api/hassio_ingress/<addon-token>`)
 2. **For Android tablets**: Use [Fully Kiosk Browser](/docs/getting-started/installation/#mounting-and-displaying-on-a-tablet) with "Hide Navigation Bar" and "Hide Status Bar" enabled
 3. **For desktop/Pi kiosk**: Launch Chrome/Chromium with `--kiosk` flag pointed at the Beacon URL
-4. **For standalone Docker**: Use the container's direct URL (e.g., `http://YOUR_DOCKER_HOST:3000`)
+4. **For standalone Docker**: On your trusted home network, use the container's URL (e.g., `http://YOUR_DOCKER_HOST:3000`). Do not forward that port to the internet. See [Is it safe to expose Beacon to the internet?](#is-it-safe-to-expose-beacon-to-the-internet).
 
 See the [Installation guide](/docs/getting-started/installation/#mounting-and-displaying-on-a-tablet) for detailed kiosk setup instructions.
 
@@ -228,9 +274,9 @@ On Docker, your data survives only if you mounted a volume at `/data`, for examp
 ### Beacon shows "Demo Mode"
 
 This means Beacon cannot connect to Home Assistant. Check:
-1. The HA token is configured (add-on: automatic; Docker: `SUPERVISOR_TOKEN` env var; dev: `VITE_HA_TOKEN`)
-2. The HA URL is reachable from the browser
-3. Home Assistant is running
+1. The HA token is configured (add-on: automatic; Docker or Kubernetes: `HA_URL` and `HA_TOKEN`, a long-lived access token, from **1.50.1**; dev: `VITE_HA_TOKEN`)
+2. On a standalone container, `HA_URL` is the Home Assistant base URL and is reachable from the container. On your trusted home network, the browser only needs to reach Beacon. In development, the browser must be able to reach `VITE_HA_URL`.
+3. Home Assistant is running. If `HA_URL` or `HA_TOKEN` is missing on a standalone container, the UI still loads but has no Home Assistant data, and the log says `Standalone mode needs HA_URL and HA_TOKEN`.
 
 ### Calendar is empty
 

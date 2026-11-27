@@ -29,18 +29,48 @@ export interface Chore {
   icon?: string; // emoji
 }
 
+/**
+ * Stored as `member_id` when a guest checks off a chore that is not assigned
+ * to a family member. It is not a member, so it earns no points and no streak.
+ */
+export const UNCREDITED_MEMBER_ID = '';
+
+/**
+ * Guest check-offs of an assigned chore stay on that assignee. A guest
+ * check-off of a chore that is not assigned to `memberId` is stored with
+ * no member.
+ */
+export function memberCreditedForCompletion(
+  memberId: string,
+  assignedTo: readonly string[] | undefined,
+  by?: 'guest',
+): string {
+  if (by === 'guest' && !(assignedTo ?? []).includes(memberId)) return UNCREDITED_MEMBER_ID;
+  return memberId;
+}
+
 export interface ChoreCompletion {
   chore_id: string;
   member_id: string;
   completed_at: string; // ISO date string for serialization
   verified_by?: string; // member ID of verifying parent
+  /**
+   * Who checked the chore off when it was not a family member on this screen.
+   * Omitted for ordinary check-offs so existing completion records stay valid.
+   */
+  by?: 'guest';
 }
 
 export interface Streak {
   member_id: string;
   current: number;
   longest: number;
-  last_completed: string; // ISO date string
+  last_completed: string; // ISO timestamp of the completion that last counted
+  /**
+   * Chore day (YYYY-MM-DD) that last counted. Set on the next new chore day.
+   * Older rows omit it and are not backfilled.
+   */
+  last_chore_day?: string;
 }
 
 export interface Routine {

@@ -102,7 +102,14 @@ screen_saver_timeout: 5
 1. Go back to the **Info** tab
 2. Click **Start**
 3. Wait a few seconds for the container to start
-4. Click **Open Web UI** in the sidebar panel, or navigate directly to your Home Assistant URL — Beacon appears as a sidebar panel with a calendar-clock icon
+4. Click **Open Web UI** in the sidebar panel, or navigate directly to your Home Assistant URL — Beacon appears as a sidebar panel with a calendar-clock icon. Prefer that sidebar panel (ingress); it sits behind your Home Assistant login. Do not map or forward Beacon's own port off your trusted home network. The add-on doesn't publish a port by default, so the sidebar panel needs no pairing. If you map the port by hand, devices that open it directly have to pair once.
+
+:::caution
+Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the [security advisory](https://github.com/asachs01/beacon/security/advisories/GHSA-rj98-fx8p-896h)). Update to **1.54.3** or later and [pair your devices](/docs/getting-started/pairing/). Even unpaired, a device that reaches the port can read the small setup file the pairing screen loads. From Beacon 1.54.3 that's only your family name, the theme and whether auto dark mode is on; earlier versions also included Beacon's Home Assistant address (standalone and Docker installs) and a few more display settings. It can't read tokens or your family's data. Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+:::
+
+From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
+
 
 > **What you should see**: The Beacon dashboard with a large clock, the current date, a personalized greeting, and (if weather is configured) the current temperature. If you have not connected any calendars yet, the calendar view will be empty.
 
@@ -117,6 +124,14 @@ screen_saver_timeout: 5
 
 Use this method if you want to run Beacon outside of Home Assistant, or if you use a Home Assistant Core installation without Supervisor.
 
+This needs Beacon **1.50.1** or later. **Changed in 1.50.1.** See [Deployment](/docs/getting-started/deployment/#docker-standalone-deployment) for `--env-file` token handling, URL overrides, and troubleshooting.
+
+:::caution
+Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the [security advisory](https://github.com/asachs01/beacon/security/advisories/GHSA-rj98-fx8p-896h)). Update to **1.54.3** or later and [pair your devices](/docs/getting-started/pairing/). Even unpaired, a device that reaches the port can read the small setup file the pairing screen loads. From Beacon 1.54.3 that's only your family name, the theme and whether auto dark mode is on; earlier versions also included Beacon's Home Assistant address (standalone and Docker installs) and a few more display settings. It can't read tokens or your family's data. Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+:::
+
+From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
+
 ### Step 1: Pull and run the container
 
 ```bash
@@ -124,14 +139,16 @@ docker run -d \
   --name beacon \
   -p 3000:3000 \
   -v beacon-data:/data \
-  -e SUPERVISOR_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
   -e HA_URL="http://YOUR_HA_IP:8123" \
+  -e HA_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
   ghcr.io/asachs01/beacon:latest
 ```
 
 Replace:
 - `YOUR_HA_LONG_LIVED_TOKEN` with a long-lived access token from Home Assistant (create one at **Profile > Long-Lived Access Tokens**)
 - `YOUR_HA_IP` with your Home Assistant IP address or hostname
+
+`HA_URL` is the Home Assistant base URL the Beacon container can reach, with no `/api` path. Do not set `SUPERVISOR_TOKEN` here. That variable is only for the Home Assistant add-on. To keep the token out of your shell history, put `HA_URL` and `HA_TOKEN` in a `.env` file (do not commit it) and replace the two `-e` lines with `--env-file .env`.
 
 ### Step 2: Create a long-lived access token
 
@@ -143,11 +160,15 @@ Replace:
 
 ### Step 3: Access Beacon
 
-Open a browser and navigate to:
+Open a browser on your trusted home network and navigate to:
 
 ```
 http://YOUR_DOCKER_HOST:3000
 ```
+
+Keep port 3000 on your LAN. Do not forward it to the internet.
+
+From Beacon **1.54.0**, each device that opens this address shows **Pair this device** the first time. Enter a family PIN or the 6-digit pairing code from the container log (`docker logs beacon`). See [Pairing a device](/docs/getting-started/pairing/).
 
 The `beacon-data` volume holds your family members, chores, settings, and meal plans. Without it, that data is lost whenever the container is recreated, including during updates.
 
@@ -164,13 +185,14 @@ services:
       - "3000:3000"
     volumes:
       - beacon-data:/data
-    environment:
-      - SUPERVISOR_TOKEN=YOUR_HA_LONG_LIVED_TOKEN
-      - HA_URL=http://YOUR_HA_IP:8123
+    env_file:
+      - .env
 
 volumes:
   beacon-data:
 ```
+
+Put `HA_URL` and `HA_TOKEN` in a `.env` file next to the Compose file, and do not commit the token. See [Deployment](/docs/getting-started/deployment/#docker-standalone-deployment).
 
 ---
 

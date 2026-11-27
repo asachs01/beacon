@@ -4,9 +4,14 @@
 # Copies Beacon custom sentences and intent handlers into the HA config
 # directory so that HA Assist can recognize Beacon voice commands.
 # When configuration.yaml has no top-level rest_command key, appends
-# `rest_command: !include beacon_rest_command.yaml` after a timestamped
-# backup. If a rest_command key or that include is already present, the
-# file is left unchanged and the lines to merge by hand are printed.
+# `rest_command: !include beacon_rest_command.yaml`. When it has no
+# top-level intent_script key, appends
+# `intent_script: !include_dir_merge_named custom_intents`.
+# One timestamped backup is taken per run, before either edit.
+# If a rest_command key or that include is already present, that part of
+# the file is left unchanged and the lines to merge by hand are printed.
+# If a top-level intent_script key is already present, that part is left
+# unchanged and the intent_script line is printed to merge by hand.
 #
 # Usage:
 #   ./install-voice-intents.sh                  # auto-detect HA config dir
@@ -30,10 +35,16 @@ the Home Assistant config directory. Appends
 
   rest_command: !include beacon_rest_command.yaml
 
-to configuration.yaml when that file has no top-level rest_command key.
-Backs up configuration.yaml with a timestamp before editing it.
+when configuration.yaml has no top-level rest_command key, and
+
+  intent_script: !include_dir_merge_named custom_intents
+
+when it has no top-level intent_script key. One timestamped backup of
+configuration.yaml is written per run, before those edits.
 If a top-level rest_command key or that include already exists, prints
-the exact lines to merge by hand and does not edit configuration.yaml.
+the exact lines to merge by hand and does not change that part of the file.
+If a top-level intent_script key already exists, prints that include line
+to merge by hand and does not change that part of the file.
 
 --dry-run   Print the plan. Do not copy files, edit configuration.yaml,
             or run ha core check.
@@ -137,17 +148,31 @@ rest_command_merge_lines() {
   ' "$REST_SRC"
 }
 
-print_manual_merge() {
+REST_INCLUDE_LINE='rest_command: !include beacon_rest_command.yaml'
+INTENT_SCRIPT_LINE='intent_script: !include_dir_merge_named custom_intents'
+
+print_rest_manual_merge() {
   local reason="$1"
-  echo "Left configuration.yaml unchanged (${reason})."
+  echo "Left configuration.yaml unchanged for rest_command (${reason})."
   echo "Exact lines to merge by hand:"
   rest_command_merge_lines
 }
 
-config_has_top_level_rest_command() {
+print_intent_manual_merge() {
+  echo "Left configuration.yaml unchanged for intent_script (a top-level intent_script: key already exists)."
+  echo "Line to merge by hand:"
+  echo "$INTENT_SCRIPT_LINE"
+}
+
+config_has_top_level_key() {
   local file="$1"
+  local key="$2"
   [ -f "$file" ] || return 1
-  grep -qE '^rest_command[[:space:]]*:' "$file"
+  grep -qE "^${key}[[:space:]]*:" "$file"
+}
+
+config_has_top_level_rest_command() {
+  config_has_top_level_key "$1" "rest_command"
 }
 
 config_includes_beacon_rest() {
@@ -171,55 +196,74 @@ backup_configuration() {
   echo "Backed up configuration.yaml to ${dest}"
 }
 
-append_rest_include() {
+append_configuration_lines() {
   local file="$1"
-  local line="rest_command: !include beacon_rest_command.yaml"
-  if [ ! -f "$file" ]; then
-    printf '%s\n' "$line" > "$file"
-    echo "Created configuration.yaml"
-    echo "Appended to configuration.yaml: ${line}"
+  shift
+  local line
+  if [ "$#" -eq 0 ]; then
     return 0
+  fi
+  if [ ! -f "$file" ]; then
+    : > "$file"
+    echo "Created configuration.yaml"
   fi
   if [ -s "$file" ]; then
     local last
     last="$(tail -c 1 "$file" || true)"
-    if [ "$last" != "" ] && [ "$last" != $'\n' ]; then
+    if [ -n "$last" ] && [ "$last" != $'\n' ]; then
       printf '\n' >> "$file"
     fi
-    printf '\n%s\n' "$line" >> "$file"
-  else
-    printf '%s\n' "$line" >> "$file"
+    printf '\n' >> "$file"
   fi
-  echo "Appended to configuration.yaml: ${line}"
+  for line in "$@"; do
+    printf '%s\n' "$line" >> "$file"
+    echo "Appended to configuration.yaml: ${line}"
+  done
 }
 
-wire_rest_command() {
+wire_configuration() {
   local file="$HA_CONFIG/configuration.yaml"
-  local line="rest_command: !include beacon_rest_command.yaml"
+  local -a to_append=()
+  local line
 
   if config_includes_beacon_rest "$file"; then
-    print_manual_merge "beacon_rest_command.yaml is already included"
-    return 0
+    print_rest_manual_merge "beacon_rest_command.yaml is already included"
+  elif config_has_top_level_rest_command "$file"; then
+    print_rest_manual_merge "a top-level rest_command: key already exists"
+  else
+    to_append+=("$REST_INCLUDE_LINE")
   fi
 
-  if config_has_top_level_rest_command "$file"; then
-    print_manual_merge "a top-level rest_command: key already exists"
+  if config_has_top_level_key "$file" "intent_script"; then
+    print_intent_manual_merge
+  else
+    to_append+=("$INTENT_SCRIPT_LINE")
+  fi
+
+  if [ "${#to_append[@]}" -eq 0 ]; then
     return 0
   fi
 
   if [ "$DRY_RUN" -eq 1 ]; then
-    echo "Dry run: would append this line to ${file}:"
-    echo "$line"
+    if [ "${#to_append[@]}" -eq 1 ]; then
+      echo "Dry run: would append this line to ${file}:"
+    else
+      echo "Dry run: would append these lines to ${file}:"
+    fi
+    for line in "${to_append[@]}"; do
+      echo "$line"
+    done
     return 0
   fi
 
+  # One backup covers every line appended in this run.
   if [ -f "$file" ]; then
     backup_configuration "$file"
   fi
-  append_rest_include "$file"
+  append_configuration_lines "$file" "${to_append[@]}"
 }
 
-wire_rest_command
+wire_configuration
 
 run_ha_core_check() {
   if [ "$DRY_RUN" -eq 1 ]; then
@@ -244,7 +288,7 @@ run_ha_core_check() {
 
 run_ha_core_check
 
-echo "Restart Home Assistant so rest_command changes load. Reloading YAML is not enough for a new rest_command."
+echo "Restart Home Assistant so rest_command and intent_script changes load. Reloading YAML is not enough for a new rest_command."
 
 if [ "$DRY_RUN" -eq 1 ]; then
   exit 0
@@ -262,15 +306,32 @@ cat <<'CHECKLIST'
 
      This script copies beacon_rest_command.yaml into the config
      directory. When configuration.yaml has no top-level rest_command
-     key, it backs that file up (configuration.yaml.bak.YYYYMMDD-HHMMSS)
-     and appends:
+     key, it backs that file up once
+     (configuration.yaml.bak.YYYYMMDD-HHMMSS) and appends:
 
        rest_command: !include beacon_rest_command.yaml
 
-     If a rest_command key or that include is already there, the file
-     is left unchanged and the exact lines to merge are printed above.
+     When there is no top-level intent_script key, the same run appends
+     this line in that same backup:
+
+       intent_script: !include_dir_merge_named custom_intents
+
+     If a rest_command key or that include is already there, that part
+     of the file is left unchanged and the exact lines to merge are
+     printed above. If an intent_script key is already there, that part
+     is left unchanged and the intent_script line is printed above.
      Replace ADDON_SLUG with the slug in the add-on page URL
-     (Settings → Add-ons → Beacon), then restart Home Assistant.
+     (Settings → Add-ons → Beacon). The rest commands send
+     Authorization: !secret beacon_token. The header Beacon receives
+     is Authorization: Bearer <token>.
+     Add-on: Beacon writes beacon_token into secrets.yaml on startup
+     when that key is missing. Restart Home Assistant after the add-on
+     is running.
+     Standalone: add this to secrets.yaml BEFORE you restart Home
+     Assistant, or Home Assistant will not load. Create the token under
+     Settings → Devices → Create access token and copy it once:
+
+       beacon_token: "Bearer <paste the token here>"
      The wall's hold-to-talk button can still complete chores through
      Beacon's own voice API if that command is missing.
 
@@ -294,11 +355,10 @@ cat <<'CHECKLIST'
      Settings > Devices & Services > Helpers > + Create Helper > Timer
      Name it "Beacon Voice" (entity_id: timer.beacon_voice)
 
-  4. RELOAD — Restart Home Assistant after adding the rest_command.
-     Sentence changes reload with Developer Tools > YAML > Conversation.
-     Also include the intent file if it is not already loaded:
-
-       intent_script: !include_dir_merge_named custom_intents
+  4. RELOAD — Restart Home Assistant after the script adds rest_command
+     or intent_script. Sentence changes reload with
+     Developer Tools > YAML > Conversation. A new rest_command does not
+     load from a YAML reload.
 
   Voice commands available:
      "Add milk to the grocery list"

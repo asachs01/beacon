@@ -1,9 +1,10 @@
 import type { ComponentType } from 'react';
 import { CalendarEvent, WeatherData } from '../types';
 import { Chore, FamilyMember } from './family';
-import { DayMenu } from './meals';
+import { BeaconRecipe, DayMenu, MealPlanEntry, MealType } from './meals';
 import type { TaskmateUser } from './taskmate';
 import type { TranslationKey } from '../i18n/translations/en';
+import type { HomeSensorPick } from '../home-sensors/types';
 
 export interface TodoItem {
   uid: string;
@@ -83,12 +84,34 @@ export interface DashboardCardContext {
   todayEvents: CalendarEvent[];
   weekEvents: { day: Date; events: CalendarEvent[] }[];
   todaysMenu: DayMenu;
+  /** Present when the dashboard can edit today's meals. */
+  mealPlan?: {
+    recipes: BeaconRecipe[];
+    upsertMeal: (entry: MealPlanEntry) => Promise<void>;
+    deleteMeal: (target: { date: string; meal_type: MealType; id?: string }) => Promise<void>;
+    saveRecipe: (input: { id?: string; name: string; ingredients: string[] }) => Promise<BeaconRecipe>;
+    addIngredients: (ingredients: string[]) => Promise<void>;
+  };
+  onPlanMeals?: () => void;
   todoItems: TodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
   taskmateUsers: TaskmateUser[];
   filteredChores: Chore[];
   completedChoreIds: Set<string>;
   onToggleChore: (choreId: string) => void;
+  /** Chore ids checked off by a guest. Omitted when none of today's completions were. */
+  guestCheckedChoreIds?: ReadonlySet<string>;
+  /** True while guest mode is on. The home sensors card hides itself. */
+  guestActive: boolean;
+  /** Kid Display never mounts this dashboard, and the card stays hidden if it did. */
+  kidDisplay: boolean;
+  /** Settings → Integrations. Off until a parent enables the card. */
+  homeSensorsEnabled: boolean;
+  homeSensors: HomeSensorPick[];
+  /** Home Assistant is reachable. Shopping cards use this only when Grocy is on. */
+  connected?: boolean;
+  /** Settings → Integrations → Grocy. Off leaves the shopping card on HA todo lists. */
+  grocyEnabled?: boolean;
 }
 
 export interface DashboardCardProps {

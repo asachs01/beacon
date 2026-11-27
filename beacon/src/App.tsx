@@ -26,15 +26,20 @@ import { NowPlayingBar } from './components/NowPlayingBar';
 import { useMusic } from './hooks/useMusic';
 import { useNotifications } from './hooks/useNotifications';
 import { ScreenSaver } from './components/ScreenSaver';
+import { NightMode } from './components/NightMode';
 import { GroceryView } from './components/GroceryView';
+import { MealsView } from './components/MealsView';
 import { OmniAdd } from './components/OmniAdd';
 import { VoiceAssist } from './components/VoiceAssist';
+import { MagicImportModal } from './components/MagicImportModal';
 import { CalendarSidebar } from './components/CalendarSidebar';
 import { Timer } from './components/Timer';
 import { WeatherView } from './components/WeatherView';
 import { useIngressDetect } from './hooks/useIngressDetect';
 import { useHaAuth } from './hooks/useHaAuth';
 import { useTheme } from './hooks/useTheme';
+import { NIGHT_THEME_ID } from './display/night-mode';
+import { useNightScheduleActive } from './display/use-night-schedule';
 import { useLocalCalendar } from './hooks/useLocalCalendar';
 import { useDashboardTasks } from './hooks/useDashboardTasks';
 import OnboardingView from './components/OnboardingView';
@@ -43,16 +48,83 @@ import { getFocusMemberId, clearFocusMode, setDeviceFocusMember } from './focus'
 import { CalendarEvent, resolveCalendarColor, normalizeCalendarLayout, type CalendarLayout } from './types';
 import { buildMonthGrid } from './utils/month-grid';
 import { getConfig, patchConfig } from './config';
+import { loadProtectedRuntimeConfig } from './api/runtime-config';
 import { I18nContext, createI18n } from './i18n';
 import { HiddenCornerGesture } from './components/HiddenCornerGesture';
+import { GuestBadge } from './components/GuestBadge';
 import { kioskHotCorner, kioskNavVisible, shouldOfferKioskGesture } from './display/hidden-gesture';
+import { filterCalendarsForGuest, filterEventsForGuest, guestCanSee, guestMayMutateEvent, guestPinConfigured } from './display/guest-mode';
+import { checklistCompletedIds, checklistGuestCheckedIds, planChecklistToggle } from './display/checklist-completion';
+import { ToastHost } from './components/ToastHost';
+import { useGuestMode } from './hooks/useGuestMode';
+import { attachDirectHaClient } from './api/home-sensor-stream';
 import { DEMO_CALENDARS, DEMO_EVENTS } from './demo/fixtures';
 import { demoInitialView } from './demo/location';
 import { normalizeNavigateView } from './voice/assist';
+import { PairDeviceScreen } from './components/PairDeviceScreen';
+import { useDevicePairing } from './hooks/useDevicePairing';
 
-const config = getConfig();
+function bootLocale(): string {
+  try {
+    const raw = localStorage.getItem('beacon-settings');
+    if (!raw) return 'en-US';
+    const parsed = JSON.parse(raw) as { locale?: unknown };
+    return typeof parsed.locale === 'string' && parsed.locale ? parsed.locale : 'en-US';
+  } catch {
+    return 'en-US';
+  }
+}
 
+function BootScreen() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
+      <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
+    </div>
+  );
+}
+
+/**
+ * The public script only has the pairing-screen chrome. Weather, photos,
+ * the screen saver, and the Home Assistant URL are merged from the protected
+ * endpoint once this browser is paired, on ingress, or when the native shell
+ * falls through to ready — and before the dashboard reads them.
+ */
 export function App() {
+  const demoMode = import.meta.env.VITE_DEMO === 'true';
+  const pairing = useDevicePairing(!demoMode);
+  const [runtimeReady, setRuntimeReady] = useState(demoMode);
+
+  useEffect(() => {
+    if (demoMode) return;
+    if (pairing.status !== 'ready') {
+      setRuntimeReady(false);
+      return;
+    }
+    let cancelled = false;
+    loadProtectedRuntimeConfig().finally(() => {
+      if (!cancelled) setRuntimeReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [demoMode, pairing.status]);
+
+  if (!demoMode && (pairing.status === 'checking' || (pairing.status === 'ready' && !runtimeReady))) {
+    return <BootScreen />;
+  }
+
+  if (pairing.status === 'required') {
+    return (
+      <I18nContext.Provider value={createI18n(bootLocale())}>
+        <PairDeviceScreen onPaired={pairing.markReady} />
+      </I18nContext.Provider>
+    );
+  }
+
+  return <BeaconApp />;
+}
+
+function BeaconApp() {
   const auth = useHaAuth();
   const { client, connected } = useHomeAssistant();
   const { isIngress, compact } = useIngressDetect();
@@ -66,6 +138,12 @@ export function App() {
     clearLocalStorage,
   } = useSettings();
   const fontStatus = useAppliedFonts(settings.headingFont, settings.bodyFont);
+  const guest = useGuestMode(settings.guestTimeoutHours, settings.guestPin);
+
+  useEffect(() => {
+    attachDirectHaClient(client());
+    return () => attachDirectHaClient(null);
+  }, [client, connected]);
 
   const i18n = useMemo(() => createI18n(settings.locale), [settings.locale]);
   const { t } = i18n;
@@ -119,31 +197,42 @@ export function App() {
         ].sort((a, b) => a.start.localeCompare(b.start))),
     [demoMode, localCal.events, localCalendarColor, haEvents],
   );
+  const screenEvents = useMemo(
+    () => filterEventsForGuest(events, guest.active, settings.guestHiddenCalendars),
+    [events, guest.active, settings.guestHiddenCalendars],
+  );
+  const screenCalendars = useMemo(
+    () => filterCalendarsForGuest(calendars, guest.active, settings.guestHiddenCalendars),
+    [calendars, guest.active, settings.guestHiddenCalendars],
+  );
 
   // Route create/update/delete to local or HA based on calendar ID
   const createEvent = useCallback(async (calendarId: string, eventData: Parameters<typeof createHaEvent>[1]) => {
+    if (!guestMayMutateEvent(guest.active, 'create')) return;
     if (calendarId === localCal.calendar.id) {
       localCal.createEvent(eventData);
     } else {
       await createHaEvent(calendarId, eventData);
     }
-  }, [localCal, createHaEvent]);
+  }, [localCal, createHaEvent, guest.active]);
 
   const updateEvent = useCallback(async (calendarId: string, uid: string, eventData: Parameters<typeof updateHaEvent>[2]) => {
+    if (!guestMayMutateEvent(guest.active, 'edit')) return;
     if (calendarId === localCal.calendar.id) {
       localCal.updateEvent(uid, eventData);
     } else {
       await updateHaEvent(calendarId, uid, eventData);
     }
-  }, [localCal, updateHaEvent]);
+  }, [localCal, updateHaEvent, guest.active]);
 
   const deleteEvent = useCallback(async (calendarId: string, uid: string) => {
+    if (!guestMayMutateEvent(guest.active, 'delete')) return;
     if (calendarId === localCal.calendar.id) {
       localCal.deleteEvent(uid);
     } else {
       await deleteHaEvent(calendarId, uid);
     }
-  }, [localCal, deleteHaEvent]);
+  }, [localCal, deleteHaEvent, guest.active]);
 
   const { weather } = useWeather(client);
   const music = useMusic(client, connected);
@@ -160,8 +249,21 @@ export function App() {
 
   const dashboardTasks = useDashboardTasks(connected, settings.groceryListIds);
 
-  // Apply theme at App level so it stays active regardless of which view is shown
-  const { setTheme } = useTheme();
+  // Apply theme at App level so it stays active regardless of which view is shown.
+  // Night mode forces the dark theme without rewriting the saved theme id.
+  const nightSchedule = useMemo(() => ({
+    enabled: settings.nightModeEnabled,
+    start: settings.nightModeStart,
+    end: settings.nightModeEnd,
+    override: settings.nightModeOverride,
+  }), [
+    settings.nightModeEnabled,
+    settings.nightModeStart,
+    settings.nightModeEnd,
+    settings.nightModeOverride,
+  ]);
+  const nightActive = useNightScheduleActive(nightSchedule, settingsLoaded);
+  const { setTheme } = useTheme({ forceId: nightActive ? NIGHT_THEME_ID : null });
   useEffect(() => {
     setTheme(settings.themeId);
   }, [settings.themeId, setTheme]);
@@ -180,11 +282,12 @@ export function App() {
   }, [settings.permanentlyHiddenCalendars]);
 
   const visibleEvents = useMemo(
-    () => events.filter((event) => !hiddenCalendars.has(event.calendarId)),
-    [events, hiddenCalendars],
+    () => screenEvents.filter((event) => !hiddenCalendars.has(event.calendarId)),
+    [screenEvents, hiddenCalendars],
   );
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [prefillTime, setPrefillTime] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<SidebarView>(() =>
@@ -311,7 +414,7 @@ export function App() {
   });
 
   // Event notifications (browser + HA mobile_app)
-  useNotifications(events, client, !focusMemberId, settings.notificationMinutes);
+  useNotifications(screenEvents, client, !focusMemberId, settings.notificationMinutes);
 
   // Leaderboard is still a slide-over panel (not a full view); Chores is now
   // a real full-screen activeView (see PRD: dedicated chores screen).
@@ -369,18 +472,20 @@ export function App() {
   }, [updateSettings]);
 
   const handleEventClick = useCallback((event: CalendarEvent) => {
+    if (!guestMayMutateEvent(guest.active, 'edit')) return;
     setSelectedEvent(event);
     setPrefillDate(null);
     setPrefillTime(null);
     setShowModal(true);
-  }, []);
+  }, [guest.active]);
 
   const handleSlotClick = useCallback((date: string, hour: number) => {
+    if (!guestMayMutateEvent(guest.active, 'create')) return;
     setSelectedEvent(null);
     setPrefillDate(date);
     setPrefillTime(`${String(hour).padStart(2, '0')}:00`);
     setShowModal(true);
-  }, []);
+  }, [guest.active]);
 
   const handleCloseModal = useCallback(() => {
     setShowModal(false);
@@ -390,6 +495,7 @@ export function App() {
   }, []);
 
   const handleSaveEvent = useCallback(async (calendarId: string, data: EventFormData) => {
+    if (!guestMayMutateEvent(guest.active, selectedEvent ? 'edit' : 'create')) return;
     const eventData = data.allDay
       ? {
           summary: data.summary,
@@ -462,7 +568,7 @@ export function App() {
       // instead of the save silently appearing to do nothing.
       throw err;
     }
-  }, [selectedEvent, createEvent, updateEvent, deleteEvent, refetchActiveRanges, handleCloseModal]);
+  }, [selectedEvent, createEvent, updateEvent, deleteEvent, refetchActiveRanges, handleCloseModal, guest.active]);
 
   const handleDeleteEvent = useCallback(async (calendarId: string, eventId: string) => {
     try {
@@ -483,6 +589,7 @@ export function App() {
   }, [selectedEvent, deleteEvent, refetchActiveRanges, handleCloseModal]);
 
   const handleEventReschedule = useCallback(async (event: CalendarEvent, newDate: string, newHour: number) => {
+    if (!guestMayMutateEvent(guest.active, 'edit')) return;
     try {
       const oldStart = new Date(event.start);
       const oldEnd = new Date(event.end);
@@ -518,18 +625,20 @@ export function App() {
     } catch (err) {
       console.error('Failed to reschedule event:', err);
     }
-  }, [updateEvent, deleteEvent, createEvent, refetchActiveRanges]);
+  }, [updateEvent, deleteEvent, createEvent, refetchActiveRanges, guest.active]);
 
   const handleAddEvent = useCallback(() => {
+    if (!guestMayMutateEvent(guest.active, 'create')) return;
     setSelectedEvent(null);
     // Default new events to the day currently selected on the dashboard.
     setPrefillDate(activeView === 'dashboard' ? format(dashboardDate, 'yyyy-MM-dd') : null);
     setPrefillTime(null);
     setShowModal(true);
-  }, [activeView, dashboardDate]);
+  }, [activeView, dashboardDate, guest.active]);
 
   const handleChangeView = useCallback(
     (view: SidebarView) => {
+      if (view === 'settings' && !guestCanSee(guest.active, 'settings')) return;
       // Leaderboard opens as an overlay, doesn't change the main view.
       // Chores is a real activeView now (dedicated full-screen view).
       if (view === 'leaderboard') {
@@ -540,7 +649,7 @@ export function App() {
       setShowLeaderboard(false);
       setActiveView(view);
     },
-    [],
+    [guest.active],
   );
 
   useEffect(() => {
@@ -575,29 +684,39 @@ export function App() {
     setShowLeaderboard(false);
   }, []);
 
-  // Build a set of chore IDs completed today (for the dashboard checklist).
-  // We use the first member for now; a member-picker could be added later.
-  const firstMemberId = members.length > 0 ? members[0].id : '__none__';
-  const completedChoreIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const c of completionsToday) {
-      if (c.member_id === firstMemberId) {
-        ids.add(c.chore_id);
-      }
-    }
-    return ids;
-  }, [completionsToday, firstMemberId]);
+  // Family check-offs on these lists still use the first member. A guest
+  // check-off uses the chore's assignee and the same `by: 'guest'` marker
+  // as the Chores screen. An unassigned guest check-off has no member.
+  const checklistScope = useMemo(() => ({
+    chores,
+    members,
+    completions: completionsToday,
+    guestActive: guest.active,
+  }), [chores, members, completionsToday, guest.active]);
+  const completedChoreIds = useMemo(
+    () => checklistCompletedIds(checklistScope),
+    [checklistScope],
+  );
+  const guestCheckedChoreIds = useMemo(
+    () => checklistGuestCheckedIds(checklistScope),
+    [checklistScope],
+  );
 
   const handleToggleChore = useCallback(
     (choreId: string) => {
-      if (completedChoreIds.has(choreId)) {
-        uncompleteChore(choreId, firstMemberId);
+      const plan = planChecklistToggle({ ...checklistScope, choreId });
+      if (plan.action === 'uncomplete') {
+        uncompleteChore(choreId, plan.memberId);
       } else {
-        completeChore(choreId, firstMemberId);
+        completeChore(choreId, plan.memberId, plan.by);
       }
     },
-    [completedChoreIds, completeChore, uncompleteChore, firstMemberId]
+    [checklistScope, completeChore, uncompleteChore],
   );
+
+  useEffect(() => {
+    if (guest.active && activeView === 'settings') setActiveView('dashboard');
+  }, [guest.active, activeView]);
 
   // Handle onboarding completion
   const handleOnboardingComplete = useCallback(async (haUrl: string, haToken: string) => {
@@ -634,6 +753,7 @@ export function App() {
 
       const view = viewMap[e.key];
       if (view) {
+        if (view === 'settings' && !guestCanSee(guest.active, 'settings')) return;
         e.preventDefault();
         setActiveView(view);
       }
@@ -641,19 +761,25 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [settings.kioskMode, kioskNavRevealed]);
+  }, [settings.kioskMode, kioskNavRevealed, guest.active]);
 
   const sidebarPos = settings.sidebarPosition || 'left';
   const showNav = kioskNavVisible(settings.kioskMode, settings.kioskRevealGesture, kioskNavRevealed);
   const offerKioskGesture = shouldOfferKioskGesture(settings.kioskMode, settings.kioskRevealGesture);
+  const offerGuestGesture = guestPinConfigured(settings.guestPin) || guest.active;
+  const nightMode = (
+    <NightMode
+      active={nightActive}
+      brightness={settings.nightModeBrightness}
+      clockOnly={settings.nightModeClockOnly}
+      timeFormat={settings.timeFormat}
+      hotCorner={kioskHotCorner(sidebarPos)}
+    />
+  );
 
-  // Show loading screen while checking stored credentials
+  // Show loading screen while checking stored credentials.
   if (auth.state.loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
-      </div>
-    );
+    return <BootScreen />;
   }
 
   // Show onboarding ONLY when running as a standalone app with no HA connection configured.
@@ -691,6 +817,9 @@ export function App() {
           memberId={focusMember.id}
           settings={settings}
           onExit={handleExitFocus}
+          guestActive={guest.active}
+          onEnterGuest={guest.enter}
+          onExitGuest={guest.exit}
         />
         {settings.voiceButton && (
           <VoiceAssist
@@ -700,6 +829,7 @@ export function App() {
             onRefreshChores={() => { void refreshChores(); }}
           />
         )}
+        {nightMode}
       </I18nContext.Provider>
     );
   }
@@ -710,6 +840,7 @@ export function App() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
+        {nightMode}
       </div>
     );
   }
@@ -726,19 +857,28 @@ export function App() {
         </div>
       )}
       {/* Kiosk hides the sidebar until the corner gesture (or Escape) reveals it. */}
-      {offerKioskGesture && (
+      {(offerKioskGesture || offerGuestGesture) && (
         <HiddenCornerGesture
-          purpose="kiosk"
+          purpose={offerKioskGesture ? 'kiosk' : 'guest'}
           corner={kioskHotCorner(sidebarPos)}
           members={members}
-          onGrantedChange={setKioskNavRevealed}
+          guestPin={settings.guestPin}
+          guestActive={guest.active}
+          onEnterGuest={guest.enter}
+          onExitGuest={guest.exit}
+          onGrantedChange={(granted) => {
+            if (guest.active) return;
+            setKioskNavRevealed(granted);
+          }}
         />
       )}
+      {guest.active && <GuestBadge />}
       {showNav && (
         <Sidebar
           activeView={activeView}
           onChangeView={handleChangeView}
           position={sidebarPos}
+          showSettings={guest.canSee('settings')}
         />
       )}
 
@@ -752,10 +892,11 @@ export function App() {
               chores={settings.choresEnabled ? chores : []}
               completedChoreIds={completedChoreIds}
               onToggleChore={handleToggleChore}
+              guestCheckedChoreIds={guestCheckedChoreIds}
               todoItems={dashboardTasks.items}
               onToggleTodo={dashboardTasks.toggleItem}
               onWeatherClick={() => setActiveView('weather')}
-              onEventClick={handleEventClick}
+              onEventClick={guest.canSee('editEvents') ? handleEventClick : undefined}
               members={members}
               taskmateUsers={dashboardTasks.users}
               layout={settings.dashboardLayout}
@@ -765,18 +906,37 @@ export function App() {
               onSelectedDateChange={setDashboardDate}
               eventsLoading={selectedDayLoading}
               isDayLoaded={isDayLoaded}
+              onPlanMeals={() => setActiveView('meals')}
+              groceryListId={settings.defaultGroceryList || 'beacon-shopping'}
+              grocyExpiringEnabled={settings.grocyExpiringEnabled}
+              grocyMissingEnabled={settings.grocyMissingEnabled}
+              guestActive={guest.active}
+              homeSensorsEnabled={settings.homeSensorsEnabled}
+              homeSensors={settings.homeSensors}
+              grocyEnabled={settings.grocyEnabled}
+              connected={connected}
             />
             <OmniAdd
               onAddEvent={handleAddEvent}
+              allowAddEvent={guest.canSee('createEvents')}
               onAddGroceryItem={() => setActiveView('grocery')}
               onAddChore={() => handleChangeView('chores')}
               onNavigateTimer={() => setActiveView('timer')}
               sidebarPosition={sidebarPos}
             />
+            {settings.magicImport && !settings.kioskMode && guest.canSee('magicImport') && (
+              <button
+                type="button"
+                className="settings-btn settings-btn--primary magic-import-launch"
+                onClick={() => setShowImport(true)}
+              >
+                {t('import.open')}
+              </button>
+            )}
           </>
         ) : activeView === 'chores' ? (
           settings.choresEnabled ? (
-            <ChoresView />
+            <ChoresView guestActive={guest.active} />
           ) : (
             <div className="chores-empty" style={{ padding: 48 }}>
               {t('app.choresDisabled')}
@@ -808,12 +968,23 @@ export function App() {
             onUpdateMember={updateMember}
             onRemoveMember={removeMember}
             connected={connected}
-            haUrl={config.ha_url}
+            haUrl={getConfig().ha_url}
             calendars={calendars}
             onEnterFocusMode={handleEnterFocusMode}
           />
+        ) : activeView === 'meals' ? (
+          <MealsView
+            weekStartsOn={settings.weekStartsOn}
+            groceryListId={settings.defaultGroceryList || 'beacon-shopping'}
+          />
         ) : activeView === 'grocery' ? (
-          <GroceryView defaultListId={settings.defaultGroceryList || undefined} mode="grocery" groceryListIds={settings.groceryListIds} />
+          <GroceryView
+            defaultListId={settings.defaultGroceryList || undefined}
+            mode="grocery"
+            groceryListIds={settings.groceryListIds}
+            grocyEnabled={settings.grocyEnabled}
+            connected={connected}
+          />
         ) : activeView === 'tasks' ? (
           <GroceryView mode="tasks" groceryListIds={settings.groceryListIds} />
         ) : activeView === 'timer' ? (
@@ -850,6 +1021,15 @@ export function App() {
                 )}
               </div>
               <div className="header-right">
+                {settings.magicImport && !settings.kioskMode && guest.canSee('magicImport') && (
+                  <button
+                    type="button"
+                    className="settings-btn magic-import-header-btn"
+                    onClick={() => setShowImport(true)}
+                  >
+                    {t('import.open')}
+                  </button>
+                )}
                 <Clock />
               </div>
             </header>
@@ -857,7 +1037,7 @@ export function App() {
             {/* Family filter pills — above the calendar */}
             <div className="filter-bar">
               <FamilyFilter
-                calendars={calendars}
+                calendars={screenCalendars}
                 hiddenCalendars={hiddenCalendars}
                 onToggle={handleToggleCalendar}
               />
@@ -868,10 +1048,12 @@ export function App() {
               <div className="beacon-body-calendar">
                 {calendarLayout === 'month' ? (
                   <MonthCalendar
-                    events={events}
+                    events={screenEvents}
                     hiddenCalendars={hiddenCalendars}
                     onEventClick={handleEventClick}
                     onSlotClick={handleSlotClick}
+                    allowCreate={guest.canSee('createEvents')}
+                    allowEdit={guest.canSee('editEvents')}
                     onVisibleMonthChange={handleVisibleMonthChange}
                     weekStartsOn={settings.weekStartsOn}
                     calendarLayout={calendarLayout}
@@ -880,11 +1062,13 @@ export function App() {
                   />
                 ) : (
                   <WeekCalendar
-                    events={events}
+                    events={screenEvents}
                     hiddenCalendars={hiddenCalendars}
                     onEventClick={handleEventClick}
                     onSlotClick={handleSlotClick}
-                    onEventReschedule={handleEventReschedule}
+                    onEventReschedule={guest.canSee('editEvents') ? handleEventReschedule : undefined}
+                    allowCreate={guest.canSee('createEvents')}
+                    allowEdit={guest.canSee('editEvents')}
                     onVisibleWeekChange={setVisibleWeekStart}
                     weekStartsOn={settings.weekStartsOn}
                     calendarLayout={calendarLayout}
@@ -897,6 +1081,7 @@ export function App() {
                 chores={settings.choresEnabled ? chores : []}
                 completedChoreIds={completedChoreIds}
                 onToggleChore={handleToggleChore}
+                guestCheckedChoreIds={guestCheckedChoreIds}
                 todoItems={dashboardTasks.items}
                 onToggleTodo={dashboardTasks.toggleItem}
                 members={members}
@@ -906,6 +1091,7 @@ export function App() {
             {/* Omni-Add FAB */}
             <OmniAdd
               onAddEvent={handleAddEvent}
+              allowAddEvent={guest.canSee('createEvents')}
               onAddGroceryItem={() => setActiveView('grocery')}
               onAddChore={() => handleChangeView('chores')}
               onNavigateTimer={() => setActiveView('timer')}
@@ -919,13 +1105,34 @@ export function App() {
       {showModal && (
         <EventModal
           event={selectedEvent}
-          calendars={calendars}
+          calendars={screenCalendars}
           defaultCalendarId={settings.defaultCalendar}
           onSave={handleSaveEvent}
           onDelete={handleDeleteEvent}
+          allowDelete={guest.canSee('deleteEvents')}
           onClose={handleCloseModal}
           prefillDate={prefillDate}
           prefillTime={prefillTime}
+        />
+      )}
+
+      {showImport && settings.magicImport && !settings.kioskMode && (
+        <MagicImportModal
+          calendars={screenCalendars}
+          members={members}
+          guestMode={guest.active}
+          defaultCalendarId={settings.defaultCalendar}
+          defaultGroceryListId={settings.defaultGroceryList}
+          defaultTodoListId="beacon-todo"
+          defaultDurationMinutes={settings.defaultEventDuration}
+          locale={settings.locale}
+          grocyEnabled={settings.grocyEnabled}
+          useHaAgent={settings.magicImportUseHaAgent}
+          aiTaskEntityId={settings.magicImportAiTaskEntity}
+          getClient={client}
+          onCreateEvent={createEvent}
+          onClose={() => setShowImport(false)}
+          onCommitted={() => { void refetchActiveRanges(); }}
         />
       )}
 
@@ -957,6 +1164,7 @@ export function App() {
       )}
 
       {/* Screen saver / dim mode */}
+      {nightMode}
       <ScreenSaver
         enabled={settings.screenSaverEnabled}
         dimTimeoutMin={settings.dimTimeout}
@@ -968,6 +1176,7 @@ export function App() {
         <div className="demo-badge">{t('app.demoMode')}</div>
       )}
       {voiceControl}
+      <ToastHost />
     </div>
     </I18nContext.Provider>
   );

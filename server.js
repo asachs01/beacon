@@ -3,28 +3,84 @@
  * Beacon add-on server.
  *
  * - Serves the static SPA from /app/dist
- * - Proxies /api/* to HA Supervisor API with SUPERVISOR_TOKEN
+ * - Proxies an allowlisted subset of /api/* to Home Assistant with the
+ *   Supervisor token, or HA_TOKEN when this process is not running as an add-on.
+ *   Anything else is 403 and is not forwarded. Server-internal haRequest calls
+ *   are not part of that proxy.
  * - Provides /beacon-data/* for persistent storage (survives rebuilds)
  */
 
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
 const WebSocket = require('ws');
+const { describeHaHttpTarget, resolveHaConnection, standaloneConfigError } = require('./lib/ha-connection.cjs');
+const { attachHaWsBridge } = require('./lib/ha-ws-bridge.cjs');
+const { createHomeSensorGate } = require('./lib/home-sensor-gate.cjs');
+const { handleHomeSensorEntities } = require('./lib/home-sensor-entities.cjs');
+const { evaluateHaProxyPolicy, isHaMediaUpload, proxySettingsFromStore } = require('./lib/ha-proxy-policy.cjs');
+const {
+  PAIR_ATTEMPT_COOKIE,
+  buildPairAttemptCookie,
+  createPairingLimiter,
+  newAttemptId,
+  normalizeAttemptId,
+} = require('./lib/pairing-rate-limit.cjs');
+const {
+  buildSessionCookie,
+  cleanLabel,
+  createSessionStore,
+  pairingSecretOk,
+  readFamilyPins,
+  requestIsSecure,
+} = require('./lib/device-sessions.cjs');
+const {
+  credentialRequired,
+  clientIp,
+  headersForUpstream,
+  stripSessionQuery,
+  createSocketRegistry,
+  isTrustedIngress,
+  readCookie,
+  readPresentedToken,
+  retryAfterSeconds,
+} = require('./lib/device-auth.cjs');
+const { warnIfBrowserTokenSet, buildRuntimeConfig, renderRuntimeConfig } = require('./lib/runtime-config.cjs');
+const { ADDED_LOG, ensureBeaconToken } = require('./lib/ha-secrets-token.cjs');
 
-const PORT = 3000;
+// BEACON_PORT is for tests. The add-on keeps listening on 3000.
+const PORT = process.env.BEACON_PORT ? Number(process.env.BEACON_PORT) : 3000;
 const DIST = process.env.BEACON_DIST || '/app/dist';
-const SUPERVISOR_TOKEN = process.env.SUPERVISOR_TOKEN || '';
-const HA_API_BASE = process.env.HA_API_BASE_OVERRIDE || 'http://supervisor/core';
-const HA_WS_URL = process.env.HA_WS_URL_OVERRIDE || 'ws://supervisor/core/api/websocket';
+// Add-on: Supervisor token and http://supervisor/core.
+// Standalone: HA_URL + HA_TOKEN. Overrides still win when set.
+const haConnection = resolveHaConnection(process.env);
+const HA_API_BASE = haConnection.apiBase;
+const HA_WS_URL = haConnection.wsUrl;
+const HA_ACCESS_TOKEN = haConnection.token;
+const HA_MODE = haConnection.mode;
+const haBridgeServer = new WebSocket.Server({ noServer: true });
 // /data/ is HA add-on persistent storage (survives container rebuilds)
 const DATA_DIR = process.env.BEACON_DATA || '/data';
+const homeSensorGate = createHomeSensorGate({
+  readSettings: async () => JSON.parse(await fsp.readFile(path.join(DATA_DIR, 'beacon-settings.json'), 'utf8')),
+  fetchEntityState: async (entityId) => {
+    const result = await haRequestTimed('GET', `/api/states/${encodeURIComponent(entityId)}`);
+    if (!result || result.status !== 200 || !result.data || typeof result.data !== 'object') return null;
+    return result.data;
+  },
+});
+homeSensorGate.load().catch((err) => {
+  console.warn(`[beacon] home sensor selection load failed: ${err.message}`);
+});
 const { createGooglePhotoCache, REFRESH_MS } = require('./lib/google-photos-cache.cjs');
 const { acceptedChoreEvents, createPrivilegeScheduler } = require('./lib/chore-privileges.cjs');
+const { readStoredResetTime } = require('./lib/chore-day.cjs');
 const { parseIntent, resolveTodoEntity } = require('./lib/voice-intents.cjs');
 const { completeStoredChore, handleCompleteChore } = require('./lib/complete-chore.cjs');
 const { listStoredChores, handleChoresLeft } = require('./lib/chores-left.cjs');
+const { backupMealPlanFile } = require('./lib/meal-plan-files.cjs');
 const googlePhotos = createGooglePhotoCache({
   dataDir: path.join(DATA_DIR, 'photo-cache', 'google'),
 });
@@ -45,6 +101,238 @@ const MIME_TYPES = {
 
 // Ensure data directory exists
 try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch { /* ignore */ }
+
+const deviceSockets = createSocketRegistry();
+const sessionStore = createSessionStore({
+  dataDir: DATA_DIR,
+  onRevoke(id) { deviceSockets.closeSession(id); },
+});
+const pairingLimiter = createPairingLimiter({
+  onLockout({ scope, ip, until }) {
+    const who = scope === 'global' ? 'all clients' : ip;
+    console.warn(`[beacon] pairing lockout (${scope}) for ${who} until ${new Date(until).toISOString()}`);
+  },
+});
+
+function ingressTrusted(req) {
+  return isTrustedIngress({
+    mode: HA_MODE === 'addon' ? 'addon' : 'standalone',
+    remoteAddress: req.socket && req.socket.remoteAddress,
+  });
+}
+
+function json(res, status, body, extraHeaders) {
+  const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+  if (extraHeaders) {
+    for (const [key, value] of Object.entries(extraHeaders)) {
+      headers[key] = value;
+    }
+  }
+  res.writeHead(status, headers);
+  res.end(JSON.stringify(body));
+}
+
+/** Session cookie, bearer token, or (for websockets and native media) query. Ingress skips this. */
+function establishedSession(req) {
+  if (ingressTrusted(req)) return { ok: true, via: 'ingress', session: null };
+  const token = readPresentedToken(req);
+  const session = token ? sessionStore.verify(token) : null;
+  if (!session) return { ok: false };
+  sessionStore.touch(session.id);
+  return { ok: true, via: 'session', session };
+}
+
+function requireSession(req, res) {
+  const auth = establishedSession(req);
+  if (!auth.ok) {
+    json(res, 401, { error: 'pairing_required' });
+    return null;
+  }
+  return auth;
+}
+
+function denyUpgrade(socket) {
+  try {
+    socket.write('HTTP/1.1 401 Unauthorized\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{"error":"pairing_required"}');
+  } catch { /* peer already gone */ }
+  socket.destroy();
+}
+
+function handleHealth(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  json(res, 200, { ok: true });
+}
+
+/**
+ * Public script the pairing screen loads. Display chrome only.
+ * A file left in dist/ is not served: env is the source of truth, so a
+ * stale runtime-config.js cannot put the Home Assistant URL back in public.
+ */
+function handlePublicRuntimeConfig(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const body = renderRuntimeConfig(process.env);
+  res.writeHead(200, {
+    'Content-Type': 'application/javascript; charset=utf-8',
+    'Cache-Control': 'no-store',
+  });
+  res.end(req.method === 'HEAD' ? undefined : body);
+}
+
+/** Full add-on/standalone config. The session gate already ran. */
+function handleProtectedRuntimeConfig(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  json(res, 200, buildRuntimeConfig(process.env));
+}
+
+function handleSessionStatus(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const auth = establishedSession(req);
+  json(res, 200, { paired: auth.ok, ingress: auth.ok && auth.via === 'ingress' });
+}
+
+function handlePair(req, res) {
+  if (req.method !== 'POST') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const ip = clientIp(req);
+  const attemptId = normalizeAttemptId(readCookie(req, PAIR_ATTEMPT_COOKIE)) || newAttemptId();
+  const attemptCookie = buildPairAttemptCookie(attemptId, { secure: requestIsSecure(req) });
+  const send = (status, body, extraHeaders) => {
+    const extra = { ...(extraHeaders || {}) };
+    const cookies = [attemptCookie];
+    if (extra['Set-Cookie']) cookies.push(extra['Set-Cookie']);
+    extra['Set-Cookie'] = cookies;
+    json(res, status, body, extra);
+  };
+  collectBody(req).then(async (bodyBuf) => {
+    const gate = pairingLimiter.check(ip, attemptId);
+    if (!gate.ok) {
+      const retryAfter = retryAfterSeconds(gate.retryAfterMs);
+      send(429, { error: 'pairing_locked', retryAfter }, { 'Retry-After': String(retryAfter) });
+      return;
+    }
+    let payload = {};
+    try {
+      payload = JSON.parse((bodyBuf || '{}').toString('utf8'));
+    } catch {
+      pairingLimiter.fail(ip, attemptId);
+      send(401, { error: 'pairing_failed' });
+      return;
+    }
+    const pins = await readFamilyPins(DATA_DIR);
+    const ok = pairingSecretOk(payload.secret, sessionStore.pairingCode(), pins);
+    if (!ok) {
+      const failed = pairingLimiter.fail(ip, attemptId);
+      if (failed.scope === 'attempt' || failed.scope === 'ip' || failed.scope === 'global') {
+        const retryAfter = retryAfterSeconds(failed.retryAfterMs);
+        send(429, { error: 'pairing_locked', retryAfter }, { 'Retry-After': String(retryAfter) });
+        return;
+      }
+      send(401, { error: 'pairing_failed' });
+      return;
+    }
+    pairingLimiter.success(ip, attemptId);
+    const created = await sessionStore.createSession(cleanLabel(payload.label));
+    // The raw token is returned once in this body and is not logged.
+    send(200, { ok: true, token: created.token, device: created.session }, {
+      'Set-Cookie': buildSessionCookie(created.token, { secure: requestIsSecure(req) }),
+    });
+  }).catch((err) => {
+    if (!res.headersSent) json(res, 400, { error: err.message || 'Bad request' });
+  });
+}
+
+function handleAccessTokenCreate(req, res) {
+  if (req.method !== 'POST') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const auth = requireSession(req, res);
+  if (!auth) return;
+  collectBody(req).then(async (bodyBuf) => {
+    let payload = {};
+    try {
+      payload = JSON.parse((bodyBuf || '{}').toString('utf8'));
+    } catch {
+      json(res, 400, { error: 'Invalid JSON' });
+      return;
+    }
+    const label = typeof payload.label === 'string' ? payload.label : '';
+    const created = await sessionStore.createSession(label, { kind: 'token' });
+    // Returned once. Not written to the log, and not stored except as a hash.
+    json(res, 200, { ok: true, token: created.token, device: created.session });
+  }).catch((err) => {
+    if (!res.headersSent) json(res, 400, { error: err.message || 'Bad request' });
+  });
+}
+
+function handleDeviceList(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const auth = requireSession(req, res);
+  if (!auth) return;
+  json(res, 200, {
+    pairingCode: sessionStore.pairingCode(),
+    devices: sessionStore.list(auth.session && auth.session.id),
+  });
+}
+
+function handleDeviceRevoke(req, res) {
+  if (req.method !== 'POST') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const auth = requireSession(req, res);
+  if (!auth) return;
+  collectBody(req).then(async (bodyBuf) => {
+    let payload = {};
+    try {
+      payload = JSON.parse((bodyBuf || '{}').toString('utf8'));
+    } catch {
+      json(res, 400, { error: 'Invalid JSON' });
+      return;
+    }
+    if (!payload.id || typeof payload.id !== 'string') {
+      json(res, 400, { error: 'Missing device id' });
+      return;
+    }
+    const removed = await sessionStore.revoke(payload.id);
+    json(res, removed ? 200 : 404, removed ? { ok: true } : { error: 'Device not found' });
+  }).catch((err) => {
+    if (!res.headersSent) json(res, 400, { error: err.message || 'Bad request' });
+  });
+}
+
+function handlePairingCodeRotate(req, res) {
+  if (req.method !== 'POST') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const auth = requireSession(req, res);
+  if (!auth) return;
+  sessionStore.regeneratePairingCode().then((code) => {
+    // The new code is returned to the signed-in caller and is not logged.
+    console.log('Beacon pairing code rotated');
+    json(res, 200, { pairingCode: code });
+  }).catch((err) => {
+    if (!res.headersSent) json(res, 500, { error: err.message });
+  });
+}
 
 async function serveStatic(req, res) {
   let filePath = path.join(DIST, req.url === '/' ? '/index.html' : req.url.split('?')[0]);
@@ -96,44 +384,121 @@ function collectBody(req, maxSize = MAX_BODY_SIZE) {
   });
 }
 
-function proxyToHA(req, res) {
-  const targetUrl = `${HA_API_BASE}${req.url}`;
+/** http or https, with port 80/443 when the URL does not name one. */
+function openHaRequest(targetUrl, options, onResponse) {
+  const target = describeHaHttpTarget(targetUrl);
+  const lib = target.secure ? https : http;
+  const headers = { ...options.headers };
+  if (options.body) headers['Content-Length'] = options.body.length;
+  return lib.request({
+    hostname: target.hostname,
+    port: target.port,
+    path: target.path,
+    method: options.method,
+    headers,
+  }, onResponse);
+}
 
-  const chunks = [];
-  req.on('data', (chunk) => chunks.push(chunk));
-  req.on('end', () => {
-    const body = chunks.length > 0 ? Buffer.concat(chunks) : null;
+function rejectJson(res, status, payload) {
+  if (res.headersSent) return;
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(payload));
+}
 
-    const url = new URL(targetUrl);
-    const options = {
-      hostname: url.hostname,
-      port: url.port || 80,
-      path: url.pathname + url.search,
-      method: req.method,
-      headers: {
-        'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
-        'Content-Type': req.headers['content-type'] || 'application/json',
-      },
-    };
+function parseProxyJsonBody(body, contentType) {
+  if (!body || body.length === 0) return null;
+  const type = String(contentType || '').toLowerCase();
+  if (type.includes('multipart/form-data')) return null;
+  try {
+    return JSON.parse(body.toString('utf8'));
+  } catch {
+    return null;
+  }
+}
 
-    if (body) {
-      options.headers['Content-Length'] = body.length;
-    }
+async function readStoredJson(name) {
+  try {
+    const raw = await fsp.readFile(path.join(DATA_DIR, name), 'utf8');
+    return JSON.parse(raw);
+  } catch (err) {
+    if (err.code !== 'ENOENT') console.warn(`[beacon] could not read ${name}: ${err.message}`);
+    return null;
+  }
+}
 
-    const proxyReq = http.request(options, (proxyRes) => {
-      res.writeHead(proxyRes.statusCode, proxyRes.headers);
-      proxyRes.pipe(res);
-    });
-
-    proxyReq.on('error', (err) => {
-      console.error('Proxy error:', err.message);
-      res.writeHead(502);
-      res.end(JSON.stringify({ error: 'Failed to reach Home Assistant' }));
-    });
-
-    if (body) proxyReq.write(body);
-    proxyReq.end();
+/** Entity scope for the public proxy, from the same JSON files /beacon-data writes. */
+async function loadHaProxySettings() {
+  const [beaconSettings, dashboardLayout, familyMembers] = await Promise.all([
+    readStoredJson('beacon-settings.json'),
+    readStoredJson('beacon-dashboard-layout.json'),
+    readStoredJson('beacon_family_members.json'),
+  ]);
+  return proxySettingsFromStore({
+    beaconSettings: beaconSettings && typeof beaconSettings === 'object' ? beaconSettings : {},
+    dashboardLayout,
+    familyMembers: Array.isArray(familyMembers) ? familyMembers : [],
   });
+}
+
+/**
+ * Public /api/* proxy. evaluateHaProxyPolicy runs before Home Assistant is
+ * contacted. A denial is 403 JSON and the request is not forwarded.
+ */
+function proxyToHA(req, res) {
+  proxyToHAAsync(req, res).catch((err) => {
+    console.error('Proxy error:', err.message);
+    rejectJson(res, 502, { error: 'Failed to reach Home Assistant' });
+  });
+}
+
+async function proxyToHAAsync(req, res) {
+  if (!HA_API_BASE) {
+    rejectJson(res, 503, { error: 'HA_URL is not set' });
+    return;
+  }
+
+  const limit = isHaMediaUpload(req.method, req.url) ? MAX_MEDIA_UPLOAD : MAX_BODY_SIZE;
+  let body;
+  try {
+    body = await collectBody(req, limit);
+  } catch (err) {
+    rejectJson(res, 413, { error: err.message });
+    return;
+  }
+
+  const settings = await loadHaProxySettings();
+  const upstreamPath = stripSessionQuery(req.url);
+  const decision = evaluateHaProxyPolicy(
+    req.method,
+    upstreamPath,
+    parseProxyJsonBody(body, req.headers['content-type']),
+    settings,
+  );
+  if (!decision.allowed) {
+    rejectJson(res, 403, { error: 'not_allowed', detail: decision.detail });
+    return;
+  }
+
+  const targetUrl = `${HA_API_BASE}${upstreamPath}`;
+  const proxyReq = openHaRequest(targetUrl, {
+    method: req.method,
+    body,
+    headers: {
+      'Authorization': `Bearer ${HA_ACCESS_TOKEN}`,
+      'Content-Type': req.headers['content-type'] || 'application/json',
+    },
+  }, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on('error', (err) => {
+    console.error('Proxy error:', err.message);
+    rejectJson(res, 502, { error: 'Failed to reach Home Assistant' });
+  });
+
+  if (body) proxyReq.write(body);
+  proxyReq.end();
 }
 
 /**
@@ -157,7 +522,16 @@ function handleServiceCall(req, res) {
       }
 
       const qs = return_response ? '?return_response' : '';
-      const result = await haRequest('POST', `/api/services/${domain}/${service}${qs}`, data || {});
+      const apiPath = `/api/services/${domain}/${service}${qs}`;
+      // Same allowlist as the /api proxy. This endpoint is how the add-on UI
+      // calls services; it is not a server-internal haRequest.
+      const decision = evaluateHaProxyPolicy('POST', apiPath, data || {}, await loadHaProxySettings());
+      if (!decision.allowed) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'not_allowed', detail: decision.detail }));
+        return;
+      }
+      const result = await haRequest('POST', apiPath, data || {});
       res.writeHead(result.status, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result.data));
     } catch (err) {
@@ -184,8 +558,12 @@ function handleServiceCall(req, res) {
  */
 function haWsCommand(command, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
-    if (!SUPERVISOR_TOKEN) {
-      reject(new Error('No Supervisor token available'));
+    if (!HA_ACCESS_TOKEN) {
+      reject(new Error('No Home Assistant token available'));
+      return;
+    }
+    if (!HA_WS_URL) {
+      reject(new Error('HA_URL is not set'));
       return;
     }
 
@@ -211,7 +589,7 @@ function haWsCommand(command, timeoutMs = 10000) {
       try { msg = JSON.parse(raw.toString('utf8')); } catch { return; }
 
       if (msg.type === 'auth_required') {
-        ws.send(JSON.stringify({ type: 'auth', access_token: SUPERVISOR_TOKEN }));
+        ws.send(JSON.stringify({ type: 'auth', access_token: HA_ACCESS_TOKEN }));
         return;
       }
       if (msg.type === 'auth_invalid') {
@@ -309,7 +687,7 @@ function handleCalendarEventAction(req, res) {
  * POST /beacon-action/chore-events
  * Body: { events: [{ event, data }] }
  * Fires beacon_chore_completed / beacon_all_chores_done on the HA event bus
- * with the Supervisor token. Missing token or an HA error is logged and
+ * with the Home Assistant token. Missing token or an HA error is logged and
  * returned as a soft failure so the chore toggle is never blocked.
  */
 function handleChoreEvents(req, res) {
@@ -330,8 +708,8 @@ function handleChoreEvents(req, res) {
     }
 
     const events = acceptedChoreEvents(payload.events);
-    if (!SUPERVISOR_TOKEN) {
-      console.warn('[beacon] chore events skipped: no Supervisor token');
+    if (!HA_ACCESS_TOKEN) {
+      console.warn('[beacon] chore events skipped: no Home Assistant token');
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: false, skipped: true, fired: 0 }));
       return;
@@ -397,7 +775,18 @@ async function handleDataApi(req, res) {
       const bodyBuf = await collectBody(req);
       const body = (bodyBuf || '{}').toString('utf8');
       JSON.parse(body); // validate JSON
+      // The first rewrite of the meal plan keeps the previous file.
+      if (key === 'beacon_meal_plans') {
+        try { backupMealPlanFile(DATA_DIR); } catch { /* backup is best-effort */ }
+      }
       await fsp.writeFile(filePath, body, 'utf8');
+      if (key === 'beacon-settings') {
+        let parsed = null;
+        try { parsed = JSON.parse(body); } catch { parsed = null; }
+        homeSensorGate.applySettings(parsed).catch((err) => {
+          console.warn(`[beacon] home sensor selection update failed: ${err.message}`);
+        });
+      }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));
     } catch (err) {
@@ -411,24 +800,151 @@ async function handleDataApi(req, res) {
   res.end(JSON.stringify({ error: 'Method not allowed' }));
 }
 
-/** Helper: make a request to the HA Supervisor API and return parsed JSON. */
+/**
+ * Forward a raw body to Home Assistant without writing it to /data.
+ * The media upload keeps the original multipart Content-Type.
+ */
+function haForward(method, apiPath, bodyBuf, contentType) {
+  return new Promise((resolve, reject) => {
+    if (!HA_ACCESS_TOKEN) {
+      reject(new Error('No Home Assistant token available'));
+      return;
+    }
+    if (!HA_API_BASE) {
+      reject(new Error('HA_URL is not set'));
+      return;
+    }
+    const headers = { Authorization: `Bearer ${HA_ACCESS_TOKEN}` };
+    if (contentType) headers['Content-Type'] = contentType;
+    const r = openHaRequest(`${HA_API_BASE}${apiPath}`, {
+      method,
+      body: bodyBuf,
+      headers,
+    }, (resp) => {
+      const chunks = [];
+      resp.on('data', (c) => chunks.push(c));
+      resp.on('end', () => resolve({ status: resp.statusCode, body: Buffer.concat(chunks) }));
+    });
+    r.on('error', reject);
+    if (bodyBuf) r.write(bodyBuf);
+    r.end();
+  });
+}
+
+const MAX_MEDIA_UPLOAD = 12 * 1024 * 1024;
+
+/**
+ * POST /beacon-action/media-upload
+ * Forwards the multipart body to HA's local media upload. The bytes stay
+ * in this request buffer and are never written under /data.
+ */
+function handleMediaUpload(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+  const chunks = [];
+  let total = 0;
+  let rejected = false;
+  req.on('data', (chunk) => {
+    if (rejected) return;
+    total += chunk.length;
+    if (total > MAX_MEDIA_UPLOAD) {
+      rejected = true;
+      res.writeHead(413, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'This file is larger than 10 MB.' }));
+      req.destroy();
+      return;
+    }
+    chunks.push(chunk);
+  });
+  req.on('end', () => {
+    if (rejected) return;
+    const body = chunks.length > 0 ? Buffer.concat(chunks) : Buffer.alloc(0);
+    haForward('POST', '/api/media_source/local_source/upload', body, req.headers['content-type'])
+      .then((result) => {
+        res.writeHead(result.status || 502, { 'Content-Type': 'application/json' });
+        res.end(result.body.length > 0 ? result.body : JSON.stringify({ error: 'Empty upload response' }));
+      })
+      .catch((err) => {
+        if (res.headersSent) return;
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      });
+  });
+  req.on('error', () => {
+    if (res.headersSent) return;
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Upload failed' }));
+  });
+}
+
+function handleMediaBrowse(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+  collectBody(req).then(() => haWsCommand({
+    type: 'media_source/browse_media',
+    media_content_id: 'media-source://media_source',
+  })).then((result) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(result ?? {}));
+  }).catch((err) => {
+    if (res.headersSent) return;
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: err.message }));
+  });
+}
+
+function handleMediaRemove(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    return;
+  }
+  collectBody(req).then(async (bodyBuf) => {
+    const { media_content_id: mediaContentId } = JSON.parse((bodyBuf || '{}').toString('utf8'));
+    if (typeof mediaContentId !== 'string' || !mediaContentId.startsWith('media-source://media_source/')) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing local media id' }));
+      return;
+    }
+    await haWsCommand({
+      type: 'media_source/local_source/remove',
+      media_content_id: mediaContentId,
+    });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+  }).catch((err) => {
+    if (res.headersSent) return;
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: err.message }));
+  });
+}
+
+/**
+ * Server-internal Home Assistant request. Intentionally not checked by the
+ * public proxy allowlist. Voice intents, chore events, privilege sync, and
+ * the server's own config read use this directly and must keep working.
+ */
 function haRequest(method, apiPath, body) {
   return new Promise((resolve, reject) => {
+    if (!HA_API_BASE) {
+      reject(new Error('HA_URL is not set'));
+      return;
+    }
     const bodyBuf = body ? Buffer.from(JSON.stringify(body), 'utf8') : null;
-    const url = new URL(`${HA_API_BASE}${apiPath}`);
-    const options = {
-      hostname: url.hostname,
-      port: url.port || 80,
-      path: url.pathname + url.search,
+    const r = openHaRequest(`${HA_API_BASE}${apiPath}`, {
       method,
+      body: bodyBuf,
       headers: {
-        'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
+        'Authorization': `Bearer ${HA_ACCESS_TOKEN}`,
         'Content-Type': 'application/json',
       },
-    };
-    if (bodyBuf) options.headers['Content-Length'] = bodyBuf.length;
-
-    const r = http.request(options, (resp) => {
+    }, (resp) => {
       const chunks = [];
       resp.on('data', (c) => chunks.push(c));
       resp.on('end', () => {
@@ -515,21 +1031,23 @@ async function applyStoredPrivileges(decisions, info) {
   }
 }
 
-// Re-apply privilege switches at startup and when the local day changes.
-// The day key is Home Assistant's time_zone when /api/config answers, and
-// otherwise localDayKey in the add-on process zone. It is never the UTC date.
+// Re-apply privilege switches at startup and when the chore day changes.
+// The day starts at choresResetTime (local midnight when unset), in Home
+// Assistant's time_zone when /api/config answers, and otherwise in the
+// add-on process zone. It is never the UTC date.
 const privilegeTick = createPrivilegeScheduler({
   now: () => new Date(),
   getTimeZone: readHaTimeZone,
+  getResetTime: () => readStoredResetTime(DATA_DIR),
   readSnapshot: readPrivilegeSnapshot,
   apply: applyStoredPrivileges,
-  hasToken: () => !!SUPERVISOR_TOKEN,
+  hasToken: () => !!HA_ACCESS_TOKEN,
   log: (message) => console.warn(message),
 });
 
 async function publishStoredChoreEvents(events) {
-  if (!SUPERVISOR_TOKEN) {
-    console.warn('[beacon] chore events skipped: no Supervisor token');
+  if (!HA_ACCESS_TOKEN) {
+    console.warn('[beacon] chore events skipped: no Home Assistant token');
     return;
   }
   for (const entry of events) {
@@ -560,6 +1078,7 @@ function completeChoreDeps() {
         return null;
       }
     },
+    readResetTime: () => readStoredResetTime(DATA_DIR),
     publishEvents: publishStoredChoreEvents,
     applyPrivileges: (decisions) => applyStoredPrivileges(decisions, { reason: 'voice', localDate: '' }),
     log: (message) => console.warn(message),
@@ -809,6 +1328,49 @@ function handleVoiceAction(req, res) {
 }
 
 const server = http.createServer((req, res) => {
+  const pathname = (req.url || '/').split('?')[0];
+
+  // Anything off the public allowlist needs a paired session or access
+  // token. Verified ingress (socket peer, add-on mode only) skips that
+  // check. The Home Assistant proxy allowlist still applies inside /api/*
+  // after this gate.
+  if (credentialRequired(pathname, ingressTrusted(req))) {
+    if (!requireSession(req, res)) return;
+  }
+
+  if (pathname === '/health') {
+    handleHealth(req, res);
+    return;
+  }
+  if (pathname === '/runtime-config.js') {
+    handlePublicRuntimeConfig(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/pair') {
+    handlePair(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/session') {
+    handleSessionStatus(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/devices') {
+    handleDeviceList(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/devices/revoke') {
+    handleDeviceRevoke(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/pairing-code' || pathname === '/beacon-auth/pairing-code/rotate') {
+    handlePairingCodeRotate(req, res);
+    return;
+  }
+  if (pathname === '/beacon-auth/access-tokens') {
+    handleAccessTokenCreate(req, res);
+    return;
+  }
+
   // Voice / natural-language action API
   if (req.url === '/beacon-action/voice') {
     handleVoiceAction(req, res);
@@ -824,6 +1386,22 @@ const server = http.createServer((req, res) => {
   // Remaining chores on today's chart (used by HA Assist and the voice API).
   if (req.url.split('?')[0] === '/beacon-action/chores-left') {
     handleChoresLeftFromServer(req, res);
+    return;
+  }
+
+  // Local media upload for AI Task attachments. Not under /api, so ingress
+  // does not rewrite the multipart body. The handler does not touch /data.
+  const mediaPath = req.url.split('?')[0];
+  if (mediaPath === '/beacon-action/media-upload') {
+    handleMediaUpload(req, res);
+    return;
+  }
+  if (mediaPath === '/beacon-action/media-browse') {
+    handleMediaBrowse(req, res);
+    return;
+  }
+  if (mediaPath === '/beacon-action/media-remove') {
+    handleMediaRemove(req, res);
     return;
   }
 
@@ -851,6 +1429,32 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Full runtime config. Same session, access token, or ingress gate as other /beacon-api routes.
+  if (pathname === '/beacon-api/runtime-config') {
+    handleProtectedRuntimeConfig(req, res);
+    return;
+  }
+
+  // Home sensors picker. Metadata only; same reachability as settings writes.
+  if ((req.url || '').split('?')[0] === '/beacon-api/home-sensors/entities') {
+    handleHomeSensorEntities(req, res, {
+      fetchStates: async () => {
+        const result = await haRequestTimed('GET', '/api/states');
+        if (!result || result.status !== 200 || !Array.isArray(result.data)) {
+          throw new Error('Home Assistant states unavailable');
+        }
+        return result.data;
+      },
+    }).catch((err) => {
+      console.warn(`[beacon] home sensor catalog failed: ${err.message}`);
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Home Assistant states unavailable' }));
+      }
+    });
+    return;
+  }
+
   // Google Photos shared-album cache. The browser never calls Google.
   if (req.url.startsWith('/beacon-api/google-photos')) {
     googlePhotos.handle(req, res);
@@ -859,11 +1463,11 @@ const server = http.createServer((req, res) => {
 
   // Proxy API requests to HA
   if (req.url.startsWith('/api/')) {
-    if (SUPERVISOR_TOKEN) {
+    if (HA_ACCESS_TOKEN) {
       proxyToHA(req, res);
     } else {
       res.writeHead(503);
-      res.end(JSON.stringify({ error: 'No Supervisor token available' }));
+      res.end(JSON.stringify({ error: 'No Home Assistant token available' }));
     }
     return;
   }
@@ -871,26 +1475,58 @@ const server = http.createServer((req, res) => {
   serveStatic(req, res);
 });
 
-// Handle WebSocket upgrades for /api/websocket
+// /beacon-ws/ha is the home-sensor bridge: the server authenticates upstream
+// and only forwards the read commands that bridge allows.
+// /api/websocket is a raw pass-through. The server token is not attached
+// there; the browser authenticates itself after auth_required.
+// Both require a paired session or a verified ingress connection.
 server.on('upgrade', (req, socket, head) => {
-  if (!req.url.startsWith('/api/websocket') || !SUPERVISOR_TOKEN) {
+  const pathOnly = (req.url || '').split('?')[0];
+  let auth = null;
+  if (credentialRequired(pathOnly, ingressTrusted(req))) {
+    auth = establishedSession(req);
+    if (!auth.ok) {
+      denyUpgrade(socket);
+      return;
+    }
+    if (auth.session) deviceSockets.track(auth.session.id, socket);
+  }
+  if (pathOnly === '/beacon-ws/ha') {
+    if (!HA_ACCESS_TOKEN || !HA_WS_URL) {
+      socket.destroy();
+      return;
+    }
+    haBridgeServer.handleUpgrade(req, socket, head, (browserWs) => {
+      if (auth && auth.session) deviceSockets.track(auth.session.id, browserWs);
+      attachHaWsBridge(browserWs, {
+        url: HA_WS_URL,
+        token: HA_ACCESS_TOKEN,
+        WebSocketImpl: WebSocket,
+        allowedEntityIds: () => homeSensorGate.allowedEntityIds(),
+        registerDeliver: (deliver) => homeSensorGate.watch(deliver),
+      });
+    });
+    return;
+  }
+
+  if (!req.url.startsWith('/api/websocket') || !HA_ACCESS_TOKEN || !HA_API_BASE) {
     socket.destroy();
     return;
   }
 
-  const url = new URL(`${HA_API_BASE}${req.url}`);
-  const options = {
-    hostname: url.hostname,
-    port: url.port || 80,
-    path: url.pathname + url.search,
+  const target = describeHaHttpTarget(`${HA_API_BASE}${stripSessionQuery(req.url)}`);
+  const lib = target.secure ? https : http;
+  const defaultPort = target.secure ? 443 : 80;
+  const proxyReq = lib.request({
+    hostname: target.hostname,
+    port: target.port,
+    path: target.path,
     method: 'GET',
     headers: {
-      ...req.headers,
-      host: url.hostname,
+      ...headersForUpstream(req),
+      host: target.port === defaultPort ? target.hostname : `${target.hostname}:${target.port}`,
     },
-  };
-
-  const proxyReq = http.request(options);
+  });
   proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
     socket.write(
       `HTTP/1.1 101 Switching Protocols\r\n` +
@@ -910,15 +1546,11 @@ server.on('upgrade', (req, socket, head) => {
   proxyReq.end();
 });
 
-server.listen(PORT, () => {
-  console.log(`Beacon server listening on port ${PORT}`);
-  console.log(`Supervisor token: ${SUPERVISOR_TOKEN ? 'available' : 'NOT available'}`);
-  console.log(`Data directory: ${DATA_DIR}`);
-});
-
-// Fill the photo cache soon after boot, then every 6 hours. A failed
-// refresh keeps the files already on disk.
-const googlePhotoBoot = setTimeout(() => {
+function startBackgroundJobs() {
+  if (process.env.BEACON_DISABLE_JOBS === '1') return;
+  // Fill the photo cache soon after boot, then every 6 hours. A failed
+  // refresh keeps the files already on disk.
+  const googlePhotoBoot = setTimeout(() => {
   googlePhotos.refresh().catch((err) => {
     console.warn(`Google Photos refresh failed: ${err.message}`);
   });
@@ -932,12 +1564,51 @@ googlePhotoBoot.unref?.();
 googlePhotoTimer.unref?.();
 
 // Privilege switches: once shortly after boot (so today's chores survive a
-// restart) and every 30s thereafter, which is what notices local midnight.
+// restart) and every 30s thereafter, which is what notices the chore reset.
 const privilegeBoot = setTimeout(() => {
   privilegeTick().catch((err) => console.warn(`[beacon] privilege sync failed: ${err.message}`));
 }, 15_000);
 const privilegeTimer = setInterval(() => {
   privilegeTick().catch((err) => console.warn(`[beacon] privilege sync failed: ${err.message}`));
 }, 30_000);
-privilegeBoot.unref?.();
-privilegeTimer.unref?.();
+  privilegeBoot.unref?.();
+  privilegeTimer.unref?.();
+}
+
+function startBeaconServer() {
+  warnIfBrowserTokenSet();
+  return sessionStore.load().then(async (code) => {
+    console.log(`Beacon pairing code: ${code}`);
+    if (HA_MODE === 'addon') {
+      try {
+        const secrets = await ensureBeaconToken({
+          secretsPath: process.env.BEACON_SECRETS_PATH || '/config/secrets.yaml',
+          createToken: (label) => sessionStore.createSession(label, { kind: 'token' }),
+          revokeToken: (id) => sessionStore.revoke(id),
+        });
+        if (secrets.added) console.log(ADDED_LOG);
+      } catch (err) {
+        console.warn(`[beacon] could not add beacon_token to secrets.yaml: ${err.message}`);
+      }
+    }
+    server.listen(PORT, () => {
+      const address = server.address();
+      const port = address && typeof address === 'object' ? address.port : PORT;
+      console.log(`Beacon server listening on port ${port}`);
+      console.log(`Mode: ${HA_MODE === 'addon' ? 'add-on' : 'standalone'}`);
+      console.log(`Home Assistant token: ${HA_ACCESS_TOKEN ? 'available' : 'NOT available'}`);
+      console.log(`Data directory: ${DATA_DIR}`);
+      const configError = standaloneConfigError(haConnection);
+      if (configError) console.error(configError);
+    });
+    startBackgroundJobs();
+    return server;
+  }).catch((err) => {
+    console.error(`[beacon] failed to start: ${err.message}`);
+    process.exit(1);
+  });
+}
+
+if (require.main === module) {
+  startBeaconServer();
+}

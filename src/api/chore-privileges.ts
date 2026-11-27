@@ -40,8 +40,12 @@ export interface ChoreEvent {
 
 type ProgressInput = { completed: number; total: number } | null;
 
-export function dayKey(value?: Date | string | number | null, timeZone?: string | null): string {
-  return dayKeyJs(value, timeZone) as string;
+export function dayKey(
+  value?: Date | string | number | null,
+  timeZone?: string | null,
+  resetTime?: string | null,
+): string {
+  return dayKeyJs(value, timeZone, resetTime) as string;
 }
 
 export function memberProgress(
@@ -50,8 +54,9 @@ export function memberProgress(
   completions: ChoreCompletion[],
   localDate: string,
   timeZone?: string | null,
+  resetTime?: string | null,
 ): MemberProgress {
-  return memberProgressJs(memberId, chores, completions, localDate, timeZone) as MemberProgress;
+  return memberProgressJs(memberId, chores, completions, localDate, timeZone, resetTime) as MemberProgress;
 }
 
 export function isMemberDayComplete(progress: ProgressInput): boolean {
@@ -64,8 +69,9 @@ export function privilegeDecision(
   completions: ChoreCompletion[],
   localDate: string,
   timeZone?: string | null,
+  resetTime?: string | null,
 ): PrivilegeDecision | null {
-  return privilegeDecisionJs(member, chores, completions, localDate, timeZone) as PrivilegeDecision | null;
+  return privilegeDecisionJs(member, chores, completions, localDate, timeZone, resetTime) as PrivilegeDecision | null;
 }
 
 export function privilegeDecisions(
@@ -74,8 +80,9 @@ export function privilegeDecisions(
   completions: ChoreCompletion[],
   localDate: string,
   timeZone?: string | null,
+  resetTime?: string | null,
 ): PrivilegeDecision[] {
-  return privilegeDecisionsJs(members, chores, completions, localDate, timeZone) as PrivilegeDecision[];
+  return privilegeDecisionsJs(members, chores, completions, localDate, timeZone, resetTime) as PrivilegeDecision[];
 }
 
 export function eventsForChoreChange(input: {

@@ -78,6 +78,8 @@ The APK already contains the Beacon UI. On first launch it asks where your data 
 
 Use the Home Assistant URL, including when Beacon itself runs as the Home Assistant add-on. The add-on's ingress path is for the browser panel. The Android app calls the Home Assistant API directly.
 
+The app's built-in dashboard talks to Home Assistant directly and never asks you to pair. From Beacon **1.54.0**, if you point the app at a Beacon server URL instead, it shows **Pair this device** the first time and stays paired after you force-quit it. See [Pairing a device](/docs/getting-started/pairing/).
+
 The tablet and Home Assistant have to see each other. A URL that works on your laptop still has to resolve from the tablet.
 
 ---

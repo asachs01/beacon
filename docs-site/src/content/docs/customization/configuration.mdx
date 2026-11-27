@@ -46,10 +46,14 @@ When running Beacon as a standalone Docker container or in development mode, con
 
 ### Docker environment variables
 
+**Changed in 1.50.1.** A standalone container uses `HA_URL` and `HA_TOKEN`. Do not set `SUPERVISOR_TOKEN` on a standalone container. See [Deployment](/docs/getting-started/deployment/#docker-standalone-deployment).
+
 | Variable | Maps To | Default |
 |----------|---------|---------|
-| `SUPERVISOR_TOKEN` | `ha_token` | (none) |
-| `HA_URL` | `ha_url` | `http://supervisor/core` |
+| `HA_URL` | Home Assistant base URL the container calls (no `/api` path; a trailing slash is stripped). Beacon builds the websocket URL by changing `http` to `ws` or `https` to `wss` and appending `/api/websocket`. | (required) |
+| `HA_TOKEN` | Long-lived access token (Profile → Long-Lived Access Tokens). Stays on the server; it is not written into the page. | (required) |
+| `HA_API_BASE_OVERRIDE` | Advanced: REST base URL. When set, it takes precedence over the URL built from `HA_URL`. | (none) |
+| `HA_WS_URL_OVERRIDE` | Advanced: websocket URL. When set, it takes precedence over the URL built from `HA_URL`. | (none) |
 | `FAMILY_NAME` | `family_name` | `My Family` |
 | `SAVE_CONFIG_IN_BROWSER` | `save_config_in_browser` | `true` |
 | `THEME` | `theme` | `skylight` |
@@ -97,7 +101,7 @@ Beacon uses a runtime configuration injection system that works across all deplo
 
 ### How it works
 
-1. **Add-on mode**: The `run.sh` script reads options from `/data/options.json` (populated by HA Supervisor) and generates a `runtime-config.js` file that sets `window.__BEACON_CONFIG__`. This script tag is injected into `index.html`.
+1. **Add-on mode**: The `run.sh` script reads options from `/data/options.json` (populated by HA Supervisor) and generates a `runtime-config.js` file that sets `window.__BEACON_CONFIG__`. This script tag is injected into `index.html`. From Beacon 1.54.3, `runtime-config.js` holds only the family name, theme and auto dark mode setting; every other setting is served after [pairing](/docs/getting-started/pairing/) (or through the Home Assistant sidebar panel, or with an access token).
 
 2. **Development mode**: Vite reads `VITE_*` variables from `.env` and makes them available via `import.meta.env.*`.
 
@@ -112,8 +116,8 @@ Beacon uses a runtime configuration injection system that works across all deplo
 import { getConfig } from './config';
 
 const config = getConfig();
-// config.ha_url       - Home Assistant URL
-// config.ha_token     - Access token
+// config.ha_url       - Home Assistant URL (empty in the add-on; the page uses Beacon)
+// config.ha_token     - Empty unless a local dev build set VITE_HA_TOKEN or onboarding saved one
 // config.family_name  - Family name
 // config.theme        - Theme ID
 // config.auto_dark_mode - Auto dark mode flag
@@ -131,8 +135,7 @@ In add-on mode, `run.sh` generates this JavaScript object:
 
 ```javascript
 window.__BEACON_CONFIG__ = {
-  ha_url: "http://supervisor/core",
-  ha_token: "SUPERVISOR_TOKEN_VALUE",
+  ha_url: "",
   family_name: "Sachs",
   theme: "midnight",
   auto_dark_mode: true,
@@ -142,6 +145,8 @@ window.__BEACON_CONFIG__ = {
   screen_saver_timeout: 5
 };
 ```
+
+`ha_url` is empty in the add-on so the page calls this Beacon server. There is no `ha_token` field. Home Assistant tokens stay on the server. `HA_BROWSER_TOKEN`, if set in the environment, is ignored and a startup warning is logged. It is deprecated from Beacon **1.54.0**, so remove it from your configuration. See [Pairing a device](/docs/getting-started/pairing/#ha_browser_token-is-no-longer-used).
 
 This is injected as a `<script>` tag in `index.html` before the main application bundle loads.
 
@@ -230,7 +235,7 @@ auth_api: true
 
 This appears in the browser console when:
 1. No `VITE_HA_TOKEN` is set in `.env` (development mode)
-2. The `SUPERVISOR_TOKEN` environment variable is missing (Docker mode)
+2. `HA_TOKEN` is missing on a standalone container (Docker or Kubernetes). `HA_URL` must be set as well. Do not use `SUPERVISOR_TOKEN` outside the Home Assistant add-on.
 3. The runtime-config.js script did not generate correctly (add-on mode)
 
 Without a token, Beacon runs in demo mode — no data is fetched from Home Assistant.

@@ -3,7 +3,7 @@ import { mkdtemp, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { handleChoresLeft, listChoresLeft } from '../../lib/chores-left.cjs';
+import { handleChoresLeft, listChoresLeft, listStoredChores } from '../../lib/chores-left.cjs';
 
 const NOW = new Date('2026-07-05T03:30:00Z'); // 2026-07-04 23:30 in New York
 
@@ -109,6 +109,53 @@ describe('listChoresLeft', () => {
     expect(result.response).toBe('Which person? I found Chris and Christine.');
   });
 
+  it('keeps a 23:00 completion done at 00:30 when reset is 04:00, and open again at 04:00', () => {
+    const members = [{ id: 'ada', name: 'Ada', role: 'child' }];
+    const chores = [
+      { id: 'dishes', name: 'Dishes', assigned_to: ['ada'], frequency: 'daily', value_cents: 0 },
+    ];
+    const completions = [
+      { chore_id: 'dishes', member_id: 'ada', completed_at: '2026-11-21T06:00:00.000Z' },
+    ];
+    const early = listChoresLeft({
+      members,
+      chores,
+      completions,
+      name: 'Ada',
+      now: new Date('2026-11-21T07:30:00.000Z'),
+      timeZone: 'America/Phoenix',
+      resetTime: '04:00',
+    });
+    expect(early.date).toBe('2026-11-20');
+    expect(early.left).toEqual([]);
+    expect(early.response).toBe("Ada is done with today's chores.");
+
+    const reset = listChoresLeft({
+      members,
+      chores,
+      completions,
+      name: 'Ada',
+      now: new Date('2026-11-21T11:00:00.000Z'),
+      timeZone: 'America/Phoenix',
+      resetTime: '04:00',
+    });
+    expect(reset.date).toBe('2026-11-21');
+    expect(reset.left).toEqual([
+      { chore_id: 'dishes', chore_title: 'Dishes', member_id: 'ada', member_name: 'Ada' },
+    ]);
+
+    const unset = listChoresLeft({
+      members,
+      chores,
+      completions,
+      name: 'Ada',
+      now: new Date('2026-11-21T07:30:00.000Z'),
+      timeZone: 'America/Phoenix',
+    });
+    expect(unset.date).toBe('2026-11-21');
+    expect(unset.left).toHaveLength(1);
+  });
+
   it('reports an unknown name and an empty chart', () => {
     const missing = listChoresLeft({
       members: chart().members,
@@ -128,6 +175,31 @@ describe('listChoresLeft', () => {
       timeZone: 'UTC',
     });
     expect(empty.response).toBe('There are no chores on the chart.');
+  });
+});
+
+describe('stored chore reset time', () => {
+  it('reads choresResetTime from beacon-settings.json', async () => {
+    const dataDir = await mkdtemp(join(tmpdir(), 'beacon-left-'));
+    await mkdir(dataDir, { recursive: true });
+    await writeFile(join(dataDir, 'beacon_family_members.json'), JSON.stringify([
+      { id: 'ada', name: 'Ada', role: 'child' },
+    ]));
+    await writeFile(join(dataDir, 'beacon_chores.json'), JSON.stringify([
+      { id: 'dishes', name: 'Dishes', assigned_to: ['ada'], frequency: 'daily', value_cents: 0 },
+    ]));
+    await writeFile(join(dataDir, 'beacon_completions.json'), JSON.stringify([
+      { chore_id: 'dishes', member_id: 'ada', completed_at: '2026-11-21T06:00:00.000Z' },
+    ]));
+    await writeFile(join(dataDir, 'beacon-settings.json'), JSON.stringify({ choresResetTime: '04:00' }));
+
+    const result = await listStoredChores({
+      dataDir,
+      now: () => new Date('2026-11-21T07:30:00.000Z'),
+      timeZone: 'America/Phoenix',
+    }, 'Ada');
+    expect(result.date).toBe('2026-11-20');
+    expect(result.left).toEqual([]);
   });
 });
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Flag, X, Plus, Volume2, BellOff } from 'lucide-react';
+import { releaseNightWake, requestNightWake } from '../display/night-wake';
 import { useTranslation } from '../i18n';
 import type { TranslationKey } from '../i18n/translations/en';
 
@@ -159,6 +160,31 @@ export function Timer({ compact = false }: TimerProps) {
   const timersRef = useRef<TimerInstance[]>([]);
   const rafRef = useRef<number>(0);
   const beeped = useRef<Set<string>>(new Set());
+  const nightWakeIds = useRef<Set<string>>(new Set());
+  const finishedKey = timers.filter((timer) => timer.finished).map((timer) => timer.id).join('\0');
+
+  // A finished timer is an alarm: lift night mode until it is dismissed.
+  useEffect(() => {
+    const held = nightWakeIds.current;
+    return () => {
+      for (const id of held) releaseNightWake(`timer:${id}`);
+      held.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    const current = new Set(finishedKey ? finishedKey.split('\0') : []);
+    for (const id of current) {
+      if (nightWakeIds.current.has(id)) continue;
+      nightWakeIds.current.add(id);
+      requestNightWake(`timer:${id}`);
+    }
+    for (const id of nightWakeIds.current) {
+      if (current.has(id)) continue;
+      nightWakeIds.current.delete(id);
+      releaseNightWake(`timer:${id}`);
+    }
+  }, [finishedKey]);
 
   // Track looping beep intervals per timer id
   const loopIntervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());

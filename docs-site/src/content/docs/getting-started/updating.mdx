@@ -22,6 +22,8 @@ Home Assistant has deprecated 32-bit ARM (`armv7`). Beacon no longer lists it as
 
 Your family members, chores, settings and meal plans live in the add-on's `/data` folder. They survive updates and are included in Home Assistant backups.
 
+From **1.48.0**, existing meals are kept, and `beacon_meal_plans.json` is backed up to `beacon_meal_plans.bak.json` before the first rewrite. That backup is not replaced later. A leftover `meal-plan.json` is imported once and is not deleted. A malformed plan file is left unchanged. See [Meals](/docs/features/meals/).
+
 ### Docker
 
 ```bash
@@ -29,10 +31,12 @@ docker pull ghcr.io/asachs01/beacon:latest
 docker stop beacon && docker rm beacon
 docker run -d --name beacon -p 3000:3000 \
   -v beacon-data:/data \
-  -e SUPERVISOR_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
   -e HA_URL="http://YOUR_HA_IP:8123" \
+  -e HA_TOKEN="YOUR_HA_LONG_LIVED_TOKEN" \
   ghcr.io/asachs01/beacon:latest
 ```
+
+`HA_TOKEN` is a long-lived access token from Home Assistant (Profile → Long-Lived Access Tokens). `HA_URL` is the Home Assistant base URL reachable from the container, with no `/api` path. This `HA_URL` and `HA_TOKEN` setup needs Beacon **1.50.1** or later. To keep the token out of your shell history, put both variables in a `.env` file and replace the two `-e` lines with `--env-file .env`. See [Deployment](/docs/getting-started/deployment/#docker-standalone-deployment).
 
 Make sure the `-v beacon-data:/data` volume is there. Without it, removing the container deletes your Beacon data. With Docker Compose, run `docker compose pull && docker compose up -d`.
 

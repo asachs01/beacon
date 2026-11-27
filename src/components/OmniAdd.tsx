@@ -5,6 +5,8 @@ import { useTranslation } from '../i18n';
 
 interface OmniAddProps {
   onAddEvent: () => void;
+  /** Guests cannot create events. The event action is hidden when this is false. */
+  allowAddEvent?: boolean;
   onAddGroceryItem: () => void;
   onAddChore: () => void;
   onNavigateTimer: () => void;
@@ -20,6 +22,7 @@ interface ActionDef {
 
 export function OmniAdd({
   onAddEvent,
+  allowAddEvent = true,
   onAddGroceryItem,
   onAddChore,
   onNavigateTimer,
@@ -34,7 +37,7 @@ export function OmniAdd({
     { id: 'chore', label: t('omniAdd.chore'), icon: <CheckSquare size={22} />, handler: onAddChore },
     { id: 'grocery', label: t('omniAdd.grocery'), icon: <ShoppingCart size={22} />, handler: onAddGroceryItem },
     { id: 'event', label: t('omniAdd.event'), icon: <CalendarPlus size={22} />, handler: onAddEvent },
-  ];
+  ].filter((action) => allowAddEvent || action.id !== 'event');
 
   const toggle = useCallback(() => {
     hapticTap();

@@ -26,7 +26,7 @@ Home Assistant pulls `ghcr.io/asachs01/beacon` for the version in `beacon/config
    - Generates `runtime-config.js` with the configuration values
    - Injects the script tag into `index.html`
    - Starts `serve` on port 3000
-3. HA's ingress proxy forwards requests from the sidebar panel to port 3000
+3. HA's ingress proxy forwards requests from the sidebar panel to port 3000. The add-on doesn't publish a host port by default, and the sidebar panel needs no [pairing](/docs/getting-started/pairing/).
 
 **Health check**: The container includes a health check that runs every 30 seconds:
 ```
@@ -37,7 +37,21 @@ wget -qO /dev/null http://localhost:3000/ || exit 1
 
 ## Docker standalone deployment
 
-For running Beacon outside of Home Assistant's add-on system.
+For running Beacon outside of Home Assistant's add-on system (Docker, Docker Compose, or Kubernetes). The container talks to Home Assistant, so `HA_URL` must be reachable from the container. On your trusted home network, the browser only needs to reach Beacon; it does not talk to Home Assistant directly.
+
+:::caution
+Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the [security advisory](https://github.com/asachs01/beacon/security/advisories/GHSA-rj98-fx8p-896h)). Update to **1.54.3** or later and [pair your devices](/docs/getting-started/pairing/). Even unpaired, a device that reaches the port can read the small setup file the pairing screen loads. From Beacon 1.54.3 that's only your family name, the theme and whether auto dark mode is on; earlier versions also included Beacon's Home Assistant address (standalone and Docker installs) and a few more display settings. It can't read tokens or your family's data. Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+:::
+
+From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
+
+This needs Beacon **1.50.1** or later. **Changed in 1.50.1.**
+
+Create a long-lived access token in Home Assistant first. Open your profile (your name at the bottom of the sidebar), scroll to **Long-Lived Access Tokens**, choose **Create Token**, name it Beacon, and copy the value. Home Assistant shows the token only once. Pass that value as `HA_TOKEN`. Do not set `SUPERVISOR_TOKEN` on a standalone container. That variable is injected by the Supervisor and selects add-on mode.
+
+The [Home sensors](/docs/features/home-sensors/) card (Beacon **1.53.0** or later) uses this token through the server's `/beacon-ws/ha` proxy. From **1.53.1**, that socket streams only the entities picked in Settings. Beacon also only passes along the Home Assistant calls its own screens use. See [Home Assistant calls Beacon allows](/docs/reference/ha-calls/).
+
+From Beacon **1.54.0**, every device that opens a standalone Beacon pairs once. The pairing code is printed in the container log at startup. See [Pairing a device](/docs/getting-started/pairing/).
 
 ### Basic deployment
 
@@ -46,13 +60,18 @@ docker run -d \
   --name beacon \
   --restart unless-stopped \
   -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="YOUR_LONG_LIVED_TOKEN" \
+  -v beacon-data:/data \
   -e HA_URL="http://192.168.1.100:8123" \
+  -e HA_TOKEN="YOUR_LONG_LIVED_TOKEN" \
   -e FAMILY_NAME="Sachs" \
   -e THEME="midnight" \
   -e WEATHER_ENTITY="weather.home" \
   ghcr.io/asachs01/beacon:latest
 ```
+
+To keep the token out of your shell history, put `HA_URL` and `HA_TOKEN` in a `.env` file (do not commit it) and replace the two `-e HA_URL` / `-e HA_TOKEN` lines with `--env-file .env`.
+
+`HA_URL` is the Home Assistant base URL, with no path on the end — for example `http://homeassistant.local:8123` or `http://192.168.1.100:8123`, with no `/api`. `http://` and `https://` both work. A trailing slash is stripped. Beacon builds the REST URL from that value, and builds the websocket URL by changing `http` to `ws` or `https` to `wss` and appending `/api/websocket`. The `beacon-data` volume keeps family members, chores, settings, and meal plans when the container is recreated.
 
 ### Docker Compose
 
@@ -65,9 +84,11 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    volumes:
+      - beacon-data:/data
     environment:
-      SUPERVISOR_TOKEN: "${HA_TOKEN}"
       HA_URL: "http://192.168.1.100:8123"
+      HA_TOKEN: "${HA_TOKEN}"
       FAMILY_NAME: "Sachs"
       THEME: "midnight"
       AUTO_DARK_MODE: "true"
@@ -75,7 +96,12 @@ services:
       PHOTO_DIRECTORY: "/media/beacon/photos"
       PHOTO_INTERVAL: "30"
       SCREEN_SAVER_TIMEOUT: "5"
+
+volumes:
+  beacon-data:
 ```
+
+Put the long-lived access token in a `.env` file next to the Compose file as `HA_TOKEN=...`, or replace `${HA_TOKEN}` with the token. Do not commit the token.
 
 ### Building from source
 
@@ -84,16 +110,34 @@ git clone https://github.com/asachs01/beacon.git
 cd beacon
 docker build -t beacon .
 docker run -d --name beacon -p 3000:3000 \
-  -e SUPERVISOR_TOKEN="..." \
-  -e HA_URL="..." \
+  -v beacon-data:/data \
+  --env-file .env \
   beacon
 ```
+
+### Advanced: URL overrides
+
+`HA_API_BASE_OVERRIDE` and `HA_WS_URL_OVERRIDE` still work, and they take precedence over the URLs Beacon would build from `HA_URL`. Set them if you need the REST or websocket address to be something other than that built URL. The override values are used as given, including a trailing slash.
+
+```bash
+HA_API_BASE_OVERRIDE=http://192.168.1.100:8123
+HA_WS_URL_OVERRIDE=ws://192.168.1.100:8123/api/websocket
+```
+
+Use `wss://` when Home Assistant is served over HTTPS. On a standalone container, authentication still uses `HA_TOKEN`. Do not set `SUPERVISOR_TOKEN`.
 
 ---
 
 ## Reverse proxy setup
 
-If you want to access Beacon from outside your local network or behind a reverse proxy.
+If you put Beacon behind a reverse proxy. A reverse proxy that is reachable from outside your LAN must require authentication. Do not forward Beacon's port on its own.
+
+:::caution
+Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the [security advisory](https://github.com/asachs01/beacon/security/advisories/GHSA-rj98-fx8p-896h)). Update to **1.54.3** or later and [pair your devices](/docs/getting-started/pairing/). Even unpaired, a device that reaches the port can read the small setup file the pairing screen loads. From Beacon 1.54.3 that's only your family name, the theme and whether auto dark mode is on; earlier versions also included Beacon's Home Assistant address (standalone and Docker installs) and a few more display settings. It can't read tokens or your family's data. Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+:::
+
+From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
+
 
 ### Nginx
 
@@ -132,9 +176,10 @@ Caddy handles SSL certificates automatically via Let's Encrypt.
 
 ### Important notes
 
-- Beacon connects to Home Assistant's WebSocket API directly from the browser. The browser must be able to reach the HA URL configured in `ha_url`.
-- If you put Beacon behind a reverse proxy but HA is on a different domain/port, you may need to configure CORS on HA or ensure both are accessible from the browser.
-- For best results, keep Beacon and HA on the same network and access Beacon via the reverse proxy.
+- The standalone container calls Home Assistant itself. The browser talks to Beacon, and Beacon calls `HA_URL` with `HA_TOKEN`. The reverse proxy in front of Beacon does not need to reach Home Assistant.
+- A development server (`npm run dev`) is different: the browser talks to Home Assistant directly, so that browser must be able to reach `VITE_HA_URL`.
+- From Beacon **1.54.0**, each device pairs once with Beacon through the proxy. Beacon sees the proxy's address for every device, so a pairing lockout applies to all devices behind it. See [Pairing a device](/docs/getting-started/pairing/#if-pairing-is-locked).
+- Keep Beacon and Home Assistant on the same trusted network. If the reverse proxy is reachable from outside your LAN, it must require authentication.
 
 ---
 
@@ -277,15 +322,42 @@ You can run Beacon on multiple displays simultaneously. Each display:
 ### Container does not start
 
 1. Check Docker logs: `docker logs beacon`
-2. Verify the `SUPERVISOR_TOKEN` is valid (not expired)
-3. Verify the `HA_URL` is reachable from the Docker container (try `docker exec beacon wget -qO- http://HA_URL/api/`)
+2. Confirm the log says `Mode: standalone` and `Home Assistant token: available`. The log never prints the token.
+3. `HA_TOKEN` must be a current long-lived access token (Profile → Long-Lived Access Tokens). `HA_URL` must be reachable from the container (try `docker exec beacon wget -qO- "$HA_URL/api/"`).
+
+Missing `HA_URL` or `HA_TOKEN` does not stop the container. See the next section.
+
+### `HA_URL` or `HA_TOKEN` is missing
+
+The UI still loads, but it has no Home Assistant data. Beacon logs this exact error:
+
+```
+Standalone mode needs HA_URL and HA_TOKEN. Set HA_URL to your Home Assistant base URL and HA_TOKEN to a long-lived access token from Profile → Long-Lived Access Tokens. Beacon will keep serving the UI.
+```
+
+Set both variables and recreate the container. `HA_URL` must be the base URL (no `/api` path).
+
+### `getaddrinfo ENOTFOUND supervisor`
+
+The container is trying to reach Home Assistant at the add-on Supervisor hostname (`supervisor`) and cannot resolve it. That was the bug in [#119](https://github.com/asachs01/beacon/issues/119), fixed in **1.50.1**. On 1.50.1 or later, set `HA_URL` and `HA_TOKEN` as in the standalone section above, and do not set `SUPERVISOR_TOKEN`.
+
+On images older than 1.50.1, set these two overrides as a workaround, and put the long-lived access token in `SUPERVISOR_TOKEN` (those images authenticate with that variable, not `HA_TOKEN`):
+
+```bash
+-e SUPERVISOR_TOKEN="YOUR_LONG_LIVED_TOKEN" \
+-e HA_API_BASE_OVERRIDE="http://YOUR_HA_IP:8123" \
+-e HA_WS_URL_OVERRIDE="ws://YOUR_HA_IP:8123/api/websocket"
+```
+
+Use `wss://` when Home Assistant is served over HTTPS. This workaround was not the supported standalone setup; upgrade to 1.50.1 or later when you can.
 
 ### Beacon loads but shows "Demo Mode"
 
-This means Beacon could not connect to Home Assistant. Check:
-1. The `ha_url` is correct and reachable from the browser
-2. The `ha_token` is valid
-3. The HA instance is running and the WebSocket API is accessible
+This means Beacon could not connect to Home Assistant. The UI can still load. Check:
+1. `HA_URL` is set as a base URL (no `/api` path) and is reachable from the container. On your trusted home network, the browser only needs to reach Beacon.
+2. `HA_TOKEN` is a valid long-lived access token
+3. You did not set `SUPERVISOR_TOKEN` on a standalone container
+4. The Home Assistant instance is running and the API is accessible
 
 ### Display goes to sleep / screen turns off
 

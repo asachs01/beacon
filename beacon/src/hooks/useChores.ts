@@ -1,8 +1,10 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useSyncExternalStore } from 'react';
 import { FamilyStore } from '../api/family';
-import { Chore, ChoreCompletion, Streak, MemberEarnings } from '../types/family';
+import { getChoreResetTime, subscribeChoreResetTime } from '../api/chore-reset-time';
+import { Chore, ChoreCompletion, Streak, MemberEarnings, UNCREDITED_MEMBER_ID } from '../types/family';
 
 export function useChores() {
+  const resetTime = useSyncExternalStore(subscribeChoreResetTime, getChoreResetTime, getChoreResetTime);
   const store = useMemo(() => new FamilyStore(), []);
   // Initialize with localStorage data immediately
   const [chores, setChores] = useState<Chore[]>(() => store.getChoresSync());
@@ -13,13 +15,13 @@ export function useChores() {
   const refresh = useCallback(async () => {
     const [c, ct, s] = await Promise.all([
       store.getChores(),
-      store.getCompletionsToday(),
+      store.getCompletionsToday(resetTime),
       store.getStreaks(),
     ]);
     setChores(c);
     setCompletionsToday(ct);
     setStreaks(s);
-  }, [store]);
+  }, [store, resetTime]);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,19 +58,19 @@ export function useChores() {
   );
 
   const completeChore = useCallback(
-    async (choreId: string, memberId: string) => {
-      await store.completeChore(choreId, memberId);
+    async (choreId: string, memberId: string, by?: 'guest') => {
+      await store.completeChore(choreId, memberId, undefined, resetTime, by);
       await refresh();
     },
-    [store, refresh]
+    [store, refresh, resetTime]
   );
 
   const uncompleteChore = useCallback(
     async (choreId: string, memberId: string) => {
-      await store.uncompleteChore(choreId, memberId);
+      await store.uncompleteChore(choreId, memberId, resetTime);
       await refresh();
     },
-    [store, refresh]
+    [store, refresh, resetTime]
   );
 
   const isChoreCompletedToday = useCallback(
@@ -121,6 +123,7 @@ export function useChores() {
       const earningsMap = new Map<string, MemberEarnings>();
 
       for (const comp of completions) {
+        if (comp.member_id === UNCREDITED_MEMBER_ID) continue;
         const chore = choreMap.get(comp.chore_id);
         if (!chore) continue;
 

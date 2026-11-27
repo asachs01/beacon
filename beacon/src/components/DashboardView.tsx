@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { isSameDay, startOfDay, addDays, parseISO } from 'date-fns';
 import { CalendarEvent, WeatherData } from '../types';
 import { Chore, FamilyMember } from '../types/family';
@@ -15,9 +15,12 @@ import { AgendaTodayCard } from './cards/AgendaTodayCard';
 import { AgendaWeekCard } from './cards/AgendaWeekCard';
 import { MenuCard } from './cards/MenuCard';
 import { TasksCard } from './cards/TasksCard';
+import { GrocyExpiringCard, GrocyMissingCard } from './cards/GrocyStatusCard';
 import type { TaskmateUser } from '../types/taskmate';
 import { DashboardCard, DashboardCardContext, DashboardRegionLayout, TodoItem } from '../types/dashboard-cards';
 import { useTranslation } from '../i18n';
+import { addIngredientsToGroceryList } from '../api/grocery-write';
+import type { HomeSensorPick } from '../home-sensors/types';
 
 export type { TodoItem } from '../types/dashboard-cards';
 
@@ -27,6 +30,7 @@ interface DashboardViewProps {
   chores: Chore[];
   completedChoreIds: Set<string>;
   onToggleChore: (choreId: string) => void;
+  guestCheckedChoreIds?: ReadonlySet<string>;
   todoItems?: TodoItem[];
   onToggleTodo?: (uid: string, currentStatus: string, listId?: string) => void;
   onWeatherClick?: () => void;
@@ -41,6 +45,27 @@ interface DashboardViewProps {
   /** Selected day is not in the fetched window yet. */
   eventsLoading?: boolean;
   isDayLoaded?: (day: Date) => boolean;
+  onPlanMeals?: () => void;
+  groceryListId?: string;
+  grocyExpiringEnabled?: boolean;
+  grocyMissingEnabled?: boolean;
+  guestActive?: boolean;
+  homeSensorsEnabled?: boolean;
+  homeSensors?: HomeSensorPick[];
+  /** Settings → Integrations → Grocy. The shopping card reads this from context. */
+  grocyEnabled?: boolean;
+  /** Home Assistant connection for the shopping card's Grocy list. */
+  connected?: boolean;
+}
+
+function GrocySidebarCards({ expiring, missing }: { expiring: boolean; missing: boolean }) {
+  if (!expiring && !missing) return null;
+  return (
+    <>
+      <GrocyExpiringCard enabled={expiring} />
+      <GrocyMissingCard enabled={missing} />
+    </>
+  );
 }
 
 function renderCard(card: DashboardCard, context: DashboardCardContext) {
@@ -56,6 +81,7 @@ export function DashboardView({
   chores,
   completedChoreIds,
   onToggleChore,
+  guestCheckedChoreIds,
   todoItems = [],
   onToggleTodo,
   onWeatherClick,
@@ -69,6 +95,15 @@ export function DashboardView({
   onSelectedDateChange,
   eventsLoading = false,
   isDayLoaded,
+  onPlanMeals,
+  groceryListId = 'beacon-shopping',
+  grocyExpiringEnabled = false,
+  grocyMissingEnabled = false,
+  guestActive = false,
+  homeSensorsEnabled = false,
+  homeSensors = [],
+  grocyEnabled = false,
+  connected = false,
 }: DashboardViewProps) {
   const { t } = useTranslation();
   const [now, setNow] = useState(new Date());
@@ -94,7 +129,11 @@ export function DashboardView({
   }, []);
 
   const { byMember, other } = useFamilyEvents(events, members, selectedDate);
-  const { todaysMenu } = useMealPlans();
+  const mealPlans = useMealPlans();
+  const { todaysMenu } = mealPlans;
+  const addIngredients = useCallback(async (ingredients: string[]) => {
+    await addIngredientsToGroceryList(ingredients, groceryListId);
+  }, [groceryListId]);
   const { layout: regions, updateLayout, views, activeViewId, setActiveViewId, addView, renameView, removeView } = useDashboardLayout(layout);
 
   const updateRegion = (region: keyof DashboardRegionLayout, cards: DashboardCard[]) => {
@@ -143,12 +182,27 @@ export function DashboardView({
     todayEvents,
     weekEvents,
     todaysMenu,
+    mealPlan: {
+      recipes: mealPlans.recipes,
+      upsertMeal: mealPlans.upsertMeal,
+      deleteMeal: mealPlans.deleteMeal,
+      saveRecipe: mealPlans.saveRecipe,
+      addIngredients,
+    },
+    onPlanMeals,
     todoItems,
     onToggleTodo,
     taskmateUsers,
     filteredChores,
     completedChoreIds,
     onToggleChore,
+    guestCheckedChoreIds,
+    guestActive,
+    kidDisplay: false,
+    homeSensorsEnabled,
+    homeSensors,
+    connected,
+    grocyEnabled,
   };
 
   // The legacy composition deliberately bypasses cards, GridStack, persisted
@@ -165,6 +219,7 @@ export function DashboardView({
             <aside className="dash-classic-col dash-classic-sidebar">
               <MenuCard config={{}} context={context} />
               <TasksCard config={{}} context={context} />
+              <GrocySidebarCards expiring={grocyExpiringEnabled} missing={grocyMissingEnabled} />
             </aside>
           </main>
         </div>
@@ -180,6 +235,7 @@ export function DashboardView({
         <aside className="dash-sidebar">
           <MenuCard config={{}} context={context} />
           <TasksCard config={{}} context={context} />
+          <GrocySidebarCards expiring={grocyExpiringEnabled} missing={grocyMissingEnabled} />
         </aside>
       </div>
     );
@@ -226,6 +282,7 @@ export function DashboardView({
               editMode={editMode}
               onChange={(c) => updateRegion('sidebar', c)}
             />
+            <GrocySidebarCards expiring={grocyExpiringEnabled} missing={grocyMissingEnabled} />
           </aside>
         </main>
       </div>
@@ -279,6 +336,7 @@ export function DashboardView({
           editMode={editMode}
           onChange={(c) => updateRegion('sidebar', c)}
         />
+        <GrocySidebarCards expiring={grocyExpiringEnabled} missing={grocyMissingEnabled} />
       </aside>
     </div>
   );

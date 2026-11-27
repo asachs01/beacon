@@ -40,3 +40,14 @@ export function isNative(): boolean {
 export function getPlatform(): string {
   return Capacitor.getPlatform();
 }
+
+/** Camera capture is offered in the Capacitor shell and on coarse pointers. */
+export function cameraCaptureAvailable(): boolean {
+  try {
+    if (isNative()) return true;
+  } catch {
+    /* Capacitor is absent in some tests */
+  }
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(pointer: coarse)').matches;
+}

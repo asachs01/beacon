@@ -1,4 +1,5 @@
 import { CalendarEvent, CalendarInfo, WeatherData, CalendarColorMember, resolveCalendarColor } from '../types';
+import { withDeviceSession } from './device-session';
 
 type MessageHandler = (message: HAMessage) => void;
 
@@ -69,10 +70,14 @@ export class HomeAssistantClient {
   private maxReconnectDelay = 30000;
   private onConnectionChange?: (connected: boolean) => void;
 
-  constructor(url: string, token: string) {
-    this.url = url.replace(/^http/, 'ws');
-    if (!this.url.endsWith('/api/websocket')) {
-      this.url = this.url.replace(/\/$/, '') + '/api/websocket';
+  constructor(url: string, token: string, options?: { socketUrl?: string }) {
+    if (options?.socketUrl) {
+      this.url = options.socketUrl;
+    } else {
+      this.url = url.replace(/^http/, 'ws');
+      if (!this.url.endsWith('/api/websocket')) {
+        this.url = this.url.replace(/\/$/, '') + '/api/websocket';
+      }
     }
     this.token = token;
   }
@@ -84,7 +89,7 @@ export class HomeAssistantClient {
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        this.ws = new WebSocket(this.url);
+        this.ws = new WebSocket(withDeviceSession(this.url));
       } catch (err) {
         reject(err);
         return;
@@ -340,14 +345,68 @@ export class HomeAssistantClient {
     return Array.isArray(result?.agents) ? result.agents : [];
   }
 
+  /**
+   * Agents plus the one conversation.process runs when agent_id is omitted.
+   * Older cores omit default_agent; the preferred Assist pipeline names it then.
+   */
+  async describeConversationAgents(): Promise<{
+    agents: Array<{ id: string; name?: string }>;
+    defaultAgentId: string | null;
+  }> {
+    const result = await this.sendMessage({ type: 'conversation/agent/list' }) as {
+      agents?: Array<{ id: string; name?: string }>;
+      default_agent?: unknown;
+    };
+    const agents = Array.isArray(result?.agents) ? result.agents : [];
+    let defaultAgentId = typeof result.default_agent === 'string' && result.default_agent
+      ? result.default_agent
+      : null;
+    if (!defaultAgentId) {
+      try {
+        const pipelines = await this.sendMessage({ type: 'assist_pipeline/pipeline/list' }) as {
+          pipelines?: Array<{ id?: string; conversation_engine?: unknown }>;
+          preferred_pipeline?: unknown;
+        };
+        const list = Array.isArray(pipelines?.pipelines) ? pipelines.pipelines : [];
+        const preferredId = typeof pipelines?.preferred_pipeline === 'string'
+          ? pipelines.preferred_pipeline
+          : '';
+        const preferred = list.find((pipeline) => pipeline.id === preferredId) ?? list[0];
+        if (typeof preferred?.conversation_engine === 'string' && preferred.conversation_engine) {
+          defaultAgentId = preferred.conversation_engine;
+        }
+      } catch {
+        /* Assist pipeline is optional on older cores */
+      }
+    }
+    return { agents, defaultAgentId };
+  }
+
   /** conversation/process over the websocket. The REST fallback lives in the voice UI. */
-  async processConversation(text: string, language?: string): Promise<unknown> {
-    const message: { type: string; text: string; language?: string } = {
+  async processConversation(text: string, language?: string, agentId?: string): Promise<unknown> {
+    const message: { type: string; text: string; language?: string; agent_id?: string } = {
       type: 'conversation/process',
       text,
     };
     if (language) message.language = language;
+    if (agentId) message.agent_id = agentId;
     return this.sendMessage(message);
+  }
+
+  /** media_source/browse_media. Used to find the local folder for an upload. */
+  async browseMedia(mediaContentId: string): Promise<unknown> {
+    return this.sendMessage({
+      type: 'media_source/browse_media',
+      media_content_id: mediaContentId,
+    });
+  }
+
+  /** media_source/local_source/remove. Deletes one uploaded file. Admin only. */
+  async removeLocalMedia(mediaContentId: string): Promise<void> {
+    await this.sendMessage({
+      type: 'media_source/local_source/remove',
+      media_content_id: mediaContentId,
+    });
   }
 
   async subscribeEvents(eventType: string, handler: MessageHandler): Promise<number> {

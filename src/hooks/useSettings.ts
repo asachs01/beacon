@@ -9,6 +9,8 @@ import {
 } from '../fonts/selection';
 import { normalizeCalendarLayout, type CalendarLayout } from '../types';
 import { isAddOn } from '../utils/ha-env';
+import { publishChoreResetTime } from '../api/chore-reset-time';
+import { normalizeHomeSensorSettings, type HomeSensorPick } from '../home-sensors/settings';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,6 +42,11 @@ export interface BeaconSettings {
   defaultCalendarView: CalendarLayout;
   defaultCalendar: string;
   permanentlyHiddenCalendars: string[];
+  /**
+   * Calendar ids left off every calendar view and card while guest mode is on.
+   * Missing ids stay visible. Empty means every calendar's hide flag is off.
+   */
+  guestHiddenCalendars: string[];
   calendarColors: Record<string, string>;
   defaultEventDuration: 30 | 60 | 120;
   notificationMinutes: 5 | 10 | 15 | 30;
@@ -47,6 +54,10 @@ export interface BeaconSettings {
   // Integrations
   weatherEntity: string;
   grocyEnabled: boolean;
+  /** Dashboard card for sensor/binary_sensor Grocy expiring products. Off until enabled. */
+  grocyExpiringEnabled: boolean;
+  /** Dashboard card for Grocy missing / low-stock products. Off until enabled. */
+  grocyMissingEnabled: boolean;
   anylistEnabled: boolean;
   defaultGroceryList: string;
   groceryListIds: string[];
@@ -55,6 +66,19 @@ export interface BeaconSettings {
   photoDirectory: string;
   photoInterval: number;
   photoTransition: 'fade' | 'slide';
+  /**
+   * Home sensors dashboard card. Off until a parent turns it on, so existing
+   * installs keep the dashboard they already have. The card is also absent
+   * from the Family and Classic presets until someone adds it in edit mode.
+   */
+  homeSensorsEnabled: boolean;
+  /**
+   * Entities shown on the Home sensors card. Each may set a friendly name
+   * and an icon. Empty until someone picks them. A reading that Home
+   * Assistant has not updated for 3 hours is shown as stale, not as the
+   * last value.
+   */
+  homeSensors: HomeSensorPick[];
 
   // Dashboard
   dashboardLayout: 'default' | 'classic' | 'compact';
@@ -70,11 +94,53 @@ export interface BeaconSettings {
   /** When kiosk mode is on, the corner gesture can temporarily reveal navigation. */
   kioskRevealGesture: boolean;
   /**
+   * 4–6 digit PIN that starts guest mode from the corner gesture. Empty means
+   * guest mode is off. Guest mode limits what this screen shows. It is not a
+   * security boundary: Home Assistant and Beacon stay reachable on the network.
+   */
+  guestPin: string;
+  /**
+   * Hours before guest mode ends on its own. Null means no timeout.
+   * A family PIN can leave guest mode. When no family PIN is set, the guest
+   * PIN leaves it, or the corner gesture alone when neither PIN is set.
+   * Clearing or changing the guest PIN ends an active session.
+   */
+  guestTimeoutHours: number | null;
+  /**
    * Hold-to-talk button on the wall. The literal default is on. On first
    * load, a standalone browser turns it off until someone enables it; the
    * Home Assistant add-on leaves it on.
    */
   voiceButton: boolean;
+  /**
+   * Import button on the dashboard and calendar. The literal default is on.
+   * On first load, a standalone browser turns it off until someone enables
+   * it; the Home Assistant add-on leaves it on. A saved true/false wins.
+   */
+  magicImport: boolean;
+  /**
+   * Ask Home Assistant's conversation agent to read pasted text. On by
+   * default, including when the key has never been stored. Off forces the
+   * local parser. A saved true/false wins and does not rewrite other keys.
+   */
+  magicImportUseHaAgent: boolean;
+  /**
+   * AI Task entity that reads photos and scanned PDFs. Empty until a parent
+   * picks an ai_task entity. Pasted text and text PDFs do not use it.
+   */
+  magicImportAiTaskEntity: string;
+  /** Dims the display on a local-time schedule. Off leaves the screen unchanged. */
+  nightModeEnabled: boolean;
+  /** Local time (HH:mm) when night mode begins. A later start crosses midnight. */
+  nightModeStart: string;
+  /** Local time (HH:mm) when night mode ends. The end minute is not included. */
+  nightModeEnd: string;
+  /** schedule follows the clock. on forces night mode. off keeps it off while the feature stays enabled. */
+  nightModeOverride: 'schedule' | 'on' | 'off';
+  /** Screen brightness while night mode is dimmed, as a percent. */
+  nightModeBrightness: number;
+  /** Replace the dashboard with a large clock until the screen is tapped. */
+  nightModeClockOnly: boolean;
 
   // Chores
   choresEnabled: boolean;
@@ -113,12 +179,15 @@ function buildDefaults(): BeaconSettings {
     defaultCalendarView: 'week',
     defaultCalendar: '',
     permanentlyHiddenCalendars: [],
+    guestHiddenCalendars: [],
     calendarColors: {},
     defaultEventDuration: 60,
     notificationMinutes: 10,
 
     weatherEntity: config.weather_entity,
     grocyEnabled: false,
+    grocyExpiringEnabled: false,
+    grocyMissingEnabled: false,
     anylistEnabled: false,
     defaultGroceryList: '',
     groceryListIds: [],
@@ -127,6 +196,8 @@ function buildDefaults(): BeaconSettings {
     photoDirectory: config.photo_directory,
     photoInterval: config.photo_interval,
     photoTransition: 'fade',
+    homeSensorsEnabled: false,
+    homeSensors: [],
 
     dashboardLayout: 'default',
     advancedDashboard: false,
@@ -138,7 +209,18 @@ function buildDefaults(): BeaconSettings {
     showSeconds: false,
     kioskMode: false,
     kioskRevealGesture: true,
+    guestPin: '',
+    guestTimeoutHours: 4,
     voiceButton: true,
+    magicImport: true,
+    magicImportUseHaAgent: true,
+    magicImportAiTaskEntity: '',
+    nightModeEnabled: false,
+    nightModeStart: '21:00',
+    nightModeEnd: '06:30',
+    nightModeOverride: 'schedule',
+    nightModeBrightness: 30,
+    nightModeClockOnly: false,
 
     choresEnabled: true,
     choresResetTime: '00:00',
@@ -159,7 +241,7 @@ async function loadSettingsAsync(): Promise<BeaconSettings> {
   const stored = serverStored ?? (configAllowsBrowserStorage
     ? loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {})
     : {});
-  return withVoiceButtonDefault(withNormalizedFonts({
+  return withUnstoredDefaults(withNormalizedFonts({
     ...defaults,
     ...stored,
     // The add-on configuration is authoritative: it can disable browser
@@ -184,6 +266,36 @@ export function withVoiceButtonDefault(
     addOn = false;
   }
   return { ...settings, voiceButton: addOn };
+}
+
+/**
+ * A saved true/false wins. When the key has never been stored, the add-on
+ * shows Import and a standalone browser hides it.
+ */
+export function withMagicImportDefault(
+  settings: BeaconSettings,
+  stored: Partial<BeaconSettings> | null | undefined,
+): BeaconSettings {
+  if (stored && typeof stored.magicImport === 'boolean') return settings;
+  let addOn = false;
+  try {
+    addOn = isAddOn();
+  } catch {
+    addOn = false;
+  }
+  return { ...settings, magicImport: addOn };
+}
+
+function withHomeSensors(settings: BeaconSettings): BeaconSettings {
+  const normalized = normalizeHomeSensorSettings(settings);
+  return { ...settings, ...normalized };
+}
+
+function withUnstoredDefaults(
+  settings: BeaconSettings,
+  stored: Partial<BeaconSettings> | null | undefined,
+): BeaconSettings {
+  return withHomeSensors(withMagicImportDefault(withVoiceButtonDefault(settings, stored), stored));
 }
 
 function withNormalizedFonts(settings: BeaconSettings): BeaconSettings {
@@ -217,9 +329,9 @@ function initialSettings(): BeaconSettings {
   const defaults = buildDefaults();
   // The screenshot build writes fixtures before React starts. Read them on
   // the first paint so views don't flash the empty defaults.
-  if (import.meta.env.VITE_DEMO !== 'true') return withVoiceButtonDefault(defaults, null);
+  if (import.meta.env.VITE_DEMO !== 'true') return withUnstoredDefaults(defaults, null);
   const stored = loadDataSync<Partial<BeaconSettings>>(STORAGE_KEY, {});
-  return withVoiceButtonDefault(withNormalizedFonts({ ...defaults, ...stored }), stored);
+  return withUnstoredDefaults(withNormalizedFonts({ ...defaults, ...stored }), stored);
 }
 
 export function useSettings() {
@@ -251,10 +363,16 @@ export function useSettings() {
     };
   }, [refresh]);
 
-  // Persist whenever settings change
+  // Persist whenever settings change, and publish the reset time the
+  // chore chart and privilege switches read.
   useEffect(() => {
     if (loaded) persistSettings(settings);
   }, [settings, loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    publishChoreResetTime(settings.choresResetTime);
+  }, [loaded, settings.choresResetTime]);
 
   /** Update one or more settings fields. Changes apply immediately. */
   const updateSettings = useCallback(
@@ -266,7 +384,7 @@ export function useSettings() {
 
   /** Reset all settings to defaults (merged with config.yaml values). */
   const resetSettings = useCallback(() => {
-    const defaults = withVoiceButtonDefault(buildDefaults(), null);
+    const defaults = withUnstoredDefaults(buildDefaults(), null);
     setSettingsState(defaults);
     persistSettings(defaults);
   }, []);
@@ -281,7 +399,7 @@ export function useSettings() {
     try {
       const parsed = JSON.parse(json);
       const defaults = buildDefaults();
-      setSettingsState(withVoiceButtonDefault(withNormalizedFonts({ ...defaults, ...parsed }), parsed));
+      setSettingsState(withUnstoredDefaults(withNormalizedFonts({ ...defaults, ...parsed }), parsed));
     } catch {
       // invalid JSON — do nothing
     }
