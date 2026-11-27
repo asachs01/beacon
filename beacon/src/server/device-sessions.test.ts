@@ -61,6 +61,24 @@ describe('device sessions', () => {
     expect(pairingSecretOk('0000', code, pins)).toBe(false);
   });
 
+  it('replaces the pairing code and leaves existing sessions in place', async () => {
+    const dataDir = await mkdtemp(join(tmpdir(), 'beacon-rotate-'));
+    const store = createSessionStore({ dataDir });
+    const original = await store.load();
+    const device = await store.createSession('Kitchen tablet');
+    const access = await store.createSession('Home Assistant automations', { kind: 'token' });
+    const next = await store.regeneratePairingCode();
+    expect(next).toMatch(/^\d{6}$/);
+    expect(next).not.toBe(original);
+    expect(pairingSecretOk(original, store.pairingCode(), [])).toBe(false);
+    expect(pairingSecretOk(next, store.pairingCode(), [])).toBe(true);
+    expect(store.verify(device.token)?.id).toBe(device.session.id);
+    expect(store.verify(access.token)?.kind).toBe('token');
+    expect(store.list().map((item: { id: string }) => item.id).sort()).toEqual(
+      [device.session.id, access.session.id].sort(),
+    );
+  });
+
   it('sets an httpOnly SameSite=Lax cookie and Secure only on https', () => {
     const cookie = buildSessionCookie('abc', { secure: false });
     expect(cookie).toContain('beacon_session=abc');

@@ -49,8 +49,14 @@ async function startBeacon(env: Record<string, string>): Promise<Running> {
   const dataDir = join(dir, 'data');
   const dist = join(dir, 'dist');
   await mkdir(dataDir, { recursive: true });
-  await mkdir(dist, { recursive: true });
+  await mkdir(join(dist, 'assets'), { recursive: true });
   await writeFile(join(dist, 'index.html'), '<!doctype html><title>Beacon</title>');
+  await writeFile(join(dist, 'favicon.svg'), '<svg id="beacon-icon"></svg>');
+  await writeFile(join(dist, 'manifest.json'), '{"name":"Beacon"}');
+  await writeFile(join(dist, 'runtime-config.js'), 'window.__BEACON_RUNTIME__=1');
+  await writeFile(join(dist, 'sw.js'), '/* beacon-sw */');
+  await writeFile(join(dist, 'assets', 'index.js'), '/* beacon-asset */');
+  await writeFile(join(dist, 'assets', 'inter.woff2'), 'woff2');
   await writeFile(join(dataDir, 'beacon_family_members.json'), JSON.stringify([
     { name: 'Ada', pin: '1234' },
   ]));
@@ -179,7 +185,11 @@ describe('device pairing on the Beacon server', () => {
       '/beacon-api/google-photos/file/abc/one.jpg',
       '/beacon-auth/devices',
       '/beacon-auth/pairing-code',
+      '/beacon-auth/pairing-code/rotate',
       '/beacon-auth/access-tokens',
+      '/v1/admin',
+      '/beacon-export',
+      '/.env',
     ];
     for (const path of protectedPaths) {
       const res = await fetch(`${base}${path}`, { headers: FORGED_INGRESS });
@@ -463,5 +473,117 @@ describe('device pairing on the Beacon server', () => {
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: 'pairing_required' });
     expect(beacon.logs.text).toContain('Mode: standalone');
+  });
+
+  it('serves the pairing shell without a session and accepts a bearer token on an unknown path', async () => {
+    const beacon = await boot();
+    const base = `http://127.0.0.1:${beacon.port}`;
+    const publicPaths = [
+      ['/', 'Beacon'],
+      ['/index.html', 'Beacon'],
+      ['/favicon.svg', 'beacon-icon'],
+      ['/manifest.json', 'Beacon'],
+      ['/runtime-config.js', '__BEACON_RUNTIME__'],
+      ['/assets/index.js', 'beacon-asset'],
+      ['/assets/inter.woff2', 'woff2'],
+      ['/sw.js', 'beacon-sw'],
+    ];
+    for (const [path, body] of publicPaths) {
+      const res = await fetch(`${base}${path}`);
+      expect(res.status, path).toBe(200);
+      expect(await res.text(), path).toContain(body);
+    }
+    const pair = await fetch(`${base}/beacon-auth/pair`);
+    expect(pair.status).toBe(405);
+
+    const unknown = await fetch(`${base}/v1/admin`, { headers: FORGED_INGRESS });
+    expect(unknown.status).toBe(401);
+    expect(await unknown.json()).toEqual({ error: 'pairing_required' });
+
+    const paired = await fetch(`${base}/beacon-auth/pair`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: beacon.code, label: 'Kitchen tablet' }),
+    });
+    expect(paired.status).toBe(200);
+    const session = await paired.json() as { token: string };
+    const authed = await fetch(`${base}/v1/admin`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
+    expect(authed.status).toBe(200);
+    expect(await authed.text()).toContain('Beacon');
+  });
+
+  it('rotates the pairing code for a signed-in caller and rejects the old code', async () => {
+    const beacon = await boot();
+    const base = `http://127.0.0.1:${beacon.port}`;
+
+    const anonymous = await fetch(`${base}/beacon-auth/pairing-code/rotate`, { method: 'POST' });
+    expect(anonymous.status).toBe(401);
+    expect(await anonymous.json()).toEqual({ error: 'pairing_required' });
+
+    const paired = await fetch(`${base}/beacon-auth/pair`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: beacon.code, label: 'Kitchen tablet' }),
+    });
+    expect(paired.status).toBe(200);
+    const session = await paired.json() as { token: string; device: { id: string } };
+
+    const created = await fetch(`${base}/beacon-auth/access-tokens`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({ label: 'Home Assistant automations' }),
+    });
+    expect(created.status).toBe(200);
+    const access = await created.json() as { token: string; device: { id: string } };
+
+    const rotated = await fetch(`${base}/beacon-auth/pairing-code/rotate`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
+    expect(rotated.status).toBe(200);
+    const rotatedBody = await rotated.json() as { pairingCode: string };
+    expect(rotatedBody.pairingCode).toMatch(/^\d{6}$/);
+    expect(rotatedBody.pairingCode).not.toBe(beacon.code);
+    await expect.poll(() => beacon.logs.text).toContain('Beacon pairing code rotated');
+    expect(beacon.logs.text).not.toContain(rotatedBody.pairingCode);
+
+    const oldCode = await fetch(`${base}/beacon-auth/pair`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: beacon.code, label: 'Old code' }),
+    });
+    expect(oldCode.status).toBe(401);
+    expect(await oldCode.json()).toEqual({ error: 'pairing_failed' });
+
+    const deviceStill = await fetch(`${base}/api/states`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
+    expect(deviceStill.status).toBe(200);
+    const tokenStill = await fetch(`${base}/beacon-action/chores-left`, {
+      headers: { Authorization: `Bearer ${access.token}` },
+    });
+    expect(tokenStill.status).not.toBe(401);
+
+    const listed = await fetch(`${base}/beacon-auth/devices`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
+    const devices = await listed.json() as { pairingCode: string; devices: Array<{ id: string }> };
+    expect(devices.pairingCode).toBe(rotatedBody.pairingCode);
+    expect(devices.devices.map((device) => device.id)).toEqual(expect.arrayContaining([
+      session.device.id,
+      access.device.id,
+    ]));
+
+    const withNew = await fetch(`${base}/beacon-auth/pair`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: rotatedBody.pairingCode, label: 'Hall' }),
+    });
+    expect(withNew.status).toBe(200);
   });
 });

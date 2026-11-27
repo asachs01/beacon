@@ -57,11 +57,12 @@ export function PairedDevicesSettings() {
     void load();
   }, [load]);
 
-  async function regenerate() {
+  async function rotatePairingCode() {
     setNotice('');
     setError('');
+    if (!window.confirm(t('settings.devices.rotateConfirm'))) return;
     const base = getIngressBasePath();
-    const res = await fetch(`${base}/beacon-auth/pairing-code`, { method: 'POST' });
+    const res = await fetch(`${base}/beacon-auth/pairing-code/rotate`, { method: 'POST' });
     const data = await res.json().catch(() => null);
     if (!res.ok || !data?.pairingCode) {
       setError(t('settings.devices.loadFailed'));
@@ -130,12 +131,12 @@ export function PairedDevicesSettings() {
               <div className="settings-row-label">{t('settings.devices.pairingCodeLabel')}</div>
               <div className="settings-row-sublabel">{t('settings.devices.pairingCodeSublabel')}</div>
             </div>
-            <div className="pair-device-code">{list.pairingCode}</div>
-          </div>
-          <div className="settings-row">
-            <button type="button" className="settings-btn" onClick={() => { void regenerate(); }}>
-              {t('settings.devices.regenerate')}
-            </button>
+            <div className="settings-pairing-actions">
+              <div className="pair-device-code">{list.pairingCode}</div>
+              <button type="button" className="settings-btn" onClick={() => { void rotatePairingCode(); }}>
+                {t('settings.devices.regenerate')}
+              </button>
+            </div>
           </div>
           <div className="settings-row">
             <div>
