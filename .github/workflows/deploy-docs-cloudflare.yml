@@ -82,4 +82,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy docs-site/dist --project-name=${{ vars.CF_PAGES_PROJECT || 'beacon-docs' }} --branch=${{ github.event_name == 'pull_request' && github.head_ref || 'main' }} --commit-dirty=true
+          # Run from docs-site/ so wrangler bundles docs-site/functions/
+          # (the www -> apex redirect middleware) with the static build.
+          workingDirectory: docs-site
+          command: pages deploy dist --project-name=${{ vars.CF_PAGES_PROJECT || 'beacon-docs' }} --branch=${{ github.event_name == 'pull_request' && github.head_ref || 'main' }} --commit-dirty=true
