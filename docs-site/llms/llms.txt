@@ -17,7 +17,7 @@ Latest release: https://github.com/asachs01/beacon/releases
 ## Comparison
 
 - [Beacon vs Skylight, Hearth, and DAKboard](__SITE_URL__/docs/getting-started/compare/): Side-by-side comparison of the three commercial products Beacon is meant to replace.
-- [Beacon vs Skylight](__SITE_URL__/docs/getting-started/skylight-alternative/): Focused Skylight Calendar comparison.
+- [Beacon vs Skylight Calendar](__SITE_URL__/docs/getting-started/skylight-alternative/): Focused Skylight Calendar comparison.
 
 ## Guides
 

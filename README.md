@@ -32,7 +32,7 @@
 
 Skylight is a polished wall calendar that charges for hardware **and** locks meal planning, photos, and other family features behind Calendar Plus (~$79/year). Beacon is the self-hosted answer: run it as a Home Assistant add-on (or standalone), keep data on your network, and use any tablet you already own.
 
-→ [Getting started](https://beaconfamily.app/docs/getting-started/welcome/) · [Beacon vs Skylight](https://beaconfamily.app/docs/getting-started/skylight-alternative/) · [Android app](https://beaconfamily.app/docs/getting-started/android/) · Install with the Home Assistant badge above
+→ [Getting started](https://beaconfamily.app/docs/getting-started/welcome/) · [Beacon vs Skylight Calendar](https://beaconfamily.app/docs/getting-started/skylight-alternative/) · [Android app](https://beaconfamily.app/docs/getting-started/android/) · Install with the Home Assistant badge above
 
 **Beacon is the free, MIT-licensed family command center that installs as a Home Assistant add-on in one click — open source all the way down, running in any tablet's browser or as a signed Android app, in your language.**
 
