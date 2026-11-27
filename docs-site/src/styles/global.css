@@ -198,6 +198,11 @@ code, pre {
 .prose li { margin-bottom: 0.5rem; color: var(--td-text); }
 .prose strong { color: var(--td-text); font-weight: 600; }
 
+/* The typography plugin wraps inline code in literal backticks; drop them. */
+.prose code::before,
+.prose code::after {
+  content: none;
+}
 .prose code:not(pre code) {
   background-color: var(--td-border);
   padding: 0.125rem 0.375rem;
