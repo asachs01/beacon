@@ -1,12 +1,14 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from '../i18n';
+import { verifyFamilyPin } from '../api/verify-pin';
 import {
   HIDDEN_GESTURE_HOT_ZONE_PX,
   HIDDEN_GESTURE_IDLE_MS,
   HIDDEN_GESTURE_LONG_PRESS_MS,
   HIDDEN_GESTURE_MOVE_CANCEL_PX,
-  configuredMemberPins,
+  familyPinConfigured,
   initialHiddenGestureState,
+  normalizePin,
   reduceHiddenGesture,
   type HiddenGestureEvent,
   type HiddenGestureOptions,
@@ -25,7 +27,7 @@ interface HiddenCornerGestureProps {
   purpose: 'kiosk' | 'kid-display' | 'guest';
   memberName?: string;
   corner: KioskHotCorner;
-  members: readonly { pin?: string | null }[];
+  members: readonly { hasPin?: boolean; pin?: string | null }[];
   onGrantedChange: (granted: boolean) => void;
   /** Empty means guest mode cannot be started from this gesture. */
   guestPin?: string;
@@ -64,25 +66,25 @@ export const HiddenCornerGesture = forwardRef<HiddenCornerGestureHandle, HiddenC
     const pinInputRef = useRef<HTMLInputElement>(null);
     const cancelRef = useRef<HTMLButtonElement>(null);
 
-    const pins = configuredMemberPins(members);
+    const familyConfigured = familyPinConfigured(members);
     const guestConfigured = guestPinConfigured(guestPin);
     const exitWithoutPin = guestExitWithoutPin({
       guestActive,
-      familyPinConfigured: pins.length > 0,
+      familyPinConfigured: familyConfigured,
       guestPin,
     });
     const optionsRef = useRef<HiddenGestureOptions>({ pinRequired: false, whenNoPin: 'grant' });
     optionsRef.current = {
       // Guest mode must not fall through to an immediate kiosk or Kid Display grant.
       // With no family PIN and no guest PIN, the gesture itself leaves guest mode.
-      pinRequired: exitWithoutPin ? false : (pins.length > 0 || guestConfigured || guestActive),
+      pinRequired: exitWithoutPin ? false : (familyConfigured || guestConfigured || guestActive),
       whenNoPin: exitWithoutPin ? 'grant' : (purpose === 'kid-display' ? 'confirm' : 'grant'),
     };
     const exitWithoutPinRef = useRef(exitWithoutPin);
     exitWithoutPinRef.current = exitWithoutPin;
     const pendingGuestExitRef = useRef(false);
-    const pinsRef = useRef(pins);
-    pinsRef.current = pins;
+    const membersRef = useRef(members);
+    membersRef.current = members;
     const guestPinRef = useRef(guestPin);
     guestPinRef.current = guestPin;
     const guestActiveRef = useRef(guestActive);
@@ -239,13 +241,13 @@ export const HiddenCornerGesture = forwardRef<HiddenCornerGestureHandle, HiddenC
       return dx * dx + dy * dy > HIDDEN_GESTURE_MOVE_CANCEL_PX * HIDDEN_GESTURE_MOVE_CANCEL_PX;
     };
 
-    const submitPin = (pin: string) => {
-      setDraft('');
+    const applyOutcome = (pin: string, familyAccepted: boolean) => {
       const outcome = classifyGesturePin({
         pin,
-        memberPins: pinsRef.current,
         guestPin: guestPinRef.current,
         guestActive: guestActiveRef.current,
+        familyPinConfigured: familyPinConfigured(membersRef.current),
+        familyAccepted,
       });
       if (outcome === 'enter-guest') {
         onEnterGuestRef.current?.();
@@ -257,18 +259,34 @@ export const HiddenCornerGesture = forwardRef<HiddenCornerGestureHandle, HiddenC
         reduce({ type: 'cancel' });
         return;
       }
-      // Family grant and rejection both go through the family PIN list only.
-      // The guest PIN is never added to configuredPins.
       reduce({
         type: 'submit-pin',
         now: Date.now(),
-        pin,
-        configuredPins: outcome === 'grant-family' ? pinsRef.current : [],
+        accepted: outcome === 'grant-family',
+      });
+    };
+
+    const submitPin = (pin: string) => {
+      setDraft('');
+      const entered = normalizePin(pin);
+      const guest = normalizePin(guestPinRef.current);
+      const guestOk = guestPinConfigured(guestPinRef.current) && entered.length > 0 && entered === guest;
+      const needsServer = familyPinConfigured(membersRef.current) && !guestOk;
+      if (!needsServer) {
+        applyOutcome(pin, false);
+        return;
+      }
+      void verifyFamilyPin(pin).then((result) => {
+        if (result.status === 'unreachable') {
+          reduce({ type: 'submit-pin', now: Date.now(), accepted: false, unreachable: true });
+          return;
+        }
+        applyOutcome(pin, result.status === 'accepted');
       });
     };
 
     const pinPrompt = guestActive
-      ? (pins.length > 0 ? t('gesture.pinPromptLeaveGuest') : t('gesture.pinPromptLeaveGuestPin'))
+      ? (familyConfigured ? t('gesture.pinPromptLeaveGuest') : t('gesture.pinPromptLeaveGuestPin'))
       : guestConfigured && purpose === 'kiosk'
         ? t('gesture.pinPromptGuestOrNav')
         : guestConfigured && purpose === 'kid-display'
@@ -357,14 +375,21 @@ export const HiddenCornerGesture = forwardRef<HiddenCornerGestureHandle, HiddenC
                 autoComplete="off"
                 maxLength={6}
                 value={draft}
-                aria-invalid={state.pinError || undefined}
+                aria-invalid={state.pinError || state.pinUnreachable || undefined}
                 onChange={(event) => {
                   setDraft(event.target.value.replace(/\D/g, '').slice(0, 6));
-                  if (state.pinError) {
-                    setState((prev) => (prev.pinError ? { ...prev, pinError: false } : prev));
+                  if (state.pinError || state.pinUnreachable) {
+                    setState((prev) => (
+                      prev.pinError || prev.pinUnreachable
+                        ? { ...prev, pinError: false, pinUnreachable: false }
+                        : prev
+                    ));
                   }
                 }}
               />
+              {state.pinUnreachable && (
+                <p className="kiosk-reveal-error" role="alert">{t('gesture.pinUnreachable')}</p>
+              )}
               {state.pinError && (
                 <p className="kiosk-reveal-error" role="alert">{t('gesture.pinError')}</p>
               )}

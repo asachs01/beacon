@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
+const { readFamilyPinHashes, verifyPinHash } = require('./family-pins.cjs');
 
 const SESSION_FILE = 'device-sessions.json';
 const COOKIE_NAME = 'beacon_session';
@@ -213,15 +214,7 @@ function createSessionStore(options = {}) {
 
 async function readFamilyPins(dataDir) {
   try {
-    const raw = await fsp.readFile(path.join(dataDir, 'beacon_family_members.json'), 'utf8');
-    const members = JSON.parse(raw);
-    if (!Array.isArray(members)) return [];
-    const pins = [];
-    for (const member of members) {
-      const pin = normalizePin(member && member.pin);
-      if (pin) pins.push(pin);
-    }
-    return pins;
+    return await readFamilyPinHashes(dataDir);
   } catch (err) {
     if (err.code !== 'ENOENT') {
       console.warn(`[beacon] family PINs could not be read: ${err.message}`);
@@ -233,14 +226,18 @@ async function readFamilyPins(dataDir) {
 /**
  * Accept a family PIN or the current pairing code. Guest PINs are not in
  * the family member file and are never accepted here.
- * Both checks always run so a match is not faster than a mismatch.
+ * The pairing-code check and every family-PIN hash check always run, so a
+ * match is not faster than a mismatch.
+ * `familyPins` is a list of pinHash strings, not plaintext.
  */
-function pairingSecretOk(secret, pairingCode, familyPins) {
+async function pairingSecretOk(secret, pairingCode, familyPins) {
   const entered = normalizePin(secret);
   const codeOk = entered.length === 6 && secretsEqual(entered, pairingCode);
+  const hashes = Array.isArray(familyPins) ? familyPins : [];
+  const results = await Promise.all(hashes.map((hash) => verifyPinHash(entered, hash)));
   let pinOk = false;
-  for (const pin of familyPins) {
-    if (entered.length > 0 && secretsEqual(entered, pin)) pinOk = true;
+  for (const ok of results) {
+    if (ok) pinOk = true;
   }
   return codeOk || pinOk;
 }

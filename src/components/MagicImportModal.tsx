@@ -19,7 +19,8 @@ import {
 import { heicToJpeg } from '../import/heic';
 import { readPdfDocument, type PdfRead } from '../import/pdf-read';
 import { nameAiTaskEntity, photoImportUnavailable } from '../import/photo-route';
-import { importPinDecision } from '../import/pin-gate';
+import { importPinRequired } from '../import/pin-gate';
+import { verifyFamilyPin } from '../api/verify-pin';
 import { cameraCaptureAvailable } from '../native';
 import { useLocalTasks } from '../hooks/useLocalTasks';
 import { useTranslation, type TranslationKey } from '../i18n';
@@ -31,7 +32,7 @@ interface CalendarTarget {
 
 interface MagicImportModalProps {
   calendars: CalendarTarget[];
-  members: readonly { pin?: string | null }[];
+  members: readonly { hasPin?: boolean; pin?: string | null }[];
   /** Guest mode blocks approve and reject even when no family PIN is set. */
   guestMode?: boolean;
   defaultCalendarId: string;
@@ -207,6 +208,7 @@ export function MagicImportModal({
   const [pinOpen, setPinOpen] = useState<'approve' | 'reject' | null>(null);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
+  const [pinUnreachable, setPinUnreachable] = useState(false);
   const cameraOn = showCamera ?? cameraCaptureAvailable();
 
   const taskAgent = useMemo(() => {
@@ -482,27 +484,38 @@ export function MagicImportModal({
       return;
     }
     if (action === 'approve' && drafts.length === 0) return;
-    if (importPinDecision(members, '') === 'not-required') {
+    if (!importPinRequired(members)) {
       if (action === 'approve') void commit();
       else onClose();
       return;
     }
     setPin('');
     setPinError(false);
+    setPinUnreachable(false);
     setPinOpen(action);
   };
 
   const submitPin = (value: string) => {
-    if (importPinDecision(members, value) !== 'accepted') {
+    void verifyFamilyPin(value).then((result) => {
+      if (result.status === 'unreachable') {
+        setPin('');
+        setPinError(false);
+        setPinUnreachable(true);
+        return;
+      }
+      if (result.status !== 'accepted') {
+        setPin('');
+        setPinUnreachable(false);
+        setPinError(true);
+        return;
+      }
+      const action = pinOpen;
+      setPinOpen(null);
       setPin('');
-      setPinError(true);
-      return;
-    }
-    const action = pinOpen;
-    setPinOpen(null);
-    setPin('');
-    if (action === 'approve') void commit();
-    else onClose();
+      setPinUnreachable(false);
+      if (action === 'approve') void commit();
+      else onClose();
+    });
   };
 
   const dismiss = () => {
@@ -775,12 +788,14 @@ export function MagicImportModal({
               autoComplete="off"
               maxLength={6}
               value={pin}
-              aria-invalid={pinError || undefined}
+              aria-invalid={pinError || pinUnreachable || undefined}
               onChange={(event) => {
                 setPin(event.target.value.replace(/\D/g, '').slice(0, 6));
                 if (pinError) setPinError(false);
+                if (pinUnreachable) setPinUnreachable(false);
               }}
             />
+            {pinUnreachable && <p className="kiosk-reveal-error" role="alert">{t('gesture.pinUnreachable')}</p>}
             {pinError && <p className="kiosk-reveal-error" role="alert">{t('gesture.pinError')}</p>}
             <div className="kiosk-reveal-actions">
               <button type="button" className="settings-btn" onClick={() => setPinOpen(null)}>

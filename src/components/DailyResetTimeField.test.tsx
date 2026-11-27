@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_BODY_FONT, DEFAULT_HEADING_FONT } from '../fonts/selection';
 import type { BeaconSettings } from '../hooks/useSettings';
+import type { FamilyMember } from '../types/family';
 import { DailyResetTimeField } from './DailyResetTimeField';
 import { SettingsView } from './SettingsView';
 
@@ -145,44 +146,120 @@ describe('Settings → Chores → Daily Reset Time', () => {
   });
 });
 
+function renderSettings(members: FamilyMember[] = []) {
+  const onUpdateSettings = vi.fn();
+  const onUpdateMember = vi.fn();
+  const onAddMember = vi.fn();
+  render(
+    <SettingsView
+      settings={settings}
+      onUpdateSettings={onUpdateSettings}
+      onResetSettings={() => {}}
+      onExportSettings={() => ''}
+      onImportSettings={() => {}}
+      onClearLocalStorage={() => {}}
+      fontStatus={{ headingFellBack: false, bodyFellBack: false }}
+      members={members}
+      onAddMember={onAddMember}
+      onUpdateMember={onUpdateMember}
+      onRemoveMember={() => {}}
+      connected={false}
+      haUrl=""
+      calendars={[]}
+      onEnterFocusMode={() => {}}
+    />,
+  );
+  return { onUpdateSettings, onUpdateMember, onAddMember };
+}
+
 describe('Settings → Display → Guest PIN', () => {
-  it('rejects a guest PIN that matches a family member PIN', () => {
-    const onUpdateSettings = vi.fn();
-    render(
-      <SettingsView
-        settings={settings}
-        onUpdateSettings={onUpdateSettings}
-        onResetSettings={() => {}}
-        onExportSettings={() => ''}
-        onImportSettings={() => {}}
-        onClearLocalStorage={() => {}}
-        fontStatus={{ headingFellBack: false, bodyFellBack: false }}
-        members={[{
-          id: 'ada',
-          name: 'Ada',
-          avatar: '👧',
-          color: '#3b82f6',
-          role: 'child',
-          pin: '1234',
-        }]}
-        onAddMember={() => {}}
-        onUpdateMember={() => {}}
-        onRemoveMember={() => {}}
-        connected={false}
-        haUrl=""
-        calendars={[]}
-        onEnterFocusMode={() => {}}
-      />,
-    );
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('rejects a guest PIN that the server says matches a family member PIN', async () => {
+    vi.stubGlobal('fetch', async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? '{}')) as { pin?: string };
+      const ok = body.pin === '1234';
+      return new Response(JSON.stringify({ ok }), { status: 200 });
+    });
+    const { onUpdateSettings } = renderSettings([{
+      id: 'ada',
+      name: 'Ada',
+      avatar: '👧',
+      color: '#3b82f6',
+      role: 'child',
+      hasPin: true,
+    }]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Display' }));
     const input = screen.getByLabelText('Guest PIN');
     fireEvent.change(input, { target: { value: '1234' } });
-    expect(screen.getByRole('alert')).toHaveTextContent('That PIN belongs to a family member. Choose a different guest PIN.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('That PIN belongs to a family member. Choose a different guest PIN.');
     expect(onUpdateSettings).not.toHaveBeenCalled();
 
     fireEvent.change(input, { target: { value: '9876' } });
+    await waitFor(() => expect(onUpdateSettings).toHaveBeenCalledWith({ guestPin: '9876' }));
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(onUpdateSettings).toHaveBeenCalledWith({ guestPin: '9876' });
+  });
+
+  it('does not save a guest PIN when Beacon cannot be reached', async () => {
+    vi.stubGlobal('fetch', async () => {
+      throw new Error('offline');
+    });
+    const { onUpdateSettings } = renderSettings([{
+      id: 'ada',
+      name: 'Ada',
+      avatar: '👧',
+      color: '#3b82f6',
+      role: 'child',
+      pin: '1234',
+      hasPin: true,
+    }]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display' }));
+    fireEvent.change(screen.getByLabelText('Guest PIN'), { target: { value: '1234' } });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Can\'t reach Beacon. Check the connection and try again.');
+    expect(onUpdateSettings).not.toHaveBeenCalled();
+  });
+});
+
+describe('Settings → Family → member PIN', () => {
+  const ada = {
+    id: 'ada',
+    name: 'Ada',
+    avatar: '👧',
+    color: '#3b82f6',
+    role: 'child' as const,
+    hasPin: true,
+    pin: '1234',
+  };
+
+  it('does not prefill a stored PIN and can change or remove it', () => {
+    const { onUpdateMember } = renderSettings([ada]);
+    fireEvent.click(screen.getByRole('button', { name: 'Family Members' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Ada' }));
+
+    expect(screen.getByText('PIN set')).toBeInTheDocument();
+    expect(screen.queryByLabelText('PIN')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('1234')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    expect(onUpdateMember).toHaveBeenCalledWith('ada', expect.any(Object));
+    expect(onUpdateMember.mock.calls.at(-1)?.[1]).not.toHaveProperty('pin');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Ada' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Change' }));
+    const input = screen.getByLabelText('PIN');
+    expect(input).toHaveValue('');
+    fireEvent.change(input, { target: { value: '654321' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    expect(onUpdateMember).toHaveBeenCalledWith('ada', expect.objectContaining({ pin: '654321' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Ada' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    expect(screen.queryByText('PIN set')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    expect(onUpdateMember).toHaveBeenCalledWith('ada', expect.objectContaining({ pin: null }));
   });
 });

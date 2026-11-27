@@ -53,12 +53,18 @@ describe('device sessions', () => {
       { name: 'Ben', pin: '' },
     ]));
     const pins = await readFamilyPins(dataDir);
+    const stored = JSON.parse(await readFile(join(dataDir, 'beacon_family_members.json'), 'utf8'));
+    expect(stored[0].pin).toBeUndefined();
+    expect(stored[0].pinHash).toMatch(/^scrypt\$16384\$8\$1\$/);
+    expect(JSON.stringify(stored)).not.toContain('"pin"');
     const code = '042981';
-    expect(pairingSecretOk('12-34', code, pins)).toBe(true);
-    expect(pairingSecretOk(code, code, pins)).toBe(true);
-    expect(pairingSecretOk('999999', code, pins)).toBe(false);
-    expect(pairingSecretOk('', code, pins)).toBe(false);
-    expect(pairingSecretOk('0000', code, pins)).toBe(false);
+    expect(await pairingSecretOk('12-34', code, pins)).toBe(true);
+    expect(await pairingSecretOk(code, code, pins)).toBe(true);
+    expect(await pairingSecretOk('999999', code, pins)).toBe(false);
+    expect(await pairingSecretOk('', code, pins)).toBe(false);
+    expect(await pairingSecretOk('0000', code, pins)).toBe(false);
+    // A match does not skip the other check: both the code and every hash ran.
+    expect(pins.length).toBe(1);
   });
 
   it('replaces the pairing code and leaves existing sessions in place', async () => {
@@ -70,8 +76,8 @@ describe('device sessions', () => {
     const next = await store.regeneratePairingCode();
     expect(next).toMatch(/^\d{6}$/);
     expect(next).not.toBe(original);
-    expect(pairingSecretOk(original, store.pairingCode(), [])).toBe(false);
-    expect(pairingSecretOk(next, store.pairingCode(), [])).toBe(true);
+    expect(await pairingSecretOk(original, store.pairingCode(), [])).toBe(false);
+    expect(await pairingSecretOk(next, store.pairingCode(), [])).toBe(true);
     expect(store.verify(device.token)?.id).toBe(device.session.id);
     expect(store.verify(access.token)?.kind).toBe('token');
     expect(store.list().map((item: { id: string }) => item.id).sort()).toEqual(

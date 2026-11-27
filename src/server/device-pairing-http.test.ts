@@ -58,7 +58,7 @@ async function startBeacon(env: Record<string, string>): Promise<Running> {
   await writeFile(join(dist, 'assets', 'index.js'), '/* beacon-asset */');
   await writeFile(join(dist, 'assets', 'inter.woff2'), 'woff2');
   await writeFile(join(dataDir, 'beacon_family_members.json'), JSON.stringify([
-    { name: 'Ada', pin: '1234' },
+    { id: 'ada', name: 'Ada', color: '#3b82f6', pin: '1234' },
   ]));
   await cp(join(root, 'server.js'), join(dir, 'server.js'));
   await cp(join(root, 'lib'), join(dir, 'lib'), { recursive: true });
@@ -659,5 +659,97 @@ describe('device pairing on the Beacon server', { timeout: 30_000 }, () => {
       body: JSON.stringify({ secret: rotatedBody.pairingCode, label: 'Hall' }),
     });
     expect(withNew.status).toBe(200);
+  });
+
+  it('hashes family PINs at startup and checks them without returning the secret', async () => {
+    const beacon = await boot();
+    const base = `http://127.0.0.1:${beacon.port}`;
+    expect(beacon.logs.text).toMatch(/migrated 1 family PINs/);
+    expect(beacon.logs.text).not.toContain('pinHash');
+
+    const stored = JSON.parse(await readFile(join(beacon.dataDir, 'beacon_family_members.json'), 'utf8'));
+    expect(stored[0].name).toBe('Ada');
+    expect(stored[0].pin).toBeUndefined();
+    expect(stored[0].pinHash).toMatch(/^scrypt\$16384\$8\$1\$/);
+    const pinHash = stored[0].pinHash;
+
+    const unpaired = await fetch(`${base}/beacon-auth/verify-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: '1234' }),
+    });
+    expect(unpaired.status).toBe(401);
+    expect(await unpaired.json()).toEqual({ error: 'pairing_required' });
+
+    const paired = await fetch(`${base}/beacon-auth/pair`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: '1234', label: 'Kitchen tablet' }),
+    });
+    expect(paired.status).toBe(200);
+    const session = await paired.json() as { token: string };
+
+    const listed = await fetch(`${base}/beacon-data/beacon_family_members`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
+    const members = await listed.json();
+    const text = JSON.stringify(members);
+    expect(text).not.toContain('pinHash');
+    expect(text).not.toContain('"pin"');
+    expect(members[0]).toMatchObject({ name: 'Ada', hasPin: true });
+
+    const wrong = await fetch(`${base}/beacon-auth/verify-pin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({ pin: '0000' }),
+    });
+    expect(wrong.status).toBe(200);
+    expect(await wrong.json()).toEqual({ ok: false });
+
+    const ok = await fetch(`${base}/beacon-auth/verify-pin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({ pin: '12-34' }),
+    });
+    expect(ok.status).toBe(200);
+    const okBody = await ok.json() as { ok: boolean; memberId?: string; pin?: string; pinHash?: string };
+    expect(okBody.ok).toBe(true);
+    expect(okBody.pin).toBeUndefined();
+    expect(okBody.pinHash).toBeUndefined();
+
+    const renamed = await fetch(`${base}/beacon-data/beacon_family_members`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify([{ ...members[0], name: 'Ada Lovelace' }]),
+    });
+    expect(renamed.status).toBe(200);
+    const afterRename = JSON.parse(await readFile(join(beacon.dataDir, 'beacon_family_members.json'), 'utf8'));
+    expect(afterRename[0].name).toBe('Ada Lovelace');
+    expect(afterRename[0].color).toBe('#3b82f6');
+    expect(afterRename[0].pinHash).toBe(pinHash);
+    expect(afterRename[0].pin).toBeUndefined();
+    expect(afterRename[0].hasPin).toBeUndefined();
+
+    const cleared = await fetch(`${base}/beacon-data/beacon_family_members`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify([{ ...members[0], name: 'Ada Lovelace', pin: '' }]),
+    });
+    expect(cleared.status).toBe(200);
+    const afterClear = JSON.parse(await readFile(join(beacon.dataDir, 'beacon_family_members.json'), 'utf8'));
+    expect(afterClear[0].pinHash).toBeUndefined();
+    expect(afterClear[0].pin).toBeUndefined();
   });
 });

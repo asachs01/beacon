@@ -23,6 +23,7 @@ const readline = require('readline');
 const { addCalendarDays, localDayKey } = require('./src/api/local-day-key.cjs');
 const { choreDayKey, resetTimeFromSettings } = require('./src/api/chore-day.cjs');
 const { applyMealMigration, mergeMealPlan, writeMealPlan } = require('./lib/meal-plan-files.cjs');
+const { migrateFamilyPins, toPublicMembers } = require('./lib/family-pins.cjs');
 
 // ---------------------------------------------------------------------------
 // Config
@@ -889,7 +890,8 @@ async function handleTool(name, args) {
     }
 
     case 'beacon_list_family_members': {
-      const members = loadJson('beacon_family_members.json');
+      await migrateFamilyPins(DATA_DIR);
+      const members = toPublicMembers(loadJson('beacon_family_members.json'));
       return { members };
     }
 

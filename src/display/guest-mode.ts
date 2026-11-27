@@ -2,9 +2,9 @@
  * Guest mode limits what this Beacon screen shows. It is not a security
  * boundary: Home Assistant and Beacon stay reachable on the network.
  *
- * Family PIN checks (`pinMatches`, `configuredMemberPins`, `importPinDecision`)
- * never receive the guest PIN. Entering and leaving guest mode is decided
- * here, beside those checks, and a guest PIN cannot grant them.
+ * Family PINs are checked on the Beacon server. This module only compares
+ * the typed value to the guest PIN stored in settings. A guest PIN cannot
+ * grant a family gate, and a family PIN is never compared on the device.
  *
  * Future features opt in through `registerGuestFeature`. Anything that shows
  * where the family is uses `kind: 'whereabouts'` and is hidden from guests
@@ -14,7 +14,7 @@
  *   registerGuestFeature({ id: 'whosHome', kind: 'whereabouts' });
  *   if (!canSee('whosHome')) return null;
  */
-import { normalizePin, pinMatches } from './hidden-gesture';
+import { normalizePin } from './hidden-gesture';
 
 export const GUEST_SESSION_KEY = 'beacon-guest-session';
 
@@ -53,20 +53,18 @@ export function guestPinConfigured(pin: string | null | undefined): boolean {
 export type GuestPinProblem = 'length' | 'matches-member';
 
 /**
- * Empty is valid and leaves guest mode off. A 4–6 digit PIN that matches a
- * family PIN is rejected so the guest PIN can never unlock a family gate.
+ * Empty is valid and leaves guest mode off. Length is checked here.
+ * Whether the digits match a family PIN is `matchesMember`, which the
+ * server decides. This function does not compare family PINs.
  */
 export function guestPinProblem(
   pin: string,
-  memberPins: readonly (string | null | undefined)[],
+  matchesMember = false,
 ): GuestPinProblem | null {
   const digits = normalizePin(pin);
   if (digits.length === 0) return null;
   if (digits.length < 4 || digits.length > 6) return 'length';
-  const members = memberPins
-    .map((entry) => normalizePin(entry ?? ''))
-    .filter((entry) => entry.length > 0);
-  if (members.some((member) => member === digits)) return 'matches-member';
+  if (matchesMember) return 'matches-member';
   return null;
 }
 
@@ -237,25 +235,25 @@ export type GesturePinOutcome = 'enter-guest' | 'exit-guest' | 'grant-family' | 
  */
 export function classifyGesturePin(input: {
   pin: string;
-  memberPins: readonly string[];
   guestPin: string;
   guestActive: boolean;
+  familyPinConfigured: boolean;
+  /** Result of POST /beacon-auth/verify-pin. Never computed on the device. */
+  familyAccepted: boolean;
 }): GesturePinOutcome {
   const entered = normalizePin(input.pin);
   const guest = normalizePin(input.guestPin);
   const guestOk = guestPinConfigured(input.guestPin) && entered.length > 0 && entered === guest;
-  const familyOk = pinMatches(entered, input.memberPins);
-  const familyConfigured = input.memberPins.some((pin) => normalizePin(pin).length > 0);
   if (input.guestActive) {
-    if (familyConfigured) {
-      if (familyOk && !guestOk) return 'exit-guest';
+    if (input.familyPinConfigured) {
+      if (input.familyAccepted && !guestOk) return 'exit-guest';
       return 'rejected';
     }
     if (guestOk) return 'exit-guest';
     return 'rejected';
   }
   if (guestOk) return 'enter-guest';
-  if (familyOk) return 'grant-family';
+  if (input.familyAccepted) return 'grant-family';
   return 'rejected';
 }
 

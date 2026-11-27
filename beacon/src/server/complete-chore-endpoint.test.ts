@@ -148,6 +148,27 @@ describe('POST /beacon-action/complete-chore', () => {
     expect(side.decisions.at(-1)).toMatchObject({ entityId: 'switch.ben_wifi', service: 'turn_on' });
   });
 
+  it('leaves a family PIN hash in place when a chore is completed', async () => {
+    const dataDir = await mkdtemp(join(tmpdir(), 'beacon-chore-'));
+    const pinHash = 'scrypt$16384$8$1$c2FsdHNhbHRzYWx0c2E=$aGFzaGhhc2hoYXNoaGFzaGhhc2hoYXNoaGFzaGE=';
+    const data = seed();
+    data.members[0] = { ...data.members[0], pinHash, color: '#112233' } as typeof data.members[0];
+    await writeSeed(dataDir, data);
+    const started = await start(dataDir, { events: [], decisions: [] });
+    servers.push(started.server);
+
+    const res = await post(started.port, { chore: 'vacuum' });
+    expect(res.json.success).toBe(true);
+    const stored = JSON.parse(await readFile(join(dataDir, 'beacon_family_members.json'), 'utf8'));
+    expect(stored[0]).toMatchObject({
+      id: 'ada',
+      name: 'Ada',
+      color: '#112233',
+      pinHash,
+    });
+    expect(stored[0].pin).toBeUndefined();
+  });
+
   it('rejects the wrong method and bad JSON', async () => {
     const dataDir = await mkdtemp(join(tmpdir(), 'beacon-chore-'));
     await writeSeed(dataDir);

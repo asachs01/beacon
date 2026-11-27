@@ -24,12 +24,27 @@ function hotZone() {
   return screen.getByRole('button', { name: 'Hidden controls' });
 }
 
+const ACCEPTED_PINS = new Set(['1234', '4321']);
+
+function mockPinFetch(impl?: typeof fetch) {
+  vi.stubGlobal('fetch', impl ?? (async (_url: string, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body ?? '{}')) as { pin?: string };
+    const ok = ACCEPTED_PINS.has(body.pin ?? '');
+    return new Response(JSON.stringify(ok ? { ok: true, memberId: 'ada' } : { ok: false }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }));
+}
+
 describe('HiddenCornerGesture', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    mockPinFetch();
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
@@ -91,20 +106,40 @@ describe('HiddenCornerGesture', () => {
     expect(onGrantedChange).toHaveBeenLastCalledWith(true);
   });
 
-  it('asks for a family PIN before revealing navigation', () => {
-    const { onGrantedChange } = setup({ members: [{ pin: '1234' }, { pin: '' }] });
+  it('asks for a family PIN before revealing navigation', async () => {
+    const { onGrantedChange } = setup({ members: [{ hasPin: true }, { pin: '' }] });
     fireEvent.pointerDown(hotZone(), { button: 0, clientX: 8, clientY: 8, pointerId: 1 });
     act(() => { vi.advanceTimersByTime(2000); });
     expect(onGrantedChange).not.toHaveBeenCalledWith(true);
     const input = screen.getByLabelText('PIN');
     fireEvent.change(input, { target: { value: '0000' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Show navigation' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Show navigation' }));
+    });
     expect(screen.getByRole('alert')).toHaveTextContent('That PIN is not recognized.');
     expect(onGrantedChange).not.toHaveBeenCalledWith(true);
 
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Show navigation' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Show navigation' }));
+    });
     expect(onGrantedChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('stays locked when Beacon cannot be reached, even if the typed PIN matches a cached value', async () => {
+    mockPinFetch(async () => {
+      throw new Error('offline');
+    });
+    const { onGrantedChange } = setup({ members: [{ pin: '1234', hasPin: true }] });
+    fireEvent.pointerDown(hotZone(), { button: 0, clientX: 8, clientY: 8, pointerId: 1 });
+    act(() => { vi.advanceTimersByTime(2000); });
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Show navigation' }));
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('Can\'t reach Beacon. Check the connection and try again.');
+    expect(onGrantedChange).not.toHaveBeenCalledWith(true);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('starts guest mode from the guest PIN without granting kiosk navigation', () => {
@@ -122,10 +157,10 @@ describe('HiddenCornerGesture', () => {
     expect(onGrantedChange).not.toHaveBeenCalledWith(true);
   });
 
-  it('leaves guest mode on a family PIN and does not exit kiosk', () => {
+  it('leaves guest mode on a family PIN and does not exit kiosk', async () => {
     const onExitGuest = vi.fn();
     const { onGrantedChange } = setup({
-      members: [{ pin: '1234' }],
+      members: [{ hasPin: true }],
       guestPin: '9876',
       guestActive: true,
       onExitGuest,
@@ -133,12 +168,16 @@ describe('HiddenCornerGesture', () => {
     fireEvent.pointerDown(hotZone(), { button: 0, clientX: 8, clientY: 8, pointerId: 1 });
     act(() => { vi.advanceTimersByTime(2000); });
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '9876' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Leave guest mode' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Leave guest mode' }));
+    });
     expect(onExitGuest).not.toHaveBeenCalled();
     expect(onGrantedChange).not.toHaveBeenCalledWith(true);
 
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Leave guest mode' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Leave guest mode' }));
+    });
     expect(onExitGuest).toHaveBeenCalledOnce();
     expect(onGrantedChange).not.toHaveBeenCalledWith(true);
   });
@@ -221,16 +260,18 @@ describe('HiddenCornerGesture', () => {
     expect(onGrantedChange).toHaveBeenLastCalledWith(true);
   });
 
-  it('requires a PIN to leave Kid Display when one is configured', () => {
+  it('requires a PIN to leave Kid Display when one is configured', async () => {
     const { onGrantedChange, ref } = setup({
       purpose: 'kid-display',
       memberName: 'Sam',
-      members: [{ pin: '4321' }],
+      members: [{ hasPin: true }],
     });
     act(() => { ref.current?.request(); });
     expect(screen.queryByText(/Exit Sam/)).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '4321' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Exit' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Exit' }));
+    });
     expect(onGrantedChange).toHaveBeenLastCalledWith(true);
   });
 

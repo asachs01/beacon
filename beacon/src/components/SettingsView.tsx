@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import {
   Settings as SettingsIcon,
@@ -40,6 +40,8 @@ import { PhotoSourceSettings } from './PhotoSourceSettings';
 import { EntityPicker } from './cards/EntityPicker';
 import { PRIVILEGE_DOMAINS } from '../api/chore-privileges';
 import { guestPinProblem } from '../display/guest-mode';
+import { familyPinConfigured, normalizePin } from '../display/hidden-gesture';
+import { verifyFamilyPin } from '../api/verify-pin';
 import { PairedDevicesSettings } from './PairedDevicesSettings';
 
 // ---------------------------------------------------------------------------
@@ -189,7 +191,10 @@ interface MemberForm {
   avatar: string;
   color: string;
   role: 'parent' | 'child';
+  /** Digits typed for a new PIN. Never the stored PIN. */
   pin: string;
+  /** keep leaves the hash alone. edit sets a PIN. clear removes it. */
+  pinMode: 'keep' | 'edit' | 'clear';
   privilegeEntityId: string;
   calendar_entity: string;
   additional_calendar_entities: string[];
@@ -201,6 +206,7 @@ const EMPTY_FORM: MemberForm = {
   color: MEMBER_COLORS[0],
   role: 'child',
   pin: '',
+  pinMode: 'edit',
   privilegeEntityId: '',
   calendar_entity: '',
   additional_calendar_entities: [],
@@ -240,6 +246,7 @@ export function SettingsView({
   const [guestPinDraft, setGuestPinDraft] = useState(settings.guestPin);
   const [guestPinError, setGuestPinError] = useState<string | null>(null);
   const [memberPinError, setMemberPinError] = useState<string | null>(null);
+  const guestPinRequest = useRef(0);
 
   useEffect(() => {
     setGuestPinDraft(settings.guestPin);
@@ -299,12 +306,14 @@ export function SettingsView({
   }, []);
 
   const handleStartEdit = useCallback((member: FamilyMember) => {
+    setMemberPinError(null);
     setMemberForm({
       name: member.name,
       avatar: member.avatar,
       color: member.color,
       role: member.role,
-      pin: member.pin ?? '',
+      pin: '',
+      pinMode: familyPinConfigured([member]) ? 'keep' : 'edit',
       privilegeEntityId: member.privilegeEntityId ?? '',
       calendar_entity: member.calendar_entity ?? '',
       additional_calendar_entities: member.additional_calendar_entities ?? [],
@@ -315,17 +324,22 @@ export function SettingsView({
 
   const handleSaveMember = useCallback(() => {
     if (!memberForm.name.trim()) return;
-    if (guestPinProblem(settings.guestPin, [memberForm.pin]) === 'matches-member') {
+    let pinUpdate: string | null | undefined;
+    if (memberForm.pinMode === 'keep') pinUpdate = undefined;
+    else if (memberForm.pin) pinUpdate = memberForm.pin;
+    else if (memberForm.pinMode === 'clear') pinUpdate = null;
+    else pinUpdate = undefined;
+    const guestDigits = normalizePin(settings.guestPin);
+    if (typeof pinUpdate === 'string' && guestDigits && normalizePin(pinUpdate) === guestDigits) {
       setMemberPinError(t('settings.family.pinMatchesGuest'));
       return;
     }
     setMemberPinError(null);
-    const data = {
+    const data: Omit<FamilyMember, 'id'> = {
       name: memberForm.name.trim(),
       avatar: memberForm.avatar,
       color: memberForm.color,
       role: memberForm.role,
-      pin: memberForm.pin || undefined,
       privilegeEntityId: memberForm.role === 'child' && memberForm.privilegeEntityId
         ? memberForm.privilegeEntityId
         : undefined,
@@ -334,6 +348,7 @@ export function SettingsView({
         ? memberForm.additional_calendar_entities
         : undefined,
     };
+    if (pinUpdate !== undefined) data.pin = pinUpdate;
     if (memberFormMode === 'edit' && editingMember) {
       onUpdateMember(editingMember, data);
     } else {
@@ -1077,21 +1092,49 @@ export function SettingsView({
               <div className="settings-row-label">{t('settings.family.pinLabel')}</div>
               <div className="settings-row-sublabel">{t('settings.family.pinSublabel')}</div>
             </div>
-            <input
-              type="password"
-              className="settings-input"
-              style={{ width: 120 }}
-              value={memberForm.pin}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                setMemberPinError(null);
-                setMemberForm((f) => ({ ...f, pin: val }));
-              }}
-              placeholder="****"
-              inputMode="numeric"
-              maxLength={6}
-              aria-invalid={memberPinError ? true : undefined}
-            />
+            {memberForm.pinMode === 'keep' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>{t('settings.family.pinSet')}</span>
+                <button
+                  type="button"
+                  className="settings-btn"
+                  onClick={() => {
+                    setMemberPinError(null);
+                    setMemberForm((f) => ({ ...f, pinMode: 'edit', pin: '' }));
+                  }}
+                >
+                  {t('settings.family.pinChange')}
+                </button>
+                <button
+                  type="button"
+                  className="settings-btn"
+                  onClick={() => {
+                    setMemberPinError(null);
+                    setMemberForm((f) => ({ ...f, pinMode: 'clear', pin: '' }));
+                  }}
+                >
+                  {t('settings.family.pinRemove')}
+                </button>
+              </div>
+            ) : (
+              <input
+                type="password"
+                className="settings-input"
+                style={{ width: 120 }}
+                value={memberForm.pin}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setMemberPinError(null);
+                  setMemberForm((f) => ({ ...f, pin: val }));
+                }}
+                placeholder="****"
+                inputMode="numeric"
+                maxLength={6}
+                aria-label={t('settings.family.pinLabel')}
+                aria-invalid={memberPinError ? true : undefined}
+                autoComplete="new-password"
+              />
+            )}
           </div>
           {memberPinError && (
             <p className="kiosk-reveal-error" role="alert" style={{ margin: '0 20px 12px' }}>{memberPinError}</p>
@@ -1796,17 +1839,30 @@ export function SettingsView({
             onChange={(e) => {
               const next = e.target.value.replace(/\D/g, '').slice(0, 6);
               setGuestPinDraft(next);
-              const problem = guestPinProblem(next, members.map((member) => member.pin));
-              if (problem === 'matches-member') {
-                setGuestPinError(t('settings.display.guestPinMatchesMember'));
-                return;
-              }
-              if (problem === 'length') {
+              const request = guestPinRequest.current + 1;
+              guestPinRequest.current = request;
+              if (guestPinProblem(next) === 'length') {
                 setGuestPinError(t('settings.display.guestPinLength'));
                 return;
               }
-              setGuestPinError(null);
-              onUpdateSettings({ guestPin: next });
+              if (normalizePin(next).length === 0) {
+                setGuestPinError(null);
+                onUpdateSettings({ guestPin: '' });
+                return;
+              }
+              void verifyFamilyPin(next).then((result) => {
+                if (guestPinRequest.current !== request) return;
+                if (result.status === 'accepted') {
+                  setGuestPinError(t('settings.display.guestPinMatchesMember'));
+                  return;
+                }
+                if (result.status !== 'rejected') {
+                  setGuestPinError(t('gesture.pinUnreachable'));
+                  return;
+                }
+                setGuestPinError(null);
+                onUpdateSettings({ guestPin: next });
+              });
             }}
             placeholder="****"
             inputMode="numeric"
