@@ -1,12 +1,12 @@
 ---
 title: "Themes"
-description: "All 7 built-in themes with color palettes, auto dark mode, and a developer guide for creating custom themes."
+description: "All 8 built-in themes with color palettes, auto dark mode, and a developer guide for creating custom themes."
 order: 1
 ---
 
 # Themes
 
-Beacon ships with 7 built-in themes plus an automatic day/night switching mode. Themes are applied via CSS custom properties, making it easy to create your own.
+Beacon ships with 8 built-in themes plus an automatic day/night switching mode. Themes are applied via CSS custom properties, making it easy to create your own.
 
 ---
 
@@ -30,7 +30,7 @@ The theme selector in the sidebar overrides the configuration value (since it sa
 
 ---
 
-## All 7 themes
+## All 8 themes
 
 ### 1. Skylight (default light theme)
 
@@ -53,11 +53,11 @@ A warm, clean light theme with soft pastels. Designed for well-lit rooms and day
 
 ---
 
-### 2. Midnight (default dark theme)
+### 2. Beacon Dark (default dark theme)
 
-![Midnight theme on the dashboard](/docs/images/screenshots/themes-dark.png)
+![Beacon Dark theme on the dashboard](/docs/images/screenshots/themes-dark.png)
 
-A deep navy dark theme with warm amber accents. The recommended theme for wall-mounted displays, especially in the evening.
+A deep navy dark theme with Beacon's brand gold accent. Its theme ID is `midnight`. The recommended theme for wall-mounted displays, especially in the evening.
 
 | Token | Color | Hex |
 |-------|-------|-----|
@@ -66,15 +66,42 @@ A deep navy dark theme with warm amber accents. The recommended theme for wall-m
 | Text | Near white | `#f8fafc` |
 | Text secondary | Slate gray | `#94a3b8` |
 | Grid lines | Dark slate | `#334155` |
-| Accent | Amber/Gold | `#f59e0b` |
+| Accent | Brand gold | `#f7a832` |
+| Text on accent | Dark navy | `#101d3c` |
+| Gold text and icons | Brand gold | `#f7a832` |
 | Header | Dark slate | `#1e293b` |
-| Today highlight | Amber tint | `rgba(245, 158, 11, 0.06)` |
+| Today highlight | Gold tint | `rgba(247, 168, 50, 0.06)` |
 
 **Event colors**: Bright blue, bright green, bright purple, bright orange, bright pink, bright teal
 
+Labels and icons on gold buttons are dark navy, because white on this gold is hard to read. Since v1.54.5.
+
 ---
 
-### 3. Nord Ice
+### 3. Beacon Light
+
+The light version of Beacon's brand theme, with the same gold accent on a cool off-white background. Its theme ID is `midnight-light`.
+
+| Token | Color | Hex |
+|-------|-------|-----|
+| Background | Off-white | `#f8fafc` |
+| Surface | Light slate | `#f1f5f9` |
+| Text | Deep navy | `#0f172a` |
+| Text secondary | Slate gray | `#64748b` |
+| Grid lines | Light slate | `#e2e8f0` |
+| Accent | Brand gold | `#f7a832` |
+| Text on accent | Dark navy | `#101d3c` |
+| Gold text and icons | Dark gold | `#9a5b00` |
+| Header | Light slate | `#f1f5f9` |
+| Today highlight | Gold tint | `rgba(247, 168, 50, 0.06)` |
+
+**Event colors**: Soft blue, soft green, soft purple, soft orange, soft pink, soft teal
+
+Gold buttons and fills use the brand gold. Gold text and icons use a darker gold so they stay readable on the light background. Since v1.54.6.
+
+---
+
+### 4. Nord Ice
 
 Inspired by the [Nord color palette](https://www.nordtheme.com/). A cool-toned light theme with frost and aurora accents.
 
@@ -93,7 +120,7 @@ Inspired by the [Nord color palette](https://www.nordtheme.com/). A cool-toned l
 
 ---
 
-### 4. Dracula
+### 5. Dracula
 
 Based on the popular [Dracula theme](https://draculatheme.com/). A purple-accented dark theme with vibrant event colors.
 
@@ -112,7 +139,7 @@ Based on the popular [Dracula theme](https://draculatheme.com/). A purple-accent
 
 ---
 
-### 5. Monokai
+### 6. Monokai
 
 Inspired by the [Monokai](https://monokai.pro/) color scheme. A warm dark theme with a green accent.
 
@@ -131,7 +158,7 @@ Inspired by the [Monokai](https://monokai.pro/) color scheme. A warm dark theme 
 
 ---
 
-### 6. Rose
+### 7. Rose
 
 A soft, warm light theme with pink and rose tones. Ideal for a feminine or playful aesthetic.
 
@@ -150,7 +177,7 @@ A soft, warm light theme with pink and rose tones. Ideal for a feminine or playf
 
 ---
 
-### 7. Forest
+### 8. Forest
 
 An earthy, nature-inspired light theme with warm greens and natural tones.
 
@@ -176,19 +203,19 @@ Select **Auto (time)** in the theme selector to let Beacon switch themes automat
 | Time Range | Theme Used |
 |------------|------------|
 | 6:00 AM - 6:59 PM | Skylight (light) |
-| 7:00 PM - 5:59 AM | Midnight (dark) |
+| 7:00 PM - 5:59 AM | Beacon Dark (dark) |
 
 ### How it works
 
 1. On load, Beacon checks the current hour
 2. If between 6 AM and 7 PM, the Skylight theme is applied
-3. Otherwise, the Midnight theme is applied
+3. Otherwise, the Beacon Dark theme is applied
 4. A timer re-evaluates every 60 seconds, so the switch happens automatically at the threshold hours
 5. The `data-theme` attribute on `<html>` is set to `light` or `dark` based on the background color luminance
 
 ### Customizing the dark theme
 
-The dark theme used by auto mode defaults to Midnight. The auto dark theme ID is stored in localStorage under `beacon-auto-dark-theme`. You can change it by setting that key to any theme ID (e.g., `dracula`, `monokai`).
+The dark theme used by auto mode defaults to Beacon Dark (`midnight`). The auto dark theme ID is stored in localStorage under `beacon-auto-dark-theme`. You can change it by setting that key to any theme ID (e.g., `dracula`, `monokai`).
 
 ---
 
@@ -209,6 +236,8 @@ interface Theme {
     textSecondary: string; // Secondary/muted text
     gridLines: string;     // Calendar grid lines, borders
     accent: string;        // Primary accent (buttons, highlights)
+    accentForeground?: string; // Optional: text and icons on the accent
+    brandText?: string;    // Optional: accent color when used as text or an icon
     headerBg: string;      // Header and sidebar background
     todayHighlight: string; // Today column background tint
     shadow: string;        // Box shadow for cards
@@ -287,6 +316,8 @@ These CSS custom properties are set on `:root` by the theme system and used thro
 | `--text-secondary` | `colors.textSecondary` | Secondary/muted text |
 | `--grid-lines` | `colors.gridLines` | Calendar grid line color |
 | `--accent` | `colors.accent` | Accent color for buttons, links |
+| `--color-on-accent` | `colors.accentForeground` | Text and icons on accent buttons. Falls back to white when a theme leaves it out |
+| `--color-brand-text` | `colors.brandText` | Accent used as text or an icon. Falls back to `--accent` when a theme leaves it out |
 | `--shadow` | `colors.shadow` | Box shadow for elevated elements |
 | `--event-1` through `--event-6` | `eventColors[0-5]` | Calendar event colors |
 | `--font-display` | `fonts.display` | Display/heading font family |
