@@ -1,3 +1,10 @@
+## [1.54.2](https://github.com/asachs01/beacon/compare/v1.54.1...v1.54.2) (2026-11-27)
+
+
+### Bug Fixes
+
+* **auth:** require a session for unknown paths ([#147](https://github.com/asachs01/beacon/issues/147)) ([e4b2488](https://github.com/asachs01/beacon/commit/e4b24885a74a48dd1619ee0151d5cb197b03f56d))
+
 ## [1.54.1](https://github.com/asachs01/beacon/compare/v1.54.0...v1.54.1) (2026-11-26)
 
 
