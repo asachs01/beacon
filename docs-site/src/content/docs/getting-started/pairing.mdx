@@ -35,7 +35,7 @@ From Beacon **1.54.2**, anything that isn't on Beacon's short public list needs 
 
 If you get it wrong, the screen says **That PIN or code did not match.**
 
-From Beacon **X.Y.Z**, family PINs are saved only as hashes, and pairing checks the PIN you type against them on the server. Pairing with a family PIN or the pairing code works the same as before.
+From Beacon **1.54.4**, family PINs are saved only as hashes, and pairing checks the PIN you type against them on the server. Pairing with a family PIN or the pairing code works the same as before.
 
 ### Where to find the pairing code
 
@@ -106,7 +106,7 @@ If Beacon sits behind a [reverse proxy](/docs/getting-started/deployment/#revers
 
 ### PIN checks have their own limit
 
-From Beacon **X.Y.Z**, family PIN prompts outside pairing (kiosk navigation, Kid Display, leaving guest mode, and Magic Import) use the same limits as above, but they're counted separately from pairing. Wrong PINs on those prompts don't lock pairing, and wrong pairing attempts don't lock those prompts. Because the count follows each screen's `beacon_pair_attempt` cookie, one screen behind a shared address doesn't lock PIN checks on another. While a lock is on, a correct PIN is refused there too. The log line starts with `[beacon] pin check lockout`.
+From Beacon **1.54.4**, family PIN prompts outside pairing (kiosk navigation, Kid Display, leaving guest mode, and Magic Import) use the same limits as above, but they're counted separately from pairing. Wrong PINs on those prompts don't lock pairing, and wrong pairing attempts don't lock those prompts. Because the count follows each screen's `beacon_pair_attempt` cookie, one screen behind a shared address doesn't lock PIN checks on another. While a lock is on, a correct PIN is refused there too. The log line starts with `[beacon] pin check lockout`.
 
 ## `HA_BROWSER_TOKEN` is no longer used
 
