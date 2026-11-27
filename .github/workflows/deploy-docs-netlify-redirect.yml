@@ -1,0 +1,61 @@
+name: Deploy Netlify docs redirect
+
+# Manual cutover step. Replaces the Netlify docs publish with a redirect to
+# https://beaconfamily.app. Run only after Cloudflare Pages is serving that
+# domain and the SITE_URL repository variable is set. Does not run on push
+# or pull_request, and does not delete the Netlify site.
+#
+# Requires a working NETLIFY_AUTH_TOKEN (the same secret as deploy-docs.yml).
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type redirect to replace the Netlify docs publish with a 301 to beaconfamily.app'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm this is the cutover redirect
+        env:
+          CONFIRM: ${{ github.event.inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "redirect" ]; then
+            echo "Refusing to replace the Netlify docs site. Re-run and set confirm to redirect."
+            exit 1
+          fi
+
+      - name: Require NETLIFY_AUTH_TOKEN
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ]; then
+            echo "NETLIFY_AUTH_TOKEN is not set. This redirect deploy needs a working token."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Build redirect publish directory
+        run: bash scripts/build-netlify-docs-redirect.sh netlify-docs-redirect
+
+      - name: Check _redirects
+        run: |
+          expected='/*  https://beaconfamily.app/:splat  301!'
+          actual="$(cat netlify-docs-redirect/_redirects)"
+          if [ "$actual" != "$expected" ]; then
+            echo "Unexpected _redirects contents: $actual"
+            exit 1
+          fi
+
+      - name: Deploy redirect to Netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: netlify-docs-redirect
+          production-deploy: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: a05ebeb0-c20a-481c-9346-0da21e93f492
