@@ -93,6 +93,8 @@ Open [http://localhost:5173](http://localhost:5173) in your browser. Beacon work
 
 From [v1.50.1](https://github.com/asachs01/beacon/releases/tag/v1.50.1), a standalone Docker container can also connect to Home Assistant when you set `HA_URL` (the base address, with no `/api`) and `HA_TOKEN` (a long-lived access token). Do not set `SUPERVISOR_TOKEN` in that mode. See the [deployment guide](https://beacon-family-docs.netlify.app/docs/getting-started/deployment/).
 
+From [v1.54.0](https://github.com/asachs01/beacon/releases/tag/v1.54.0), a device that opens Beacon directly on its port (Docker, standalone, or a hand-mapped add-on port) pairs once with the family PIN or a 6-digit code. Opening Beacon from the Home Assistant sidebar, and the Android app's built-in dashboard, do not pair. `HA_BROWSER_TOKEN` is ignored. Automations and `rest_command`s send `Authorization: !secret beacon_token` (the add-on writes it to `secrets.yaml` automatically; on standalone, create one under Settings → Devices → Create access token and add it before restarting Home Assistant). Settings → Devices has Rotate pairing code. From [v1.54.3](https://github.com/asachs01/beacon/releases/tag/v1.54.3), the public `runtime-config.js` file contains the family name, theme, and auto dark mode setting; it never contains a token. Update to [v1.54.3](https://github.com/asachs01/beacon/releases/tag/v1.54.3) or later. Advisory: [GHSA-rj98-fx8p-896h](https://github.com/asachs01/beacon/security/advisories/GHSA-rj98-fx8p-896h). See the [pairing guide](https://beacon-family-docs.netlify.app/docs/getting-started/pairing/).
+
 ## Configuration
 
 Beacon is configured through the Home Assistant add-on options panel:
