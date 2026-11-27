@@ -88,7 +88,8 @@ The word "Beacon" in Plus Jakarta Sans SemiBold (600), letter-spacing -0.02em. T
 |------|-----|-----|-----|-------|
 | Deep Navy | `#0f172a` | rgb(15, 23, 42) | hsl(222, 47%, 11%) | Dark mode backgrounds, primary dark surface |
 | Warm White | `#f8fafc` | rgb(248, 250, 252) | hsl(210, 40%, 98%) | Primary text on dark, light mode background |
-| Beacon Gold | `#f7a832` | rgb(247, 168, 50) | hsl(36, 92%, 58%) | Accent color, the "glow", active states, highlights |
+| Beacon Gold | `#f7a832` | rgb(247, 168, 50) | hsl(36, 92%, 58%) | Fills, the "glow", active-state backgrounds, highlights |
+| Beacon Gold Text | `#9a5b00` | rgb(154, 91, 0) | hsl(35, 100%, 30%) | Text and icons on Beacon Light (`--color-brand-text`). Beacon Dark text/icons stay Beacon Gold |
 | Soft Blue | `#3b82f6` | rgb(59, 130, 246) | hsl(217, 91%, 60%) | Interactive elements, links, buttons |
 
 ### Calendar / Family Member Colors
@@ -127,6 +128,7 @@ Assignment order: Ocean is the default first-member color. Additional members re
 | Text Secondary | `#94a3b8` | `--color-text-secondary` |
 | Text Muted | `#64748b` | `--color-text-muted` |
 | Accent | `#f7a832` | `--color-accent` |
+| Brand text | `#f7a832` | `--color-brand-text` |
 
 ### Light Mode Palette (Daytime)
 
@@ -140,10 +142,11 @@ Assignment order: Ocean is the default first-member color. Additional members re
 | Text Secondary | `#475569` | `--color-text-secondary` |
 | Text Muted | `#94a3b8` | `--color-text-muted` |
 | Accent | `#f7a832` | `--color-accent` |
+| Brand text | `#9a5b00` | `--color-brand-text` |
 
 ### Color Usage Rules
 
-1. **Beacon Gold is the hero.** Use it sparingly for maximum impact: the current time, the active day indicator, primary action buttons, and the logo glow. Never use it for large filled areas.
+1. **Beacon Gold is the hero.** Use it sparingly for maximum impact: primary action buttons, active-state fills, and the logo glow. Never use it for large filled areas. On Beacon Light, text and icons use Beacon Gold Text (`#9a5b00`, `--color-brand-text`) instead of the fill gold. Beacon Dark text and icons stay Beacon Gold.
 2. **Dark mode is the default.** Wall-mounted displays in living spaces look best with dark backgrounds, especially in the evening. Light mode activates automatically during daytime hours.
 3. **Calendar colors appear as left-border accents** on event cards (4px wide) and as small dots next to member names. They should never fill entire cards.
 4. **Text on dark backgrounds** uses Warm White (#f8fafc) for primary content and #94a3b8 for secondary/supporting text. Never use pure white (#ffffff) on Dark Navy -- it creates excessive contrast.
@@ -233,7 +236,7 @@ Lucide is chosen for consistency with the Home Assistant ecosystem and its clean
 
 1. Icons always accompany text labels in navigation and section headings. Never use an unlabeled icon as the sole means of conveying meaning.
 2. Interactive icons (buttons) have a minimum tap target of 44x44px regardless of the icon's visual size.
-3. Icon color matches the adjacent text color. Active/selected state icons use Beacon Gold (#f7a832).
+3. Icon color matches the adjacent text color. Active/selected state icons use `--color-brand-text`: Beacon Gold (#f7a832) on Beacon Dark, Beacon Gold Text (#9a5b00) on Beacon Light.
 4. Do not mix icon libraries. If Lucide does not have a needed icon, request a custom SVG drawn in the same style (1.5px stroke, round caps, round joins, 24px viewBox).
 
 ---
@@ -451,6 +454,11 @@ Beacon Gold
   RGB: 247, 168, 50
   HSL: 36, 92%, 58%
 
+Beacon Gold Text (Beacon Light text and icons)
+  HEX: #9a5b00
+  RGB: 154, 91, 0
+  HSL: 35, 100%, 30%
+
 Soft Blue
   HEX: #3b82f6
   RGB: 59, 130, 246
@@ -490,6 +498,7 @@ For implementation reference, here are the recommended CSS custom property names
   --color-text-secondary: #94a3b8;
   --color-text-muted: #64748b;
   --color-accent: #f7a832;
+  --color-brand-text: #f7a832; /* Beacon Light overrides this to #9a5b00 */
   --color-interactive: #3b82f6;
 
   /* Calendar colors */

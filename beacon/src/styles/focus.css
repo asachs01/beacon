@@ -116,7 +116,7 @@
 .focus-card-count {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--focus-accent, var(--accent));
+  color: var(--focus-accent, var(--color-brand-text, var(--accent)));
 }
 
 .focus-checklist {
@@ -188,7 +188,7 @@
   margin-left: auto;
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--focus-accent, var(--accent));
+  color: var(--focus-accent, var(--color-brand-text, var(--accent)));
 }
 
 .focus-celebration {

@@ -29,7 +29,11 @@
   --accent: #3b82f6;
   /* --color-on-accent is set by useTheme when a theme's accent cannot hold
      white text. Beacon Dark and Beacon Light set #101d3c (navy on #f7a832).
-     Leave it unset here so other themes keep their per-control fallbacks. */
+     Leave it unset here so other themes keep their per-control fallbacks.
+     --color-brand-text is the same kind of override: Beacon Light sets
+     #9a5b00 for gold used as text or an icon; Beacon Dark sets #f7a832.
+     Leave it unset so other themes keep var(--accent) via the stylesheet
+     fallback. Gold fills stay --accent / #f7a832. */
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
   /* Event / family member colors */

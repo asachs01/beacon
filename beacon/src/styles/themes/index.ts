@@ -14,6 +14,13 @@ export interface Theme {
      * Other themes omit this and keep white (or the control's own fallback).
      */
     accentForeground?: string;
+    /**
+     * Gold used as text or an icon. Beacon Light uses #9a5b00 so it clears
+     * 3:1 on #f8fafc and #f1f5f9. Beacon Dark uses #f7a832, the same as
+     * brand gold, because that gold already passes on the dark surfaces.
+     * Other themes omit this and keep their own accent for text.
+     */
+    brandText?: string;
     headerBg: string;
     todayHighlight: string;
     shadow: string;

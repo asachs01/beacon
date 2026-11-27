@@ -130,7 +130,7 @@
   font-size: 48px;
   font-weight: 700;
   line-height: 1;
-  color: var(--accent);
+  color: var(--color-brand-text, var(--accent));
   font-variant-numeric: tabular-nums;
   letter-spacing: -1px;
 }

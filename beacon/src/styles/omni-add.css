@@ -88,7 +88,7 @@
   height: 48px;
   border-radius: 50%;
   background: var(--bg-surface);
-  color: var(--accent, var(--color-blue-full));
+  color: var(--color-brand-text, var(--accent, var(--color-blue-full)));
   display: flex;
   align-items: center;
   justify-content: center;

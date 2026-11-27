@@ -255,7 +255,7 @@
 .timer-preset--active {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--color-brand-text, var(--accent));
 }
 
 .timer--compact .timer-preset {
@@ -428,7 +428,7 @@
   font-family: var(--font-family-heading);
   font-size: 24px;
   font-weight: 700;
-  color: var(--accent, var(--color-blue-full));
+  color: var(--color-brand-text, var(--accent, var(--color-blue-full)));
   line-height: 1;
 }
 

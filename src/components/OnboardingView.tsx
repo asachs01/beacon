@@ -182,7 +182,7 @@ const styles = {
     width: '100%',
     padding: '12px 24px',
     background: 'transparent',
-    color: 'var(--accent)',
+    color: 'var(--color-brand-text, var(--accent))',
     border: '1px solid var(--accent)',
     borderRadius: 'var(--radius-md)',
     fontFamily: 'var(--font-family-body)',
@@ -333,7 +333,7 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
           onClick={() => setAuthMethod('token')}
         >
           <h3 style={styles.cardTitle}>
-            <Key size={18} color="var(--accent)" />
+            <Key size={18} color="var(--color-brand-text, var(--accent))" />
             {t('onboarding.tokenMethod')}
           </h3>
           <p style={styles.cardDesc}>
@@ -372,7 +372,7 @@ export default function OnboardingView({ onComplete, onOAuthStart }: OnboardingV
           onClick={() => setAuthMethod('oauth')}
         >
           <h3 style={styles.cardTitle}>
-            <LogIn size={18} color="var(--accent)" />
+            <LogIn size={18} color="var(--color-brand-text, var(--accent))" />
             {t('onboarding.oauthMethod')}
           </h3>
           <p style={styles.cardDesc}>

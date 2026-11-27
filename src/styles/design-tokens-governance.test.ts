@@ -131,3 +131,119 @@ describe('design tokens are wired up, not orphaned', () => {
   });
 });
 
+/** WCAG 2 relative luminance contrast for two #rrggbb colors. */
+function contrastRatio(foreground: string, background: string): number {
+  const lum = (hex: string) => {
+    const h = hex.replace('#', '');
+    const channel = (pair: string) => {
+      const s = parseInt(pair, 16) / 255;
+      return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    };
+    const r = channel(h.slice(0, 2));
+    const g = channel(h.slice(2, 4));
+    const b = channel(h.slice(4, 6));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const lighter = Math.max(lum(foreground), lum(background));
+  const darker = Math.min(lum(foreground), lum(background));
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function walkFiles(dir: string, extension: string): string[] {
+  const found: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) found.push(...walkFiles(full, extension));
+    else if (entry.name.endsWith(extension)) found.push(full);
+  }
+  return found;
+}
+
+function stripComments(source: string, jsx: boolean): string {
+  const withoutBlocks = source.replace(/\/\*[\s\S]*?\*\//g, '');
+  return jsx ? withoutBlocks.replace(/(^|[^:])\/\/.*$/gm, '$1') : withoutBlocks;
+}
+
+/** True when a gold/accent reference sits inside var(--color-brand-text, ...). */
+function insideBrandText(value: string, index: number): boolean {
+  const token = 'var(--color-brand-text';
+  let from = 0;
+  while (from <= index) {
+    const start = value.toLowerCase().indexOf(token, from);
+    if (start === -1 || start > index) return false;
+    const open = value.indexOf('(', start);
+    let depth = 0;
+    let end = open;
+    for (; end < value.length; end++) {
+      if (value[end] === '(') depth++;
+      else if (value[end] === ')') {
+        depth--;
+        if (depth === 0) {
+          end++;
+          break;
+        }
+      }
+    }
+    if (index >= start && index < end) return true;
+    from = start + token.length;
+  }
+  return false;
+}
+
+const RAW_GOLD = /--accent(?![\w-])|--color-brand(?![\w-])|#f7a832|#f59e0b/gi;
+
+function rawGoldOutsideBrandText(value: string): string[] {
+  const hits: string[] = [];
+  for (const match of value.matchAll(RAW_GOLD)) {
+    if (match.index !== undefined && !insideBrandText(value, match.index)) {
+      hits.push(match[0]);
+    }
+  }
+  return hits;
+}
+
+describe('Beacon Light brand text', () => {
+  it('meets 3:1 against the Beacon Light page and surface', () => {
+    expect(midnightLight.colors.brandText?.toLowerCase()).toBe('#9a5b00');
+    expect(midnight.colors.brandText?.toLowerCase()).toBe('#f7a832');
+    expect(midnightLight.colors.background.toLowerCase()).toBe('#f8fafc');
+    expect(midnightLight.colors.surface.toLowerCase()).toBe('#f1f5f9');
+
+    const onPage = contrastRatio(midnightLight.colors.brandText!, midnightLight.colors.background);
+    const onSurface = contrastRatio(midnightLight.colors.brandText!, midnightLight.colors.surface);
+    expect(onPage, `brand text on page is ${onPage.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
+    expect(onSurface, `brand text on surface is ${onSurface.toFixed(2)}:1`).toBeGreaterThanOrEqual(3);
+  });
+
+  it('does not paint Beacon Light text or icons with raw brand gold or the theme accent', () => {
+    const cssFiles = walkFiles(path.join(SRC_DIR, 'styles'), '.css');
+    const tsxFiles = walkFiles(SRC_DIR, '.tsx');
+    const violations: string[] = [];
+
+    const note = (file: string, value: string, hits: string[]) => {
+      if (hits.length > 0) {
+        violations.push(`${path.relative(SRC_DIR, file)}: ${value.trim()} (${hits.join(', ')})`);
+      }
+    };
+
+    for (const file of cssFiles) {
+      const source = stripComments(readFileSync(file, 'utf-8'), false);
+      // Property name is exactly color, fill, or stroke — not border-color.
+      const props = source.matchAll(/(?:^|[^-\w])(color|fill|stroke)\s*:\s*([^;}{]+)/g);
+      for (const match of props) {
+        note(file, match[2], rawGoldOutsideBrandText(match[2]));
+      }
+    }
+
+    for (const file of tsxFiles) {
+      const source = stripComments(readFileSync(file, 'utf-8'), true);
+      const attrs = source.matchAll(/(?:^|[^-\w])(color|fill|stroke)\s*(?:=|:)\s*\{?\s*['"`]([^'"`]+)['"`]/g);
+      for (const match of attrs) {
+        note(file, match[2], rawGoldOutsideBrandText(match[2]));
+      }
+    }
+
+    expect(violations, violations.join('\n')).toEqual([]);
+  });
+});
+

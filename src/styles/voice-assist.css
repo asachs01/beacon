@@ -111,7 +111,7 @@
 .voice-assist-dismiss {
   border: 0;
   background: transparent;
-  color: var(--accent, #3b82f6);
+  color: var(--color-brand-text, var(--accent, #3b82f6));
   padding: 8px 4px;
 }
 
