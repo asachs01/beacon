@@ -1,3 +1,10 @@
+## [1.54.3](https://github.com/asachs01/beacon/compare/v1.54.2...v1.54.3) (2026-11-27)
+
+
+### Bug Fixes
+
+* **auth:** keep house settings off the public runtime script ([#151](https://github.com/asachs01/beacon/issues/151)) ([0145c25](https://github.com/asachs01/beacon/commit/0145c250c542cec7665cc9eaee11ccdc272ba829))
+
 ## [1.54.2](https://github.com/asachs01/beacon/compare/v1.54.1...v1.54.2) (2026-11-27)
 
 
