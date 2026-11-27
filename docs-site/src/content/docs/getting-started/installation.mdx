@@ -105,7 +105,7 @@ screen_saver_timeout: 5
 4. Click **Open Web UI** in the sidebar panel, or navigate directly to your Home Assistant URL — Beacon appears as a sidebar panel with a calendar-clock icon. Prefer that sidebar panel (ingress); it sits behind your Home Assistant login. Do not map or forward Beacon's own port off your trusted home network. The add-on doesn't publish a port by default, so the sidebar panel needs no pairing. If you map the port by hand, devices that open it directly have to pair once.
 
 :::caution
-Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the [security advisory](https://github.com/asachs01/beacon/security/advisories/GHSA-rj98-fx8p-896h)). Update to **1.54.1** or later and [pair your devices](/docs/getting-started/pairing/). Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
 :::
 
 From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
@@ -127,7 +127,7 @@ Use this method if you want to run Beacon outside of Home Assistant, or if you u
 This needs Beacon **1.50.1** or later. **Changed in 1.50.1.** See [Deployment](/docs/getting-started/deployment/#docker-standalone-deployment) for `--env-file` token handling, URL overrides, and troubleshooting.
 
 :::caution
-Anyone who can reach Beacon's port can use its Home Assistant access. Keep that port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the [security advisory](https://github.com/asachs01/beacon/security/advisories/GHSA-rj98-fx8p-896h)). Update to **1.54.1** or later and [pair your devices](/docs/getting-started/pairing/). Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
 :::
 
 From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
