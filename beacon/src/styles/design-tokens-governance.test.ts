@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import * as path from 'node:path';
+import { midnight } from './themes/midnight';
+import { midnightLight } from './themes/midnight-light';
 
 /**
  * Design-token governance test.
@@ -88,10 +90,34 @@ describe('design tokens are wired up, not orphaned', () => {
 
   it('--color-warning is never aliased back to --color-brand\'s hex value in a live rule', () => {
     // Regression guard for the specific bug: warning state visually
-    // identical to the brand mark. #f59e0b is brand gold; warning must be
+    // identical to the brand mark. #f7a832 is brand gold; warning must be
     // its own hue (#d97706) everywhere it's used as a literal fallback.
-    const warningFallbackPattern = /--color-warning,\s*#f59e0b\)/i;
+    const warning = tokens.find((t) => t.name === '--color-warning');
+    const brand = tokens.find((t) => t.name === '--color-brand');
+    expect(warning?.hex).not.toBe('#f7a832');
+    expect(warning?.hex).not.toBe(brand?.hex);
+    const warningFallbackPattern = /--color-warning,\s*#f7a832\)/i;
     expect(warningFallbackPattern.test(allOtherCss)).toBe(false);
+  });
+
+  it('does not reintroduce the retired brand gold #f59e0b in themes or tokens.css', () => {
+    const themesDir = path.join(STYLES_DIR, 'themes');
+    const themeFiles = readdirSync(themesDir).filter((file) => file.endsWith('.ts'));
+    for (const file of themeFiles) {
+      const content = readFileSync(path.join(themesDir, file), 'utf-8');
+      expect(content.toLowerCase(), file).not.toContain('#f59e0b');
+    }
+    expect(tokensCss.toLowerCase()).not.toContain('#f59e0b');
+  });
+
+  it('Beacon Dark and Beacon Light accents match --color-brand', () => {
+    const brand = tokens.find((t) => t.name === '--color-brand');
+    expect(brand).toBeDefined();
+    expect(midnight.colors.accent.toLowerCase()).toBe(brand!.hex);
+    expect(midnightLight.colors.accent.toLowerCase()).toBe(brand!.hex);
+    // White on #f7a832 is ~1.98:1. On-accent text is navy.
+    expect(midnight.colors.accentForeground?.toLowerCase()).toBe('#101d3c');
+    expect(midnightLight.colors.accentForeground?.toLowerCase()).toBe('#101d3c');
   });
 
   it('defines heading and body font tokens that end in the system font stack', () => {

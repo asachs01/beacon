@@ -51,7 +51,7 @@ The icon is a **minimal geometric beacon/lighthouse silhouette** viewed from the
 1. **Base**: A short, wide trapezoid representing the lighthouse foundation. Slightly wider at the bottom than the top. Rounded corners at the bottom edges (2px radius at icon scale).
 2. **Tower**: A tall, narrow trapezoid tapering upward from the base. Clean straight edges. The tower is roughly 3x taller than the base.
 3. **Lantern room**: A small rectangle at the top of the tower, slightly wider than the tower's top edge, creating a subtle overhang.
-4. **Glow element**: Three concentric arc segments radiating outward from the lantern room to the upper-left and upper-right (like a Wi-Fi signal icon rotated 90 degrees, but with only the top half). The arcs use Beacon Gold (#f59e0b) while the tower structure uses the primary foreground color. The arcs decrease in opacity: innermost at 100%, middle at 60%, outermost at 30%.
+4. **Glow element**: Three concentric arc segments radiating outward from the lantern room to the upper-left and upper-right (like a Wi-Fi signal icon rotated 90 degrees, but with only the top half). The arcs use Beacon Gold (#f7a832) while the tower structure uses the primary foreground color. The arcs decrease in opacity: innermost at 100%, middle at 60%, outermost at 30%.
 
 The overall proportions fit within a square bounding box. The tower is centered horizontally. Negative space is generous -- the icon should breathe.
 
@@ -88,7 +88,7 @@ The word "Beacon" in Plus Jakarta Sans SemiBold (600), letter-spacing -0.02em. T
 |------|-----|-----|-----|-------|
 | Deep Navy | `#0f172a` | rgb(15, 23, 42) | hsl(222, 47%, 11%) | Dark mode backgrounds, primary dark surface |
 | Warm White | `#f8fafc` | rgb(248, 250, 252) | hsl(210, 40%, 98%) | Primary text on dark, light mode background |
-| Beacon Gold | `#f59e0b` | rgb(245, 158, 11) | hsl(38, 92%, 50%) | Accent color, the "glow", active states, highlights |
+| Beacon Gold | `#f7a832` | rgb(247, 168, 50) | hsl(36, 92%, 58%) | Accent color, the "glow", active states, highlights |
 | Soft Blue | `#3b82f6` | rgb(59, 130, 246) | hsl(217, 91%, 60%) | Interactive elements, links, buttons |
 
 ### Calendar / Family Member Colors
@@ -111,7 +111,7 @@ Assignment order: Ocean is the default first-member color. Additional members re
 | Name | HEX | RGB | HSL | Usage |
 |------|-----|-----|-----|-------|
 | Success | `#22c55e` | rgb(34, 197, 94) | hsl(142, 71%, 45%) | Confirmation, completed states |
-| Warning | `#f59e0b` | rgb(245, 158, 11) | hsl(38, 92%, 50%) | Caution states (shares value with Beacon Gold) |
+| Warning | `#d97706` | rgb(217, 119, 6) | hsl(32, 95%, 44%) | Caution states, kept distinct from Beacon Gold |
 | Error | `#ef4444` | rgb(239, 68, 68) | hsl(0, 84%, 60%) | Errors, destructive actions |
 | Info | `#06b6d4` | rgb(6, 182, 212) | hsl(189, 94%, 43%) | Informational callouts, tips |
 
@@ -126,7 +126,7 @@ Assignment order: Ocean is the default first-member color. Additional members re
 | Text Primary | `#f8fafc` | `--color-text` |
 | Text Secondary | `#94a3b8` | `--color-text-secondary` |
 | Text Muted | `#64748b` | `--color-text-muted` |
-| Accent | `#f59e0b` | `--color-accent` |
+| Accent | `#f7a832` | `--color-accent` |
 
 ### Light Mode Palette (Daytime)
 
@@ -139,7 +139,7 @@ Assignment order: Ocean is the default first-member color. Additional members re
 | Text Primary | `#0f172a` | `--color-text` |
 | Text Secondary | `#475569` | `--color-text-secondary` |
 | Text Muted | `#94a3b8` | `--color-text-muted` |
-| Accent | `#f59e0b` | `--color-accent` |
+| Accent | `#f7a832` | `--color-accent` |
 
 ### Color Usage Rules
 
@@ -233,7 +233,7 @@ Lucide is chosen for consistency with the Home Assistant ecosystem and its clean
 
 1. Icons always accompany text labels in navigation and section headings. Never use an unlabeled icon as the sole means of conveying meaning.
 2. Interactive icons (buttons) have a minimum tap target of 44x44px regardless of the icon's visual size.
-3. Icon color matches the adjacent text color. Active/selected state icons use Beacon Gold (#f59e0b).
+3. Icon color matches the adjacent text color. Active/selected state icons use Beacon Gold (#f7a832).
 4. Do not mix icon libraries. If Lucide does not have a needed icon, request a custom SVG drawn in the same style (1.5px stroke, round caps, round joins, 24px viewBox).
 
 ---
@@ -447,9 +447,9 @@ Warm White
   HSL: 210, 40%, 98%
 
 Beacon Gold
-  HEX: #f59e0b
-  RGB: 245, 158, 11
-  HSL: 38, 92%, 50%
+  HEX: #f7a832
+  RGB: 247, 168, 50
+  HSL: 36, 92%, 58%
 
 Soft Blue
   HEX: #3b82f6
@@ -489,7 +489,7 @@ For implementation reference, here are the recommended CSS custom property names
   --color-text: #f8fafc;
   --color-text-secondary: #94a3b8;
   --color-text-muted: #64748b;
-  --color-accent: #f59e0b;
+  --color-accent: #f7a832;
   --color-interactive: #3b82f6;
 
   /* Calendar colors */
@@ -502,7 +502,7 @@ For implementation reference, here are the recommended CSS custom property names
 
   /* Semantic */
   --color-success: #22c55e;
-  --color-warning: #f59e0b;
+  --color-warning: #d97706;
   --color-error: #ef4444;
   --color-info: #06b6d4;
 

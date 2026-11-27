@@ -25,7 +25,7 @@
 
 .weather-retry-btn {
   background: var(--accent);
-  color: #fff;
+  color: var(--color-on-accent, #fff);
   border: none;
   border-radius: 8px;
   padding: 8px 20px;

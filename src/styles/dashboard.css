@@ -561,7 +561,7 @@
   align-items: center;
   justify-content: center;
   transition: all 200ms ease;
-  color: white;
+  color: var(--color-on-accent, #fff);
 }
 
 .task-checkbox--checked .task-checkbox-box {
@@ -1155,6 +1155,7 @@
 
 .dash-ha-toggle--on .dash-ha-toggle-switch::after {
   transform: translateX(16px);
+  background: var(--color-on-accent, #fff);
 }
 
 /* ─── Card sizing (sidebar cards only — see renderSizedCard) ───
@@ -1271,7 +1272,7 @@
 .dash-view-tab--active .dash-view-tab-btn {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--bg-surface, #fff);
+  color: var(--color-on-accent, var(--bg-surface, #fff));
 }
 
 .dash-view-tab-icon {

@@ -8,6 +8,12 @@ export interface Theme {
     textSecondary: string;
     gridLines: string;
     accent: string;
+    /**
+     * Text and icons drawn on `accent`. Beacon Dark and Beacon Light set
+     * #101d3c because white on brand gold (#f7a832) is about 1.98:1.
+     * Other themes omit this and keep white (or the control's own fallback).
+     */
+    accentForeground?: string;
     headerBg: string;
     todayHighlight: string;
     shadow: string;

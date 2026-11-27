@@ -47,7 +47,7 @@
   --td-text: #f8fafc;          /* midnight text */
   --td-text-muted: #94a3b8;    /* midnight textSecondary */
   --td-border: #334155;        /* midnight gridLines */
-  --td-accent: #f7a832;        /* tokens.css --color-brand (midnight still says #f59e0b) */
+  --td-accent: #f7a832;        /* tokens.css --color-brand */
   --td-accent-hover: #ffc35a;
   --td-accent-text: #f7a832;
   --td-link: #f7a832;          /* midnight's accent role is gold */

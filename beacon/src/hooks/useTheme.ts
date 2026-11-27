@@ -34,6 +34,13 @@ function applyThemeToDOM(theme: Theme): void {
   root.style.setProperty('--text-secondary', colors.textSecondary);
   root.style.setProperty('--grid-lines', colors.gridLines);
   root.style.setProperty('--accent', colors.accent);
+  // Text/icons on the accent fill. Only themes that cannot use white
+  // (Beacon gold) set this; everyone else keeps the stylesheet fallback.
+  if (colors.accentForeground) {
+    root.style.setProperty('--color-on-accent', colors.accentForeground);
+  } else {
+    root.style.removeProperty('--color-on-accent');
+  }
   root.style.setProperty('--shadow', colors.shadow);
 
   eventColors.forEach((color, i) => {

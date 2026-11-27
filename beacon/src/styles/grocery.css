@@ -92,7 +92,7 @@
   height: 44px;
   border-radius: 50%;
   background: var(--accent, var(--color-blue-full));
-  color: white;
+  color: var(--color-on-accent, #fff);
   border: none;
   cursor: pointer;
   display: flex;
@@ -195,7 +195,7 @@
   justify-content: center;
   flex-shrink: 0;
   transition: all 200ms ease;
-  color: white;
+  color: var(--color-on-accent, #fff);
 }
 
 .grocery-view-checkbox--checked {
