@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import {
   HA_BROWSER_TOKEN_WARNING,
+  buildRuntimeConfig,
   renderRuntimeConfig,
   warnIfBrowserTokenSet,
 } from '../../lib/runtime-config.cjs';
@@ -27,6 +28,27 @@ describe('runtime-config.js', () => {
     expect(js.toLowerCase()).not.toContain('token');
     expect(js).toContain('"family_name":"Adams"');
     expect(js).toContain('"ha_url":"http://192.168.1.20:8123"');
+  });
+
+  it('does not publish token-like env vars or config keys', () => {
+    const sentinel = 'sentinel-secret-xyz';
+    const env = {
+      HA_URL: 'http://192.168.1.20:8123',
+      FAMILY_NAME: 'Adams',
+      HA_TOKEN: sentinel,
+      HA_BROWSER_TOKEN: sentinel,
+      SUPERVISOR_TOKEN: sentinel,
+      BEACON_TOKEN: sentinel,
+    };
+    const config = buildRuntimeConfig(env);
+    const rendered = renderRuntimeConfig(env);
+
+    expect(rendered).not.toContain(sentinel);
+    for (const key of Object.keys(config)) {
+      expect(key, key).not.toMatch(/token|secret|password|key|bearer|auth/i);
+    }
+    expect(rendered).toContain('"ha_url":"http://192.168.1.20:8123"');
+    expect(rendered).toContain('"family_name":"Adams"');
   });
 
   it('logs the deprecation warning when HA_BROWSER_TOKEN is set and stays quiet otherwise', () => {
