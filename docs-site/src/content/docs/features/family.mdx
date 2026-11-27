@@ -25,7 +25,7 @@ Family members are the people in your household. Each member gets a name, an ava
    - **Privilege switch** (children only, **1.45.0** and later): Optionally pick a Home Assistant switch, toggle, light, or fan that turns on when today's chores are done. The default is None. See [Chore privileges](/docs/features/chore-privileges/).
 5. Click **Add Member**
 
-The member is saved immediately to the browser's localStorage and (when possible) synced to Home Assistant input_text helpers.
+The member is saved on the Beacon server, so every display that uses that server sees the same list. See [Data storage](#data-storage).
 
 ---
 
@@ -181,30 +181,24 @@ Removing a member does not delete their chore completions or streak history. How
 
 ## Data storage
 
-Family member data is stored in the browser's localStorage under the key `beacon_family_members`. When a Home Assistant client is connected, Beacon attempts to sync the data to an `input_text.beacon_family_members` helper entity (for payloads under 255 characters).
+Beacon's server keeps family members in `beacon_family_members.json` in its data folder, `/data`: the add-on's own data folder, or the volume you mount at `/data` on Docker. Every display that opens the same Beacon server sees the same family members, and adding or editing someone on one tablet shows up on the others.
 
-For larger families, the data may exceed the HA input_text limit. In that case, localStorage is the sole storage location. This means:
+Each browser also keeps a copy under the localStorage key `beacon_family_members`. Beacon uses it to show the list straight away while it loads the server copy, and as a fallback if the server can't be reached. That copy never includes PINs or PIN hashes. Clearing browser data only removes this copy; the next load fetches the list from the server again.
 
-- Family members are tied to the specific browser/device where they were created
-- Clearing browser data will remove family members
-- To use the same family on multiple displays, set up members on each device separately
-
-> **Tip**: For a production setup, consider using a dedicated tablet that is always on, with browser data persistence enabled.
+When you run the app with the Vite dev server (`npm run dev`), there is no Beacon server, so family members live only in that browser's localStorage.
 
 ---
 
 ## Troubleshooting
 
-### Family members disappear after clearing browser data
+### Family members are missing after an update or a new container
 
-Family data is stored in localStorage. If you clear browser data (cache, cookies, site data), family members will be lost. To avoid this:
-- Use a kiosk browser (like Fully Kiosk) that does not clear data
-- Avoid clearing site data for your Beacon URL
+Family members are kept in Beacon's data folder, not in the browser. On Docker, they survive a new container only if you mounted a volume at `/data`, for example `-v beacon-data:/data`. See [Is my data preserved across updates?](/docs/reference/faq/#is-my-data-preserved-across-updates).
 
 ### The "Add Chore" button does not appear
 
 The Add Chore button appears when there is at least one family member defined. If no members exist, the Chores panel shows "Add family members first to assign chores."
 
-### Changes do not sync across devices
+### Changes do not show on another display
 
-Each device has its own localStorage. Family members added on one tablet will not appear on another. This is a known limitation of the localStorage-based storage approach.
+Displays that open the same Beacon server share one family list. If a display that was already open still shows an old list, reload it. If it still doesn't match, check that it can reach Beacon: while the server can't be reached, a display shows the copy it saved in its own browser.

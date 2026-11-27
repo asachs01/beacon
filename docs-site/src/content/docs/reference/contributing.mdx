@@ -92,7 +92,7 @@ Put `HA_URL` (the Home Assistant base URL, with no `/api` path) and `HA_TOKEN` i
 | Icons | Lucide React | Consistent icon set, tree-shakeable |
 | Date handling | date-fns | Modular, lightweight date utilities |
 | HA Communication | WebSocket API | Real-time bidirectional communication |
-| Container | Alpine Linux + serve | Minimal image size, static file serving |
+| Container | Alpine Linux + Node.js (`server.js`) | Serves the app, proxies allowed Home Assistant calls, stores data in `/data` |
 
 ### Directory structure
 
@@ -115,7 +115,7 @@ beacon/
       photos.ts              # Photo, photo config types
     api/
       homeassistant.ts       # WebSocket client for HA API
-      family.ts              # Family data store (localStorage + HA sync)
+      family.ts              # Family data store (server /beacon-data, localStorage cache)
       grocy.ts               # Grocy REST API client
       anylist.ts             # AnyList REST API client
       music.ts               # Media player API (play, pause, volume, etc.)
@@ -217,7 +217,8 @@ beacon/
                     |  |       |       |
                     +--+-------+-------+
                              |
-                    localStorage (family, chores, theme)
+          Beacon server /beacon-data (family, chores, settings)
+          + localStorage cache and per-device keys
 ```
 
 ### Component tree

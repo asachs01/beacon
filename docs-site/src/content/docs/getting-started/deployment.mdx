@@ -20,12 +20,12 @@ Home Assistant pulls `ghcr.io/asachs01/beacon` for the version in `beacon/config
 
 1. The Dockerfile uses a two-stage build:
    - **Build stage**: Node.js 20 Alpine builds the Vite/React app (`npm ci && npm run build`)
-   - **Runtime stage**: Based on `ghcr.io/hassio-addons/base:16.3.2`, installs Node.js and the `serve` static file server
+   - **Runtime stage**: Based on `ghcr.io/hassio-addons/base:16.3.2`, installs Node.js and copies in Beacon's server (`server.js` and `lib/`)
 2. `run.sh` runs at container start:
    - Reads add-on options from `/data/options.json` via `bashio::config`
    - Generates `runtime-config.js` with the configuration values
    - Injects the script tag into `index.html`
-   - Starts `serve` on port 3000
+   - Starts Beacon's server (`node /app/server.js`) on port 3000. It serves the app, passes allowed requests to Home Assistant, and saves Beacon's data in `/data`
 3. HA's ingress proxy forwards requests from the sidebar panel to port 3000. The add-on doesn't publish a host port by default, and the sidebar panel needs no [pairing](/docs/getting-started/pairing/).
 
 **Health check**: The container includes a health check that runs every 30 seconds:
@@ -282,8 +282,8 @@ You can run Beacon on multiple displays simultaneously. Each display:
 
 - Connects to the same Home Assistant instance
 - Shows the same calendar events (since they come from HA)
-- Has its own independent localStorage (family members, chores, theme preference)
-- Can be configured with different themes or family names
+- Shares the same family members, chores, routines, settings, and meal plans when the displays open the same Beacon server, because Beacon saves them in its data folder
+- Keeps a few things in its own browser only: its [Kid Display](/docs/features/kid-display/) assignment (unless you use the `?display=` URL), manual [countdowns](/docs/features/dashboard/), the timer sound, and a [guest mode](/docs/features/guest-mode/) session
 
 ### Example: Kitchen + Living Room
 
