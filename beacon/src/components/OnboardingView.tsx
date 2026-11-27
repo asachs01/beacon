@@ -88,7 +88,7 @@ const styles = {
     width: '100%',
     padding: '14px 24px',
     background: 'var(--accent)',
-    color: '#ffffff',
+    color: 'var(--color-on-accent, #fff)',
     border: 'none',
     borderRadius: 'var(--radius-md)',
     fontFamily: 'var(--font-family-body)',

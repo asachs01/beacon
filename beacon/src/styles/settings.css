@@ -199,6 +199,7 @@
 
 .settings-toggle input:checked ~ .settings-toggle-thumb {
   transform: translateX(20px);
+  background: var(--color-on-accent, #fff);
 }
 
 /* --- Select dropdown --- */
@@ -319,7 +320,7 @@
 
 .settings-segment-btn--active {
   background: var(--accent);
-  color: white;
+  color: var(--color-on-accent, #fff);
   font-weight: 500;
 }
 
@@ -381,7 +382,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-on-accent, #fff);
 }
 
 /* --- Connection status dot --- */
@@ -559,7 +560,7 @@
 .settings-btn--primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: white;
+  color: var(--color-on-accent, #fff);
 }
 
 .settings-btn--primary:hover {

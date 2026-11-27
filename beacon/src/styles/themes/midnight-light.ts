@@ -9,9 +9,10 @@ export const midnightLight: Theme = {
     text: '#0f172a',
     textSecondary: '#64748b',
     gridLines: '#e2e8f0',
-    accent: '#f59e0b',
+    accent: '#f7a832',
+    accentForeground: '#101d3c',
     headerBg: '#f1f5f9',
-    todayHighlight: 'rgba(245, 158, 11, 0.06)',
+    todayHighlight: 'rgba(247, 168, 50, 0.06)',
     shadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
   },
   eventColors: [

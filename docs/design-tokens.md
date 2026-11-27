@@ -9,7 +9,7 @@ don't reach for an arbitrary Tailwind hex in a component.
 |---|---|---|
 | `--color-ink` | `#0f172a` | Dark neutral — text/bg base |
 | `--color-paper` | `#f8fafc` | Light neutral — bg/surface base |
-| `--color-brand` | `#f59e0b` | Beacon Gold — brand identity |
+| `--color-brand` | `#f7a832` | Beacon Gold — brand identity |
 | `--color-accent` | `#3b82f6` | Primary functional accent — links, focus, primary actions, info |
 | `--color-cat-sage` | `#10b981` | Category color 1 (calendar/family member) |
 | `--color-cat-lavender` | `#8b5cf6` | Category color 2 |
@@ -24,8 +24,9 @@ Cut from the original 14: `Ocean #3b82f6` (literal duplicate of Soft Blue/accent
 `Info #06b6d4` (folded into `--color-accent` — info and primary accent serve the
 same "neutral informative" register on a dashboard this size).
 
-`Warning` was `#f59e0b` (a literal duplicate of Brand Gold) — changed to
-`#d97706` so a warning banner is never visually identical to the brand mark.
+`Warning` was `#f59e0b`, which at the time was a literal duplicate of Brand Gold.
+It changed to `#d97706` so a warning banner is never visually identical to the
+brand mark. Brand Gold is now `#f7a832` (`--color-brand`); Warning does not share that value.
 
 ## Typography
 

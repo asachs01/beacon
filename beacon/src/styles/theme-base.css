@@ -27,6 +27,9 @@
   /* Structure */
   --grid-lines: #e5e5e5;
   --accent: #3b82f6;
+  /* --color-on-accent is set by useTheme when a theme's accent cannot hold
+     white text. Beacon Dark and Beacon Light set #101d3c (navy on #f7a832).
+     Leave it unset here so other themes keep their per-control fallbacks. */
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
   /* Event / family member colors */

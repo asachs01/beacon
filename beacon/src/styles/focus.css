@@ -163,7 +163,7 @@
   height: 32px;
   border-radius: 50%;
   border: 3px solid var(--focus-accent, var(--accent));
-  color: #fff;
+  color: var(--color-on-accent, #fff);
   transition: all 150ms ease;
 }
 

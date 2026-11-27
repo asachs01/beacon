@@ -919,12 +919,14 @@ a:focus:not(:focus-visible) {
 .event-details-popover-btn--primary {
   background: var(--accent, #3b82f6);
   border-color: var(--accent, #3b82f6);
-  color: #fff;
+  color: var(--color-on-accent, #fff);
 }
 
 .event-details-popover-btn--primary:hover {
   background: var(--accent-hover, #2563eb);
   border-color: var(--accent-hover, #2563eb);
+  /* Hover fill is the blue fallback, not brand gold, so white stays readable. */
+  color: #fff;
 }
 
 /* Column Headers */
@@ -2465,7 +2467,7 @@ a:focus:not(:focus-visible) {
 
 .calendar-view-switcher-btn--active {
   background: var(--accent);
-  color: #ffffff;
+  color: var(--color-on-accent, #fff);
 }
 
 .month-day-popover-backdrop {
@@ -2525,7 +2527,7 @@ a:focus:not(:focus-visible) {
   margin: 12px 16px 16px;
   background: var(--accent);
   border-color: var(--accent);
-  color: #ffffff;
+  color: var(--color-on-accent, #fff);
 }
 
 .month-day-popover-list {
