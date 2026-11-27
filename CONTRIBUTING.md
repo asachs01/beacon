@@ -42,11 +42,11 @@ The built files land in the `dist/` directory.
 
 ## Docs site URL
 
-The public docs site is built from `docs-site/` and hosted on Netlify. Its origin is `SITE_URL`, read by `docs-site/site.config.mjs`. When the variable is unset, the build uses `https://beacon-family-docs.netlify.app`. Astro's `site`, canonical links, Open Graph and Twitter URLs, JSON-LD, the sitemap, `robots.txt`, and `llms.txt` / `llms-full.txt` all use that value.
+The public docs site is built from `docs-site/` and is served at `https://beaconfamily.app`. Its origin is `SITE_URL`, read by `docs-site/site.config.mjs`. When the variable is unset, the build uses `https://beaconfamily.app`. Astro's `site`, canonical links, Open Graph and Twitter URLs, JSON-LD, the sitemap, `robots.txt`, and `llms.txt` / `llms-full.txt` all use that value.
 
 To switch domains:
 
-1. Set `SITE_URL` to the new origin with no trailing slash, for example `https://beaconboard.app`.
+1. Set `SITE_URL` to the new origin with no trailing slash, for example `https://beaconfamily.app`.
 2. In Netlify, add `SITE_URL` under Site configuration → Environment variables. This repo builds the site in GitHub Actions and then uploads `docs-site/dist` (`.github/workflows/deploy-docs.yml`), so also set the same value as a GitHub repository variable named `SITE_URL` (Settings → Secrets and variables → Actions → Variables). The workflow passes that variable into the build. Leave it empty to keep the default.
 3. When the new domain is permanent, change `DEFAULT_SITE_URL` in `docs-site/site.config.mjs`. That is the only line in the docs site that should contain the host.
 4. Keep the wording in `docs-site/llms/*.txt` and write docs links with the `__SITE_URL__` token. The build substitutes `SITE_URL`. Do not paste the host into those files.

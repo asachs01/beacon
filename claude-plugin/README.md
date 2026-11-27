@@ -32,7 +32,7 @@ Control your [Beacon](https://github.com/asachs01/beacon) family dashboard from 
 
 ## Documentation
 
-- [Dashboard](https://beacon-family-docs.netlify.app/docs/features/dashboard/)
-- [Chores](https://beacon-family-docs.netlify.app/docs/features/chores/)
-- [Calendar](https://beacon-family-docs.netlify.app/docs/features/calendar/)
-- [AI Integration](https://beacon-family-docs.netlify.app/docs/reference/ai-integration/)
+- [Dashboard](https://beaconfamily.app/docs/features/dashboard/)
+- [Chores](https://beaconfamily.app/docs/features/chores/)
+- [Calendar](https://beaconfamily.app/docs/features/calendar/)
+- [AI Integration](https://beaconfamily.app/docs/reference/ai-integration/)

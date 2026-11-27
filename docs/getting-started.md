@@ -2,7 +2,7 @@
 
 A visual walkthrough of Beacon — your family's daily signal. This guide shows you what to expect after installation, with annotated screenshots of every major view at both desktop and mobile sizes.
 
-> **Looking for installation instructions?** See the [README](../README.md) for quick-start steps, or the [full Getting Started guide](https://beacon-family-docs.netlify.app/docs/getting-started/) on the docs site for detailed setup (Google Calendar, Docker, development, tablet mounting, and more).
+> **Looking for installation instructions?** See the [README](../README.md) for quick-start steps, or the [full Getting Started guide](https://beaconfamily.app/docs/getting-started/) on the docs site for detailed setup (Google Calendar, Docker, development, tablet mounting, and more).
 
 ---
 
@@ -254,8 +254,8 @@ To change themes:
 
 ## Next Steps
 
-- **[Android app](https://beacon-family-docs.netlify.app/docs/getting-started/android/)** -- sideload the signed APK, verify the checksum, and point it at Home Assistant
+- **[Android app](https://beaconfamily.app/docs/getting-started/android/)** -- sideload the signed APK, verify the checksum, and point it at Home Assistant
 - **[README](../README.md)** -- installation, features overview, and project info
 - **[Changelog](../CHANGELOG.md)** -- release history
 - **[Contributing](../CONTRIBUTING.md)** -- how to contribute to Beacon
-- **[Docs Site](https://beacon-family-docs.netlify.app/)** -- full documentation with detailed guides for every feature
+- **[Docs Site](https://beaconfamily.app/)** -- full documentation with detailed guides for every feature

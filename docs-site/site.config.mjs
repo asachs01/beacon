@@ -6,7 +6,7 @@
  * `site`, canonical and Open Graph URLs, JSON-LD, the sitemap, robots.txt,
  * and llms.txt all read this module.
  */
-export const DEFAULT_SITE_URL = "https://beacon-family-docs.netlify.app";
+export const DEFAULT_SITE_URL = "https://beaconfamily.app";
 
 /** Placeholder in docs-site/llms templates. The build replaces it with SITE_URL. */
 export const SITE_URL_TOKEN = "__SITE_URL__";
