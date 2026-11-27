@@ -69,6 +69,12 @@ function loadStored(key: string, fallback: string): string {
   }
 }
 
+/** Theme from the public runtime script, used before a device has saved one. */
+function publicBootTheme(): string {
+  const theme = window.__BEACON_CONFIG__?.theme;
+  return typeof theme === 'string' && theme.trim() !== '' ? theme : 'skylight';
+}
+
 function persist(key: string, value: string): void {
   try {
     localStorage.setItem(key, value);
@@ -93,7 +99,7 @@ export function applyStoredTheme(): void {
     }
   } catch { /* ignore */ }
 
-  const storedId = loadStored(THEME_STORAGE_KEY, 'skylight');
+  const storedId = loadStored(THEME_STORAGE_KEY, publicBootTheme());
   // Also check the settings object for themeId (useSettings stores it there)
   let themeId = storedId;
   try {

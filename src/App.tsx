@@ -48,6 +48,7 @@ import { getFocusMemberId, clearFocusMode, setDeviceFocusMember } from './focus'
 import { CalendarEvent, resolveCalendarColor, normalizeCalendarLayout, type CalendarLayout } from './types';
 import { buildMonthGrid } from './utils/month-grid';
 import { getConfig, patchConfig } from './config';
+import { loadProtectedRuntimeConfig } from './api/runtime-config';
 import { I18nContext, createI18n } from './i18n';
 import { HiddenCornerGesture } from './components/HiddenCornerGesture';
 import { GuestBadge } from './components/GuestBadge';
@@ -63,9 +64,67 @@ import { normalizeNavigateView } from './voice/assist';
 import { PairDeviceScreen } from './components/PairDeviceScreen';
 import { useDevicePairing } from './hooks/useDevicePairing';
 
-const config = getConfig();
+function bootLocale(): string {
+  try {
+    const raw = localStorage.getItem('beacon-settings');
+    if (!raw) return 'en-US';
+    const parsed = JSON.parse(raw) as { locale?: unknown };
+    return typeof parsed.locale === 'string' && parsed.locale ? parsed.locale : 'en-US';
+  } catch {
+    return 'en-US';
+  }
+}
 
+function BootScreen() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
+      <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
+    </div>
+  );
+}
+
+/**
+ * The public script only has the pairing-screen chrome. Weather, photos,
+ * the screen saver, and the Home Assistant URL are merged from the protected
+ * endpoint once this browser is paired, on ingress, or when the native shell
+ * falls through to ready — and before the dashboard reads them.
+ */
 export function App() {
+  const demoMode = import.meta.env.VITE_DEMO === 'true';
+  const pairing = useDevicePairing(!demoMode);
+  const [runtimeReady, setRuntimeReady] = useState(demoMode);
+
+  useEffect(() => {
+    if (demoMode) return;
+    if (pairing.status !== 'ready') {
+      setRuntimeReady(false);
+      return;
+    }
+    let cancelled = false;
+    loadProtectedRuntimeConfig().finally(() => {
+      if (!cancelled) setRuntimeReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [demoMode, pairing.status]);
+
+  if (!demoMode && (pairing.status === 'checking' || (pairing.status === 'ready' && !runtimeReady))) {
+    return <BootScreen />;
+  }
+
+  if (pairing.status === 'required') {
+    return (
+      <I18nContext.Provider value={createI18n(bootLocale())}>
+        <PairDeviceScreen onPaired={pairing.markReady} />
+      </I18nContext.Provider>
+    );
+  }
+
+  return <BeaconApp />;
+}
+
+function BeaconApp() {
   const auth = useHaAuth();
   const { client, connected } = useHomeAssistant();
   const { isIngress, compact } = useIngressDetect();
@@ -120,7 +179,6 @@ export function App() {
   });
 
   const demoMode = import.meta.env.VITE_DEMO === 'true';
-  const pairing = useDevicePairing(!demoMode);
 
   // Merge HA + local calendars and events. The screenshot build substitutes
   // the fictional Rivera calendars so each family column has its own color.
@@ -719,21 +777,9 @@ export function App() {
     />
   );
 
-  // Show loading screen while checking stored credentials or device pairing.
-  if (auth.state.loading || pairing.status === 'checking') {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
-      </div>
-    );
-  }
-
-  if (pairing.status === 'required') {
-    return (
-      <I18nContext.Provider value={i18n}>
-        <PairDeviceScreen onPaired={pairing.markReady} />
-      </I18nContext.Provider>
-    );
+  // Show loading screen while checking stored credentials.
+  if (auth.state.loading) {
+    return <BootScreen />;
   }
 
   // Show onboarding ONLY when running as a standalone app with no HA connection configured.
@@ -922,7 +968,7 @@ export function App() {
             onUpdateMember={updateMember}
             onRemoveMember={removeMember}
             connected={connected}
-            haUrl={config.ha_url}
+            haUrl={getConfig().ha_url}
             calendars={calendars}
             onEnterFocusMode={handleEnterFocusMode}
           />

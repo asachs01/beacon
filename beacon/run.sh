@@ -64,7 +64,10 @@ fi
 export HA_URL FAMILY_NAME SAVE_CONFIG_IN_BROWSER THEME AUTO_DARK_MODE \
   WEATHER_ENTITY PHOTO_DIRECTORY PHOTO_INTERVAL SCREEN_SAVER_TIMEOUT HA_TOKEN
 
-# Generate runtime-config.js. lib/runtime-config.cjs never writes a token.
+# Generate runtime-config.js. lib/runtime-config.cjs never writes a token,
+# the Home Assistant URL, or house settings. The script is family name,
+# theme, and auto dark mode. The shell loads the rest from
+# GET /beacon-api/runtime-config after a session or ingress.
 # The Home Assistant token stays in the server environment.
 CONFIG_JS="/app/dist/runtime-config.js"
 node -e "

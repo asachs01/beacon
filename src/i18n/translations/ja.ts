@@ -809,7 +809,7 @@ export const ja: Record<TranslationKey, string> = {
   'settings.devices.title': 'ペアリング済みの端末',
   'settings.devices.desc': '端末は家族の PIN またはペアリングコードで一度だけペアリングします。解除すると、開いている接続を含めてすぐにサインアウトします。',
   'settings.devices.pairingCodeLabel': 'ペアリングコード',
-  'settings.devices.pairingCodeSublabel': '起動時の Beacon ログにも表示されます。このコードか家族の PIN を知っている人は端末をペアリングできます。新しいコードを作ると以前のコードは無効になります。',
+  'settings.devices.pairingCodeSublabel': '起動時の Beacon ログにも表示されます。このコードか家族の PIN を知っている人は端末をペアリングできます。「ペアリングコードを更新」で現在のコードは無効になります。ペアリング済みの端末とアクセストークンはサインインしたままです。',
   'settings.devices.regenerate': 'ペアリングコードを更新',
   'settings.devices.rotateConfirm': 'ペアリングコードを更新しますか？現在のコードはすぐに使えなくなります。ペアリング済みの端末とアクセストークンはそのまま使えます。',
   'settings.devices.regenerated': 'ペアリングコードを更新しました。以前のコードは使えません。',

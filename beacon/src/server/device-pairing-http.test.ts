@@ -183,6 +183,7 @@ describe('device pairing on the Beacon server', () => {
       '/beacon-api/google-photos',
       '/beacon-api/google-photos/photos',
       '/beacon-api/google-photos/file/abc/one.jpg',
+      '/beacon-api/runtime-config',
       '/beacon-auth/devices',
       '/beacon-auth/pairing-code',
       '/beacon-auth/pairing-code/rotate',
@@ -475,6 +476,77 @@ describe('device pairing on the Beacon server', () => {
     expect(beacon.logs.text).toContain('Mode: standalone');
   });
 
+  it('serves public runtime-config.js without house settings and the full config with a session', async () => {
+    const ha = await startDummyHa();
+    closers.push(ha.close);
+    const beacon = await startBeacon({
+      SUPERVISOR_TOKEN: 'supervisor-token',
+      HA_API_BASE_OVERRIDE: ha.url,
+      HA_WS_URL_OVERRIDE: ha.url.replace(/^http/, 'ws') + '/api/websocket',
+      HA_URL: 'http://192.168.1.50:8123',
+      HA_TOKEN: 'supervisor-or-long-lived-token',
+      HA_BROWSER_TOKEN: 'browser-token-do-not-publish',
+      FAMILY_NAME: 'Adams',
+      THEME: 'midnight',
+      AUTO_DARK_MODE: 'false',
+      SAVE_CONFIG_IN_BROWSER: 'false',
+      WEATHER_ENTITY: 'weather.kitchen',
+      PHOTO_DIRECTORY: '/media/beacon/vacation',
+      PHOTO_INTERVAL: '45',
+      SCREEN_SAVER_TIMEOUT: '12',
+    });
+    children.push(beacon.child);
+    const base = `http://127.0.0.1:${beacon.port}`;
+
+    const pub = await fetch(`${base}/runtime-config.js`);
+    expect(pub.status).toBe(200);
+    const js = await pub.text();
+    expect(js.startsWith('window.__BEACON_CONFIG__ = ')).toBe(true);
+    expect(js).not.toContain('__BEACON_RUNTIME__');
+    expect(js).not.toContain('browser-token-do-not-publish');
+    expect(js).not.toContain('supervisor-or-long-lived-token');
+    expect(js).not.toContain('ha_url');
+    expect(js).not.toContain('weather.kitchen');
+    expect(js).not.toContain('/media/beacon/vacation');
+    const parsed = JSON.parse(js.slice('window.__BEACON_CONFIG__ = '.length, -1)) as Record<string, unknown>;
+    expect(Object.keys(parsed).sort()).toEqual(['auto_dark_mode', 'family_name', 'theme']);
+    expect(parsed).toEqual({
+      family_name: 'Adams',
+      theme: 'midnight',
+      auto_dark_mode: false,
+    });
+
+    const denied = await fetch(`${base}/beacon-api/runtime-config`);
+    expect(denied.status).toBe(401);
+    expect(await denied.json()).toEqual({ error: 'pairing_required' });
+
+    const paired = await fetch(`${base}/beacon-auth/pair`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: '1234', label: 'Kitchen tablet' }),
+    });
+    expect(paired.status).toBe(200);
+    const session = await paired.json() as { token: string };
+    const authed = await fetch(`${base}/beacon-api/runtime-config`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
+    expect(authed.status).toBe(200);
+    const body = await authed.json();
+    expect(body).toEqual({
+      ha_url: 'http://192.168.1.50:8123',
+      family_name: 'Adams',
+      save_config_in_browser: false,
+      theme: 'midnight',
+      auto_dark_mode: false,
+      weather_entity: 'weather.kitchen',
+      photo_directory: '/media/beacon/vacation',
+      photo_interval: 45,
+      screen_saver_timeout: 12,
+    });
+    expect(JSON.stringify(body)).not.toContain('supervisor-or-long-lived-token');
+    expect(body).not.toHaveProperty('ha_token');
+  });
+
   it('serves the pairing shell without a session and accepts a bearer token on an unknown path', async () => {
     const beacon = await boot();
     const base = `http://127.0.0.1:${beacon.port}`;
@@ -483,7 +555,7 @@ describe('device pairing on the Beacon server', () => {
       ['/index.html', 'Beacon'],
       ['/favicon.svg', 'beacon-icon'],
       ['/manifest.json', 'Beacon'],
-      ['/runtime-config.js', '__BEACON_RUNTIME__'],
+      ['/runtime-config.js', 'window.__BEACON_CONFIG__'],
       ['/assets/index.js', 'beacon-asset'],
       ['/assets/inter.woff2', 'woff2'],
       ['/sw.js', 'beacon-sw'],

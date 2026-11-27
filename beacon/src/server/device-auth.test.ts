@@ -73,6 +73,7 @@ describe('route classification', () => {
     '/beacon-api/google-photos/refresh',
     '/beacon-api/google-photos/file/abc/one.jpg',
     '/beacon-api/home-sensors/entities',
+    '/beacon-api/runtime-config',
     '/beacon-auth/devices',
     '/beacon-auth/devices/revoke',
     '/beacon-auth/pairing-code',

@@ -47,7 +47,7 @@ const {
   readPresentedToken,
   retryAfterSeconds,
 } = require('./lib/device-auth.cjs');
-const { warnIfBrowserTokenSet } = require('./lib/runtime-config.cjs');
+const { warnIfBrowserTokenSet, buildRuntimeConfig, renderRuntimeConfig } = require('./lib/runtime-config.cjs');
 const { ADDED_LOG, ensureBeaconToken } = require('./lib/ha-secrets-token.cjs');
 
 // BEACON_PORT is for tests. The add-on keeps listening on 3000.
@@ -164,6 +164,33 @@ function handleHealth(req, res) {
     return;
   }
   json(res, 200, { ok: true });
+}
+
+/**
+ * Public script the pairing screen loads. Display chrome only.
+ * A file left in dist/ is not served: env is the source of truth, so a
+ * stale runtime-config.js cannot put the Home Assistant URL back in public.
+ */
+function handlePublicRuntimeConfig(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  const body = renderRuntimeConfig(process.env);
+  res.writeHead(200, {
+    'Content-Type': 'application/javascript; charset=utf-8',
+    'Cache-Control': 'no-store',
+  });
+  res.end(req.method === 'HEAD' ? undefined : body);
+}
+
+/** Full add-on/standalone config. The session gate already ran. */
+function handleProtectedRuntimeConfig(req, res) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    json(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+  json(res, 200, buildRuntimeConfig(process.env));
 }
 
 function handleSessionStatus(req, res) {
@@ -1315,6 +1342,10 @@ const server = http.createServer((req, res) => {
     handleHealth(req, res);
     return;
   }
+  if (pathname === '/runtime-config.js') {
+    handlePublicRuntimeConfig(req, res);
+    return;
+  }
   if (pathname === '/beacon-auth/pair') {
     handlePair(req, res);
     return;
@@ -1395,6 +1426,12 @@ const server = http.createServer((req, res) => {
   // Persistent data API
   if (req.url.startsWith('/beacon-data/')) {
     handleDataApi(req, res);
+    return;
+  }
+
+  // Full runtime config. Same session, access token, or ingress gate as other /beacon-api routes.
+  if (pathname === '/beacon-api/runtime-config') {
+    handleProtectedRuntimeConfig(req, res);
     return;
   }
 

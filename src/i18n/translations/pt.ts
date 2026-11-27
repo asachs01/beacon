@@ -809,7 +809,7 @@ export const pt: Record<TranslationKey, string> = {
   'settings.devices.title': 'Dispositivos emparelhados',
   'settings.devices.desc': 'Um dispositivo emparelha-se uma vez com um PIN da família ou o código de emparelhamento. Revogá-lo termina a sessão de imediato, incluindo ligações abertas.',
   'settings.devices.pairingCodeLabel': 'Código de emparelhamento',
-  'settings.devices.pairingCodeSublabel': 'Também aparece no registo do Beacon no arranque. Quem tiver este código ou um PIN da família pode emparelhar um dispositivo. Gere um código novo para invalidar o anterior.',
+  'settings.devices.pairingCodeSublabel': 'Também aparece no registo do Beacon no arranque. Quem tiver este código ou um PIN da família pode emparelhar um dispositivo. Use Renovar código de emparelhamento para invalidar o código atual. Os dispositivos emparelhados e os tokens de acesso mantêm a sessão.',
   'settings.devices.regenerate': 'Renovar código de emparelhamento',
   'settings.devices.rotateConfirm': 'Renovar o código de emparelhamento? O código atual deixa de funcionar de imediato. Dispositivos emparelhados e tokens de acesso continuam ligados.',
   'settings.devices.regenerated': 'O código de emparelhamento foi atualizado. O código anterior deixou de funcionar.',

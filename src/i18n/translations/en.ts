@@ -827,7 +827,7 @@ export const en = {
   'settings.devices.title': 'Paired devices',
   'settings.devices.desc': 'A device pairs once with a family PIN or the pairing code. Revoking it signs that device out immediately, including open connections.',
   'settings.devices.pairingCodeLabel': 'Pairing code',
-  'settings.devices.pairingCodeSublabel': 'Also printed in the Beacon log at startup. Anyone with this code or a family PIN can pair a device. Generate a new code to invalidate the old one.',
+  'settings.devices.pairingCodeSublabel': 'Also printed in the Beacon log at startup. Anyone with this code or a family PIN can pair a device. Choose Rotate pairing code to invalidate the current code. Paired devices and access tokens stay signed in.',
   'settings.devices.regenerate': 'Rotate pairing code',
   'settings.devices.rotateConfirm': 'Rotate the pairing code? The current code stops working immediately. Paired devices and access tokens stay signed in.',
   'settings.devices.regenerated': 'The pairing code was updated. The previous code no longer works.',
