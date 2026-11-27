@@ -97,7 +97,7 @@ On the Home Assistant add-on, the plan is `beacon_meal_plans.json` in the add-on
 
 ## One-time migration
 
-The first time Beacon rewrites an existing plan, it makes a copy first. On the add-on, that copy is `beacon_meal_plans.bak.json` in the same `/data` folder. A later rewrite does not replace that backup. In a standalone browser, the same one-time copy is stored as `beacon_meal_plans.bak` in the browser's local storage.
+The first time Beacon rewrites an existing plan, it makes a copy first. That copy is `beacon_meal_plans.bak.json` in the same `/data` folder, on the add-on and on Docker or standalone installs alike. A later rewrite does not replace that backup. The browser also keeps a one-time copy as `beacon_meal_plans.bak` in its local storage.
 
 On load, Beacon fills in missing meal ids. If an older unused `meal-plan.json` (or the standalone `meal-plan` store) is still around, those meals are imported when they are not already in the plan (matched on date, meal type, and name). An empty plan receives all of them. That file is not deleted. Recipes from that older file are copied into `beacon_recipes` only if that store is empty.
 
