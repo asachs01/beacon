@@ -24,6 +24,8 @@ You don't need to pair if you open Beacon from the **Home Assistant sidebar** (i
 After you update, a wall tablet that opens Beacon directly on its port shows the pairing screen once. Pair it and it carries on as before. Tablets that open Beacon through the Home Assistant sidebar are not affected.
 :::
 
+From Beacon **1.54.2**, anything that isn't on Beacon's short public list needs a paired device or an [access token](#access-tokens-for-automations). The public list is just what the pairing screen needs to load. Opening Beacon from the Home Assistant sidebar still works without pairing, and automations that send `beacon_token` keep working.
+
 ## How to pair
 
 1. Open Beacon on the new device. The **Pair this device** screen appears.
@@ -38,7 +40,9 @@ If you get it wrong, the screen says **That PIN or code did not match.**
 - **In the log.** Beacon prints `Beacon pairing code: NNNNNN` each time it starts. For the add-on, open **Settings → Add-ons → Beacon → Log**. For Docker, run `docker logs beacon` (use your container's name).
 - **On a screen that's already paired.** Open **Settings → Devices**. The code is shown under **Pairing code**.
 
-Choose **New code** in **Settings → Devices** to make a new code. The old code stops working right away. Devices that are already paired are not affected.
+### Rotate the pairing code
+
+From Beacon **1.54.2**, open **Settings → Devices** and choose **Rotate pairing code** under **Pairing code**. Beacon asks you to confirm: the current code stops working immediately, and paired devices and access tokens stay signed in. Once it's done, Beacon shows the new code and says **The pairing code was updated. The previous code no longer works.** Rotate it after a guest has seen the code, or any time you're not sure who has it.
 
 ## What an unpaired device can see
 
@@ -60,7 +64,7 @@ Open **Settings → Devices**. Each paired device is listed with when it was las
 
 Choose **Revoke** next to a device to sign it out. It takes effect immediately, including for a screen that's open right now, and that screen goes back to **Pair this device**. To use it again, pair it again.
 
-Revoke a device when you sell a tablet, lose a phone, or just aren't sure what it is. Choose **New code** as well if you think someone you didn't intend has the code.
+Revoke a device when you sell a tablet, lose a phone, or just aren't sure what it is. Choose **Rotate pairing code** as well if you think someone you didn't intend has the code.
 
 ## Access tokens for automations
 

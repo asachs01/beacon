@@ -190,7 +190,7 @@ Beacon is designed for **landscape displays** (16:9 or 16:10). In portrait mode,
 
 ### Why is Beacon asking me to pair this device?
 
-**From Beacon 1.54.0, a device that opens Beacon directly on its port pairs once.** That covers Docker and standalone installs, the native iOS and Android apps, and any add-on where you mapped the port by hand. Enter a family PIN or the 6-digit pairing code. The code is printed in the Beacon log at startup (`Beacon pairing code: NNNNNN`) and shown in **Settings → Devices** on a screen that's already paired. After you pair, the device stays paired until you choose **Revoke** in **Settings → Devices**. Opening Beacon from the Home Assistant sidebar needs no pairing. After an update, a wall tablet that opens Beacon directly shows the pairing screen once. See [Pairing a device](/docs/getting-started/pairing/).
+**From Beacon 1.54.0, a device that opens Beacon directly on its port pairs once.** That covers Docker and standalone installs, the native iOS and Android apps, and any add-on where you mapped the port by hand. Enter a family PIN or the 6-digit pairing code. The code is printed in the Beacon log at startup (`Beacon pairing code: NNNNNN`) and shown in **Settings → Devices** on a screen that's already paired. After you pair, the device stays paired until you choose **Revoke** in **Settings → Devices**. Opening Beacon from the Home Assistant sidebar needs no pairing. From Beacon 1.54.2, anything beyond the pairing screen needs a paired device or an access token; automations that send `beacon_token` keep working. After an update, a wall tablet that opens Beacon directly shows the pairing screen once. See [Pairing a device](/docs/getting-started/pairing/).
 
 ### Does it send notifications?
 
