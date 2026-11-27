@@ -1,35 +1,48 @@
 import { visit } from 'unist-util-visit';
 import { toString } from 'mdast-util-to-string';
 
-/** Turn Starlight-style :::caution ... ::: fences into a styled <aside>. */
+/**
+ * Turn Starlight-style callout fences into styled <aside> elements:
+ *
+ *   :::caution            :::note[Custom title]
+ *   Body text.            Body with `code` and [links](/docs/).
+ *   :::                   :::
+ *
+ * Supported kinds: caution, note. Inner markdown (inline code, links,
+ * emphasis, lists) is kept as-is.
+ */
+const KINDS = { caution: 'Caution', note: 'Note' };
+const OPEN = /^:::(caution|note)(?:\[([^\]\n]*)\])?[ \t]*$/;
+
 export function remarkCaution() {
   return (tree) => {
     visit(tree, (node) => {
       if (!Array.isArray(node.children) || node.children.length === 0) return;
-      if (node.type === 'caution') return;
+      if (node.type === 'callout') return;
 
       const next = [];
       const children = node.children;
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
-        const compact = compactCaution(child);
+        const compact = compactCallout(child);
         if (compact) {
           next.push(compact);
           continue;
         }
-        if (isFence(child, ':::caution')) {
+        const open = openFence(child);
+        if (open) {
           const inner = [];
           let j = i + 1;
           let closed = false;
           for (; j < children.length; j++) {
-            if (isFence(children[j], ':::')) {
+            if (isClose(children[j])) {
               closed = true;
               break;
             }
             inner.push(children[j]);
           }
           if (closed) {
-            next.push(cautionNode(inner));
+            next.push(calloutNode(open.kind, open.title, inner));
             i = j;
             continue;
           }
@@ -41,31 +54,50 @@ export function remarkCaution() {
   };
 }
 
-function isFence(node, value) {
-  return node?.type === 'paragraph' && toString(node).trim() === value;
-}
-
-/** One paragraph that contains the whole :::caution ... ::: fence. */
-function compactCaution(node) {
+function openFence(node) {
   if (node?.type !== 'paragraph') return null;
-  const text = toString(node).replace(/\r\n/g, '\n').trim();
-  const match = /^:::caution[ \t]*\n([\s\S]*?)\n[ \t]*:::$/.exec(text);
-  if (!match) return null;
-  const body = match[1].trim();
-  if (!body) return null;
-  return cautionNode([{
-    type: 'paragraph',
-    children: [{ type: 'text', value: body }],
-  }]);
+  const m = OPEN.exec(toString(node).trim());
+  return m ? { kind: m[1], title: m[2] } : null;
 }
 
-function cautionNode(inner) {
+function isClose(node) {
+  return node?.type === 'paragraph' && toString(node).trim() === ':::';
+}
+
+/**
+ * One paragraph holding the whole fence (no blank lines inside). The first
+ * text child starts with ":::kind[title]\n" and the last ends with "\n:::".
+ * Trim those markers off and keep every other inline node untouched.
+ */
+function compactCallout(node) {
+  if (node?.type !== 'paragraph' || node.children.length === 0) return null;
+  const first = node.children[0];
+  const last = node.children[node.children.length - 1];
+  if (first.type !== 'text' || last.type !== 'text') return null;
+
+  const head = /^:::(caution|note)(?:\[([^\]\n]*)\])?[ \t]*\r?\n/.exec(first.value);
+  if (!head) return null;
+  const tail = /\r?\n[ \t]*:::[ \t]*$/;
+  const lastValue = first === last ? first.value.slice(head[0].length) : last.value;
+  if (!tail.test(lastValue)) return null;
+
+  const kids = node.children.map((c) => ({ ...c }));
+  kids[0].value = kids[0].value.slice(head[0].length);
+  const end = kids.length - 1;
+  kids[end].value = kids[end].value.replace(tail, '');
+  const body = kids.filter((c) => !(c.type === 'text' && c.value === ''));
+  if (body.length === 0) return null;
+
+  return calloutNode(head[1], head[2], [{ type: 'paragraph', children: body }]);
+}
+
+function calloutNode(kind, title, inner) {
   return {
-    type: 'caution',
+    type: 'callout',
     data: {
       hName: 'aside',
       hProperties: {
-        className: ['docs-caution'],
+        className: [`docs-${kind}`],
         role: 'note',
       },
     },
@@ -73,9 +105,9 @@ function cautionNode(inner) {
       {
         type: 'paragraph',
         data: {
-          hProperties: { className: ['docs-caution-title'] },
+          hProperties: { className: [`docs-${kind}-title`] },
         },
-        children: [{ type: 'text', value: 'Caution' }],
+        children: [{ type: 'text', value: (title && title.trim()) || KINDS[kind] }],
       },
       ...inner,
     ],

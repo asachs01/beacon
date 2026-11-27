@@ -243,6 +243,44 @@ code, pre {
   color: var(--td-text);
 }
 
+/* Starlight-style :::note callout */
+.docs-note {
+  margin: 1.25rem 0;
+  padding: 0.85rem 1rem 0.95rem 1rem;
+  border-left: 4px solid var(--td-info);
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--td-info) 12%, var(--td-bg));
+  color: var(--td-text);
+  font-style: normal;
+}
+.prose .docs-note {
+  font-style: normal;
+  color: var(--td-text);
+}
+.docs-note-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.45rem;
+  font-weight: 700;
+  font-style: normal;
+  color: color-mix(in srgb, var(--td-info) 70%, var(--td-text));
+}
+.docs-note-title::before {
+  content: "";
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  background: currentColor;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M12 16v-4'/><path d='M12 8h.01'/></svg>") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><path d='M12 16v-4'/><path d='M12 8h.01'/></svg>") center / contain no-repeat;
+}
+.prose .docs-note p {
+  margin: 0;
+  font-style: normal;
+  color: var(--td-text);
+}
+
 /* Copy button for code blocks */
 .copy-button {
   position: absolute;
