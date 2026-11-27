@@ -134,6 +134,13 @@ Additional settings (themes, family members, chores, calendar sources, list prov
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [License](LICENSE)
 
+## Getting help
+
+- Questions and setup help: [Discussions Q&A](https://github.com/asachs01/beacon/discussions/categories/q-a)
+- Feature ideas: [Discussions Ideas](https://github.com/asachs01/beacon/discussions/categories/ideas)
+- Share your setup: [Discussions Show your setup](https://github.com/asachs01/beacon/discussions/categories/show-your-setup)
+- Bug reports: [GitHub issues](https://github.com/asachs01/beacon/issues)
+
 ## Contributing
 
 Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) before submitting a pull request.

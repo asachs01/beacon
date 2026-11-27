@@ -10,7 +10,7 @@ Found something broken? Please [open an issue](https://github.com/asachs01/beaco
 
 ### Suggesting Features
 
-Have an idea that would make Beacon better for your family? [Open a feature request](https://github.com/asachs01/beacon/issues/new?template=feature_request.md). We'd love to hear how you use Beacon and what would make it more useful.
+Have an idea that would make Beacon better for your family? [Start a discussion in Ideas](https://github.com/asachs01/beacon/discussions/categories/ideas). We'd love to hear how you use Beacon and what would make it more useful.
 
 ### Submitting Changes
 
@@ -46,7 +46,7 @@ The public docs site is built from `docs-site/` and is served at `https://beacon
 
 To switch domains:
 
-1. Set `SITE_URL` to the new origin with no trailing slash, for example `https://beaconfamily.app`.
+1. Set `SITE_URL` to the new origin with no trailing slash, for example `https://docs.example.org`.
 2. In Netlify, add `SITE_URL` under Site configuration → Environment variables. This repo builds the site in GitHub Actions and then uploads `docs-site/dist` (`.github/workflows/deploy-docs.yml`), so also set the same value as a GitHub repository variable named `SITE_URL` (Settings → Secrets and variables → Actions → Variables). The workflow passes that variable into the build. Leave it empty to keep the default.
 3. When the new domain is permanent, change `DEFAULT_SITE_URL` in `docs-site/site.config.mjs`. That is the only line in the docs site that should contain the host.
 4. Keep the wording in `docs-site/llms/*.txt` and write docs links with the `__SITE_URL__` token. The build substitutes `SITE_URL`. Do not paste the host into those files.
@@ -115,6 +115,6 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
 ## Questions?
 
-Not sure about something? Feel free to [open a discussion](https://github.com/asachs01/beacon/discussions) or comment on an existing issue. There are no dumb questions here.
+Not sure about something? Ask in [Discussions Q&A](https://github.com/asachs01/beacon/discussions/categories/q-a). Feature ideas go to [Ideas](https://github.com/asachs01/beacon/discussions/categories/ideas), and you can share photos in [Show your setup](https://github.com/asachs01/beacon/discussions/categories/show-your-setup). Bug reports still go in [GitHub issues](https://github.com/asachs01/beacon/issues/new?template=bug_report.md). There are no dumb questions here.
 
 Thanks again for helping make Beacon better for families everywhere!

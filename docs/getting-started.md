@@ -259,3 +259,7 @@ To change themes:
 - **[Changelog](../CHANGELOG.md)** -- release history
 - **[Contributing](../CONTRIBUTING.md)** -- how to contribute to Beacon
 - **[Docs Site](https://beaconfamily.app/)** -- full documentation with detailed guides for every feature
+- **[Discussions Q&A](https://github.com/asachs01/beacon/discussions/categories/q-a)** -- questions and setup help
+- **[Discussions Ideas](https://github.com/asachs01/beacon/discussions/categories/ideas)** -- feature ideas
+- **[Show your setup](https://github.com/asachs01/beacon/discussions/categories/show-your-setup)** -- share your setup
+- **[GitHub issues](https://github.com/asachs01/beacon/issues)** -- bug reports
