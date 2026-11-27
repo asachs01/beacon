@@ -1,0 +1,20 @@
+---
+/**
+ * Beacon wordmark, from branding/icon/svg/wordmark.svg (PR #56), copied into
+ * src/assets/brand/. Used in the header on narrow screens instead of the
+ * horizontal lockup. It already uses currentColor, so it follows the text color.
+ */
+import raw from '@/assets/brand/wordmark.svg?raw';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = 'h-6 w-auto' } = Astro.props;
+
+const svg = raw
+  .replace(/<title>[^<]*<\/title>/, '')
+  .replace(/role="img" aria-label="Beacon"/, `class="${className}" aria-hidden="true" focusable="false"`);
+---
+
+<Fragment set:html={svg} />

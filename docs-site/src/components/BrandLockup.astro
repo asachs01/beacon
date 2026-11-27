@@ -1,0 +1,33 @@
+---
+/**
+ * Beacon Light horizontal lockup (app icon + wordmark), from
+ * branding/icon/svg/horizontal-lockup.svg (PR #56). Copied into
+ * src/assets/brand/ so the docs build doesn't read outside docs-site/.
+ *
+ * Inlined so the wordmark can follow the text color (navy on light,
+ * paper on dark). Gradient ids are prefixed per instance so the header
+ * and footer copies on one page don't collide.
+ */
+import raw from '@/assets/brand/horizontal-lockup.svg?raw';
+
+interface Props {
+  idPrefix: string;
+  class?: string;
+}
+
+const { idPrefix, class: className = 'h-10 w-auto' } = Astro.props;
+
+const svg = raw
+  // Unique ids per instance.
+  .replace(/id="([^"]+)"/g, `id="${idPrefix}-$1"`)
+  .replace(/url\(#([^)]+)\)/g, `url(#${idPrefix}-$1)`)
+  // Wordmark follows the surrounding text color.
+  .replace('fill="#1d2b4f"', 'fill="currentColor"')
+  // Trim the artboard padding so the mark fills the header height.
+  .replace('viewBox="0 0 250 100"', 'viewBox="6 12 236 76"')
+  // The link around it carries the accessible name.
+  .replace(/<title>[^<]*<\/title>/, '')
+  .replace(/role="img" aria-label="Beacon"/, `class="${className}" aria-hidden="true" focusable="false"`);
+---
+
+<Fragment set:html={svg} />
