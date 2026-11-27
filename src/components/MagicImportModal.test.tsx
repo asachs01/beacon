@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MagicImportModal } from './MagicImportModal';
 import type { Extraction } from '../import/extract';
@@ -56,6 +56,21 @@ function renderModal(members: { pin?: string }[], guestMode = false) {
   return { onCreateEvent, onAddListItem, onClose };
 }
 
+beforeEach(() => {
+  vi.stubGlobal('fetch', async (_url: string, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body ?? '{}')) as { pin?: string };
+    const ok = body.pin === '1234';
+    return new Response(JSON.stringify(ok ? { ok: true, memberId: 'ada' } : { ok: false }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe('Magic Import review PIN gate', () => {
   it('does not write drafts until a family PIN is accepted', async () => {
     const { onCreateEvent, onAddListItem, onClose } = renderModal([{ pin: '1234' }]);
@@ -66,7 +81,7 @@ describe('Magic Import review PIN gate', () => {
 
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '0000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('That PIN is not recognized.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('That PIN is not recognized.');
     expect(onCreateEvent).not.toHaveBeenCalled();
 
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
@@ -87,9 +102,23 @@ describe('Magic Import review PIN gate', () => {
     expect(onClose).not.toHaveBeenCalled();
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(onCreateEvent).not.toHaveBeenCalled();
     expect(onAddListItem).not.toHaveBeenCalled();
+  });
+
+  it('does not approve when the PIN check cannot reach Beacon', async () => {
+    vi.stubGlobal('fetch', async () => {
+      throw new Error('offline');
+    });
+    const { onCreateEvent, onClose } = renderModal([{ pin: '1234' }]);
+    await openReview();
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Can\'t reach Beacon. Check the connection and try again.');
+    expect(onCreateEvent).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('blocks approve and reject in guest mode', async () => {

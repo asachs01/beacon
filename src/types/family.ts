@@ -3,7 +3,14 @@ export interface FamilyMember {
   name: string;
   avatar: string; // emoji or image URL
   color: string; // hex color
-  pin?: string; // 4-6 digit PIN
+  /**
+   * Write-only plaintext sent to Beacon to set or replace the PIN.
+   * The server stores a hash and does not return this field.
+   * `null` or `''` clears the PIN. Omit it to leave the stored PIN alone.
+   */
+  pin?: string | null;
+  /** True when a PIN hash is stored. The digits are not on this device. */
+  hasPin?: boolean;
   role: 'parent' | 'child';
   /**
    * Optional Home Assistant entity turned on when this child finishes today's

@@ -4,7 +4,7 @@ import {
   HIDDEN_GESTURE_LONG_PRESS_MS,
   HIDDEN_GESTURE_TAP_GAP_MS,
   HIDDEN_GESTURE_TAP_MAX_MS,
-  configuredMemberPins,
+  familyPinConfigured,
   initialHiddenGestureState,
   kioskHotCorner,
   kioskNavVisible,
@@ -50,15 +50,23 @@ describe('kiosk navigation visibility', () => {
 });
 
 describe('configured PINs', () => {
-  it('keeps only digit PINs and ignores blanks', () => {
-    expect(configuredMemberPins([
-      { pin: '12-34' },
+  it('asks for a PIN when the server says one is set, without reading the digits', () => {
+    expect(familyPinConfigured([
+      { hasPin: true },
       { pin: '' },
       { pin: '   ' },
       {},
       { pin: null },
-      { pin: '9999' },
-    ])).toEqual(['1234', '9999']);
+      { hasPin: false },
+    ])).toBe(true);
+    expect(familyPinConfigured([
+      { pin: '' },
+      {},
+      { pin: null },
+      { hasPin: false },
+    ])).toBe(false);
+    // A cache from before hashing still means "a PIN is configured".
+    expect(familyPinConfigured([{ pin: '12-34' }])).toBe(true);
     expect(normalizePin('12ab345678')).toBe('123456');
   });
 });
@@ -127,24 +135,32 @@ describe('hidden gesture', () => {
     expect(prompted.phase).toBe('pin');
     const wrong = reduceHiddenGesture(
       prompted,
-      { type: 'submit-pin', now: 3000, pin: '0000', configuredPins: ['1234'] },
+      { type: 'submit-pin', now: 3000, accepted: false },
       kioskPin,
     );
     expect(wrong.phase).toBe('pin');
     expect(wrong.pinError).toBe(true);
-    const right = reduceHiddenGesture(
+    const offline = reduceHiddenGesture(
       wrong,
-      { type: 'submit-pin', now: 4000, pin: '12-34', configuredPins: ['1234'] },
+      { type: 'submit-pin', now: 3500, accepted: false, unreachable: true },
+      kioskPin,
+    );
+    expect(offline.phase).toBe('pin');
+    expect(offline.pinUnreachable).toBe(true);
+    expect(offline.pinError).toBe(false);
+    const right = reduceHiddenGesture(
+      offline,
+      { type: 'submit-pin', now: 4000, accepted: true },
       kioskPin,
     );
     expect(right.phase).toBe('granted');
   });
 
-  it('accepts any configured family PIN', () => {
+  it('grants only when the server accepts the PIN', () => {
     const prompted = reduceHiddenGesture(initialHiddenGestureState(), { type: 'request', now: 0 }, kioskPin);
     const next = reduceHiddenGesture(
       prompted,
-      { type: 'submit-pin', now: 10, pin: '5555', configuredPins: ['1234', '5555'] },
+      { type: 'submit-pin', now: 10, accepted: true },
       kioskPin,
     );
     expect(next.phase).toBe('granted');
@@ -166,7 +182,7 @@ describe('hidden gesture', () => {
     expect(prompted.phase).not.toBe('confirm');
     const granted = reduceHiddenGesture(
       prompted,
-      { type: 'submit-pin', now: 10, pin: '4321', configuredPins: ['4321'] },
+      { type: 'submit-pin', now: 10, accepted: true },
       kidPin,
     );
     expect(granted.phase).toBe('granted');

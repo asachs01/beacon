@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { FocusView } from './FocusView';
 import type { BeaconSettings } from '../../hooks/useSettings';
@@ -31,6 +31,15 @@ function seed(pin?: string) {
 describe('FocusView exit', () => {
   beforeEach(() => {
     localStorage.clear();
+    vi.stubGlobal('fetch', async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? '{}')) as { pin?: string };
+      const ok = body.pin === '2468';
+      return new Response(JSON.stringify({ ok }), { status: 200 });
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('asks to confirm before leaving Kid Display when no PIN is set', () => {
@@ -49,7 +58,7 @@ describe('FocusView exit', () => {
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 
-  it('requires a family PIN before the corner gesture can leave Kid Display', () => {
+  it('requires a family PIN before the corner gesture can leave Kid Display', async () => {
     vi.useFakeTimers();
     try {
       seed('2468');
@@ -61,10 +70,14 @@ describe('FocusView exit', () => {
       expect(onExit).not.toHaveBeenCalled();
       expect(screen.getByRole('dialog')).toHaveTextContent('family PIN');
       fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '0000' } });
-      fireEvent.click(screen.getByRole('button', { name: 'Exit' }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Exit' }));
+      });
       expect(onExit).not.toHaveBeenCalled();
       fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '2468' } });
-      fireEvent.click(screen.getByRole('button', { name: 'Exit' }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Exit' }));
+      });
       expect(onExit).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();

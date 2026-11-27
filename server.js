@@ -37,6 +37,14 @@ const {
   requestIsSecure,
 } = require('./lib/device-sessions.cjs');
 const {
+  atomicWriteJson,
+  mergeFamilyMembers,
+  migrateFamilyPins,
+  readFamilyMemberList,
+  toPublicMembers,
+} = require('./lib/family-pins.cjs');
+const { handleVerifyPin } = require('./lib/verify-pin.cjs');
+const {
   credentialRequired,
   clientIp,
   headersForUpstream,
@@ -111,6 +119,15 @@ const pairingLimiter = createPairingLimiter({
   onLockout({ scope, ip, until }) {
     const who = scope === 'global' ? 'all clients' : ip;
     console.warn(`[beacon] pairing lockout (${scope}) for ${who} until ${new Date(until).toISOString()}`);
+  },
+});
+// Separate from pairing so PIN guesses cannot lock the pairing endpoint.
+// Same per-device cookie and per-IP ceiling, so one screen behind a shared
+// address cannot lock the others out of PIN checks.
+const pinLimiter = createPairingLimiter({
+  onLockout({ scope, ip, until }) {
+    const who = scope === 'global' ? 'all clients' : ip;
+    console.warn(`[beacon] pin check lockout (${scope}) for ${who} until ${new Date(until).toISOString()}`);
   },
 });
 
@@ -233,7 +250,7 @@ function handlePair(req, res) {
       return;
     }
     const pins = await readFamilyPins(DATA_DIR);
-    const ok = pairingSecretOk(payload.secret, sessionStore.pairingCode(), pins);
+    const ok = await pairingSecretOk(payload.secret, sessionStore.pairingCode(), pins);
     if (!ok) {
       const failed = pairingLimiter.fail(ip, attemptId);
       if (failed.scope === 'attempt' || failed.scope === 'ip' || failed.scope === 'global') {
@@ -755,9 +772,13 @@ async function handleDataApi(req, res) {
 
   if (req.method === 'GET') {
     try {
+      if (key === 'beacon_family_members') await migrateFamilyPins(DATA_DIR);
       const data = await fsp.readFile(filePath, 'utf8');
+      const body = key === 'beacon_family_members'
+        ? JSON.stringify(toPublicMembers(JSON.parse(data)))
+        : data;
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(data);
+      res.end(body);
     } catch (err) {
       if (err.code === 'ENOENT') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -774,12 +795,20 @@ async function handleDataApi(req, res) {
     try {
       const bodyBuf = await collectBody(req);
       const body = (bodyBuf || '{}').toString('utf8');
-      JSON.parse(body); // validate JSON
+      const parsed = JSON.parse(body); // validate JSON
       // The first rewrite of the meal plan keeps the previous file.
       if (key === 'beacon_meal_plans') {
         try { backupMealPlanFile(DATA_DIR); } catch { /* backup is best-effort */ }
       }
-      await fsp.writeFile(filePath, body, 'utf8');
+      if (key === 'beacon_family_members') {
+        if (!Array.isArray(parsed)) throw new Error('family members must be a list');
+        await migrateFamilyPins(DATA_DIR);
+        const stored = await readFamilyMemberList(DATA_DIR);
+        const merged = await mergeFamilyMembers(stored, parsed);
+        await atomicWriteJson(filePath, merged);
+      } else {
+        await fsp.writeFile(filePath, body, 'utf8');
+      }
       if (key === 'beacon-settings') {
         let parsed = null;
         try { parsed = JSON.parse(body); } catch { parsed = null; }
@@ -1370,6 +1399,10 @@ const server = http.createServer((req, res) => {
     handleAccessTokenCreate(req, res);
     return;
   }
+  if (pathname === '/beacon-auth/verify-pin') {
+    handleVerifyPin(req, res, { dataDir: DATA_DIR, limiter: pinLimiter });
+    return;
+  }
 
   // Voice / natural-language action API
   if (req.url === '/beacon-action/voice') {
@@ -1578,6 +1611,11 @@ const privilegeTimer = setInterval(() => {
 function startBeaconServer() {
   warnIfBrowserTokenSet();
   return sessionStore.load().then(async (code) => {
+    try {
+      await migrateFamilyPins(DATA_DIR);
+    } catch (err) {
+      console.warn(`[beacon] family PIN migration failed: ${err.message}`);
+    }
     console.log(`Beacon pairing code: ${code}`);
     if (HA_MODE === 'addon') {
       try {

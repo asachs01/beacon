@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { localDayKey as localDayKeyFromTs } from './date-keys';
@@ -227,6 +227,30 @@ describe('beacon_get_meal_plan local day', () => {
     });
     expect(merged.success).toBe(false);
     expect(readFileSync(path.join(dataDir, 'beacon_meal_plans.json'), 'utf8')).toBe(original);
+  });
+});
+
+describe('beacon_list_family_members', () => {
+  it('returns hasPin and hashes a plaintext PIN without dropping other fields', async () => {
+    mkdirSync(dataDir, { recursive: true });
+    writeJson('beacon_family_members.json', [
+      { id: 'ada', name: 'Ada', role: 'parent', color: '#abcdef', avatar: '👩', pin: '1234' },
+    ]);
+    const listed = await handleTool('beacon_list_family_members', {});
+    expect(listed.members).toEqual([
+      expect.objectContaining({ id: 'ada', name: 'Ada', role: 'parent', color: '#abcdef', hasPin: true }),
+    ]);
+    expect(listed.members[0].pin).toBeUndefined();
+    expect(listed.members[0].pinHash).toBeUndefined();
+    const stored = JSON.parse(readFileSync(path.join(dataDir, 'beacon_family_members.json'), 'utf8'));
+    expect(stored[0].pin).toBeUndefined();
+    expect(stored[0].name).toBe('Ada');
+    expect(stored[0].color).toBe('#abcdef');
+    expect(stored[0].pinHash).toMatch(/^scrypt\$16384\$8\$1\$/);
+    const again = await handleTool('beacon_list_family_members', {});
+    expect(again.members[0].pinHash).toBeUndefined();
+    const second = JSON.parse(readFileSync(path.join(dataDir, 'beacon_family_members.json'), 'utf8'));
+    expect(second[0].pinHash).toBe(stored[0].pinHash);
   });
 });
 

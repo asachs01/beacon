@@ -26,6 +26,8 @@ export interface HiddenGestureState {
   pressStartedAt: number | null;
   lastActivityAt: number | null;
   pinError: boolean;
+  /** The PIN check could not reach Beacon. The screen stays locked. */
+  pinUnreachable: boolean;
 }
 
 export interface HiddenGestureOptions {
@@ -44,7 +46,7 @@ export type HiddenGestureEvent =
   | { type: 'press-hold-elapsed'; now: number }
   | { type: 'press-end'; now: number; inside: boolean }
   | { type: 'request'; now: number }
-  | { type: 'submit-pin'; now: number; pin: string; configuredPins: readonly string[] }
+  | { type: 'submit-pin'; now: number; accepted: boolean; unreachable?: boolean }
   | { type: 'confirm'; now: number }
   | { type: 'cancel' }
   | { type: 'activity'; now: number }
@@ -57,6 +59,7 @@ export function initialHiddenGestureState(): HiddenGestureState {
     pressStartedAt: null,
     lastActivityAt: null,
     pinError: false,
+    pinUnreachable: false,
   };
 }
 
@@ -66,22 +69,15 @@ export function normalizePin(pin: string): string {
 }
 
 /**
- * True when the entered PIN matches any configured family PIN.
- * Do not pass the guest PIN here. Guest mode is a separate check, and the
- * guest PIN must not satisfy a family gate.
+ * True when a family PIN is configured.
+ * `hasPin` is the server's answer. A leftover plaintext `pin` only means
+ * "ask for a PIN" on a cache written before hashing. The digits are never
+ * compared on this device.
  */
-export function pinMatches(pin: string, configuredPins: readonly string[]): boolean {
-  const entered = normalizePin(pin);
-  return entered.length > 0 && configuredPins.some((configured) => normalizePin(configured) === entered);
-}
-
-export function configuredMemberPins(members: readonly { pin?: string | null }[]): string[] {
-  const pins: string[] = [];
-  for (const member of members) {
-    const pin = normalizePin(member.pin ?? '');
-    if (pin.length > 0) pins.push(pin);
-  }
-  return pins;
+export function familyPinConfigured(
+  members: readonly { hasPin?: boolean; pin?: string | null }[],
+): boolean {
+  return members.some((member) => member.hasPin === true || normalizePin(member.pin ?? '').length > 0);
 }
 
 export type KioskHotCorner = 'left' | 'right';
@@ -117,6 +113,7 @@ function succeed(now: number, options: HiddenGestureOptions): HiddenGestureState
       pressStartedAt: null,
       lastActivityAt: now,
       pinError: false,
+      pinUnreachable: false,
     };
   }
   if (options.whenNoPin === 'confirm') {
@@ -126,6 +123,7 @@ function succeed(now: number, options: HiddenGestureOptions): HiddenGestureState
       pressStartedAt: null,
       lastActivityAt: now,
       pinError: false,
+      pinUnreachable: false,
     };
   }
   return {
@@ -134,6 +132,7 @@ function succeed(now: number, options: HiddenGestureOptions): HiddenGestureState
     pressStartedAt: null,
     lastActivityAt: now,
     pinError: false,
+    pinUnreachable: false,
   };
 }
 
@@ -181,14 +180,19 @@ export function reduceHiddenGesture(
     }
     case 'submit-pin': {
       if (state.phase !== 'pin') return state;
-      const ok = pinMatches(event.pin, event.configuredPins);
-      if (!ok) return { ...state, pinError: true, lastActivityAt: event.now };
+      if (event.unreachable) {
+        return { ...state, pinError: false, pinUnreachable: true, lastActivityAt: event.now };
+      }
+      if (!event.accepted) {
+        return { ...state, pinError: true, pinUnreachable: false, lastActivityAt: event.now };
+      }
       return {
         phase: 'granted',
         taps: [],
         pressStartedAt: null,
         lastActivityAt: event.now,
         pinError: false,
+        pinUnreachable: false,
       };
     }
     case 'confirm': {
@@ -199,6 +203,7 @@ export function reduceHiddenGesture(
         pressStartedAt: null,
         lastActivityAt: event.now,
         pinError: false,
+        pinUnreachable: false,
       };
     }
     case 'cancel': {

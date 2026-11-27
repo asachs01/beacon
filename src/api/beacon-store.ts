@@ -76,21 +76,25 @@ export async function loadServerData<T>(key: string): Promise<T | null> {
 /**
  * Write to localStorage AND server (fire-and-forget).
  */
-export async function saveData<T>(key: string, data: T, options: { browserStorage?: boolean } = {}): Promise<void> {
-  const json = JSON.stringify(data);
+export async function saveData<T>(
+  key: string,
+  data: T,
+  options: { browserStorage?: boolean; serverData?: unknown } = {},
+): Promise<void> {
   if (options.browserStorage !== false) {
     try {
-      localStorage.setItem(key, json);
+      localStorage.setItem(key, JSON.stringify(data));
     } catch {
       /* localStorage unavailable */
     }
   }
   if (isAddOn()) {
     const base = getIngressBasePath();
+    const payload = options.serverData !== undefined ? options.serverData : data;
     fetch(`${base}/beacon-data/${key}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: json,
+      body: JSON.stringify(payload),
     }).catch(() => {
       /* server persistence is best-effort */
     });

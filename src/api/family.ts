@@ -30,6 +30,26 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** Drop plaintext PINs before they land in localStorage or React state. */
+function publicMember(member: FamilyMember): FamilyMember {
+  const next: FamilyMember = { ...member };
+  if ('pin' in member) {
+    const digits = String(member.pin ?? '').replace(/\D/g, '').slice(0, 6);
+    next.hasPin = digits.length > 0;
+    delete next.pin;
+  }
+  delete (next as { pinHash?: unknown }).pinHash;
+  return next;
+}
+
+function publicMembers(members: FamilyMember[]): FamilyMember[] {
+  return members.map(publicMember);
+}
+
+async function saveMembers(members: FamilyMember[]): Promise<void> {
+  await saveData(STORAGE_KEYS.members, publicMembers(members), { serverData: members });
+}
+
 function choreToday(resetTime?: string | null): string {
   return choreDayKey(undefined, null, resetTime);
 }
@@ -53,19 +73,20 @@ export class FamilyStore {
   // --- Members ---
 
   async getMembers(): Promise<FamilyMember[]> {
-    return loadData<FamilyMember[]>(STORAGE_KEYS.members, []);
+    const members = await loadData<FamilyMember[]>(STORAGE_KEYS.members, []);
+    return publicMembers(members);
   }
 
   getMembersSync(): FamilyMember[] {
-    return loadDataSync<FamilyMember[]>(STORAGE_KEYS.members, []);
+    return publicMembers(loadDataSync<FamilyMember[]>(STORAGE_KEYS.members, []));
   }
 
   async addMember(member: Omit<FamilyMember, 'id'>): Promise<FamilyMember> {
     const members = await this.getMembers();
     const newMember: FamilyMember = { ...member, id: generateId() };
     members.push(newMember);
-    await saveData(STORAGE_KEYS.members, members);
-    return newMember;
+    await saveMembers(members);
+    return publicMember(newMember);
   }
 
   async updateMember(id: string, data: Partial<Omit<FamilyMember, 'id'>>): Promise<FamilyMember | null> {
@@ -73,15 +94,15 @@ export class FamilyStore {
     const index = members.findIndex((m) => m.id === id);
     if (index === -1) return null;
     members[index] = { ...members[index], ...data };
-    await saveData(STORAGE_KEYS.members, members);
-    return members[index];
+    await saveMembers(members);
+    return publicMember(members[index]);
   }
 
   async removeMember(id: string): Promise<boolean> {
     const members = await this.getMembers();
     const filtered = members.filter((m) => m.id !== id);
     if (filtered.length === members.length) return false;
-    await saveData(STORAGE_KEYS.members, filtered);
+    await saveMembers(filtered);
     return true;
   }
 

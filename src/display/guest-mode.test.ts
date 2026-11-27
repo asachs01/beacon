@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { configuredMemberPins, pinMatches, reduceHiddenGesture, initialHiddenGestureState } from './hidden-gesture';
-import { importPinDecision } from '../import/pin-gate';
+import { familyPinConfigured, reduceHiddenGesture, initialHiddenGestureState } from './hidden-gesture';
+import { importPinRequired } from '../import/pin-gate';
 import {
   GUEST_SESSION_KEY,
   classifyGesturePin,
@@ -20,68 +20,91 @@ import {
   startGuestSession,
 } from './guest-mode';
 
-const members = [{ pin: '1234' }, { pin: '5555' }, { pin: '' }];
+const members = [{ hasPin: true }, { hasPin: true }, { pin: '' }];
 const guestPin = '987654';
 
 describe('guest PIN never unlocks a family gate', () => {
-  it('keeps the guest PIN out of pinMatches, configuredMemberPins, and importPinDecision', () => {
-    const configured = configuredMemberPins(members);
-    expect(configured).toEqual(['1234', '5555']);
-    expect(configured).not.toContain(guestPin);
-    expect(pinMatches(guestPin, configured)).toBe(false);
-    expect(pinMatches('1234', configured)).toBe(true);
-    expect(importPinDecision(members, guestPin)).toBe('rejected');
-    expect(importPinDecision(members, '1234')).toBe('accepted');
+  it('does not treat a guest PIN or a rejected server check as a family grant', () => {
+    expect(familyPinConfigured(members)).toBe(true);
+    expect(importPinRequired(members)).toBe(true);
+    expect(importPinRequired([{ pin: '' }])).toBe(false);
+
+    expect(classifyGesturePin({
+      pin: guestPin,
+      guestPin,
+      guestActive: false,
+      familyPinConfigured: true,
+      familyAccepted: false,
+    })).toBe('enter-guest');
+    expect(classifyGesturePin({
+      pin: '1234',
+      guestPin,
+      guestActive: false,
+      familyPinConfigured: true,
+      familyAccepted: false,
+    })).toBe('rejected');
 
     const pinned = reduceHiddenGesture(
       { ...initialHiddenGestureState(), phase: 'pin', lastActivityAt: 0 },
-      { type: 'submit-pin', now: 1, pin: guestPin, configuredPins: configured },
+      { type: 'submit-pin', now: 1, accepted: false },
       { pinRequired: true, whenNoPin: 'grant' },
     );
     expect(pinned.phase).not.toBe('granted');
     expect(pinned.pinError).toBe(true);
+    const offline = reduceHiddenGesture(
+      pinned,
+      { type: 'submit-pin', now: 2, accepted: false, unreachable: true },
+      { pinRequired: true, whenNoPin: 'grant' },
+    );
+    expect(offline.phase).toBe('pin');
+    expect(offline.pinUnreachable).toBe(true);
   });
 
   it('enters guest mode with the guest PIN and does not treat that as a family grant', () => {
-    const configured = configuredMemberPins(members);
     expect(classifyGesturePin({
       pin: guestPin,
-      memberPins: configured,
       guestPin,
       guestActive: false,
+      familyPinConfigured: true,
+      familyAccepted: true,
     })).toBe('enter-guest');
     expect(classifyGesturePin({
       pin: '1234',
-      memberPins: configured,
       guestPin,
       guestActive: false,
+      familyPinConfigured: true,
+      familyAccepted: true,
     })).toBe('grant-family');
     expect(classifyGesturePin({
       pin: guestPin,
-      memberPins: configured,
       guestPin,
       guestActive: true,
+      familyPinConfigured: true,
+      familyAccepted: true,
     })).toBe('rejected');
     expect(classifyGesturePin({
       pin: '5555',
-      memberPins: configured,
       guestPin,
       guestActive: true,
+      familyPinConfigured: true,
+      familyAccepted: true,
     })).toBe('exit-guest');
   });
 
   it('leaves guest mode with the guest PIN when no family PIN is set', () => {
     expect(classifyGesturePin({
       pin: guestPin,
-      memberPins: [],
       guestPin,
       guestActive: true,
+      familyPinConfigured: false,
+      familyAccepted: false,
     })).toBe('exit-guest');
     expect(classifyGesturePin({
       pin: '0000',
-      memberPins: [],
       guestPin,
       guestActive: true,
+      familyPinConfigured: false,
+      familyAccepted: false,
     })).toBe('rejected');
     expect(guestExitWithoutPin({
       guestActive: true,
@@ -100,13 +123,13 @@ describe('guest PIN never unlocks a family gate', () => {
     })).toBe(false);
   });
 
-  it('rejects a guest PIN that matches a family PIN', () => {
-    expect(guestPinProblem('1234', ['12-34', ''])).toBe('matches-member');
-    expect(guestPinProblem('9876', ['1234'])).toBeNull();
-    expect(guestPinProblem('', ['1234'])).toBeNull();
-    expect(guestPinProblem('123', ['9999'])).toBe('length');
+  it('checks guest PIN length locally and uses the server for a family match', () => {
+    expect(guestPinProblem('1234', true)).toBe('matches-member');
+    expect(guestPinProblem('9876', false)).toBeNull();
+    expect(guestPinProblem('', true)).toBeNull();
+    expect(guestPinProblem('123')).toBe('length');
     // PIN entry keeps the first 6 digits, so a longer value is a 6-digit PIN.
-    expect(guestPinProblem('1234567', [])).toBeNull();
+    expect(guestPinProblem('1234567')).toBeNull();
   });
 });
 
