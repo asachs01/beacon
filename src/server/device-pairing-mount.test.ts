@@ -8,6 +8,7 @@ describe('pairing UI and middleware are mounted in both trees', () => {
       expect(app).toContain('PairDeviceScreen');
       expect(app).toContain('useDevicePairing');
       expect(app).toContain('<PairDeviceScreen');
+      expect(app).toContain('loadProtectedRuntimeConfig');
 
       const settings = readFileSync(`${tree}/components/SettingsView.tsx`, 'utf8');
       expect(settings).toContain('<PairedDevicesSettings');
