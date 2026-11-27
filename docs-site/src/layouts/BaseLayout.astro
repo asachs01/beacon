@@ -27,9 +27,7 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <meta name="color-scheme" content="light dark" />
     <SEOHead
       title={title}
       description={description}
@@ -44,10 +42,18 @@ const {
         var theme = localStorage.getItem('td-theme');
         if (theme) document.documentElement.setAttribute('data-theme', theme);
         else document.documentElement.setAttribute('data-theme', 'beacon');
+        // Light and dark follow the app: an explicit choice wins, otherwise
+        // follow the device's light/dark setting (and keep following it).
         var dark = localStorage.getItem('td-dark');
-        // Default to dark mode for Beacon theme (it's designed dark-first)
-        if (dark === 'true' || dark === null) {
-          document.documentElement.classList.add('dark');
+        var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+        var useDark = dark === null ? !!(mq && mq.matches) : dark === 'true';
+        document.documentElement.classList.toggle('dark', useDark);
+        if (dark === null && mq && mq.addEventListener) {
+          mq.addEventListener('change', function(e) {
+            if (localStorage.getItem('td-dark') === null) {
+              document.documentElement.classList.toggle('dark', e.matches);
+            }
+          });
         }
       })();
     </script>

@@ -1,32 +1,60 @@
-/* Beacon theme — Deep Navy with Beacon Gold accent */
+/* Beacon theme: the app's design tokens, copied for the docs.
+ *
+ * Source of truth is the app, not this file:
+ *   - color roles: src/styles/tokens.css (reasoning: docs/design-tokens.md)
+ *   - light mode:  src/styles/themes/skylight.ts (the app's default light theme)
+ *   - dark mode:   src/styles/themes/midnight.ts ("Beacon Dark")
+ * The app's design-tokens governance test only covers the app, so update these
+ * by hand if those files change.
+ *
+ * Roles:
+ *   --td-accent       brand gold (--color-brand #f7a832). Fills: buttons,
+ *                     active markers, highlights. Always under ink text.
+ *   --td-accent-text  gold used as text. Light mode darkens it to pass WCAG AA.
+ *   --td-link         links: the app theme's accent. Skylight's blue #3b82f6 is
+ *                     darkened to #2563eb for AA on light; Beacon Dark's accent
+ *                     is gold, so dark mode links are brand gold.
+ *   --td-warning      --color-warning #d97706, kept distinct from brand gold.
+ *   --td-bg-code      brand navy #101d3c for code blocks in both modes.
+ */
 :root:not([data-theme]),
 :root[data-theme="beacon"] {
-  --td-bg: #f8fafc;
-  --td-bg-alt: #f1f5f9;
-  --td-bg-code: #0f172a;
-  --td-text: #0f172a;
-  --td-text-muted: #64748b;
-  --td-border: #e2e8f0;
-  --td-accent: #f59e0b;
-  --td-accent-hover: #d97706;
-  --td-success: #22c55e;
-  --td-warning: #f59e0b;
-  --td-error: #ef4444;
-  --td-info: #06b6d4;
+  --td-bg: #faf9f6;            /* skylight background */
+  --td-bg-alt: #ffffff;        /* skylight surface */
+  --td-header-bg: #ffffff;     /* skylight headerBg */
+  --td-bg-code: #101d3c;       /* brand navy */
+  --td-text: #1a1a1a;          /* skylight text */
+  --td-text-muted: #6b7280;    /* skylight textSecondary */
+  --td-border: #e5e5e5;        /* skylight gridLines */
+  --td-accent: #f7a832;        /* tokens.css --color-brand */
+  --td-accent-hover: #ffc35a;
+  --td-accent-text: #9a5b00;
+  --td-link: #2563eb;          /* skylight accent #3b82f6, darkened for AA */
+  --td-link-hover: #1d4ed8;
+  --td-success: #22c55e;       /* tokens.css --color-success */
+  --td-warning: #d97706;       /* tokens.css --color-warning */
+  --td-warning-text: #9a3412;  /* warning as text, AA on the caution tint */
+  --td-error: #ef4444;         /* tokens.css --color-error */
+  --td-info: #2563eb;          /* info folds into the accent role (design-tokens.md) */
 }
 
 :root:not([data-theme]).dark,
 :root[data-theme="beacon"].dark {
-  --td-bg: #0f172a;
-  --td-bg-alt: #1e293b;
-  --td-bg-code: #0f172a;
-  --td-text: #f8fafc;
-  --td-text-muted: #94a3b8;
-  --td-border: #334155;
-  --td-accent: #f59e0b;
-  --td-accent-hover: #fbbf24;
+  --td-bg: #0f172a;            /* midnight background */
+  --td-bg-alt: #1e293b;        /* midnight surface */
+  --td-header-bg: #1e293b;     /* midnight headerBg */
+  --td-bg-code: #101d3c;       /* brand navy */
+  --td-text: #f8fafc;          /* midnight text */
+  --td-text-muted: #94a3b8;    /* midnight textSecondary */
+  --td-border: #334155;        /* midnight gridLines */
+  --td-accent: #f7a832;        /* tokens.css --color-brand (midnight still says #f59e0b) */
+  --td-accent-hover: #ffc35a;
+  --td-accent-text: #f7a832;
+  --td-link: #f7a832;          /* midnight's accent role is gold */
+  --td-link-hover: #ffc35a;
   --td-success: #22c55e;
-  --td-warning: #f59e0b;
+  --td-warning: #d97706;
+  --td-warning-text: #f59e0b;
   --td-error: #ef4444;
-  --td-info: #06b6d4;
+  --td-info: #60a5fa;
 }

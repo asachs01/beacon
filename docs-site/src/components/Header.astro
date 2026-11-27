@@ -1,4 +1,6 @@
 ---
+import BrandLockup from './BrandLockup.astro';
+import BrandWordmark from './BrandWordmark.astro';
 import ThemeSwitcher from './ThemeSwitcher.astro';
 
 const currentPath = Astro.url.pathname;
@@ -15,18 +17,13 @@ function isActive(href: string, activePrefix: string): boolean {
 }
 ---
 
-<header class="sticky top-0 z-50 backdrop-blur-md border-b border-[var(--td-border)]" style="background-color: color-mix(in srgb, var(--td-bg) 80%, transparent)">
+<header class="sticky top-0 z-50 backdrop-blur-md border-b border-[var(--td-border)]" style="background-color: color-mix(in srgb, var(--td-header-bg, var(--td-bg)) 85%, transparent)">
   <div class="container">
     <div class="flex items-center justify-between h-16">
-      <a href="/" class="flex items-center gap-2 font-semibold text-lg">
-        <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
-          <path d="M22 52 L18 56 Q18 58 20 58 L44 58 Q46 58 46 56 L42 52 Z" fill="currentColor"/>
-          <path d="M24 52 L27 20 L37 20 L40 52 Z" fill="currentColor"/>
-          <rect x="25" y="16" width="14" height="6" rx="1" fill="currentColor"/>
-          <path d="M20 14 A14 14 0 0 1 32 2" stroke="var(--td-accent)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-          <path d="M44 14 A14 14 0 0 0 32 2" stroke="var(--td-accent)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        </svg>
-        <span>Beacon Docs</span>
+      <a href="/" aria-label="Beacon Docs home" class="flex items-center gap-2 font-semibold text-lg">
+        <BrandLockup idPrefix="hdr" class="hidden sm:block h-10 w-auto" />
+        <BrandWordmark class="sm:hidden h-6 w-auto" />
+          <span class="text-sm font-medium px-2 py-0.5 rounded-md border border-[var(--td-border)] text-[var(--td-text-muted)]" aria-hidden="true">Docs</span>
       </a>
 
       <nav class="hidden lg:flex items-center gap-6">
