@@ -1,3 +1,10 @@
+## [1.54.6](https://github.com/asachs01/beacon/compare/v1.54.5...v1.54.6) (2026-11-27)
+
+
+### Bug Fixes
+
+* **theme:** Beacon Light gold text token ([#170](https://github.com/asachs01/beacon/issues/170)) ([ad6e3cf](https://github.com/asachs01/beacon/commit/ad6e3cf699229934a9dbc30b89a5906262ff240b)), closes [#9a5b00](https://github.com/asachs01/beacon/issues/9a5b00) [#f7a832](https://github.com/asachs01/beacon/issues/f7a832)
+
 ## [1.54.5](https://github.com/asachs01/beacon/compare/v1.54.4...v1.54.5) (2026-11-27)
 
 
