@@ -809,7 +809,7 @@ export const fr: Record<TranslationKey, string> = {
   'settings.devices.title': 'Appareils associés',
   'settings.devices.desc': 'Un appareil s’associe une fois avec un PIN familial ou le code d’association. Le révoquer le déconnecte tout de suite, y compris les connexions ouvertes.',
   'settings.devices.pairingCodeLabel': 'Code d’association',
-  'settings.devices.pairingCodeSublabel': 'Il est aussi affiché dans le journal Beacon au démarrage. Toute personne qui a ce code ou un PIN familial peut associer un appareil. Générez un nouveau code pour invalider l’ancien.',
+  'settings.devices.pairingCodeSublabel': 'Il est aussi affiché dans le journal Beacon au démarrage. Toute personne qui a ce code ou un PIN familial peut associer un appareil. Choisissez Renouveler le code d’association pour invalider le code actuel. Les appareils associés et les jetons d’accès restent connectés.',
   'settings.devices.regenerate': 'Renouveler le code d’association',
   'settings.devices.rotateConfirm': 'Renouveler le code d’association ? Le code actuel cesse de fonctionner immédiatement. Les appareils déjà associés et les jetons d’accès restent connectés.',
   'settings.devices.regenerated': 'Le code d’association a été mis à jour. L’ancien code ne fonctionne plus.',

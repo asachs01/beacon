@@ -809,7 +809,7 @@ export const es: Record<TranslationKey, string> = {
   'settings.devices.title': 'Dispositivos emparejados',
   'settings.devices.desc': 'Un dispositivo se empareja una vez con un PIN familiar o el código de emparejamiento. Revocarlo cierra la sesión al momento, también las conexiones abiertas.',
   'settings.devices.pairingCodeLabel': 'Código de emparejamiento',
-  'settings.devices.pairingCodeSublabel': 'También aparece en el registro de Beacon al arrancar. Quien tenga este código o un PIN familiar puede emparejar un dispositivo. Genera un código nuevo para invalidar el anterior.',
+  'settings.devices.pairingCodeSublabel': 'También aparece en el registro de Beacon al arrancar. Quien tenga este código o un PIN familiar puede emparejar un dispositivo. Usa Rotar código de emparejamiento para invalidar el código actual. Los dispositivos emparejados y los tokens de acceso siguen conectados.',
   'settings.devices.regenerate': 'Rotar código de emparejamiento',
   'settings.devices.rotateConfirm': '¿Rotar el código de emparejamiento? El código actual deja de funcionar de inmediato. Los dispositivos emparejados y los tokens de acceso siguen conectados.',
   'settings.devices.regenerated': 'El código de emparejamiento se actualizó. El código anterior ya no sirve.',

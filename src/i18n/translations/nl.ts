@@ -809,7 +809,7 @@ export const nl: Record<TranslationKey, string> = {
   'settings.devices.title': 'Gekoppelde apparaten',
   'settings.devices.desc': 'Een apparaat koppelt eenmalig met een gezins-PIN of de koppelcode. Intrekken meldt dat apparaat direct af, ook open verbindingen.',
   'settings.devices.pairingCodeLabel': 'Koppelcode',
-  'settings.devices.pairingCodeSublabel': 'Staat ook bij het opstarten in het Beacon-logboek. Iedereen met deze code of een gezins-PIN kan een apparaat koppelen. Maak een nieuwe code om de oude ongeldig te maken.',
+  'settings.devices.pairingCodeSublabel': 'Staat ook bij het opstarten in het Beacon-logboek. Iedereen met deze code of een gezins-PIN kan een apparaat koppelen. Kies Koppelcode vernieuwen om de huidige code ongeldig te maken. Gekoppelde apparaten en toegangstokens blijven aangemeld.',
   'settings.devices.regenerate': 'Koppelcode vernieuwen',
   'settings.devices.rotateConfirm': 'Koppelcode vernieuwen? De huidige code werkt meteen niet meer. Gekoppelde apparaten en toegangstokens blijven aangemeld.',
   'settings.devices.regenerated': 'De koppelcode is bijgewerkt. De vorige code werkt niet meer.',

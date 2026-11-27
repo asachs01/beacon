@@ -809,7 +809,7 @@ export const de: Record<TranslationKey, string> = {
   'settings.devices.title': 'Gekoppelte Geräte',
   'settings.devices.desc': 'Ein Gerät koppelt sich einmal mit einer Familien-PIN oder dem Kopplungscode. Beim Widerruf wird es sofort abgemeldet, auch offene Verbindungen.',
   'settings.devices.pairingCodeLabel': 'Kopplungscode',
-  'settings.devices.pairingCodeSublabel': 'Steht auch beim Start im Beacon-Protokoll. Wer diesen Code oder eine Familien-PIN hat, kann ein Gerät koppeln. Ein neuer Code macht den alten ungültig.',
+  'settings.devices.pairingCodeSublabel': 'Steht auch beim Start im Beacon-Protokoll. Wer diesen Code oder eine Familien-PIN hat, kann ein Gerät koppeln. „Kopplungscode erneuern“ macht den aktuellen Code ungültig. Gekoppelte Geräte und Zugriffstoken bleiben angemeldet.',
   'settings.devices.regenerate': 'Kopplungscode erneuern',
   'settings.devices.rotateConfirm': 'Kopplungscode erneuern? Der aktuelle Code gilt sofort nicht mehr. Gekoppelte Geräte und Zugriffstoken bleiben angemeldet.',
   'settings.devices.regenerated': 'Der Kopplungscode wurde aktualisiert. Der vorherige Code gilt nicht mehr.',
