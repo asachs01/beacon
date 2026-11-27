@@ -25,7 +25,7 @@ Make Beacon the free, open-source family command center that anyone can set up o
 ## Phase 3: Distribution
 **Goal**: One-click install on any platform
 
-- [x] **Android APK** — signed APK attached to every release since v1.42.0 ([sideload guide](https://beacon-family-docs.netlify.app/docs/getting-started/android/)); Play Store listing not yet
+- [x] **Android APK** — signed APK attached to every release since v1.42.0 ([sideload guide](https://beaconfamily.app/docs/getting-started/android/)); Play Store listing not yet
 - [ ] **iOS app** — App Store via Capacitor (already scaffolded)
 - [ ] **Docker one-liner** — `docker run -p 3000:3000 beacon` for self-hosting
 - [ ] **Raspberry Pi image** — flash SD card, plug in monitor, boot to Beacon

@@ -46,6 +46,13 @@ Latest release: https://github.com/asachs01/beacon/releases
 - [Timer](__SITE_URL__/docs/features/timer/): Named timers.
 - [Notifications](__SITE_URL__/docs/features/notifications/): Notification settings.
 
+## Getting help
+
+- Questions and setup help: [Discussions Q&A](https://github.com/asachs01/beacon/discussions/categories/q-a)
+- Feature ideas: [Discussions Ideas](https://github.com/asachs01/beacon/discussions/categories/ideas)
+- Share your setup: [Discussions Show your setup](https://github.com/asachs01/beacon/discussions/categories/show-your-setup)
+- Bug reports: [GitHub issues](https://github.com/asachs01/beacon/issues)
+
 ## FAQ and reference
 
 - [FAQ](__SITE_URL__/docs/reference/faq/): Common questions about install, Android, calendars, photos, meals, and kiosk use.

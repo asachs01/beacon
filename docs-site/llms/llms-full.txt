@@ -7,8 +7,9 @@
 - Source: https://github.com/asachs01/beacon
 - Releases (including the Android APK): https://github.com/asachs01/beacon/releases
 - Home Assistant community thread: https://community.home-assistant.io/t/beacon-free-family-command-center-add-on/1000220
+- Getting help: questions and setup help go to [Discussions Q&A](https://github.com/asachs01/beacon/discussions/categories/q-a); feature ideas go to [Discussions Ideas](https://github.com/asachs01/beacon/discussions/categories/ideas); share your setup in [Show your setup](https://github.com/asachs01/beacon/discussions/categories/show-your-setup); bug reports go to [GitHub issues](https://github.com/asachs01/beacon/issues). The Home Assistant community thread above is an additional place to talk about the add-on.
 
-This file uses the current Netlify docs host. The domain may change later; paths should stay the same.
+Docs links use the current docs origin; paths stay the same if the host changes.
 
 ## What Beacon is not
 
@@ -146,6 +147,10 @@ A simplified view aimed at children. The docs also cover how to exit it.
 - [Music](__SITE_URL__/docs/features/music/): Controls for Home Assistant media players.
 - [Timer](__SITE_URL__/docs/features/timer/): Named, simultaneous timers.
 - [Notifications](__SITE_URL__/docs/features/notifications/): Notification options.
+
+## Getting help
+
+Questions and setup help go to [Discussions Q&A](https://github.com/asachs01/beacon/discussions/categories/q-a). Feature ideas go to [Discussions Ideas](https://github.com/asachs01/beacon/discussions/categories/ideas). Share your setup in [Show your setup](https://github.com/asachs01/beacon/discussions/categories/show-your-setup). Bug reports go to [GitHub issues](https://github.com/asachs01/beacon/issues). The [Home Assistant community thread](https://community.home-assistant.io/t/beacon-free-family-command-center-add-on/1000220) is an additional place to talk about the add-on.
 
 ## FAQ and reference
 
