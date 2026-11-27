@@ -101,7 +101,7 @@ Beacon uses a runtime configuration injection system that works across all deplo
 
 ### How it works
 
-1. **Add-on mode**: The `run.sh` script reads options from `/data/options.json` (populated by HA Supervisor) and generates a `runtime-config.js` file that sets `window.__BEACON_CONFIG__`. This script tag is injected into `index.html`.
+1. **Add-on mode**: The `run.sh` script reads options from `/data/options.json` (populated by HA Supervisor) and generates a `runtime-config.js` file that sets `window.__BEACON_CONFIG__`. This script tag is injected into `index.html`. From Beacon 1.54.3, `runtime-config.js` holds only the family name, theme and auto dark mode setting; every other setting is served after [pairing](/docs/getting-started/pairing/) (or through the Home Assistant sidebar panel, or with an access token).
 
 2. **Development mode**: Vite reads `VITE_*` variables from `.env` and makes them available via `import.meta.env.*`.
 

@@ -46,13 +46,19 @@ From Beacon **1.54.2**, open **Settings → Devices** and choose **Rotate pairin
 
 ## What an unpaired device can see
 
-Before a device pairs, Beacon still sends it the small setup file (`runtime-config.js`) that the pairing screen needs to load. Anyone who can reach Beacon's port can read it. It holds:
+Before a device pairs, Beacon still sends it the small setup file (`runtime-config.js`) that the pairing screen needs to load. Anyone who can reach Beacon's port can read it. From Beacon **1.54.3** it holds only:
 
 - Your **family name**
-- Beacon's **Home Assistant address**, on standalone and Docker installs. On the add-on this is left blank.
-- Display settings: the **theme**, whether **auto dark mode** is on, the **weather entity**, the **photo folder**, how often photos change, the **screen saver timeout**, and whether settings are saved in the browser
+- The **theme**
+- Whether **auto dark mode** is on
+
+That's the same on every install type. The rest of Beacon's settings, such as the Home Assistant address, the weather entity and the photo folder, load only after the device pairs (or through the Home Assistant sidebar panel, or with an [access token](#access-tokens-for-automations)). An unpaired device that asks for them gets turned away.
 
 It never holds a Home Assistant token or an access token, and it doesn't include your family's data, such as calendars, chores, lists or photos. Those need a paired device. Keeping Beacon's port on your home network keeps even this small file private.
+
+:::note[Before 1.54.3]
+Versions 1.54.0 to 1.54.2 also put Beacon's Home Assistant address (standalone and Docker installs) and more display settings in this file, including the weather entity, photo folder, photo interval, screen saver timeout and whether settings are saved in the browser. Update to 1.54.3 or later to keep those private.
+:::
 
 ## Each device pairs once
 
