@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question or get setup help
+    url: https://github.com/asachs01/beacon/discussions/categories/q-a
+    about: Questions about installing, pairing or using Beacon go to Discussions Q&A.
+  - name: Suggest an idea
+    url: https://github.com/asachs01/beacon/discussions/categories/ideas
+    about: Share feature ideas and talk them through with other families first.
+  - name: Show your setup
+    url: https://github.com/asachs01/beacon/discussions/categories/show-and-tell
+    about: Post photos of your Beacon wall display or tablet.
