@@ -87,6 +87,8 @@ Kid Display is separate from kiosk mode, and it is meant to be hard to leave by 
 
 If any family member has a PIN, Beacon asks for it before leaving. If no PIN is set, it asks you to confirm. Cancel, press Escape, or wait about 15 seconds and the prompt goes away without exiting.
 
+From Beacon **X.Y.Z**, the family PIN is checked on the Beacon server. If the screen can't reach Beacon (a network error, a server error, or no answer within about 8 seconds), it stays on Kid Display and shows "Can't reach Beacon. Check the connection and try again." Try again once the connection is back.
+
 The same gesture can also start [guest mode](/docs/features/guest-mode/) when a guest PIN is set. The guest PIN never leaves Kid Display. Once guest mode is on, a family PIN leaves guest mode first; use the gesture again with a family PIN to leave Kid Display. When no family PIN is set, the guest PIN (or the gesture alone, if no PIN is set at all) leaves guest mode first, then the usual confirm-to-exit path applies on the next gesture. The guest timeout only ends guest mode. A **Guest** badge stays on the screen while it is active.
 
 Exiting clears the device's Kid Display assignment and strips the `?display=` parameter from the URL, returning the device to the full Beacon app.

@@ -35,6 +35,8 @@ From Beacon **1.54.2**, anything that isn't on Beacon's short public list needs 
 
 If you get it wrong, the screen says **That PIN or code did not match.**
 
+From Beacon **X.Y.Z**, family PINs are saved only as hashes, and pairing checks the PIN you type against them on the server. Pairing with a family PIN or the pairing code works the same as before.
+
 ### Where to find the pairing code
 
 - **In the log.** Beacon prints `Beacon pairing code: NNNNNN` each time it starts. For the add-on, open **Settings → Add-ons → Beacon → Log**. For Docker, run `docker logs beacon` (use your container's name).
@@ -101,6 +103,10 @@ Beacon slows down wrong guesses so a PIN or code can't be guessed:
 Beacon notes each lockout in its log (**Settings → Add-ons → Beacon → Log** or `docker logs`), with the address and when it ends. The attempt-cookie value is not written there.
 
 If Beacon sits behind a [reverse proxy](/docs/getting-started/deployment/#reverse-proxy-setup), Beacon sees the proxy's address for every device. The 5-try lock follows `beacon_pair_attempt`, so one screen's mistakes do not lock the others. Clearing the cookie still counts toward the 30-per-hour limit on that shared address.
+
+### PIN checks have their own limit
+
+From Beacon **X.Y.Z**, family PIN prompts outside pairing (kiosk navigation, Kid Display, leaving guest mode, and Magic Import) use the same limits as above, but they're counted separately from pairing. Wrong PINs on those prompts don't lock pairing, and wrong pairing attempts don't lock those prompts. Because the count follows each screen's `beacon_pair_attempt` cookie, one screen behind a shared address doesn't lock PIN checks on another. While a lock is on, a correct PIN is refused there too. The log line starts with `[beacon] pin check lockout`.
 
 ## `HA_BROWSER_TOKEN` is no longer used
 

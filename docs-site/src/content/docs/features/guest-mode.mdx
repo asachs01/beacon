@@ -16,7 +16,7 @@ This needs Beacon **1.51.0** or later.
 
 Open **Settings → Display → Guest mode**.
 
-- **Guest PIN** is 4 to 6 digits. Leave it empty to keep guest mode off. The same digits cannot also be a family member's PIN, and a family PIN cannot be changed to match the guest PIN.
+- **Guest PIN** is 4 to 6 digits. Leave it empty to keep guest mode off. The same digits cannot also be a family member's PIN, and a family PIN cannot be changed to match the guest PIN. From Beacon **X.Y.Z**, Beacon checks a new guest PIN against the family PINs on the server, and that check counts toward the [PIN attempt limit](/docs/features/family/#what-a-family-pin-unlocks). If Settings can't reach Beacon, it shows "Can't reach Beacon. Check the connection and try again." and doesn't save the guest PIN.
 - **Guest timeout** is how long guest mode stays on before it ends by itself. The choices are 1, 2, 4, 8, 12, or 24 hours, or **No timeout**. The default is 4 hours.
 
 The section in Settings also repeats that this is not a security boundary.
@@ -38,7 +38,9 @@ Guests can always leave guest mode from inside the app, including when the timeo
 
 **No timeout** stays on until that gesture. A timeout still ends guest mode when it runs out.
 
-The guest PIN can never open a family-PIN gate. It cannot unlock Settings, reveal kiosk navigation, leave Kid Display, or approve or reject [Magic Import](/docs/features/magic-import/). Those still need a family member's PIN, using the same check the app has today.
+From Beacon **X.Y.Z**, a family PIN is checked on the Beacon server. If the screen can't reach Beacon (a network error, a server error, or no answer within about 8 seconds), guest mode stays on and the prompt shows "Can't reach Beacon. Check the connection and try again." Try again once the connection is back. The guest PIN is still compared with the one saved in Settings, both to start guest mode and, when no family PIN is set, to leave it.
+
+The guest PIN can never open a family-PIN gate. It cannot unlock Settings, reveal kiosk navigation, leave Kid Display, or approve or reject [Magic Import](/docs/features/magic-import/). Those still need a family member's PIN.
 
 The session is kept in this browser until it expires, including across a reload. Clearing or changing the guest PIN in Settings ends any active guest session on this browser, including one restored after a reload.
 
