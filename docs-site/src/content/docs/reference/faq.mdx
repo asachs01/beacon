@@ -240,9 +240,9 @@ Nothing is shown until you reveal it. **Reveal navigation gesture** (same screen
 - **Touch or mouse**: long-press the top corner for about 2 seconds, or tap that corner 3 times quickly. The corner is the top-left, or the top-right when the sidebar position is set to the right.
 - **Keyboard**: hold Escape for about 2 seconds (outside a text field). You can also focus the same corner and hold Enter or Space, or press it 3 times quickly.
 
-The sidebar stays up for about 15 seconds after the last tap, click, or key press, then hides again. If any family member has a PIN, Beacon asks for that PIN before showing navigation. The same gesture can also start [guest mode](/docs/features/guest-mode/) when a guest PIN is set; the guest PIN never reveals navigation. Turn the gesture off under **Settings > Display** when this screen should stay locked with no way back from the display itself.
+The sidebar stays up for about 15 seconds after the last tap, click, or key press, then hides again. If any family member has a PIN, Beacon asks for that PIN before showing navigation. From Beacon **1.54.4**, that PIN is checked on the Beacon server; if the screen can't reach Beacon, navigation stays hidden and the prompt shows "Can't reach Beacon. Check the connection and try again." The same gesture can also start [guest mode](/docs/features/guest-mode/) when a guest PIN is set; the guest PIN never reveals navigation. Turn the gesture off under **Settings > Display** when this screen should stay locked with no way back from the display itself.
 
-**Kid Display** is a different mode (one child's routines and chores). The same corner gesture — long-press or 3 quick taps, or holding Escape — is the way out. When a family PIN is set, it is required. When no PIN is set, Beacon asks you to confirm. Five taps on the clock still opens that same PIN or confirm step.
+**Kid Display** is a different mode (one child's routines and chores). The same corner gesture — long-press or 3 quick taps, or holding Escape — is the way out. When a family PIN is set, it is required. When no PIN is set, Beacon asks you to confirm. Five taps on the clock still opens that same PIN or confirm step. If the screen can't reach Beacon to check the PIN, it stays on Kid Display and shows the same can't-reach message.
 
 **Home Assistant's sidebar** (when running as an HA add-on): Beacon cannot hide HA's sidebar when running inside Home Assistant ingress — that chrome is controlled by Home Assistant itself. For dedicated wall tablets or Windows kiosk setups, open Beacon's direct URL in full-screen mode instead:
 
@@ -262,6 +262,10 @@ See the [Installation guide](/docs/getting-started/installation/#mounting-and-di
 **Yes.** On the add-on, family members, chores, routines, settings and meal plans are saved by Beacon's server in the add-on's `/data` folder, and the display keeps a copy in the browser. Updates don't touch `/data`.
 
 On Docker, your data survives only if you mounted a volume at `/data`, for example `-v beacon-data:/data`. See [Updating and Troubleshooting](/docs/getting-started/updating/#docker).
+
+### Should I change our family PINs after updating?
+
+**Only if you've paired a device you don't fully trust.** Before Beacon **1.54.4**, a paired device could read family PINs. From that version, Beacon keeps only salted hashes of PINs on the server and converts existing PINs on its first start, with nothing for you to set up. Devices only learn whether someone has a PIN. To change one, open **Settings → Family Members**, edit the person, choose **Change**, and enter a new 4-6 digit PIN. See [PIN setup](/docs/features/family/#pin-setup).
 
 ### Can I back up my data?
 

@@ -40,6 +40,8 @@ The paste screen and the review screen both name the path that will run or that 
 
 If any family member has a PIN, Approve and Reject ask for a family PIN first. It is the same digits used to reveal kiosk navigation and to leave Kid Display. If no family PIN is set, Approve saves immediately.
 
+From Beacon **1.54.4**, the family PIN is checked on the Beacon server. If the screen can't reach Beacon (a network error, a server error, or no answer within about 8 seconds), nothing is saved or discarded. The dialog stays open with your drafts and shows "Can't reach Beacon. Check the connection and try again." Enter the PIN again once the connection is back.
+
 Drafts exist only while the dialog is open. Closing it without approving discards them. Existing calendar events, list items, and other stored records are not rewritten.
 
 ## Privacy

@@ -21,7 +21,7 @@ Family members are the people in your household. Each member gets a name, an ava
    - **Avatar**: Pick an emoji from the categorized grid (see below)
    - **Color**: Pick a color from the 8-color palette
    - **Role**: Select Parent or Child
-   - **PIN**: Optionally enter a 4-6 digit numeric PIN
+   - **PIN**: Optionally enter a 4-6 digit numeric PIN. Once saved, it shows as **PIN set** (see [PIN setup](#pin-setup))
    - **Privilege switch** (children only, **1.45.0** and later): Optionally pick a Home Assistant switch, toggle, light, or fan that turns on when today's chores are done. The default is None. See [Chore privileges](/docs/features/chore-privileges/).
 5. Click **Add Member**
 
@@ -94,14 +94,43 @@ Roles are currently informational and used to control UI visibility (e.g., showi
 
 PINs are optional 4-6 digit numeric codes. When a PIN is set:
 
-- It is stored in the browser's localStorage
 - Only digits are accepted (letters and symbols are stripped during entry)
 - The maximum length is 6 digits
-- PINs are stored as plain text locally (not hashed)
+- From Beacon **1.54.4**, Beacon keeps only a salted hash of the PIN on the Beacon server, in `beacon_family_members.json`. The PIN itself is not saved anywhere.
+- Screens and devices only learn whether a member has a PIN. They never receive the PIN or its hash.
 
-Any configured family PIN unlocks two parent actions: revealing navigation while Beacon's kiosk mode is on, and leaving Kid Display. If no PIN is set, kiosk navigation appears as soon as the hidden gesture succeeds, and Kid Display asks for a simple confirmation instead. The privilege switch does not use the PIN. Checking a chore does not ask for one.
+There is nothing new to set up. PINs saved by an earlier version are converted to hashes the first time Beacon starts after the update. Other member details are left as they are. The log notes only how many PINs were converted, for example `[beacon] migrated 2 family PINs`.
+
+### Changing or removing a PIN
+
+From Beacon **1.54.4**, a saved PIN can't be shown again, not even in Settings. When you edit a member who has a PIN, the form shows **PIN set** with two buttons:
+
+- **Change**: enter a new 4-6 digit PIN, then choose **Save Changes**. If you leave the new PIN empty, the current PIN stays as it is.
+- **Remove**: clears the PIN when you save.
+
+Saving without choosing either button leaves the PIN as it is.
+
+### What a family PIN unlocks
+
+Any configured family PIN unlocks these parent actions:
+
+- Revealing navigation while Beacon's kiosk mode is on
+- Leaving [Kid Display](/docs/features/kid-display/)
+- Leaving [guest mode](/docs/features/guest-mode/)
+- Approving or rejecting a [Magic Import](/docs/features/magic-import/)
+- [Pairing a device](/docs/getting-started/pairing/), along with the 6-digit pairing code
+
+If no PIN is set, kiosk navigation appears as soon as the hidden gesture succeeds, and Kid Display asks for a simple confirmation instead. The privilege switch does not use the PIN. Checking a chore does not ask for one.
+
+From Beacon **1.54.4**, every family PIN check happens on the Beacon server, so the screen needs to reach Beacon. For kiosk navigation, Kid Display, leaving guest mode, and Magic Import, if the screen can't reach Beacon (a network error, a server error, or no answer within about 8 seconds), it stays where it is and shows "Can't reach Beacon. Check the connection and try again." Nothing is checked on the device instead. Try again once the connection is back.
+
+Wrong PINs are limited per device, the same way as [pairing](/docs/getting-started/pairing/#if-pairing-is-locked), but counted separately. A child trying PINs on one screen doesn't lock pairing, and doesn't lock PIN checks on another screen.
 
 The [guest PIN](/docs/features/guest-mode/) is separate. It cannot be the same digits as a family PIN, and it never opens those family-PIN gates. A family PIN leaves guest mode. When no family PIN is set, the guest PIN leaves it.
+
+:::caution[Change PINs after updating]
+Before Beacon **1.54.4**, a paired device could read family PINs. If you've paired a device you don't fully trust, change your family PINs after you update. Open **Settings → Family Members**, edit each person, choose **Change**, and enter a new PIN.
+:::
 
 ---
 
