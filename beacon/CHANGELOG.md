@@ -1,3 +1,10 @@
+## [1.54.4](https://github.com/asachs01/beacon/compare/v1.54.3...v1.54.4) (2026-11-27)
+
+
+### Bug Fixes
+
+* **auth:** store family PINs as salted scrypt hashes ([#163](https://github.com/asachs01/beacon/issues/163)) ([2d9f0bf](https://github.com/asachs01/beacon/commit/2d9f0bfc6338aef9fb3aafd987d2775e9daa344f))
+
 ## [1.54.3](https://github.com/asachs01/beacon/compare/v1.54.2...v1.54.3) (2026-11-27)
 
 
