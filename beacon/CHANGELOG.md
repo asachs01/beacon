@@ -1,3 +1,10 @@
+## [1.54.5](https://github.com/asachs01/beacon/compare/v1.54.4...v1.54.5) (2026-11-27)
+
+
+### Bug Fixes
+
+* **theme:** align brand gold to #f7a832 ([#166](https://github.com/asachs01/beacon/issues/166)) ([a53bbda](https://github.com/asachs01/beacon/commit/a53bbda2962cbfb6b7e53a064374a5cf5413adb8)), closes [#f7a832](https://github.com/asachs01/beacon/issues/f7a832) [#101d3c](https://github.com/asachs01/beacon/issues/101d3c) [#f7a832](https://github.com/asachs01/beacon/issues/f7a832)
+
 ## [1.54.4](https://github.com/asachs01/beacon/compare/v1.54.3...v1.54.4) (2026-11-27)
 
 
