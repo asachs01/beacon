@@ -14,9 +14,9 @@ faq:
   - question: "Does Beacon work offline?"
     answer: "Mostly. Beacon runs entirely on your local network and never needs its own cloud service. The display keeps a local copy of its data, and the built-in fonts and themes need no internet. Anything that comes from the internet still needs it: Google Calendar sync and weather reach you through Home Assistant, and Google Fonts are downloaded when you pick one."
   - question: "Is my family's data private?"
-    answer: "Yes. Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account."
+    answer: "Yes. Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account. A device that hasn't paired can read only your family name, Beacon's Home Assistant address (standalone and Docker installs only) and a few display settings, never tokens or your family's data."
   - question: "Is it safe to expose Beacon to the internet?"
-    answer: "No. Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the security advisory GHSA-rj98-fx8p-896h). Update to 1.54.1 or later and pair your devices. Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet. For remote access, use the add-on's ingress panel (behind Home Assistant login), Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication."
+    answer: "No. Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the security advisory GHSA-rj98-fx8p-896h). Update to 1.54.1 or later and pair your devices. Even unpaired, a device that reaches the port can read the small setup file the pairing screen loads: your family name, Beacon's Home Assistant address (standalone and Docker installs only), and a few display settings such as the theme, weather entity and photo folder. It can't read tokens or your family's data. Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet. For remote access, use the add-on's ingress panel (behind Home Assistant login), Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication."
   - question: "How do I update Beacon?"
     answer: "On the add-on, go to Settings → Add-ons → Beacon and click Update. For Docker, rolling back, and fixing a failed update, see the Updating and Troubleshooting docs page."
 ---
@@ -49,14 +49,14 @@ Skylight sells its own screen, and meal planning, photos and some other features
 
 ### Is my family's data private?
 
-**Yes.** Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account. See [Does Beacon send my data anywhere?](#does-beacon-send-my-data-anywhere). For keeping Beacon's port on your LAN, see [Is it safe to expose Beacon to the internet?](#is-it-safe-to-expose-beacon-to-the-internet).
+**Yes.** Beacon talks only to your Home Assistant instance and its own server on your network. There's no telemetry, analytics or Beacon account. A device that hasn't paired can read only your family name, Beacon's Home Assistant address (standalone and Docker installs only) and a few display settings, never tokens or your family's data. See [Does Beacon send my data anywhere?](#does-beacon-send-my-data-anywhere). For keeping Beacon's port on your LAN, see [Is it safe to expose Beacon to the internet?](#is-it-safe-to-expose-beacon-to-the-internet).
 
 ### Is it safe to expose Beacon to the internet?
 
 **No.**
 
 :::caution
-Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the [security advisory](https://github.com/asachs01/beacon/security/advisories/GHSA-rj98-fx8p-896h)). Update to **1.54.1** or later and [pair your devices](/docs/getting-started/pairing/). Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
+Before Beacon 1.54.0, anyone who could reach Beacon's port could use its Home Assistant access (see the [security advisory](https://github.com/asachs01/beacon/security/advisories/GHSA-rj98-fx8p-896h)). Update to **1.54.1** or later and [pair your devices](/docs/getting-started/pairing/). Even unpaired, a device that reaches the port can read the small setup file the pairing screen loads: your family name, Beacon's Home Assistant address (standalone and Docker installs only), and a few display settings such as the theme, weather entity and photo folder. It can't read tokens or your family's data. Even then, keep Beacon's port on your trusted home network (your LAN) and never forward it to the internet or expose it beyond your LAN. In the add-on, use the Home Assistant sidebar panel (ingress) where you can; it sits behind your Home Assistant login. If you need remote access, use the add-on's ingress panel, Home Assistant's own remote access, a VPN, or a reverse proxy that requires authentication.
 :::
 
 From Beacon **1.54.0**, a device that opens Beacon directly on its port pairs once first. See [Pairing a device](/docs/getting-started/pairing/).
