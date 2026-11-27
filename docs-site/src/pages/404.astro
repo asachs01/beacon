@@ -1,0 +1,74 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+
+const title = 'Page not found';
+const description = "We couldn't find that page in the Beacon docs.";
+---
+
+<BaseLayout title={title} description={description} noindex>
+  <Header />
+
+  <main class="flex-1 py-16 lg:py-24">
+    <div class="container">
+      <div class="max-w-2xl mx-auto text-center">
+        <p class="text-sm font-semibold uppercase tracking-wide text-[var(--td-text-muted)] mb-3">404</p>
+        <h1 class="text-3xl lg:text-4xl font-bold mb-4 tracking-tight">Page not found</h1>
+        <p class="text-lg text-[var(--td-text-muted)] mb-8">
+          Sorry, we couldn't find that page. It may have moved, or the link may have a typo.
+          Try searching the docs, or start from one of the links below.
+        </p>
+
+        <div id="not-found-search" class="pagefind-ui text-left mb-8" aria-label="Search the docs"></div>
+        <noscript>
+          <p class="text-[var(--td-text-muted)] mb-8">Search needs JavaScript. The links below still work.</p>
+        </noscript>
+
+        <div class="flex flex-wrap justify-center gap-4">
+          <a href="/docs/getting-started/welcome/" class="btn btn-primary">Getting started</a>
+          <a
+            href="https://github.com/asachs01/beacon/discussions/categories/q-a"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-secondary"
+          >
+            Ask in GitHub Discussions
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<script>
+  // Same Pagefind UI and index the header search uses, shown inline.
+  async function mountSearch() {
+    const el = document.getElementById('not-found-search');
+    if (!el) return;
+    if (!document.querySelector('link[href="/pagefind/pagefind-ui.css"]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/pagefind/pagefind-ui.css';
+      document.head.appendChild(link);
+    }
+    // @ts-ignore
+    if (!window.PagefindUI) {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = '/pagefind/pagefind-ui.js';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load Pagefind'));
+        document.head.appendChild(script);
+      });
+    }
+    // @ts-ignore
+    new window.PagefindUI({ element: '#not-found-search', showSubResults: true, showImages: false });
+  }
+  mountSearch().catch(() => {
+    const el = document.getElementById('not-found-search');
+    if (el) el.hidden = true;
+  });
+</script>

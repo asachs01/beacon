@@ -8,6 +8,8 @@ interface Props {
   ogImage?: string;
   ogType?: string;
   twitterCard?: string;
+  /** Adds <meta name="robots" content="noindex"> (used by the 404 page). */
+  noindex?: boolean;
 }
 
 const {
@@ -17,6 +19,7 @@ const {
   ogImage = "/og-image.png",
   ogType = "website",
   twitterCard = "summary_large_image",
+  noindex = false,
 } = Astro.props;
 
 const siteName = "Beacon Docs";
@@ -29,6 +32,7 @@ const ogImageURL = /^https?:\/\//i.test(ogImage) ? ogImage : absoluteUrl(ogImage
 <meta name="title" content={fullTitle} />
 <meta name="description" content={description} />
 <link rel="canonical" href={canonicalURL} />
+{noindex && <meta name="robots" content="noindex" />}
 
 <meta property="og:type" content={ogType} />
 <meta property="og:url" content={canonicalURL} />

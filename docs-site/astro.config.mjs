@@ -16,7 +16,9 @@ export default defineConfig({
       filter: (page) =>
         !page.endsWith("/robots.txt") &&
         !page.endsWith("/llms.txt") &&
-        !page.endsWith("/llms-full.txt"),
+        !page.endsWith("/llms-full.txt") &&
+        !page.endsWith("/404/") &&
+        !page.endsWith("/404"),
     }),
   ],
   redirects: {
