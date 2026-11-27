@@ -22,7 +22,7 @@ Docs links use the current docs origin; paths stay the same if the host changes.
 ### Getting Started
 URL: __SITE_URL__/docs/getting-started/installation/
 
-Install Beacon as a Home Assistant add-on (add the GitHub repo as an add-on repository, then install and start Beacon), as a standalone Docker container, or as a local development server. From [v1.50.1](https://github.com/asachs01/beacon/releases/tag/v1.50.1), a standalone Docker container connects to Home Assistant when you set `HA_URL` (the base Home Assistant address, with no `/api`) and `HA_TOKEN` (a long-lived access token). Do not set `SUPERVISOR_TOKEN` when running standalone; add-on users see no change. You can also run without Home Assistant, with calendars, lists, and tasks stored in the browser. See [Deployment](__SITE_URL__/docs/getting-started/deployment/). From [v1.54.0](https://github.com/asachs01/beacon/releases/tag/v1.54.0), a device that opens Beacon directly on its port pairs once. See [Pairing a device](__SITE_URL__/docs/getting-started/pairing/).
+Install Beacon as a Home Assistant add-on (add the GitHub repo as an add-on repository, then install and start Beacon), as a standalone Docker container, or as a local development server. From [v1.50.1](https://github.com/asachs01/beacon/releases/tag/v1.50.1), a standalone Docker container connects to Home Assistant when you set `HA_URL` (the base Home Assistant address, with no `/api`) and `HA_TOKEN` (a long-lived access token). Do not set `SUPERVISOR_TOKEN` when running standalone; add-on users see no change. You can also run without Home Assistant, using Beacon's built-in local calendar, lists, and tasks. Those, along with family members, chores, routines, settings, and meal plans, are saved on the Beacon server in `/data`, with a browser copy for speed and offline use. Still per-browser: the Kid Display assignment, manual countdowns, the timer sound, and a guest session. Under the Vite dev server there is no Beacon server, so this data lives only in that browser. See [Deployment](__SITE_URL__/docs/getting-started/deployment/). From [v1.54.0](https://github.com/asachs01/beacon/releases/tag/v1.54.0), a device that opens Beacon directly on its port pairs once. See [Pairing a device](__SITE_URL__/docs/getting-started/pairing/).
 
 ### Deployment
 URL: __SITE_URL__/docs/getting-started/deployment/
@@ -46,12 +46,12 @@ From v1.43.2, add-on updates download a prebuilt multi-arch image from `ghcr.io/
 
 ## Comparison
 
-### Beacon vs Skylight, Hearth, and DAKboard
+### Beacon vs Skylight Calendar, Hearth, and DAKboard
 URL: __SITE_URL__/docs/getting-started/compare/
 
 Compares Beacon with Skylight Calendar, Hearth Display, and DAKboard on cost, hosting, calendar, chores, lists, photos, and how you run it (any tablet browser, or the signed Android APK). Beacon is free and self-hosted.
 
-### Beacon vs Skylight
+### Beacon vs Skylight Calendar
 URL: __SITE_URL__/docs/getting-started/skylight-alternative/
 
 A shorter page aimed at people searching for a Skylight Calendar alternative.
@@ -133,7 +133,7 @@ Shipped in [v1.53.0](https://github.com/asachs01/beacon/releases/tag/v1.53.0). O
 ### Meals
 URL: __SITE_URL__/docs/features/meals/
 
-Shipped in [v1.48.0](https://github.com/asachs01/beacon/releases/tag/v1.48.0). An in-app meal planner. The Meals sidebar view is a week grid for breakfast, lunch, dinner, and snacks; the grid follows Settings → General → Week Starts On. The dashboard Menu card is editable, including on days with nothing planned. Meals can be named, noted, and tied to a Beacon recipe. Add ingredients to grocery list writes to the default list or the built-in Shopping List, including Home Assistant to-do lists. It does not write to Grocy. The MCP tool `beacon_set_meal_plan` merges by default (upsert by date and meal type; a null or empty name clears that one slot; other dates are left alone). Pass `replace: true` to replace the whole plan, which is the previous behavior. You can still fill the plan with the `scripts/sync-meals.mjs` AnyList sync script. The first rewrite of an existing plan writes a one-time backup: `beacon_meal_plans.bak.json` on the add-on, or `beacon_meal_plans.bak` in local storage in a standalone browser.
+Shipped in [v1.48.0](https://github.com/asachs01/beacon/releases/tag/v1.48.0). An in-app meal planner. The Meals sidebar view is a week grid for breakfast, lunch, dinner, and snacks; the grid follows Settings → General → Week Starts On. The dashboard Menu card is editable, including on days with nothing planned. Meals can be named, noted, and tied to a Beacon recipe. Add ingredients to grocery list writes to the default list or the built-in Shopping List, including Home Assistant to-do lists. It does not write to Grocy. The MCP tool `beacon_set_meal_plan` merges by default (upsert by date and meal type; a null or empty name clears that one slot; other dates are left alone). Pass `replace: true` to replace the whole plan, which is the previous behavior. You can still fill the plan with the `scripts/sync-meals.mjs` AnyList sync script. The first rewrite of an existing plan writes a one-time backup as `beacon_meal_plans.bak.json` in the Beacon server data folder (`/data`). The browser also keeps a one-time copy under the localStorage key `beacon_meal_plans.bak`. A later rewrite does not replace that backup.
 
 ### Kid Display Mode
 URL: __SITE_URL__/docs/features/kid-display/
