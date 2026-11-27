@@ -9,6 +9,7 @@ interface Props {
   ogImage?: string;
   ogType?: string;
   twitterCard?: string;
+  noindex?: boolean;
 }
 
 const {
@@ -17,7 +18,8 @@ const {
   canonicalURL,
   ogImage,
   ogType,
-  twitterCard
+  twitterCard,
+  noindex = false
 } = Astro.props;
 ---
 
@@ -39,6 +41,7 @@ const {
       ogImage={ogImage}
       ogType={ogType}
       twitterCard={twitterCard}
+      noindex={noindex}
     />
     <script is:inline>
       // Restore theme + dark mode before first paint to prevent flash
@@ -62,7 +65,7 @@ const {
       })();
     </script>
   </head>
-  <body class="min-h-screen flex flex-col">
+  <body class="min-h-screen flex flex-col" data-pagefind-ignore={noindex ? "all" : undefined}>
     <slot />
     <script is:inline>
       // Copy code button for all pre blocks
