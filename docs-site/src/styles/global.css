@@ -11,26 +11,6 @@
 
 @plugin "@tailwindcss/typography";
 
-/* Self-hosted fonts (no third-party font CDN). Same files and stacks as the
-   app: see src/styles/tokens.css (--font-family-heading / --font-family-body)
-   and src/fonts/load.ts. Code uses the system monospace stack. */
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 100 900;
-  src: url('../assets/fonts/fraunces-latin-wght-normal.woff2') format('woff2-variations'), url('../assets/fonts/fraunces-latin-wght-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 100 900;
-  src: url('../assets/fonts/inter-latin-wght-normal.woff2') format('woff2-variations'), url('../assets/fonts/inter-latin-wght-normal.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
 @theme {
   --color-td-bg: var(--td-bg);
   --color-td-bg-alt: var(--td-bg-alt);
@@ -48,10 +28,7 @@
 
 /* Base styles */
 html {
-  /* Copied from src/styles/tokens.css */
-  --td-font-heading: "Fraunces", ui-serif, Georgia, "Times New Roman", serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --td-font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-family: var(--td-font-body);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   scroll-behavior: smooth;
 }
 
@@ -60,13 +37,6 @@ body {
   color: var(--td-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-h1, h2, h3,
-.prose h1, .prose h2, .prose h3 {
-  font-family: var(--td-font-heading);
-  font-optical-sizing: auto;
-  letter-spacing: -0.01em;
 }
 
 code, pre {
@@ -102,7 +72,7 @@ code, pre {
 
 .btn-primary {
   background-color: var(--td-accent);
-  color: #0f172a; /* ink on brand gold: 9.0:1 */
+  color: #0f172a;
 }
 
 .btn-primary:hover {
@@ -142,7 +112,7 @@ code, pre {
 
 .install-command {
   background-color: var(--td-bg-code);
-  color: var(--td-accent); /* gold on brand navy: 8.4:1 */
+  color: var(--td-accent);
   border-radius: 0.5rem;
   padding: 0.75rem 1rem;
   font-family: 'JetBrains Mono', monospace;
@@ -161,7 +131,7 @@ code, pre {
 }
 
 .nav-link-active {
-  color: var(--td-accent-text, var(--td-accent));
+  color: var(--td-accent);
   font-weight: 500;
 }
 
@@ -179,8 +149,8 @@ code, pre {
 }
 
 .sidebar-link-active {
-  background-color: color-mix(in srgb, var(--td-accent) 14%, transparent);
-  color: var(--td-accent-text, var(--td-accent));
+  background-color: color-mix(in srgb, var(--td-accent) 10%, transparent);
+  color: var(--td-accent);
   font-weight: 500;
 }
 
@@ -225,8 +195,8 @@ code, pre {
 .prose th { text-align: left; padding: 0.5rem 1rem; border-bottom: 1px solid var(--td-border); font-weight: 600; }
 .prose td { padding: 0.5rem 1rem; border-bottom: 1px solid var(--td-border); }
 
-.prose a { color: var(--td-link, var(--td-accent)); }
-.prose a:hover { color: var(--td-link-hover, var(--td-link, var(--td-accent))); text-decoration: underline; }
+.prose a { color: var(--td-accent); }
+.prose a:hover { text-decoration: underline; }
 
 .prose blockquote {
   border-left: 4px solid var(--td-accent);
@@ -256,7 +226,7 @@ code, pre {
   margin: 0 0 0.45rem;
   font-weight: 700;
   font-style: normal;
-  color: var(--td-warning-text, var(--td-warning));
+  color: var(--td-warning);
 }
 .docs-caution-title::before {
   content: "";

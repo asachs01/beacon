@@ -1,5 +1,4 @@
 ---
-import BrandLockup from './BrandLockup.astro';
 const currentYear = new Date().getFullYear();
 ---
 
@@ -7,9 +6,15 @@ const currentYear = new Date().getFullYear();
   <div class="container py-12">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
       <div class="md:col-span-2">
-        <a href="/" aria-label="Beacon Docs home" class="flex items-center gap-2 font-semibold text-lg mb-4">
-          <BrandLockup idPrefix="ftr" />
-          <span class="text-sm font-medium px-2 py-0.5 rounded-md border border-[var(--td-border)] text-[var(--td-text-muted)]" aria-hidden="true">Docs</span>
+        <a href="/" class="flex items-center gap-2 font-semibold text-lg mb-4">
+          <svg class="w-7 h-7" viewBox="0 0 64 64" fill="none">
+            <path d="M22 52 L18 56 Q18 58 20 58 L44 58 Q46 58 46 56 L42 52 Z" fill="currentColor"/>
+            <path d="M24 52 L27 20 L37 20 L40 52 Z" fill="currentColor"/>
+            <rect x="25" y="16" width="14" height="6" rx="1" fill="currentColor"/>
+            <path d="M20 14 A14 14 0 0 1 32 2" stroke="var(--td-accent)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <path d="M44 14 A14 14 0 0 0 32 2" stroke="var(--td-accent)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          </svg>
+          <span>Beacon Docs</span>
         </a>
         <p class="text-[var(--td-text-muted)] max-w-md">
           Documentation for Beacon — your family's daily signal. An open-source, self-hosted family dashboard for wall-mounted displays.
@@ -45,7 +50,7 @@ const currentYear = new Date().getFullYear();
     </div>
 
     <div class="border-t border-[var(--td-border)] mt-8 pt-8 text-center text-[var(--td-text-muted)] text-sm">
-      <p>&copy; {currentYear} Beacon. Built with <a href="https://astro.build" class="text-[var(--td-link,var(--td-accent))] hover:underline">Astro</a>.</p>
+      <p>&copy; {currentYear} Beacon. Built with <a href="https://astro.build" class="text-[var(--td-accent)] hover:underline">Astro</a>.</p>
     </div>
   </div>
 </footer>
